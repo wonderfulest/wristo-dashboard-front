@@ -24,3 +24,11 @@ export interface LoginResponseData {
   token: string
   userInfo: UserInfo
 }
+
+export interface RoleInfo {
+  id: number
+  roleName: string
+  description: string
+  createdAt: string
+  updatedAt: string
+}

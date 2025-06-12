@@ -1,0 +1,71 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+@url = http://localhost:8088
+@api_token = api_NMl41bsO2G0HZimXeO1VGn-026QHn9Se
+@user_id = 1
+@role_id = 4
+
+### 查询角色列表
+GET {{url}}/api/admin/roles/list/all
+Authorization: Bearer {{api_token}}
+
+### 查询角色详情
+GET {{url}}/api/admin/roles/get/{{role_id}}
+Authorization: Bearer {{api_token}}
+
+### 创建角色
+POST {{url}}/api/admin/roles/create
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+{
+  "roleName": "管理员",
+  "roleCode": "ROLE_ADMIN",
+  "description": "系统管理员",
+  "status": 1
+}
+
+### 更新角色
+PUT {{url}}/api/admin/roles/update/{{role_id}}
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+{
+  "roleName": "管理员(更新)",
+  "description": "系统管理员(更新)",
+  "status": 1
+}
+
+### 删除角色
+GET {{url}}/api/admin/roles/delete/{{role_id}}
+Authorization: Bearer {{api_token}}
+
+### 分配角色给用户
+GET {{url}}/api/admin/roles/assign/{{role_id}}/users/{{user_id}}
+Authorization: Bearer {{api_token}}
+
+### 移除用户的角色
+GET {{url}}/api/admin/roles/remove/{{role_id}}/users/{{user_id}}
+Authorization: Bearer {{api_token}}
+
+返回值：
+
+
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "id": 4,
+    "roleName": "管理员(更新)",
+    "roleCode": "ROLE_TEST_001",
+    "description": "系统管理员(更新)",
+    "status": 1,
+    "isDeleted": 0,
+    "createdAt": "2025-06-09T07:46:53.000+00:00",
+    "updatedAt": "2025-06-12T09:58:21.000+00:00",
+    "version": 30
+  }
+}
