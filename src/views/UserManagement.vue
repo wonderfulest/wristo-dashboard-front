@@ -22,7 +22,9 @@
           <el-input v-model="currentUser.email" />
         </el-form-item>
         <el-form-item label="角色">
-          <el-input v-model="rolesInput" placeholder="用逗号分隔多个角色" />
+          <el-select v-model="rolesInput" multiple filterable placeholder="请选择角色">
+            <el-option v-for="role in roleOptions" :key="role.roleCode" :label="role.roleName" :value="role.roleCode" />
+          </el-select>
         </el-form-item>
         <el-form-item v-if="!isEdit" label="密码">
           <el-input v-model="password" type="password" />
@@ -40,17 +42,29 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserList, createUser, updateUser, deleteUser } from '@/api/user'
-import type { UserInfo } from '@/types/api'
+import { getRoleList } from '@/api/role'
+import type { UserInfo, RoleInfo } from '@/types/api'
 
 const users = ref<UserInfo[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const currentUser = ref<Partial<UserInfo> & { roles?: string | string[] }>({})
-const rolesInput = ref('')
+const rolesInput = ref<string[]>([])
 const password = ref('')
+const roleOptions = ref<RoleInfo[]>([])
 
-const roleFormatter = (row: any) => Array.isArray(row.roles) ? row.roles.join(', ') : ''
+const roleFormatter = (row: any) => {
+  if (Array.isArray(row.roles)) {
+    // 兼容 roles 为对象数组
+    if (row.roles.length > 0 && typeof row.roles[0] === 'object') {
+      return row.roles.map((r: any) => r.roleName).join(', ')
+    }
+    // 兼容 roles 为字符串数组
+    return row.roles.join(', ')
+  }
+  return ''
+}
 
 const fetchUsers = async () => {
   loading.value = true
@@ -68,10 +82,19 @@ const fetchUsers = async () => {
   }
 }
 
+const fetchRoles = async () => {
+  try {
+    const res = await getRoleList()
+    if (res.code === 0 && res.data) {
+      roleOptions.value = res.data
+    }
+  } catch {}
+}
+
 const handleAdd = () => {
   isEdit.value = false
   currentUser.value = {}
-  rolesInput.value = ''
+  rolesInput.value = []
   password.value = ''
   dialogVisible.value = true
 }
@@ -79,7 +102,15 @@ const handleAdd = () => {
 const handleEdit = (row: UserInfo) => {
   isEdit.value = true
   currentUser.value = { ...row }
-  rolesInput.value = Array.isArray(row.roles) ? row.roles.join(',') : ''
+  if (Array.isArray(row.roles)) {
+    if (row.roles.length > 0 && typeof row.roles[0] === 'object') {
+      rolesInput.value = row.roles.map((r: any) => r.roleCode)
+    } else {
+      rolesInput.value = row.roles.slice()
+    }
+  } else {
+    rolesInput.value = []
+  }
   dialogVisible.value = true
 }
 
@@ -106,7 +137,7 @@ const handleSave = async () => {
     ElMessage.error('新增用户时密码不能为空')
     return
   }
-  let payload: any = { ...currentUser.value, roles: rolesInput.value.split(',').map(r => r.trim()).filter(Boolean) }
+  let payload: any = { ...currentUser.value, roles: rolesInput.value }
   if (!isEdit.value) {
     payload.password = password.value
   }
@@ -125,7 +156,10 @@ const handleSave = async () => {
   }
 }
 
-onMounted(fetchUsers)
+onMounted(() => {
+  fetchUsers()
+  fetchRoles()
+})
 </script>
 
 <style scoped>

@@ -57,13 +57,28 @@ Authorization: Bearer {{api_token}}
 
 {
     "id": 1,
-    "username": "admin",
-    "nickname": "管理员昵称",
+    "username": "admin_update",
+    "nickname": "昵称更新",
     "email": "admin@example.com",
     "phone": null,
     "avatar": "http://avatar.url",
     "status": null,
-    "roles": null,
+    "roles": [
+    {
+        "id": 1,
+        "roleName": "超级管理员",
+        "roleCode": "ROLE_SUPER_ADMIN",
+        "description": "系统超级管理员",
+        "status": 1
+    },
+    {
+        "id": 3,
+        "roleName": "商家用户",
+        "roleCode": "ROLE_MERCHANT",
+        "description": "商家用户",
+        "status": 1
+    }
+    ],
     "createdAt": "2025-06-02 08:30:07",
     "updatedAt": "2025-06-02 08:30:07",
     "lastLoginTime": null,

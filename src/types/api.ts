@@ -28,6 +28,7 @@ export interface LoginResponseData {
 export interface RoleInfo {
   id: number
   roleName: string
+  roleCode: string
   description: string
   createdAt: string
   updatedAt: string

@@ -3,14 +3,14 @@
     <div class="side-main-wrapper">
       <!-- Side Menu -->
       <aside class="side-menu">
-        <div class="logo">
+        <div class="logo logo-center">
           <span class="logo-icon">W</span>
           <span class="logo-text">pay</span>
         </div>
         <nav class="menu-list">
+          <router-link to="/dashboard" class="menu-item" active-class="active">仪表盘</router-link>
           <router-link to="/user-management" class="menu-item" active-class="active">用户管理</router-link>
           <router-link to="/role-management" class="menu-item" active-class="active">角色管理</router-link>
-          <router-link to="/dashboard" class="menu-item" active-class="active">仪表盘</router-link>
           <router-link to="/products" class="menu-item" active-class="active">产品管理</router-link>
           <router-link to="/history" class="menu-item" active-class="active">历史记录</router-link>
           <router-link to="/discounts" class="menu-item" active-class="active">优惠管理</router-link>
@@ -104,6 +104,11 @@ const toggleDropdown = () => {
   align-items: center;
   font-size: 2.2rem;
   font-weight: bold;
+}
+.logo-center {
+  justify-content: center;
+  width: 100%;
+  margin: 12px 0 12px 0;
 }
 .logo-icon {
   color: $color-success;
@@ -224,7 +229,7 @@ const toggleDropdown = () => {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 32px 0 0 0;
+  padding: 12px 0 0 0;
   min-height: 100vh;
 }
 .menu-list {

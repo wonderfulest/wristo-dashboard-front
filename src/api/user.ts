@@ -32,7 +32,7 @@ export const createUser = (data: { username: string; password: string; email: st
 }
 
 export const updateUser = (id: number, data: Partial<UserInfo>): Promise<ApiResponse<UserInfo>> => {
-  return instance.put(`/admin/users/update/${id}`, data)
+  return instance.post(`/admin/users/update/${id}`, data)
 }
 
 export const deleteUser = (id: number): Promise<ApiResponse<null>> => {

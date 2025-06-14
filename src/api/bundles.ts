@@ -14,7 +14,7 @@ export interface Bundle {
 
 // 获取所有套餐列表
 export const fetchBundles = (): Promise<ApiResponse<Bundle[]>> => {
-  return instance.get('/bundles')
+  return instance.get('/bundles/all-by-user')
 }
 
 // 新增套餐
