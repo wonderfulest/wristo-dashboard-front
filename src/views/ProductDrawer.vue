@@ -118,9 +118,9 @@
         class="create-btn"
         size="large"
         :disabled="!checked || loading"
-        @click="props.product ? handleSave() : handleCreate()"
+        @click="handleSave() "
       >
-        {{ props.product ? 'Save' : 'CREATE PRODUCT' }}
+        Save
       </el-button>
     </div>
   </div>
@@ -128,7 +128,7 @@
 
 <script setup lang="ts">
 import { ref, defineExpose, defineProps, watch } from "vue";
-import { createProduct, updateProduct, type Product, uploadProductImage } from '@/api/products'
+import { updateProduct, type Product, uploadProductImage } from '@/api/products'
 import { ElMessage } from 'element-plus'
 import { defineEmits } from 'vue'
 import type { ApiResponse } from '@/types/api';
@@ -248,36 +248,6 @@ function validateForm() {
   return true;
 }
 
-async function handleCreate() {
-  if (!checked.value) {
-    ElMessage.error('You must agree to the terms');
-    return;
-  }
-  if (!validateForm()) return;
-  loading.value = true;
-  try {
-    const payload = {
-      name: form.value.name.trim(),
-      description: form.value.description.trim(),
-      garminImageUrl: form.value.garminImg || '',
-      garminStoreUrl: form.value.garminUrl || '',
-      trialLasts: form.value.trialLasts ? Number(form.value.trialLasts) : 0,
-      price: form.value.price ? Number(form.value.price) : 0,
-    };
-    const res: ApiResponse<Product> = await createProduct(payload);
-    if (res.code === 0) {
-      ElMessage.success('Product created successfully');
-      emits('close');
-    } else {
-      ElMessage.error(res.msg || 'Create failed');
-    }
-  } catch (e: any) {
-    ElMessage.error(e?.msg || 'Create failed');
-  } finally {
-    loading.value = false;
-  }
-}
-
 function resetForm() {
   form.value = {
     garminImg: "",
@@ -311,17 +281,6 @@ watch(() => props.product, (val) => {
   if (val) setForm(val);
   else resetForm();
 });
-
-// const productDrawerVisible = ref(false)
-// const currentProduct = ref<Product | null>(null)
-
-// const handleProductClick = async (appId: number) => {
-//   const res = await getProduct(appId)
-//   if (res.code === 0 && res.data) {
-//     currentProduct.value = res.data
-//     productDrawerVisible.value = true
-//   }
-// }
 
 async function handleSave() {
   if (!props.product) return

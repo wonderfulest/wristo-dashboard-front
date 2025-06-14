@@ -1,0 +1,74 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+### 环境变量
+@baseUrl = http://localhost:8088
+@contentType = application/json
+@api_token = api_NMl41bsO2G0HZimXeO1VGn-026QHn9Se
+
+### 查询所有分类
+GET {{baseUrl}}/api/categories/all
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+### 创建分类
+POST {{baseUrl}}/api/categories/create
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+{
+    "name": "测试分类",
+    "slug": "test-category"
+}
+
+### 获取单个分类
+GET {{baseUrl}}/api/categories/1
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+### 获取活跃分类
+GET {{baseUrl}}/api/categories/active
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+### 通过 slug 获取分类
+GET {{baseUrl}}/api/categories/by-slug/test-category
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+### 更新分类
+POST {{baseUrl}}/api/categories/update
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+{
+    "id": 1,
+    "name": "更新后的分类",
+    "slug": "updated-category",
+    "isActive": 1
+}
+
+### 删除分类
+POST {{baseUrl}}/api/categories/delete/1
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+
+返回
+
+
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    {
+      "id": 2,
+      "name": "Animal",
+      "slug": "animal",
+      "image": null,
+      "sort": 0
+    }
+  }
+}

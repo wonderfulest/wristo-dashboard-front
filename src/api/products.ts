@@ -12,6 +12,7 @@ export interface Product {
   createdAt?: string
   updatedAt?: string
   isDeleted?: number
+  isActive?: number
 }
 
 export interface ProductPageQuery {
@@ -29,11 +30,7 @@ export interface ProductPageData {
 }
 
 export const fetchProductPage = (params: ProductPageQuery): Promise<ApiResponse<ProductPageData>> => {
-  return instance.post('/products/page', params)
-}
-
-export const fetchAllProducts = (): Promise<ApiResponse<Product[]>> => {
-  return instance.get('/products/all-by-user')
+  return instance.get('/admin/products/page', { params })
 }
 
 // 新增产品
@@ -46,18 +43,14 @@ export interface CreateProductDto {
   price?: number;
 }
 
-export const createProduct = (data: CreateProductDto): Promise<ApiResponse<Product>> => {
-  return instance.post('/products', data)
-}
-
 // 查询单个产品
 export const getProduct = (appId: number): Promise<ApiResponse<Product>> => {
-  return instance.get(`/products/${appId}`)
+  return instance.get(`/admin/products/${appId}`)
 }
 
 // 更新产品
 export const updateProduct = (appId: number, data: Partial<Product>): Promise<ApiResponse<Product>> => {
-  return instance.post(`/products/update/${appId}`, data)
+  return instance.post(`/admin/products/update/${appId}`, data)
 }
 
 // 上传产品图片

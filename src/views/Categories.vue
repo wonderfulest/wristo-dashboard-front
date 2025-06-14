@@ -1,41 +1,31 @@
 <template>
-  <div class="products-container">
+  <div class="categories-container">
     <div class="header">
-      <h2>商品管理</h2>
-      <el-button type="primary" @click="handleAdd">新增商品</el-button>
+      <h2>分类管理</h2>
+      <el-button type="primary" @click="handleAdd">新增分类</el-button>
     </div>
 
-    <el-table :data="products" style="width: 100%" v-loading="loading">
-      <el-table-column prop="appId" label="ID" width="80" />
-      <el-table-column prop="name" label="商品名称" />
-      <el-table-column prop="designId" label="设计ID" />
+    <el-table :data="categories" style="width: 100%" v-loading="loading">
+      <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column prop="name" label="分类名称" />
+      <el-table-column prop="slug" label="标识" />
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
-          <el-tag :type="row.isActive === 1 ? 'success' : 'danger'">
-            {{ row.isActive === 1 ? '启用' : '禁用' }}
+          <el-tag :type="row.isActive ? 'success' : 'danger'">
+            {{ row.isActive ? '启用' : '禁用' }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column label="图片" width="100">
         <template #default="{ row }">
           <el-image
-            v-if="row.garminImageUrl"
-            :src="row.garminImageUrl"
-            :preview-src-list="[row.garminImageUrl]"
+            v-if="row.image"
+            :src="row.image"
+            :preview-src-list="[row.image]"
             fit="cover"
             style="width: 50px; height: 50px"
           />
           <span v-else>无图片</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="price" label="价格" width="100">
-        <template #default="{ row }">
-          ${{ row.price }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="trialLasts" label="试用时长" width="100">
-        <template #default="{ row }">
-          {{ row.trialLasts }}天
         </template>
       </el-table-column>
       <el-table-column prop="createdAt" label="创建时间" width="180">
@@ -46,6 +36,7 @@
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+          <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -66,58 +57,20 @@
     <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="dialogType === 'add' ? '新增商品' : '编辑商品'"
+      :title="dialogType === 'add' ? '新增分类' : '编辑分类'"
       width="500px"
     >
       <el-form
         ref="formRef"
         :model="form"
         :rules="rules"
-        label-width="100px"
+        label-width="80px"
       >
-        <el-form-item label="商品名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入商品名称" />
+        <el-form-item label="分类名称" prop="name">
+          <el-input v-model="form.name" placeholder="请输入分类名称" />
         </el-form-item>
-        <el-form-item label="设计ID" prop="designId">
-          <el-input v-model="form.designId" placeholder="请输入设计ID" />
-        </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            placeholder="请输入商品描述"
-          />
-        </el-form-item>
-        <el-form-item label="价格" prop="price">
-          <el-input-number
-            v-model="form.price"
-            :precision="2"
-            :step="0.1"
-            :min="0"
-          />
-        </el-form-item>
-        <el-form-item label="试用时长" prop="trialLasts">
-          <el-input-number
-            v-model="form.trialLasts"
-            :precision="2"
-            :step="0.1"
-            :min="0"
-          />
-        </el-form-item>
-        <el-form-item label="商品图片" prop="garminImageUrl">
-          <el-upload
-            class="avatar-uploader"
-            action="/api/files/upload"
-            :show-file-list="false"
-            :on-success="handleUploadSuccess"
-            :before-upload="beforeUpload"
-          >
-            <img v-if="form.garminImageUrl" :src="form.garminImageUrl" class="avatar" />
-            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="商店链接" prop="garminStoreUrl">
-          <el-input v-model="form.garminStoreUrl" placeholder="请输入商店链接" />
+        <el-form-item label="标识" prop="slug">
+          <el-input v-model="form.slug" placeholder="请输入分类标识" />
         </el-form-item>
         <el-form-item label="状态" prop="isActive">
           <el-switch
@@ -127,6 +80,18 @@
             active-text="启用"
             inactive-text="禁用"
           />
+        </el-form-item>
+        <el-form-item label="图片" prop="image">
+          <el-upload
+            class="avatar-uploader"
+            action="/api/files/upload"
+            :show-file-list="false"
+            :on-success="handleUploadSuccess"
+            :before-upload="beforeUpload"
+          >
+            <img v-if="form.image" :src="form.image" class="avatar" />
+            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+          </el-upload>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -145,10 +110,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { formatDate } from '@/utils/date'
-import { fetchProductPage, createProduct, updateProduct, type Product } from '@/api/products'
+import { fetchCategoryPage, createCategory, updateCategory, deleteCategory, type Category } from '@/api/category'
 
 // 表格数据
-const products = ref<Product[]>([])
+const categories = ref<Category[]>([])
 const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -159,79 +124,94 @@ const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 const formRef = ref<FormInstance>()
 const form = ref({
-  appId: 0,
-  designId: '',
+  id: 0,
   name: '',
-  description: '',
-  price: 0,
-  garminImageUrl: '',
-  garminStoreUrl: '',
-  garminAppUuid: '',
-  trialLasts: 0,
+  slug: '',
+  image: '',
   isActive: 1
 })
 
 const rules: FormRules = {
   name: [
-    { required: true, message: '请输入商品名称', trigger: 'blur' },
+    { required: true, message: '请输入分类名称', trigger: 'blur' },
     { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
   ],
-  price: [
-    { required: true, message: '请输入商品价格', trigger: 'blur' }
-  ],
+  slug: [
+    { required: true, message: '请输入分类标识', trigger: 'blur' },
+    { pattern: /^[a-z0-9-]+$/, message: '只能包含小写字母、数字和连字符', trigger: 'blur' }
+  ]
 }
 
-// 获取商品列表
-const fetchProducts = async () => {
+// 获取分类列表
+const fetchCategories = async () => {
   loading.value = true
   try {
-    const res = await fetchProductPage({
+    const res = await fetchCategoryPage({
       pageNum: currentPage.value,
-      pageSize: pageSize.value,
-      orderBy: 'created_at:desc'
+      pageSize: pageSize.value
     })
     if (res.code === 0) {
-      products.value = res.data.list
+      categories.value = res.data.list
       total.value = res.data.total
     } else {
-      ElMessage.error(res.message || '获取商品列表失败')
+      ElMessage.error(res.message || '获取分类列表失败')
     }
   } catch (error) {
-    ElMessage.error('获取商品列表失败')
+    ElMessage.error('获取分类列表失败')
   } finally {
     loading.value = false
   }
 }
 
-// 新增商品
+// 新增分类
 const handleAdd = () => {
   dialogType.value = 'add'
   form.value = {
-    appId: 0,
-    designId: '',
+    id: 0,
     name: '',
-    description: '',
-    price: 0,
-    garminImageUrl: '',
-    garminStoreUrl: '',
-    garminAppUuid: '',
-    trialLasts: 0,
+    slug: '',
+    image: '',
     isActive: 1
   }
   dialogVisible.value = true
 }
 
-// 编辑商品
-const handleEdit = (row: Product) => {
+// 编辑分类
+const handleEdit = (row: Category) => {
   dialogType.value = 'edit'
   form.value = { ...row }
   dialogVisible.value = true
 }
 
+// 删除分类
+const handleDelete = (row: Category) => {
+  ElMessageBox.confirm(
+    '确定要删除该分类吗？',
+    '警告',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(async () => {
+    try {
+      const res = await deleteCategory(row.id)
+      if (res.code === 0) {
+        ElMessage.success('删除成功')
+        fetchCategories()
+      } else {
+        ElMessage.error(res.message || '删除失败')
+      }
+    } catch (error) {
+      ElMessage.error('删除失败')
+    }
+  })
+}
+
 // 上传图片相关
 const handleUploadSuccess = (response: any) => {
   if (response.code === 0) {
-    form.value.garminImageUrl = response.data.url
+    form.value.image = response.data.url
   } else {
     ElMessage.error('上传失败')
   }
@@ -257,22 +237,38 @@ const handleSubmit = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
     if (valid) {
-      const res = await updateProduct(form.value.appId, {
-        name: form.value.name,
-        designId: form.value.designId,
-        description: form.value.description,
-        price: form.value.price,
-        garminImageUrl: form.value.garminImageUrl,
-        garminStoreUrl: form.value.garminStoreUrl,
-        trialLasts: form.value.trialLasts,
-        isActive: form.value.isActive
-      })
-      if (res.code === 0) {
-        ElMessage.success('更新成功')
-        dialogVisible.value = false
-        fetchProducts()
-      } else {
-        ElMessage.error(res.message || '更新失败')
+      try {
+        if (dialogType.value === 'add') {
+          const res = await createCategory({
+            name: form.value.name,
+            slug: form.value.slug,
+            image: form.value.image,
+            isActive: form.value.isActive
+          })
+          if (res.code === 0) {
+            ElMessage.success('新增成功')
+            dialogVisible.value = false
+            fetchCategories()
+          } else {
+            ElMessage.error(res.message || '新增失败')
+          }
+        } else {
+          const res = await updateCategory(form.value.id, {
+            name: form.value.name,
+            slug: form.value.slug,
+            image: form.value.image,
+            isActive: form.value.isActive
+          })
+          if (res.code === 0) {
+            ElMessage.success('更新成功')
+            dialogVisible.value = false
+            fetchCategories()
+          } else {
+            ElMessage.error(res.message || '更新失败')
+          }
+        }
+      } catch (error) {
+        ElMessage.error(dialogType.value === 'add' ? '新增失败' : '更新失败')
       }
     }
   })
@@ -281,21 +277,21 @@ const handleSubmit = async () => {
 // 分页相关
 const handleSizeChange = (val: number) => {
   pageSize.value = val
-  fetchProducts()
+  fetchCategories()
 }
 
 const handleCurrentChange = (val: number) => {
   currentPage.value = val
-  fetchProducts()
+  fetchCategories()
 }
 
 onMounted(() => {
-  fetchProducts()
+  fetchCategories()
 })
 </script>
 
 <style scoped>
-.products-container {
+.categories-container {
   padding: 20px;
 }
 
