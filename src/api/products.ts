@@ -19,6 +19,7 @@ export interface ProductPageQuery {
   pageNum: number
   pageSize: number
   orderBy?: string
+  name?: string
 }
 
 export interface ProductPageData {
@@ -53,13 +54,3 @@ export const updateProduct = (appId: number, data: Partial<Product>): Promise<Ap
   return instance.post(`/admin/products/update/${appId}`, data)
 }
 
-// 上传产品图片
-export const uploadProductImage = (file: File, folder = 'hero', suffix = 'png') => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('folder', folder);
-  formData.append('suffix', suffix);
-  return instance.post('/files/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-} 

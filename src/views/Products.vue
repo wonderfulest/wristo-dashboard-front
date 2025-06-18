@@ -2,7 +2,22 @@
   <div class="products-container">
     <div class="header">
       <h2>商品管理</h2>
-      <el-button type="primary" @click="handleAdd">新增商品</el-button>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <el-input
+          v-model="searchName"
+          placeholder="按商品名称搜索"
+          clearable
+          style="width: 200px"
+          @keyup.enter.native="handleSearch"
+        />
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-select v-model="sortOrder" placeholder="排序方式" style="width: 150px" @change="handleSort">
+          <el-option label="创建时间倒序" value="created_at:desc" />
+          <el-option label="下载量倒序" value="download:desc" />
+          <el-option label="下载量升序" value="download:asc" />
+        </el-select>
+        <el-button type="primary" @click="handleAdd">新增商品</el-button>
+      </div>
     </div>
 
     <el-table :data="products" style="width: 100%" v-loading="loading">
@@ -19,31 +34,36 @@
       <el-table-column label="图片" width="100">
         <template #default="{ row }">
           <el-image
-            v-if="row.garminImageUrl"
-            :src="row.garminImageUrl"
-            :preview-src-list="[row.garminImageUrl]"
+            v-if="row.garminImageUrl || row.heroFile?.url"
+            :src="row.garminImageUrl || row.heroFile?.url"
+            :preview-src-list="[row.garminImageUrl || row.heroFile?.url]"
             fit="cover"
             style="width: 50px; height: 50px"
           />
           <span v-else>无图片</span>
         </template>
       </el-table-column>
-      <el-table-column prop="price" label="价格" width="100">
+      <el-table-column prop="download" label="下载量" width="80">
+        <template #default="{ row }">
+          {{ row.download }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="price" label="价格" width="80">
         <template #default="{ row }">
           ${{ row.price }}
         </template>
       </el-table-column>
       <el-table-column prop="trialLasts" label="试用时长" width="100">
         <template #default="{ row }">
-          {{ row.trialLasts }}天
+          {{ row.trialLasts }}小时
         </template>
       </el-table-column>
-      <el-table-column prop="createdAt" label="创建时间" width="180">
+      <el-table-column prop="createdAt" label="创建时间" width="120">
         <template #default="{ row }">
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column label="操作" width="120" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
         </template>
@@ -96,6 +116,14 @@
             :min="0"
           />
         </el-form-item>
+        <el-form-item label="下载量" prop="download">
+          <el-input-number
+            v-model="form.download"
+            :precision="0"
+            :step="1"
+            :min="0"
+          />
+        </el-form-item>
         <el-form-item label="试用时长" prop="trialLasts">
           <el-input-number
             v-model="form.trialLasts"
@@ -107,9 +135,8 @@
         <el-form-item label="商品图片" prop="garminImageUrl">
           <el-upload
             class="avatar-uploader"
-            action="/api/files/upload"
             :show-file-list="false"
-            :on-success="handleUploadSuccess"
+            :on-change="(file: any) => handleImageChange(file)"
             :before-upload="beforeUpload"
           >
             <img v-if="form.garminImageUrl" :src="form.garminImageUrl" class="avatar" />
@@ -141,11 +168,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { formatDate } from '@/utils/date'
-import { fetchProductPage, createProduct, updateProduct, type Product } from '@/api/products'
+import { fetchProductPage, updateProduct, type Product } from '@/api/products'
+import { uploadProductHeroImage } from '@/api/files'
 
 // 表格数据
 const products = ref<Product[]>([])
@@ -168,7 +196,8 @@ const form = ref({
   garminStoreUrl: '',
   garminAppUuid: '',
   trialLasts: 0,
-  isActive: 1
+  isActive: 1,
+  download: 0
 })
 
 const rules: FormRules = {
@@ -181,6 +210,19 @@ const rules: FormRules = {
   ],
 }
 
+// 搜索和排序相关
+const searchName = ref('')
+const sortOrder = ref('created_at:desc')
+
+const handleSearch = () => {
+  currentPage.value = 1
+  fetchProducts()
+}
+const handleSort = () => {
+  currentPage.value = 1
+  fetchProducts()
+}
+
 // 获取商品列表
 const fetchProducts = async () => {
   loading.value = true
@@ -188,19 +230,33 @@ const fetchProducts = async () => {
     const res = await fetchProductPage({
       pageNum: currentPage.value,
       pageSize: pageSize.value,
-      orderBy: 'created_at:desc'
+      orderBy: sortOrder.value,
+      name: searchName.value ? searchName.value : undefined
     })
     if (res.code === 0) {
-      products.value = res.data.list
-      total.value = res.data.total
+      products.value = res.data?.list || []
+      total.value = res.data?.total || 0
     } else {
-      ElMessage.error(res.message || '获取商品列表失败')
+      ElMessage.error(res.msg || '获取商品列表失败')
     }
   } catch (error) {
     ElMessage.error('获取商品列表失败')
   } finally {
     loading.value = false
   }
+}
+
+async function handleImageChange(file: any) {
+  if (!file || !file.raw) return;
+  loading.value = true;
+  const res = await uploadProductHeroImage(file.raw)
+  if (res.code === 0 && res.data) {
+    form.value.garminImageUrl = res.data as string
+    ElMessage.success('图片上传成功');
+  } else {
+    ElMessage.error(res.msg || '图片上传失败');
+  }
+  loading.value = false;
 }
 
 // 新增商品
@@ -216,7 +272,8 @@ const handleAdd = () => {
     garminStoreUrl: '',
     garminAppUuid: '',
     trialLasts: 0,
-    isActive: 1
+    isActive: 1,
+    download: 0
   }
   dialogVisible.value = true
 }
@@ -224,7 +281,7 @@ const handleAdd = () => {
 // 编辑商品
 const handleEdit = (row: Product) => {
   dialogType.value = 'edit'
-  form.value = { ...row }
+  form.value = { ...row } as any
   dialogVisible.value = true
 }
 
@@ -259,7 +316,6 @@ const handleSubmit = async () => {
     if (valid) {
       const res = await updateProduct(form.value.appId, {
         name: form.value.name,
-        designId: form.value.designId,
         description: form.value.description,
         price: form.value.price,
         garminImageUrl: form.value.garminImageUrl,
@@ -272,7 +328,7 @@ const handleSubmit = async () => {
         dialogVisible.value = false
         fetchProducts()
       } else {
-        ElMessage.error(res.message || '更新失败')
+        ElMessage.error(res.msg || '更新失败')
       }
     }
   })

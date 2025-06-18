@@ -46,7 +46,7 @@
             class="img-uploader"
             drag
             :show-file-list="false"
-            :on-change="(file: any) => handleImageChange(file, platform.key)"
+            :on-change="(file: any) => handleImageChange(file)"
             :before-upload="() => false"
           >
             <div v-if="!form[platform.imgField]" class="img-upload-placeholder">
@@ -128,10 +128,10 @@
 
 <script setup lang="ts">
 import { ref, defineExpose, defineProps, watch } from "vue";
-import { updateProduct, type Product, uploadProductImage } from '@/api/products'
+import { updateProduct, type Product } from '@/api/products'
 import { ElMessage } from 'element-plus'
 import { defineEmits } from 'vue'
-import type { ApiResponse } from '@/types/api';
+import { uploadProductHeroImage } from '@/api/files'
 
 const props = defineProps<{ product?: Product | null }>()
 
@@ -204,24 +204,17 @@ const inputItems = [
   },
 ];
 
-function handleImageChange(file: any, key: string) {
+async function handleImageChange(file: any) {
   if (!file || !file.raw) return;
   loading.value = true;
-  uploadProductImage(file.raw, 'hero', file.raw.type.split('/')[1] || 'png')
-    .then((res: any) => {
-      if (res.code === 0 && res.data) {
-        form.value[`${key}Img`] = res.data;
-        ElMessage.success('图片上传成功');
-      } else {
-        ElMessage.error(res.msg || '图片上传失败');
-      }
-    })
-    .catch(() => {
-      ElMessage.error('图片上传失败');
-    })
-    .finally(() => {
-      loading.value = false;
-    });
+  const res = await uploadProductHeroImage(file.raw)
+  if (res.code === 0 && res.data) {
+    form.value.garminImg = res.data as string;
+    ElMessage.success('图片上传成功');
+  } else {
+    ElMessage.error(res.msg || '图片上传失败');
+  }
+  loading.value = false;
 }
 
 function isActive(key: string) {

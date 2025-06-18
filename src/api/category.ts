@@ -25,11 +25,7 @@ export interface CategoryPageData {
 }
 
 export const fetchCategoryPage = (params: CategoryPageQuery): Promise<ApiResponse<CategoryPageData>> => {
-  return instance.get('/categories/page', { params })
-}
-
-export const fetchAllCategories = (): Promise<ApiResponse<Category[]>> => {
-  return instance.get('/categories/all')
+  return instance.get('/admin/categories/page', { params })
 }
 
 // 新增分类
