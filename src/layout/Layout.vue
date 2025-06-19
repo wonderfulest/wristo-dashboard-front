@@ -1,12 +1,37 @@
 <template>
   <div class="global-layout">
-    <div class="side-main-wrapper">
-      <!-- Side Menu -->
-      <aside class="side-menu">
-        <div class="logo logo-center">
+    <!-- 顶部导航栏 -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="logo">
           <span class="logo-icon">W</span>
           <span class="logo-text">pay</span>
         </div>
+        <nav class="nav-list">
+          <router-link to="/dashboard" class="nav-item" active-class="active">官网运营</router-link>
+          <router-link to="/orders" class="nav-item" active-class="active">订单管理</router-link>
+          <router-link to="/user-management" class="nav-item" active-class="active">用户管理</router-link>
+          <router-link to="/marketing" class="nav-item" active-class="active">营销工具</router-link>
+          <router-link to="/reports" class="nav-item" active-class="active">报表中心</router-link>
+        </nav>
+        <div class="header-right">
+          <div class="user-profile-dropdown">
+            <div class="user-profile-name" @click="toggleDropdown">
+              {{ userStore.userInfo?.username }}
+              <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="dropdown-content" v-if="isDropdownOpen">
+              <a href="/account/profile">编辑资料</a>
+              <a href="/account/password">修改密码</a>
+              <a href="#" @click.prevent="handleLogout">退出登录</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div class="side-main-wrapper">
+      <!-- Side Menu -->
+      <aside class="side-menu">
         <nav class="menu-list">
           <router-link to="/dashboard" class="menu-item" active-class="active">仪表盘</router-link>
           <router-link to="/user-management" class="menu-item" active-class="active">用户管理</router-link>
@@ -17,17 +42,6 @@
           <router-link to="/discounts" class="menu-item" active-class="active">优惠管理</router-link>
           <router-link to="/profile" class="menu-item" active-class="active">个人资料</router-link>
         </nav>
-        <div class="user-profile-dropdown">
-          <div class="user-profile-name" @click="toggleDropdown">
-            {{ userStore.userInfo?.username }}
-            <span class="dropdown-arrow">▼</span>
-          </div>
-          <div class="dropdown-content" v-if="isDropdownOpen">
-            <a href="/account/profile">编辑资料</a>
-            <a href="/account/password">修改密码</a>
-            <a href="#" @click.prevent="handleLogout">退出登录</a>
-          </div>
-        </div>
       </aside>
       <!-- Main Content -->
       <main class="main-content">
@@ -90,13 +104,17 @@ const toggleDropdown = () => {
   background: $color-bg;
   color: $color-link;
   padding: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 .header-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 80px;
-  max-width: 1200px;
+  height: 64px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 32px;
 }
@@ -122,20 +140,26 @@ const toggleDropdown = () => {
   font-weight: 700;
   font-size: 2.2rem;
 }
-.header-right {
+.nav-list {
   display: flex;
-  gap: 24px;
+  gap: 32px;
   align-items: center;
+  margin-left: 48px;
 }
-.header-right a {
+.nav-item {
   color: $color-link;
   font-weight: 500;
   text-decoration: none;
   font-size: 1.1rem;
   transition: color 0.2s;
 }
-.header-right a:hover {
+.nav-item.active, .nav-item:hover {
   color: $color-success;
+}
+.header-right {
+  display: flex;
+  gap: 24px;
+  align-items: center;
 }
 .main-content {
   flex: 1;
@@ -218,6 +242,23 @@ const toggleDropdown = () => {
 }
 .user-profile-dropdown {
   position: relative;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+}
+.user-profile-name {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  font-size: 1rem;
+}
+.dropdown-arrow {
+  margin-left: 6px;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
 }
 .side-main-wrapper {
   display: flex;
@@ -230,14 +271,12 @@ const toggleDropdown = () => {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 12px 0 0 0;
   min-height: 100vh;
 }
 .menu-list {
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin-top: 32px;
 }
 .menu-item {
   padding: 14px 32px;

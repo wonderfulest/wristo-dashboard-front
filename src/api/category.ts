@@ -54,3 +54,13 @@ export const updateCategory = (id: number, data: Partial<Category>): Promise<Api
 export const deleteCategory = (id: number): Promise<ApiResponse<void>> => {
   return instance.post(`/admin/categories/delete/${id}`)
 } 
+
+// 更新分类状态
+export const updateCategoryStatus = (id: number, isActive: number): Promise<ApiResponse<void>> => {
+  return instance.post(`/admin/categories/active/${id}/${isActive}`)
+}
+
+// 获取所有分类
+export const fetchAllCategories = (): Promise<ApiResponse<Category[]>> => {
+  return instance.get('/admin/categories/all')
+}

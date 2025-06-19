@@ -3,7 +3,53 @@ description:
 globs: 
 alwaysApply: false
 ---
+### 产品返回对象参考
+
+{
+    "appId": 158882,
+    "designId": "wmt79aoj6slx09i6gm5bljrw",
+    "userId": 14,
+    "paddleProductId": "pro_01jxxvhgsrwph30gs4nbeke0va",
+    "name": "TestA1",
+    "description": "TestA1",
+    "price": 3.00,
+    "garminImageUrl": "https://cdn.wristo.io/test/screenshot/92e7c855-6585-4cd9-a06a-8c5387484514.png",
+    "garminStoreUrl": "https://apps.garmin.com/zh-CN/apps/2120f6b9-97d3-4014-8062-576f8516b7d4",
+    "garminAppUuid": "",
+    "trialLasts": 33.0,
+    "createdAt": "2025-06-17 10:29:55",
+    "updatedAt": "2025-06-17 17:37:38",
+    "isActive": 0,
+    "isDeleted": 0,
+    "download": 0,
+    "purchase": 0,
+    "heroFile": null,
+    "backgroundFile": null,
+    "categories": [
+      {
+        "id": 1,
+        "name": "Whole",
+        "slug": "whole",
+        "sort": 0,
+      },
+      {
+        "id": 2,
+        "name": "Animal",
+        "slug": "animal",
+        "sort": 0,
+      },
+      {
+        "id": 3,
+        "name": "Flower",
+        "slug": "flower",
+        "sort": 0,
+      }
+    ]
+}
+
 ### 环境变量
+
+
 @baseUrl = http://localhost:8088
 @api_token = api_NMl41bsO2G0HZimXeO1VGn-026QHn9Se
 @appId = 175774
@@ -62,5 +108,65 @@ Authorization: Bearer {{api_token}}
     "purchase": 0,
     "heroFile": null,
     "backgroundFile": null
+  }
+}
+
+
+### 更新产品分类
+
+POST {{baseUrl}}/api/admin/products/category/{{appId}}
+Content-Type: application/json
+Authorization: Bearer {{api_token}}
+
+{
+  "categoryIds": [1, 2, 3]
+}
+
+
+返回
+
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "appId": 158882,
+    "designId": "wmt79aoj6slx09i6gm5bljrw",
+    "userId": 14,
+    "paddleProductId": "pro_01jxxvhgsrwph30gs4nbeke0va",
+    "name": "TestA1",
+    "description": "TestA1",
+    "price": 3.00,
+    "garminImageUrl": "https://cdn.wristo.io/test/screenshot/92e7c855-6585-4cd9-a06a-8c5387484514.png",
+    "garminStoreUrl": "https://apps.garmin.com/zh-CN/apps/2120f6b9-97d3-4014-8062-576f8516b7d4",
+    "garminAppUuid": "",
+    "trialLasts": 33.0,
+    "createdAt": "2025-06-17 10:29:55",
+    "updatedAt": "2025-06-17 17:37:38",
+    "isActive": 0,
+    "isDeleted": 0,
+    "download": 0,
+    "purchase": 0,
+    "heroFile": null,
+    "backgroundFile": null,
+    "categories": [
+      {
+        "id": 1,
+        "name": "Whole",
+        "slug": "whole",
+        "sort": 0,
+      },
+      {
+        "id": 2,
+        "name": "Animal",
+        "slug": "animal",
+        "sort": 0,
+      },
+      {
+        "id": 3,
+        "name": "Flower",
+        "slug": "flower",
+        "sort": 0,
+      }
+    ]
   }
 }

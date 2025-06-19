@@ -26,9 +26,12 @@
       <el-table-column prop="designId" label="设计ID" />
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
-          <el-tag :type="row.isActive === 1 ? 'success' : 'danger'">
-            {{ row.isActive === 1 ? '启用' : '禁用' }}
-          </el-tag>
+          <el-switch
+            v-model="row.isActive"
+            :active-value="1"
+            :inactive-value="0"
+            @change="(val: number) => handleProductStatusChange(row, val)"
+          />
         </template>
       </el-table-column>
       <el-table-column label="图片" width="100">
@@ -41,6 +44,40 @@
             style="width: 50px; height: 50px"
           />
           <span v-else>无图片</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="分类" width="220">
+        <template #default="{ row }">
+          <span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px;">
+            <el-tag
+              v-for="cat in row.categories"
+              :key="cat.id"
+              closable
+              @close.stop="() => handleRemoveCategory(row, cat)"
+              style="margin-right: 2px; margin-bottom: 2px;"
+            >
+              {{ cat.name }}
+            </el-tag>
+            <el-dropdown
+              trigger="click"
+              @command="catId => handleAddCategory(row, catId)"
+            >
+              <el-button size="small" type="primary" plain style="padding: 0 6px; margin-left: 2px;">
+                +
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-for="cat in allCategories.filter(c => !row.categories.some(rc => rc.id === c.id))"
+                    :key="cat.id"
+                    :command="cat.id"
+                  >
+                    {{ cat.name }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </span>
         </template>
       </el-table-column>
       <el-table-column prop="download" label="下载量" width="80">
@@ -69,7 +106,6 @@
         </template>
       </el-table-column>
     </el-table>
-
     <!-- 分页 -->
     <div class="pagination">
       <el-pagination
@@ -82,7 +118,6 @@
         @current-change="handleCurrentChange"
       />
     </div>
-
     <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
@@ -155,6 +190,24 @@
             inactive-text="禁用"
           />
         </el-form-item>
+        <el-form-item label="分类">
+          <el-select
+            v-model="form.categories"
+            multiple
+            filterable
+            placeholder="请选择分类"
+            style="width: 100%"
+            :clearable="true"
+            value-key="id"
+          >
+            <el-option
+              v-for="cat in allCategories"
+              :key="cat.id"
+              :label="cat.name"
+              :value="cat"
+            />
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -172,8 +225,9 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { formatDate } from '@/utils/date'
-import { fetchProductPage, updateProduct, type Product } from '@/api/products'
+import { fetchProductPage, updateProduct, type Product, updateProductStatus, updateProductCategories } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
+import { fetchAllCategories, type Category } from '@/api/category'
 
 // 表格数据
 const products = ref<Product[]>([])
@@ -181,6 +235,7 @@ const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const allCategories = ref<Category[]>([])
 
 // 表单相关
 const dialogVisible = ref(false)
@@ -197,7 +252,8 @@ const form = ref({
   garminAppUuid: '',
   trialLasts: 0,
   isActive: 1,
-  download: 0
+  download: 0,
+  categories: [] as Category[]
 })
 
 const rules: FormRules = {
@@ -259,6 +315,14 @@ async function handleImageChange(file: any) {
   loading.value = false;
 }
 
+// 获取所有分类
+const fetchCategories = async () => {
+  const res = await fetchAllCategories()
+  if (res.code === 0 && res.data) {
+    allCategories.value = res.data
+  }
+}
+
 // 新增商品
 const handleAdd = () => {
   dialogType.value = 'add'
@@ -273,7 +337,8 @@ const handleAdd = () => {
     garminAppUuid: '',
     trialLasts: 0,
     isActive: 1,
-    download: 0
+    download: 0,
+    categories: []
   }
   dialogVisible.value = true
 }
@@ -281,7 +346,7 @@ const handleAdd = () => {
 // 编辑商品
 const handleEdit = (row: Product) => {
   dialogType.value = 'edit'
-  form.value = { ...row } as any
+  form.value = { ...row, categories: row.categories || [] } as any
   dialogVisible.value = true
 }
 
@@ -324,6 +389,9 @@ const handleSubmit = async () => {
         isActive: form.value.isActive
       })
       if (res.code === 0) {
+        // 分类保存
+        const categoryIds = (form.value.categories || []).map((c: any) => c.id)
+        await updateProductCategories(form.value.appId, categoryIds)
         ElMessage.success('更新成功')
         dialogVisible.value = false
         fetchProducts()
@@ -345,8 +413,40 @@ const handleCurrentChange = (val: number) => {
   fetchProducts()
 }
 
+// 切换商品激活状态
+const handleProductStatusChange = async (row: Product, val: number) => {
+  try {
+    const res = await updateProductStatus(row.appId, val)
+    if (res.code === 0) {
+      ElMessage.success('状态更新成功')
+      fetchProducts()
+    } else {
+      ElMessage.error(res.msg || '状态更新失败')
+    }
+  } catch (error) {
+    ElMessage.error('状态更新失败')
+    // 回滚UI
+    row.isActive = val === 1 ? 0 : 1
+  }
+}
+
+// 分类增删逻辑
+const handleRemoveCategory = async (row: Product, cat: Category) => {
+  const ids = (row.categories || []).filter((c: Category) => c.id !== cat.id).map((c: Category) => c.id)
+  await updateProductCategories(row.appId, ids)
+  ElMessage.success('分类已移除')
+  fetchProducts()
+}
+const handleAddCategory = async (row: Product, catId: number) => {
+  const ids = [...(row.categories || []).map((c: Category) => c.id), catId]
+  await updateProductCategories(row.appId, ids)
+  ElMessage.success('分类已添加')
+  fetchProducts()
+}
+
 onMounted(() => {
   fetchProducts()
+  fetchCategories()
 })
 </script>
 

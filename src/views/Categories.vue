@@ -4,16 +4,18 @@
       <h2>分类管理</h2>
       <el-button type="primary" @click="handleAdd">新增分类</el-button>
     </div>
-
     <el-table :data="categories" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="分类名称" />
       <el-table-column prop="slug" label="标识" />
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
-          <el-tag :type="row.isActive ? 'success' : 'danger'">
-            {{ row.isActive ? '启用' : '禁用' }}
-          </el-tag>
+          <el-switch
+            v-model="row.isActive"
+            :active-value="1"
+            :inactive-value="0"
+            @change="(val: number) => handleStatusChange(row, val)"
+          />
         </template>
       </el-table-column>
       <el-table-column label="图片" width="100">
@@ -26,11 +28,6 @@
             style="width: 50px; height: 50px"
           />
           <span v-else>无图片</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="createdAt" label="创建时间" width="180">
-        <template #default="{ row }">
-          {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
       <el-table-column label="操作" width="200" fixed="right">
@@ -110,7 +107,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { formatDate } from '@/utils/date'
-import { fetchCategoryPage, createCategory, updateCategory, deleteCategory, type Category } from '@/api/category'
+import { fetchCategoryPage, createCategory, updateCategory, deleteCategory, updateCategoryStatus, type Category } from '@/api/category'
 
 // 表格数据
 const categories = ref<Category[]>([])
@@ -151,10 +148,10 @@ const fetchCategories = async () => {
       pageSize: pageSize.value
     })
     if (res.code === 0) {
-      categories.value = res.data.list
-      total.value = res.data.total
+      categories.value = res.data?.list || []
+      total.value = res.data?.total || 0
     } else {
-      ElMessage.error(res.message || '获取分类列表失败')
+      ElMessage.error(res.msg || '获取分类列表失败')
     }
   } catch (error) {
     ElMessage.error('获取分类列表失败')
@@ -179,7 +176,7 @@ const handleAdd = () => {
 // 编辑分类
 const handleEdit = (row: Category) => {
   dialogType.value = 'edit'
-  form.value = { ...row }
+  form.value = { ...row, image: row.image || '' }
   dialogVisible.value = true
 }
 
@@ -200,7 +197,7 @@ const handleDelete = (row: Category) => {
         ElMessage.success('删除成功')
         fetchCategories()
       } else {
-        ElMessage.error(res.message || '删除失败')
+        ElMessage.error(res.msg || '删除失败')
       }
     } catch (error) {
       ElMessage.error('删除失败')
@@ -242,15 +239,14 @@ const handleSubmit = async () => {
           const res = await createCategory({
             name: form.value.name,
             slug: form.value.slug,
-            image: form.value.image,
-            isActive: form.value.isActive
+            image: form.value.image
           })
           if (res.code === 0) {
             ElMessage.success('新增成功')
             dialogVisible.value = false
             fetchCategories()
           } else {
-            ElMessage.error(res.message || '新增失败')
+            ElMessage.error(res.msg || '新增失败')
           }
         } else {
           const res = await updateCategory(form.value.id, {
@@ -264,7 +260,7 @@ const handleSubmit = async () => {
             dialogVisible.value = false
             fetchCategories()
           } else {
-            ElMessage.error(res.message || '更新失败')
+            ElMessage.error(res.msg || '更新失败')
           }
         }
       } catch (error) {
@@ -283,6 +279,23 @@ const handleSizeChange = (val: number) => {
 const handleCurrentChange = (val: number) => {
   currentPage.value = val
   fetchCategories()
+}
+
+// 切换分类状态
+const handleStatusChange = async (row: Category, val: number) => {
+  try {
+    const res = await updateCategoryStatus(row.id, val)
+    if (res.code === 0) {
+      ElMessage.success('状态更新成功')
+      fetchCategories()
+    } else {
+      ElMessage.error(res.msg || '状态更新失败')
+    }
+  } catch (error) {
+    ElMessage.error('状态更新失败')
+    // 回滚UI
+    row.isActive = val === 1 ? 0 : 1
+  }
 }
 
 onMounted(() => {
