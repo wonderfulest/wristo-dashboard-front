@@ -71,18 +71,13 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store/user'
 import { useRouter } from 'vue-router'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 const router = useRouter()
 const userStore = useUserStore()
 const handleLogout = async () => {
   await userStore.logout()
   router.push('/login')
 }
-
-const hasMerchantRole = computed(() => {
-  const roles: any[] = (userStore.userInfo && Array.isArray((userStore.userInfo as any).roles)) ? (userStore.userInfo as any).roles : []
-  return roles.some((role: any) => role.roleCode === 'ROLE_MERCHANT')
-})
 
 // 下拉菜单控制
 const isDropdownOpen = ref(false)

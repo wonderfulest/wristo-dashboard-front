@@ -106,7 +106,6 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { formatDate } from '@/utils/date'
 import { fetchCategoryPage, createCategory, updateCategory, deleteCategory, updateCategoryStatus, type Category } from '@/api/category'
 
 // 表格数据

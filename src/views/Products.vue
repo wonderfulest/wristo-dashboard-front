@@ -60,7 +60,7 @@
             </el-tag>
             <el-dropdown
               trigger="click"
-              @command="catId => handleAddCategory(row, catId)"
+              @command="(catId: number) => handleAddCategory(row, catId)"
             >
               <el-button size="small" type="primary" plain style="padding: 0 6px; margin-left: 2px;">
                 +
@@ -68,7 +68,7 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item
-                    v-for="cat in allCategories.filter(c => !row.categories.some(rc => rc.id === c.id))"
+                    v-for="cat in allCategories.filter(c => !row.categories.some((rc: any) => rc.id === c.id))"
                     :key="cat.id"
                     :command="cat.id"
                   >
@@ -302,19 +302,6 @@ const fetchProducts = async () => {
   }
 }
 
-async function handleImageChange(file: any) {
-  if (!file || !file.raw) return;
-  loading.value = true;
-  const res = await uploadProductHeroImage(file.raw)
-  if (res.code === 0 && res.data) {
-    form.value.garminImageUrl = res.data as string
-    ElMessage.success('图片上传成功');
-  } else {
-    ElMessage.error(res.msg || '图片上传失败');
-  }
-  loading.value = false;
-}
-
 // 获取所有分类
 const fetchCategories = async () => {
   const res = await fetchAllCategories()
@@ -351,14 +338,6 @@ const handleEdit = (row: Product) => {
 }
 
 // 上传图片相关
-const handleUploadSuccess = (response: any) => {
-  if (response.code === 0) {
-    form.value.garminImageUrl = response.data.url
-  } else {
-    ElMessage.error('上传失败')
-  }
-}
-
 const beforeUpload = (file: File) => {
   const isImage = file.type.startsWith('image/')
   const isLt2M = file.size / 1024 / 1024 < 2
@@ -372,6 +351,19 @@ const beforeUpload = (file: File) => {
     return false
   }
   return true
+}
+
+async function handleImageChange(file: any) {
+  if (!file || !file.raw) return;
+  loading.value = true;
+  const res = await uploadProductHeroImage(file.raw)
+  if (res.code === 0 && res.data) {
+    form.value.garminImageUrl = res.data as string
+    ElMessage.success('图片上传成功');
+  } else {
+    ElMessage.error(res.msg || '图片上传失败');
+  }
+  loading.value = false;
 }
 
 // 提交表单

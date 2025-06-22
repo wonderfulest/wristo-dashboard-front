@@ -115,7 +115,7 @@
 <script setup lang="ts">
 import { ref, defineExpose, defineProps, watch, computed, onMounted } from 'vue'
 import { createBundle, updateBundle, type Bundle } from '@/api/bundles'
-import { fetchAllProducts, type Product } from '@/api/products'
+import { fetchProductPage, type Product } from '@/api/products'
 import { ElMessage } from 'element-plus'
 import { defineEmits } from 'vue'
 import draggable from 'vuedraggable'
@@ -245,11 +245,9 @@ function validateForm() {
 
 async function getAllProducts() {
   // 拉取所有产品，假设产品总数不会太大
-  const res = await fetchAllProducts()
+  const res = await fetchProductPage({ pageNum: 1, pageSize: 1000 })
   if (res.code === 0 && res.data) {
-    products.value = res.data
-  } else {
-    products.value = []
+    products.value = res.data.list
   }
 }
 
