@@ -52,31 +52,18 @@
             <el-tag
               v-for="cat in row.categories"
               :key="cat.id"
-              closable
-              @close.stop="() => handleRemoveCategory(row, cat)"
               style="margin-right: 2px; margin-bottom: 2px;"
             >
               {{ cat.name }}
             </el-tag>
-            <el-dropdown
-              trigger="click"
-              @command="(catId: number) => handleAddCategory(row, catId)"
-            >
-              <el-button size="small" type="primary" plain style="padding: 0 6px; margin-left: 2px;">
-                +
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item
-                    v-for="cat in allCategories.filter(c => !row.categories.some((rc: any) => rc.id === c.id))"
-                    :key="cat.id"
-                    :command="cat.id"
-                  >
-                    {{ cat.name }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <el-button
+              size="small"
+              type="primary"
+              link
+              :icon="Edit"
+              @click="handleEditCategories(row)"
+              style="margin-left: 4px; font-size: 16px;"
+            />
           </span>
         </template>
       </el-table-column>
@@ -216,6 +203,29 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 分类编辑对话框 -->
+    <el-dialog
+      v-model="categoryDialogVisible"
+      title="编辑产品分类"
+      width="400px"
+    >
+      <el-checkbox-group v-model="selectedCategoryIds" style="display: flex; flex-direction: column;">
+        <el-checkbox
+          v-for="cat in allCategories"
+          :key="cat.id"
+          :label="cat.id"
+        >
+          {{ cat.name }}
+        </el-checkbox>
+      </el-checkbox-group>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="categoryDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleConfirmCategoryUpdate">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -223,7 +233,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Edit } from '@element-plus/icons-vue'
 import { formatDate } from '@/utils/date'
 import { fetchProductPage, updateProduct, type Product, updateProductStatus, updateProductCategories } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
@@ -422,18 +432,33 @@ const handleProductStatusChange = async (row: Product, val: number) => {
   }
 }
 
-// 分类增删逻辑
-const handleRemoveCategory = async (row: Product, cat: Category) => {
-  const ids = (row.categories || []).filter((c: Category) => c.id !== cat.id).map((c: Category) => c.id)
-  await updateProductCategories(row.appId, ids)
-  ElMessage.success('分类已移除')
-  fetchProducts()
+// 分类编辑弹窗
+const categoryDialogVisible = ref(false)
+const productForCategoryEdit = ref<Product | null>(null)
+const selectedCategoryIds = ref<number[]>([])
+
+// 分类增删逻辑 - 改为弹窗批量修改
+const handleEditCategories = (row: Product) => {
+  productForCategoryEdit.value = row;
+  selectedCategoryIds.value = (row.categories || []).map((c: Category) => c.id);
+  categoryDialogVisible.value = true;
 }
-const handleAddCategory = async (row: Product, catId: number) => {
-  const ids = [...(row.categories || []).map((c: Category) => c.id), catId]
-  await updateProductCategories(row.appId, ids)
-  ElMessage.success('分类已添加')
-  fetchProducts()
+
+const handleConfirmCategoryUpdate = async () => {
+  if (!productForCategoryEdit.value) return;
+  
+  try {
+    const res = await updateProductCategories(productForCategoryEdit.value.appId, selectedCategoryIds.value);
+    if (res.code === 0) {
+      ElMessage.success('分类更新成功');
+      categoryDialogVisible.value = false;
+      fetchProducts(); // Refresh the table
+    } else {
+      ElMessage.error(res.msg || '更新失败');
+    }
+  } catch (error) {
+    ElMessage.error('更新失败');
+  }
 }
 
 onMounted(() => {
