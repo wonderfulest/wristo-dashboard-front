@@ -14,6 +14,9 @@ export interface Product {
   updatedAt?: string
   isDeleted?: number
   isActive?: number
+  heroFile?: {
+    url: string
+  } | null
   categories?: Category[]
 }
 

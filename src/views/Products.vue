@@ -208,17 +208,33 @@
     <el-dialog
       v-model="categoryDialogVisible"
       title="编辑产品分类"
-      width="400px"
+      width="600px"
     >
-      <el-checkbox-group v-model="selectedCategoryIds" style="display: flex; flex-direction: column;">
-        <el-checkbox
-          v-for="cat in allCategories"
-          :key="cat.id"
-          :label="cat.id"
-        >
-          {{ cat.name }}
-        </el-checkbox>
-      </el-checkbox-group>
+      <div style="display: flex; gap: 20px;">
+        <div style="flex: 1;">
+          <el-checkbox-group v-model="selectedCategoryIds" style="display: flex; flex-direction: column;">
+            <el-checkbox
+              v-for="cat in allCategories"
+              :key="cat.id"
+              :label="cat.id"
+              size="large"
+            >
+              {{ cat.name }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </div>
+        <div style="flex-shrink: 0; width: 150px;">
+          <el-image
+            v-if="productForCategoryEdit?.garminImageUrl || productForCategoryEdit?.heroFile?.url"
+            :src="productForCategoryEdit.garminImageUrl || productForCategoryEdit.heroFile?.url"
+            style="width: 150px; height: 150px; border-radius: 8px;"
+            fit="cover"
+          />
+          <div v-else style="width: 150px; height: 150px; background-color: #f5f7fa; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #909399;">
+            无图片
+          </div>
+        </div>
+      </div>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="categoryDialogVisible = false">取消</el-button>
