@@ -70,13 +70,13 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@/store/user'
-import { useRouter } from 'vue-router'
 import { ref } from 'vue'
-const router = useRouter()
 const userStore = useUserStore()
+const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
+const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
 const handleLogout = async () => {
   await userStore.logout()
-  router.push('/login')
+  window.location.href = `${ssoBaseUrl}?redirect_uri=${encodeURIComponent(redirectUri)}`
 }
 
 // 下拉菜单控制

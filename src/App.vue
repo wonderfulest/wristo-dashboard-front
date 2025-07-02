@@ -5,7 +5,7 @@ const route = useRoute()
 </script>
 
 <template>
-  <component :is="['/login', '/register'].includes(route.path) ? 'router-view' : Layout" />
+  <component :is="['/auth/callback'].includes(route.path) ? 'router-view' : Layout" />
 </template>
 
 <style scoped>

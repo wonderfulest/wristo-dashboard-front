@@ -2,7 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { BizErrorCode } from '@/constant/errorCode'
 import type { ApiResponse } from '@/types/api'
-import router from '@/router'
+import { useUserStore } from '@/store/user'
 
 const instance = axios.create({
   baseURL: '/api', // 走 vite 代理
@@ -14,7 +14,8 @@ const instance = axios.create({
 
 // 请求拦截器
 instance.interceptors.request.use(config => {
-  const token = localStorage.getItem('token')
+  const userStore = useUserStore()
+  const token = userStore.token
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -34,14 +35,15 @@ instance.interceptors.response.use(
   },
   error => {
     if (error.response?.status === 403) {
-      // 清除本地存储的 token 和用户信息
-      localStorage.removeItem('token')
-      localStorage.removeItem('userInfo')
+      console.log('403', error.response)
       ElMessage.error('登录已过期，请重新登录')
-      // 跳转到登录页面
-      router.push('/login')
+      setTimeout(() => {
+        const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
+        const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
+        window.location.href = `${ssoBaseUrl}?redirect_uri=${encodeURIComponent(redirectUri)}`  
+      }, 3000)
     } else {
-    ElMessage.error('网络错误，请稍后重试')
+      ElMessage.error('网络错误，请稍后重试')
     }
     return Promise.reject(error)
   }

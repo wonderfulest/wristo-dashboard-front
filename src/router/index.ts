@@ -5,18 +5,6 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/login',
-      name: 'Login',
-      component: () => import('@/views/Login.vue'),
-      meta: { requiresAuth: false }
-    },
-    {
-      path: '/register',
-      name: 'Register',
-      component: () => import('@/views/Register.vue'),
-      meta: { requiresAuth: false }
-    },
-    {
       path: '/user-management',
       name: 'UserManagement',
       component: () => import('@/views/UserManagement.vue'),
@@ -65,6 +53,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/auth/callback',
+      name: 'AuthCallback',
+      component: () => import('@/views/AuthCallback.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
       path: '/',
       redirect: '/dashboard'
     },
@@ -74,18 +68,20 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  console.log('from', from.path)
+  console.log('beforeEach', to, from)
   const userStore = useUserStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
+  const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
+  const ssoLoginUrl = `${ssoBaseUrl}?redirect_uri=${encodeURIComponent(redirectUri)}`
 
-  if (requiresAuth && !userStore.token) {
-    next('/login')
-  } else if (
-    userStore.token &&
-    (to.path === '/login' || to.path === '/register')
-  ) {
-    next('/account/products')
+  console.log('beforeEach userInfo', userStore.userInfo)
+  if (requiresAuth && !userStore.userInfo) {
+    // window.location.href = ssoLoginUrl
+    console.log('open ssoLoginUrl')
+    return
   } else {
+    console.log('open next')
     next()
   }
 })

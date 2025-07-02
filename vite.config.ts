@@ -15,7 +15,8 @@ export default defineConfig({
   },
   server: {
     host: true, // 监听所有地址
-    port: 3009,
+    port: 3002,
+    strictPort: true,
     proxy: {
       '^/api/.*': {
         target: 'http://localhost:8088',
