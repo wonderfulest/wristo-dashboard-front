@@ -68,7 +68,6 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  console.log('beforeEach', to, from)
   const userStore = useUserStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
@@ -77,11 +76,9 @@ router.beforeEach((to, from, next) => {
 
   console.log('beforeEach userInfo', userStore.userInfo)
   if (requiresAuth && !userStore.userInfo) {
-    // window.location.href = ssoLoginUrl
-    console.log('open ssoLoginUrl')
+    window.location.href = ssoLoginUrl
     return
   } else {
-    console.log('open next')
     next()
   }
 })
