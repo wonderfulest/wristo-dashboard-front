@@ -67,7 +67,7 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _, next) => {
   const userStore = useUserStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
