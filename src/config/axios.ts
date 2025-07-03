@@ -40,7 +40,7 @@ instance.interceptors.response.use(
       setTimeout(() => {
         const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
         const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
-        window.location.href = `${ssoBaseUrl}?redirect_uri=${encodeURIComponent(redirectUri)}`  
+        window.location.href = `${ssoBaseUrl}?client=dashboard&redirect_uri=${encodeURIComponent(redirectUri)}`  
       }, 3000)
     } else {
       ElMessage.error('网络错误，请稍后重试')
