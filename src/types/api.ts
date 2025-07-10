@@ -4,6 +4,13 @@ export interface ApiResponse<T> {
   data?: T
 } 
 
+export interface PageData<T> {
+  pageNum: number
+  pageSize: number
+  total: number
+  pages: number
+  list: T[]
+} 
 export interface UserInfo {
   id: number
   username: string

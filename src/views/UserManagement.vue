@@ -3,7 +3,9 @@
     <h2>用户管理</h2>
     <el-button type="success" style="margin-bottom: 16px;" @click="handleAdd">新增用户</el-button>
     <el-table :data="users" style="width: 100%" :loading="loading">
+      <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="username" label="用户名" width="180" />
+      <el-table-column prop="nickname" label="昵称" width="180" />
       <el-table-column prop="email" label="邮箱" width="220" />
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
       <el-table-column label="操作" width="180">
@@ -15,8 +17,14 @@
     </el-table>
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '新增用户'">
       <el-form :model="currentUser" label-width="80px">
+        <el-form-item label="ID">
+          <el-input v-model="currentUser.id" />
+        </el-form-item>
         <el-form-item label="用户名">
           <el-input v-model="currentUser.username" />
+        </el-form-item>
+        <el-form-item label="昵称">
+          <el-input v-model="currentUser.nickname" />
         </el-form-item>
         <el-form-item label="邮箱">
           <el-input v-model="currentUser.email" />

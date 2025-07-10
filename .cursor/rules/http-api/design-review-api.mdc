@@ -3,3 +3,129 @@ description:
 globs:
 alwaysApply: false
 ---
+
+@token = api_admin-token
+
+@base_url = http://localhost:8088
+
+@design_uid = kcOTuepoELgiBxBB1wLA8
+
+### 获取审核列表
+
+GET {{base_url}}/api/admin/design/page/review?pageNum=1&pageSize=1&orderBy=created_at:desc&designStatus=submitted&designUid=&name=&populate=coverImage,payment
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### 返回值：
+
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "pageNum": 1,
+    "pageSize": 1,
+    "total": 352,
+    "pages": 352,
+    "list": [
+      {
+        "id": 990,
+        "designUid": "kcOTuepoELgiBxBB1wLA8",
+        "name": "Test",
+        "description": "Test",
+        "configJson": null,
+        "designStatus": "submitted",
+        "kpayId": "",
+        "wpayId": "",
+        "payMethod": "",
+        "garminAppUuid": "",
+        "isActive": 1,
+        "isDeleted": 0,
+        "createdAt": 1751966553876,
+        "updatedAt": 1752110970885,
+        "version": 14,
+        "user": {
+          "id": 1,
+          "username": "admin",
+          "nickname": null,
+          "avatar": null
+        },
+        "coverImage": {
+          "id": 1890,
+          "name": "",
+          "caption": "",
+          "width": 454,
+          "height": 454,
+          "formats": {
+            "thumbnail": {
+              "ext": ".png",
+              "url": "https://cdn.wristo.io/general/Rl9o7_G7RGOyDh3woD1W1/thumbnail.png",
+              "hash": "thumbnail__1751968438825",
+              "mime": "image/png",
+              "name": "thumbnail_",
+              "path": null,
+              "size": 2.9794921875,
+              "width": 156,
+              "height": 156,
+              "sizeInBytes": 3051
+            }
+          },
+          "hash": "",
+          "ext": "",
+          "mime": "image/jpeg",
+          "size": 0.00,
+          "url": "https://cdn.wristo.io/test/screenshot/257b059b-01ca-4ba7-99ec-7da7c894ce53.png",
+          "provider": "local",
+          "locale": "zh-CN",
+          "documentId": "Rl9o7_G7RGOyDh3woD1W1",
+          "alternativeText": "",
+          "previewUrl": "",
+          "provider_metadata": {},
+          "folderPath": "/",
+          "createdAt": 1751968439515,
+          "updatedAt": 1751968439515,
+          "publishedAt": 1751968439514
+        },
+        "backgroundImage": null,
+        "payment": {
+          "paymentMethod": "wpay",
+          "paymentMethodDesc": "WPay支付",
+          "kpayId": "",
+          "wpayId": "109793",
+          "price": 2.99,
+          "currency": "USD",
+          "paddleProductId": "pro_01jzry9js61xz6k4r9m7ajgy0b",
+          "paddlePriceId": "pri_01jzrz7fp6aa1mc3963k6f0mtr"
+        },
+        "release": null
+      }
+    ]
+  }
+}
+### 审核通过
+
+POST {{base_url}}/api/admin/design/approve/{{design_uid}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### 返回值：
+
+{
+  "code": 0,
+  "msg": "success",
+  "data": true
+}
+
+
+### 审核不通过
+
+POST  {{base_url}}/api/admin/design/reject/{{design_uid}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### 返回值：
+
+{
+  "code": 0,
+  "msg": "success",
+  "data": true
+}

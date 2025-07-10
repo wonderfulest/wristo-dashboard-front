@@ -1,16 +1,6 @@
 import instance from '@/config/axios'
 import type { ApiResponse } from '@/types/api'
-
-export interface Bundle {
-  bundleId: number
-  bundleName: string
-  bundleDesc: string
-  price: number
-  isActive: number
-  createdAt: string
-  updatedAt: string
-  products: any[]
-}
+import type { Bundle, CreateBundleDto, UpdateBundleDto } from '@/types/bundle'
 
 // 获取所有套餐列表
 export const fetchBundles = (): Promise<ApiResponse<Bundle[]>> => {
@@ -18,21 +8,8 @@ export const fetchBundles = (): Promise<ApiResponse<Bundle[]>> => {
 }
 
 // 新增套餐
-export interface CreateBundleDto {
-  bundleName: string
-  bundleDesc: string
-  price: number
-  appIds: number[]
-}
 export const createBundle = (data: CreateBundleDto): Promise<ApiResponse<Bundle>> => {
   return instance.post('/bundles', data)
-}
-
-export interface UpdateBundleDto {
-  bundleName: string
-  bundleDesc: string
-  price: number
-  appIds: number[]
 }
 
 export const updateBundle = (data: UpdateBundleDto, bundleId: number): Promise<ApiResponse<Bundle>> => {

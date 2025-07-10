@@ -1,52 +1,9 @@
 import instance from '@/config/axios'
-import type { ApiResponse } from '@/types/api'
-import type { Category } from './category'
+import type { ApiResponse, PageData } from '@/types/api'
+import type { Product, ProductPageQuery } from '@/types/product'
 
-export interface Product {
-  appId: number
-  name: string
-  description: string
-  price: number
-  garminImageUrl: string
-  garminStoreUrl: string
-  trialLasts: number
-  createdAt?: string
-  updatedAt?: string
-  isDeleted?: number
-  isActive?: number
-  heroFile?: {
-    url: string
-  } | null
-  categories?: Category[]
-}
-
-export interface ProductPageQuery {
-  pageNum: number
-  pageSize: number
-  orderBy?: string
-  name?: string
-}
-
-export interface ProductPageData {
-  pageNum: number
-  pageSize: number
-  total: number
-  pages: number
-  list: Product[]
-}
-
-export const fetchProductPage = (params: ProductPageQuery): Promise<ApiResponse<ProductPageData>> => {
+export const fetchProductPage = (params: ProductPageQuery): Promise<ApiResponse<PageData<Product>>> => {
   return instance.get('/admin/products/page', { params })
-}
-
-// 新增产品
-export interface CreateProductDto {
-  name: string;
-  description: string;
-  garminImageUrl?: string;
-  garminStoreUrl?: string;
-  trialLasts?: number;
-  price?: number;
 }
 
 // 查询单个产品
