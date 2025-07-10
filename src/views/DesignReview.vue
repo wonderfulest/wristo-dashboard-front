@@ -138,9 +138,8 @@ const handleCurrentChange = (val: number) => {
 
 const handleApprove = async (row: any) => {
   try {
-    const res = await approveDesign(row.designUid)
-    const resp = res.data
-    if (resp.code === 0) {
+    const resp: ApiResponse<boolean> = await approveDesign(row.designUid) as unknown as ApiResponse<boolean>
+    if (resp.code === 0 && resp.data) {
       ElMessage.success('审核通过')
       fetchDesigns()
     } else {
@@ -152,9 +151,8 @@ const handleApprove = async (row: any) => {
 }
 const handleReject = async (row: any) => {
   try {
-    const res = await rejectDesign(row.designUid)
-    const resp = res.data
-    if (resp.code === 0) {
+    const resp: ApiResponse<boolean> = await rejectDesign(row.designUid) as unknown as ApiResponse<boolean>
+    if (resp.code === 0 && resp.data) {
       ElMessage.success('已拒绝')
       fetchDesigns()
     } else {
