@@ -313,7 +313,8 @@ const fetchProducts = async () => {
       pageNum: currentPage.value,
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
-      name: searchName.value ? searchName.value : undefined
+      name: searchName.value ? searchName.value : undefined,
+      populate: '*'
     })
     if (res.code === 0) {
       products.value = res.data?.list || []

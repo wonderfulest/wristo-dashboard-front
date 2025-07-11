@@ -37,6 +37,7 @@ export interface ProductPageQuery {
   pageSize: number
   orderBy?: string
   name?: string
+  populate?: string
 }
 
 export interface CreateProductDto {
