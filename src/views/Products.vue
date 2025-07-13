@@ -24,16 +24,16 @@
       <el-table-column prop="appId" label="ID" width="80" />
       <el-table-column prop="name" label="商品名称" />
       <el-table-column prop="designId" label="设计ID" />
-      <el-table-column label="状态" width="100">
+      <!-- <el-table-column label="状态" width="100">
         <template #default="{ row }">
           <el-switch
-            v-model="row.isActive"
+            v-model="row.status"
             :active-value="1"
             :inactive-value="0"
             @change="(val: number) => handleProductStatusChange(row, val)"
           />
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column label="图片" width="100">
         <template #default="{ row }">
           <el-image
@@ -87,9 +87,19 @@
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+          <div style="display: flex; gap: 8px;">
+            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+            <el-button 
+              :type="row.status === 1 ? 'danger' : 'success'" 
+              link 
+              @click="handleToggleStatus(row)"
+              :loading="statusLoadingMap.get(row.appId)"
+            >
+              {{ row.status === 1 ? '下线' : '上线' }}
+            </el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -168,9 +178,9 @@
         <el-form-item label="商店链接" prop="garminStoreUrl">
           <el-input v-model="form.garminStoreUrl" placeholder="请输入商店链接" />
         </el-form-item>
-        <el-form-item label="状态" prop="isActive">
+        <el-form-item label="状态" prop="status">
           <el-switch
-            v-model="form.isActive"
+            v-model="form.status"
             :active-value="1"
             :inactive-value="0"
             active-text="启用"
@@ -251,7 +261,7 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Edit } from '@element-plus/icons-vue'
 import { formatDate } from '@/utils/date'
-import { fetchProductPage, updateProduct, updateProductStatus, updateProductCategories } from '@/api/products'
+import { fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -279,7 +289,7 @@ const form = ref({
   garminStoreUrl: '',
   garminAppUuid: '',
   trialLasts: 0,
-  isActive: 1,
+  status: 1,
   download: 0,
   categories: [] as Category[]
 })
@@ -352,7 +362,7 @@ const handleAdd = () => {
     garminStoreUrl: '',
     garminAppUuid: '',
     trialLasts: 0,
-    isActive: 1,
+    status: 1,
     download: 0,
     categories: []
   }
@@ -407,7 +417,6 @@ const handleSubmit = async () => {
         garminImageUrl: form.value.garminImageUrl,
         garminStoreUrl: form.value.garminStoreUrl,
         trialLasts: form.value.trialLasts,
-        isActive: form.value.isActive
       })
       if (res.code === 0) {
         // 分类保存
@@ -434,22 +443,8 @@ const handleCurrentChange = (val: number) => {
   fetchProducts()
 }
 
-// 切换商品激活状态
-const handleProductStatusChange = async (row: Product, val: number) => {
-  try {
-    const res = await updateProductStatus(row.appId, val)
-    if (res.code === 0) {
-      ElMessage.success('状态更新成功')
-      fetchProducts()
-    } else {
-      ElMessage.error(res.msg || '状态更新失败')
-    }
-  } catch (error) {
-    ElMessage.error('状态更新失败')
-    // 回滚UI
-    row.isActive = val === 1 ? 0 : 1
-  }
-}
+// 状态切换加载状态映射
+const statusLoadingMap = ref<Map<number, boolean>>(new Map())
 
 // 分类编辑弹窗
 const categoryDialogVisible = ref(false)
@@ -477,6 +472,31 @@ const handleConfirmCategoryUpdate = async () => {
     }
   } catch (error) {
     ElMessage.error('更新失败');
+  }
+}
+
+// 切换产品上架/下架状态
+const handleToggleStatus = async (row: Product) => {
+  try {
+    // 设置加载状态
+    statusLoadingMap.value.set(row.appId, true)
+    
+    const newStatus = row.status === 1 ? 0 : 1
+    const response = await toggleProductStatus(row.appId, newStatus)
+    
+    if (response.code === 0) {
+      // 更新本地状态
+      row.status = newStatus
+      ElMessage.success(newStatus === 1 ? '产品已上线' : '产品已下线')
+    } else {
+      ElMessage.error(response.msg || '状态切换失败')
+    }
+  } catch (error) {
+    console.error('切换产品状态失败:', error)
+    ElMessage.error('状态切换失败')
+  } finally {
+    // 清除加载状态
+    statusLoadingMap.value.set(row.appId, false)
   }
 }
 

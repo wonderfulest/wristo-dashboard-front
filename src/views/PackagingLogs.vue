@@ -64,9 +64,11 @@
           {{ row.version }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link @click="handleViewDetails(row)">查看详情</el-button>
+          <div style="display: flex; gap: 8px;">
+            <el-button type="primary" link @click="handleViewDetails(row)">查看详情</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>

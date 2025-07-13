@@ -14,6 +14,7 @@ export interface Product {
     url: string
   } | null
   categories?: Category[]
+  status?: number
 }
 
 export interface ProductPayment {

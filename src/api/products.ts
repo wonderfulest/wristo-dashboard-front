@@ -26,6 +26,11 @@ export const updateProductStatus = (appId: number, isActive: number): Promise<Ap
   return instance.post(`/admin/products/active/${appId}/${isActive}`)
 }
 
+// 切换产品上架/下架状态
+export const toggleProductStatus = (appId: number, status: number): Promise<ApiResponse<boolean>> => {
+  return instance.post(`/admin/products/status/${appId}/${status}`)
+}
+
 // 更新产品分类
 export const updateProductCategories = (appId: number, categoryIds: number[]): Promise<ApiResponse<Product>> => {
   return instance.post(`/admin/products/category/${appId}`, { categoryIds })
