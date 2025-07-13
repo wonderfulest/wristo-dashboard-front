@@ -59,6 +59,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/packaging-logs',
+      name: 'PackagingLogs',
+      component: () => import('@/views/PackagingLogs.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/auth/callback',
       name: 'AuthCallback',
       component: () => import('@/views/AuthCallback.vue'),

@@ -12,7 +12,7 @@ alwaysApply: false
 
 ### 获取审核列表
 
-GET {{base_url}}/api/admin/design/page/review?pageNum=1&pageSize=1&orderBy=created_at:desc&designStatus=submitted&designUid=&name=&populate=coverImage,payment
+GET {{base_url}}/api/admin/design/page/review?pageNum=1&pageSize=1&orderBy=created_at:desc&designStatus=submitted&designUid=&name=&populate=cover,payment
 Content-Type: application/json
 Authorization: Bearer {{token}}
 

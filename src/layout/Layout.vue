@@ -37,6 +37,7 @@
           <router-link to="/user-management" class="menu-item" active-class="active">用户管理</router-link>
           <router-link to="/role-management" class="menu-item" active-class="active">角色管理</router-link>
           <router-link to="/design-review" class="menu-item" active-class="active">设计审核</router-link>
+          <router-link to="/packaging-logs" class="menu-item" active-class="active">打包记录</router-link>
           <router-link to="/products" class="menu-item" active-class="active">产品管理</router-link>
           <router-link to="/categories" class="menu-item" active-class="active">分类管理</router-link>
           <router-link to="/history" class="menu-item" active-class="active">历史记录</router-link>
@@ -261,7 +262,7 @@ const toggleDropdown = () => {
   min-height: 100vh;
 }
 .side-menu {
-  width: 220px;
+  width: 140px;
   background: #fff;
   border-right: 1px solid #eee;
   display: flex;
@@ -272,7 +273,7 @@ const toggleDropdown = () => {
 .menu-list {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  width: 140px;
 }
 .menu-item {
   padding: 14px 32px;

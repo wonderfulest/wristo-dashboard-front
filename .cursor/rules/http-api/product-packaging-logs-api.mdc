@@ -1,0 +1,76 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+### ProductPackagingLog Admin API 测试文件
+
+@baseUrl = http://localhost:8088
+@adminToken = api_admin-token
+
+### 1. 分页查询打包日志
+
+POST {{baseUrl}}/api/admin/product-packaging-logs/page
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "pageNum": 1,
+  "pageSize": 10,
+  "productId": null,
+  "packagingStatus": null
+}
+
+返回：
+
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "pageNum": 1,
+    "pageSize": 10,
+    "total": 2,
+    "pages": 1,
+    "list": [
+      {
+        "id": 2,
+        "packagingStatus": "init",
+        "errorMessage": null,
+        "createdAt": 1752324056064,
+        "updatedAt": 1752324056064,
+        "version": 1,
+        "isDeleted": 0,
+        "isActive": 1,
+        "product": {
+          "appId": 134494,
+          "name": "Test",
+          "designId": "GMB0S2tzTgkoQHj8Df7Wf",
+          "price": 2.99,
+          "garminImageUrl": "",
+          "garminStoreUrl": "",
+          "heroFile": null
+        }
+      },
+      {
+        "id": 1,
+        "packagingStatus": "init",
+        "errorMessage": null,
+        "createdAt": 1752175718820,
+        "updatedAt": 1752175718820,
+        "version": 1,
+        "isDeleted": 0,
+        "isActive": 1,
+        "product": {
+          "appId": 123637,
+          "name": "Test",
+          "designId": "ba461783-5503-4457-94c0-f130e5dc0607",
+          "price": 2.99,
+          "garminImageUrl": "",
+          "garminStoreUrl": "",
+          "heroFile": null
+        }
+      }
+    ]
+  }
+}

@@ -1,10 +1,15 @@
 import instance from '@/config/axios'
 import type { ApiResponse, PageData } from '@/types/api'
-import type { Product, ProductPageQuery } from '@/types/product'
+import type { Product, ProductPackagingLogQuery, ProductPackagingLogVO, ProductPageQuery } from '@/types/product'
 
 export const fetchProductPage = (params: ProductPageQuery): Promise<ApiResponse<PageData<Product>>> => {
   return instance.post('/admin/products/page', params)
 }
+
+// 分页查询打包日志
+export const getProductPackagingLogsPage = (params: ProductPackagingLogQuery): Promise<ApiResponse<PageData<ProductPackagingLogVO>>> => {
+  return instance.post('/admin/products/packaging-log/page', params)
+} 
 
 // 查询单个产品
 export const getProduct = (appId: number): Promise<ApiResponse<Product>> => {

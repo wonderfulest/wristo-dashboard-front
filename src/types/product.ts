@@ -50,4 +50,61 @@ export interface CreateProductDto {
 }
 
 // 依赖类型
-import type { Category } from '@/types/category' 
+import type { Category } from '@/types/category'
+
+export interface ProductBaseVO {
+  appId: number
+  name: string
+  designId: string
+  price: number
+  garminImageUrl: string
+  garminStoreUrl: string
+  heroFile: {
+    url: string
+  } | null
+}
+
+export interface ProductPackagingLogVO {
+  id: number
+  packagingStatus: string
+  errorMessage: string | null
+  createdAt: number
+  updatedAt: number
+  version: number
+  isDeleted: number
+  isActive: number
+  product: ProductBaseVO
+}
+
+export interface ProductPackagingLogQuery {
+  pageNum: number
+  pageSize: number
+  productId?: number | null
+  packagingStatus?: string | null // 支持逗号分隔的多个状态，如 "init,pending,complete"
+}
+
+// 打包状态常量
+export const PACKAGING_STATUS = {
+  INIT: 'init',
+  PENDING: 'pending',
+  COMPLETE: 'complete',
+  FAILED: 'failed'
+} as const
+
+export type PackagingStatus = typeof PACKAGING_STATUS[keyof typeof PACKAGING_STATUS]
+
+// 打包状态颜色映射
+export const PACKAGING_STATUS_COLORS = {
+  [PACKAGING_STATUS.INIT]: 'info',
+  [PACKAGING_STATUS.PENDING]: 'warning',
+  [PACKAGING_STATUS.COMPLETE]: 'success',
+  [PACKAGING_STATUS.FAILED]: 'danger'
+} as const
+
+// 打包状态文本映射
+export const PACKAGING_STATUS_TEXT = {
+  [PACKAGING_STATUS.INIT]: '初始化',
+  [PACKAGING_STATUS.PENDING]: '进行中',
+  [PACKAGING_STATUS.COMPLETE]: '完成',
+  [PACKAGING_STATUS.FAILED]: '失败'
+} as const 
