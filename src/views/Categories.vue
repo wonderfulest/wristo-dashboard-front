@@ -106,7 +106,8 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { fetchCategoryPage, createCategory, updateCategory, deleteCategory, updateCategoryStatus, type Category } from '@/api/category'
+import { fetchCategoryPage, createCategory, updateCategory, deleteCategory, updateCategoryStatus } from '@/api/category'
+import type { Category } from '@/types/category'
 
 // 表格数据
 const categories = ref<Category[]>([])

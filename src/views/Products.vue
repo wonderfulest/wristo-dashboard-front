@@ -251,9 +251,11 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Edit } from '@element-plus/icons-vue'
 import { formatDate } from '@/utils/date'
-import { fetchProductPage, updateProduct, type Product, updateProductStatus, updateProductCategories } from '@/api/products'
+import { fetchProductPage, updateProduct, updateProductStatus, updateProductCategories } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
-import { fetchAllCategories, type Category } from '@/api/category'
+import { fetchAllCategories } from '@/api/category'
+import type { Product } from '@/types/product'
+import type { Category } from '@/types/category'
 
 // 表格数据
 const products = ref<Product[]>([])

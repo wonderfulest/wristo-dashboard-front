@@ -98,7 +98,7 @@
       >
         <template #item="{ element }">
           <div class="order-item">
-            <span class="order-label">{{ products.find(p => p.appId === element)?.name }}</span>
+            <span class="order-label">{{ products.find((p: Product) => p.appId === element)?.name }}</span>
           </div>
         </template>
       </draggable>
@@ -114,8 +114,10 @@
 
 <script setup lang="ts">
 import { ref, defineExpose, defineProps, watch, computed, onMounted } from 'vue'
-import { createBundle, updateBundle, type Bundle } from '@/api/bundles'
-import { fetchProductPage, type Product } from '@/api/products'
+import { createBundle, updateBundle } from '@/api/bundles'
+import { fetchProductPage } from '@/api/products'
+import type { Bundle } from '@/types/bundle'
+import type { Product } from '@/types/product'
 import { ElMessage } from 'element-plus'
 import { defineEmits } from 'vue'
 import draggable from 'vuedraggable'
@@ -171,7 +173,7 @@ const historySelectedIds = ref<number[]>([])
 
 const isAllSelected = computed(() => products.value.length > 0 && selectableProducts.value.length > 0 && selectedProductIds.value.length === selectableProducts.value.length)
 
-const selectableProducts = computed(() => products.value.filter(p => !historySelectedIds.value.includes(p.appId)))
+const selectableProducts = computed(() => products.value.filter((p: Product) => !historySelectedIds.value.includes(p.appId)))
 
 // 合并所有已选 id，顺序为历史+新选
 const allSelectedIds = computed({
@@ -199,7 +201,7 @@ function toggleProduct(appId: number) {
 
 function toggleSelectAll() {
   if (!isAllSelected.value) {
-    selectedProductIds.value = selectableProducts.value.map(p => p.appId)
+    selectedProductIds.value = selectableProducts.value.map((p: Product) => p.appId)
   } else {
     selectedProductIds.value = []
   }
@@ -278,8 +280,8 @@ async function handleCreate() {
 function setForm(bundle: Bundle) {
   form.value.bundleName = bundle.bundleName || ''
   form.value.bundleDesc = bundle.bundleDesc || ''
-  const ids = Array.isArray(bundle.products) ? bundle.products.map(p => p.appId) : []
-  selectedProductIds.value = ids.filter(id => !historySelectedIds.value.includes(id))
+  const ids = Array.isArray(bundle.products) ? bundle.products.map((p: any) => p.appId) : []
+  selectedProductIds.value = ids.filter((id: number) => !historySelectedIds.value.includes(id))
   historySelectedIds.value = ids.slice()
 }
 

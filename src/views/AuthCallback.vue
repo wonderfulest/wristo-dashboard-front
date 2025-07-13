@@ -8,7 +8,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchSsoToken, SsoTokenResponseData } from '@/api/sso'
+import { fetchSsoToken } from '@/api/sso'
+import type { SsoTokenResponseData } from '@/types/sso'
 import { getUserInfo } from '@/api/auth'
 import type { ApiResponse } from '@/types/api'
 import { useUserStore } from '@/store/user'

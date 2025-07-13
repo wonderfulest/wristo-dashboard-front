@@ -128,7 +128,8 @@
 
 <script setup lang="ts">
 import { ref, defineExpose, defineProps, watch } from "vue";
-import { updateProduct, type Product } from '@/api/products'
+import { updateProduct } from '@/api/products'
+import type { Product } from '@/types/product'
 import { ElMessage } from 'element-plus'
 import { defineEmits } from 'vue'
 import { uploadProductHeroImage } from '@/api/files'
