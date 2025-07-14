@@ -108,7 +108,7 @@ const fetchDesigns = async () => {
       name: searchName.value ? searchName.value : undefined,
       userId: searchUserId.value ? Number(searchUserId.value) : undefined,
       designStatus: 'submitted',
-      populate: 'cover,product,payment'
+      populate: 'cover,product,payment,user'
     }) as unknown as ApiResponse<PageData<Design>>
     designs.value = resp.data?.list || []
     total.value = resp.data?.total || 0
