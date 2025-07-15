@@ -29,21 +29,21 @@ instance.interceptors.response.use(
     if (res.code === BizErrorCode.SUCCESS) {
       return response.data // 返回原始 response
     } else {
-      ElMessage.error(response.data.msg || '请求失败')
+      ElMessage.error(response.data.msg || 'http error')
       return Promise.reject(response.data)
     }
   },
   error => {
     if (error.response?.status === 403) {
       console.log('403', error.response)
-      ElMessage.error('登录已过期，请重新登录')
+      ElMessage.error('403 forbidden')
       setTimeout(() => {
         const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
         const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
         window.location.href = `${ssoBaseUrl}?client=dashboard&redirect_uri=${encodeURIComponent(redirectUri)}`  
-      }, 3000)
+      }, 1000)
     } else {
-      ElMessage.error('网络错误，请稍后重试')
+      ElMessage.error(error.response.data.msg || 'http error')
     }
     return Promise.reject(error)
   }
