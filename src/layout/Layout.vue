@@ -36,6 +36,7 @@
           <router-link to="/dashboard" class="menu-item" active-class="active">仪表盘</router-link>
           <router-link to="/user-management" class="menu-item" active-class="active">用户管理</router-link>
           <router-link to="/role-management" class="menu-item" active-class="active">角色管理</router-link>
+          <router-link to="/dict" class="menu-item" active-class="active">字典管理</router-link>
           <router-link to="/design-review" class="menu-item" active-class="active">设计审核</router-link>
           <router-link to="/packaging-logs" class="menu-item" active-class="active">打包记录</router-link>
           <router-link to="/products" class="menu-item" active-class="active">产品管理</router-link>
