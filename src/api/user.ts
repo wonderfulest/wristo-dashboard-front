@@ -1,5 +1,6 @@
 import instance from '@/config/axios'
 import type { ApiResponse, UserInfo } from '@/types/api'
+import type { UserUpdateDTO } from '@/types/user'
 
 export const getUserInfo = (): Promise<ApiResponse<UserInfo>> => {
   return instance.get('/users/info')
@@ -31,7 +32,7 @@ export const createUser = (data: { username: string; password: string; email: st
   return instance.post('/admin/users/create', data)
 }
 
-export const updateUser = (id: number, data: Partial<UserInfo>): Promise<ApiResponse<UserInfo>> => {
+export const updateUser = (id: number, data: UserUpdateDTO): Promise<ApiResponse<UserInfo>> => {
   return instance.post(`/admin/users/update/${id}`, data)
 }
 

@@ -4,3 +4,11 @@ export interface UserBase {
   nickname: string | null
   avatar: string | null
 } 
+
+export interface UserUpdateDTO {
+  username?: string
+  nickname?: string
+  avatar?: string
+  status?: number
+  roles?: string[]
+} 

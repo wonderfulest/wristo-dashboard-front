@@ -11,6 +11,7 @@ export interface PageData<T> {
   pages: number
   list: T[]
 } 
+
 export interface UserInfo {
   id: number
   username: string

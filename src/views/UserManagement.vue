@@ -52,6 +52,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserList, createUser, updateUser, deleteUser } from '@/api/user'
 import { getRoleList } from '@/api/role'
 import type { UserInfo, RoleInfo } from '@/types/api'
+import type { UserUpdateDTO } from '@/types/user'
 
 const users = ref<UserInfo[]>([])
 const loading = ref(false)
@@ -145,16 +146,25 @@ const handleSave = async () => {
     ElMessage.error('新增用户时密码不能为空')
     return
   }
-  let payload: any = { ...currentUser.value, roles: rolesInput.value }
-  if (!isEdit.value) {
-    payload.password = password.value
-  }
+  
   let res
   if (isEdit.value && currentUser.value.id) {
-    res = await updateUser(currentUser.value.id, payload)
+    // 使用强制的 UserUpdateDTO 类型
+    const updatePayload: UserUpdateDTO = {
+      username: currentUser.value.username,
+      nickname: currentUser.value.nickname || undefined,
+      avatar: currentUser.value.avatar || undefined,
+      status: currentUser.value.status ? parseInt(currentUser.value.status) : undefined,
+      roles: rolesInput.value
+    }
+    res = await updateUser(currentUser.value.id, updatePayload)
   } else {
-    res = await createUser(payload)
+    // 创建用户时使用原有的逻辑
+    const createPayload: any = { ...currentUser.value, roles: rolesInput.value }
+    createPayload.password = password.value
+    res = await createUser(createPayload)
   }
+  
   if (res.code === 0) {
     ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
     dialogVisible.value = false
