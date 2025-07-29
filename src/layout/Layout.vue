@@ -48,7 +48,12 @@
       </aside>
       <!-- Main Content -->
       <main class="main-content">
-        <router-view />
+        <Breadcrumb />
+        <div class="content-wrapper">
+          <div class="page-content">
+            <router-view />
+          </div>
+        </div>
       </main>
     </div>
     <!-- Footer -->
@@ -74,6 +79,7 @@
 <script setup lang="ts">
 import { useUserStore } from '@/store/user'
 import { ref } from 'vue'
+import Breadcrumb from '@/components/Breadcrumb.vue'
 const userStore = useUserStore()
 const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
 const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
@@ -161,10 +167,27 @@ const toggleDropdown = () => {
 }
 .main-content {
   flex: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 32px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.page-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 0 0 8px 8px;
+  // margin: 0 16px 16px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .footer {
   background: $color-footer-bg;
@@ -260,33 +283,39 @@ const toggleDropdown = () => {
 }
 .side-main-wrapper {
   display: flex;
-  min-height: 100vh;
+  flex: 1;
+  min-height: calc(100vh - 64px);
 }
 .side-menu {
-  width: 140px;
+  width: 160px;
   background: #fff;
   border-right: 1px solid #eee;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-height: 100vh;
+  min-height: 100%;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.06);
 }
 .menu-list {
   display: flex;
   flex-direction: column;
-  width: 140px;
+  width: 160px;
+  padding: 16px 0;
 }
 .menu-item {
-  padding: 14px 32px;
-  color: #222;
+  padding: 10px 20px;
+  color: #606266;
   text-decoration: none;
-  font-size: 1.1rem;
+  font-size: 13px;
   transition: background 0.2s, color 0.2s;
+  border-radius: 0 20px 20px 0;
+  margin: 2px 0;
+  margin-right: 12px;
 }
 .menu-item.active, .menu-item.router-link-exact-active {
-  background: #f5f5f5;
+  background: #e8f5e8;
   color: #19b36b;
-  font-weight: bold;
+  font-weight: 600;
 }
 .user-profile-dropdown {
   margin-top: auto;

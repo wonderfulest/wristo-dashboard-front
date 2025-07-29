@@ -1,7 +1,5 @@
 <template>
-  <div class="packaging-logs-container">
     <div class="header">
-      <h2>打包记录管理</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-input
           v-model="searchProductId"
@@ -114,7 +112,6 @@
         </el-descriptions>
       </div>
     </el-dialog>
-  </div>
 </template>
 
 <script setup lang="ts">

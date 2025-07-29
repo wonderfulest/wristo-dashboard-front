@@ -1,7 +1,6 @@
 <template>
   <div class="dict-container">
     <div class="header">
-      <h2>Dictionary Management</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-input v-model="search.dictType" placeholder="Dict Type" clearable style="width: 160px" />
         <el-input v-model="search.dictCode" placeholder="Dict Code" clearable style="width: 160px" />

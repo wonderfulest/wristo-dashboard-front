@@ -1,7 +1,6 @@
 <template>
   <div class="design-review-container">
     <div class="header">
-      <h2>设计审核</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-input
           v-model="searchName"

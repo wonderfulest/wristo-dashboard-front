@@ -1,7 +1,6 @@
 <template>
   <div class="categories-container">
     <div class="header">
-      <h2>分类管理</h2>
       <el-button type="primary" @click="handleAdd">新增分类</el-button>
     </div>
     <el-table :data="categories" style="width: 100%" v-loading="loading">

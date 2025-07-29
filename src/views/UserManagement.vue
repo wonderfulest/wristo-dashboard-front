@@ -1,7 +1,9 @@
 <template>
   <div class="user-management-page">
-    <h2>用户管理</h2>
-    <el-button type="success" style="margin-bottom: 16px;" @click="handleAdd">新增用户</el-button>
+    <div class="page-header">
+      <h2>用户管理</h2>
+      <el-button type="success" @click="handleAdd">新增用户</el-button>
+    </div>
     <el-table :data="users" style="width: 100%" :loading="loading">
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="username" label="用户名" width="180" />
@@ -182,8 +184,36 @@ onMounted(() => {
 
 <style scoped>
 .user-management-page {
-  padding: 24px;
-  background: #fff;
-  border-radius: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.page-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.el-table {
+  flex: 1;
+  margin-bottom: 24px;
+}
+
+.el-dialog {
+  .el-dialog__body {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
 }
 </style> 

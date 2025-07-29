@@ -1,0 +1,145 @@
+// Element Plus 样式覆盖
+// 表格样式 - 更紧凑的设计
+.el-table {
+  // 表格整体样式
+  font-size: $table-font-size;
+  
+  // 表头样式
+  .el-table__header-wrapper {
+    .el-table__header {
+      th.el-table__cell {
+        background-color: #fafafa;
+        color: #606266;
+        font-weight: 600;
+        font-size: $table-header-font-size;
+        padding: $table-header-padding;
+        border-bottom: 1px solid $table-border-color;
+      }
+    }
+  }
+  
+  // 表格内容样式
+  .el-table__body-wrapper {
+    .el-table__body {
+      td.el-table__cell {
+        padding: $table-cell-padding;
+        font-size: $table-font-size;
+        color: #606266;
+        border-bottom: 1px solid #f0f0f0;
+        
+        // 悬停效果
+        &:hover {
+          background-color: $table-hover-bg;
+        }
+      }
+    }
+  }
+  
+  // 表格行样式
+  .el-table__row {
+    &:hover {
+      background-color: $table-hover-bg;
+    }
+  }
+  
+  // 表格边框
+  &::before {
+    display: none;
+  }
+  
+  // 表格边框样式
+  .el-table__border-line {
+    border-color: $table-border-color;
+  }
+}
+
+// 表格分页器样式
+.el-pagination {
+  font-size: $table-font-size;
+  
+  .el-pagination__total,
+  .el-pagination__jump {
+    font-size: $table-font-size;
+  }
+  
+  .btn-prev,
+  .btn-next {
+    padding: 0 8px;
+    font-size: $table-font-size;
+  }
+  
+  .el-pager li {
+    padding: 0 8px;
+    font-size: $table-font-size;
+  }
+}
+
+// 按钮样式调整
+.el-button {
+  font-size: $table-font-size;
+  padding: 6px 12px;
+  
+  &.el-button--small {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  
+  &.el-button--mini {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}
+
+// 表单样式调整
+.el-form {
+  .el-form-item__label {
+    font-size: $table-font-size;
+    color: #606266;
+  }
+  
+  .el-input__inner,
+  .el-textarea__inner {
+    font-size: $table-font-size;
+    padding: 6px 12px;
+  }
+}
+
+// 对话框样式
+.el-dialog {
+  .el-dialog__header {
+    padding: 16px 20px;
+    
+    .el-dialog__title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+  
+  .el-dialog__body {
+    padding: 16px 20px;
+    font-size: $table-font-size;
+  }
+}
+
+// 选择器样式
+.el-select {
+  .el-input__inner {
+    font-size: $table-font-size;
+  }
+}
+
+// 消息提示样式
+.el-message {
+  font-size: $table-font-size;
+}
+
+// 确认框样式
+.el-message-box {
+  .el-message-box__title {
+    font-size: 16px;
+  }
+  
+  .el-message-box__content {
+    font-size: $table-font-size;
+  }
+}
