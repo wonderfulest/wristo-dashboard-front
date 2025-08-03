@@ -5,6 +5,12 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/subscription-plans',
+      name: 'SubscriptionPlans',
+      component: () => import('@/views/SubscriptionPlans.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/user-management',
       name: 'UserManagement',
       component: () => import('@/views/UserManagement.vue'),

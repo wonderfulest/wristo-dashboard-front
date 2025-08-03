@@ -39,6 +39,7 @@
           <router-link to="/dict" class="menu-item" active-class="active">字典管理</router-link>
           <router-link to="/design-review" class="menu-item" active-class="active">设计审核</router-link>
           <router-link to="/packaging-logs" class="menu-item" active-class="active">打包记录</router-link>
+          <router-link to="/subscription-plans" class="menu-item" active-class="active">订阅计划</router-link>
           <router-link to="/products" class="menu-item" active-class="active">产品管理</router-link>
           <router-link to="/categories" class="menu-item" active-class="active">分类管理</router-link>
           <router-link to="/history" class="menu-item" active-class="active">历史记录</router-link>
