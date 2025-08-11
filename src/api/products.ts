@@ -3,7 +3,7 @@ import type { ApiResponse, PageData } from '@/types/api'
 import type { Product, ProductPackagingLogQuery, ProductPackagingLogVO, ProductPageQuery } from '@/types/product'
 
 export const fetchProductPage = (params: ProductPageQuery): Promise<ApiResponse<PageData<Product>>> => {
-  return instance.post('/admin/products/page', params)
+  return instance.post('/admin/products/page?populate=*', params)
 }
 
 // 分页查询打包日志
