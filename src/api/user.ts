@@ -21,7 +21,7 @@ export const uploadAvatar = (file: File): Promise<ApiResponse<string>> => {
 }
 
 export const getUserList = (): Promise<ApiResponse<UserInfo[]>> => {
-  return instance.get('/admin/users/list/all')
+  return instance.get('/admin/users/list/all?populate=roles')
 }
 
 export const getUserDetail = (id: number): Promise<ApiResponse<UserInfo>> => {
