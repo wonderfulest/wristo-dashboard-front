@@ -3,7 +3,7 @@ import type { ApiResponse, UserInfo } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
 
 export const getUserInfo = (): Promise<ApiResponse<UserInfo>> => {
-  return instance.get('/users/info')
+  return instance.get('/users/info?populate=roles')
 }
 
 export const updateUserInfo = (data: Partial<UserInfo>): Promise<ApiResponse<UserInfo>> => {
