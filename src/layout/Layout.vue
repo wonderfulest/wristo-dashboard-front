@@ -5,14 +5,18 @@
       <div class="header-inner">
         <div class="logo">
           <span class="logo-icon">W</span>
-          <span class="logo-text">pay</span>
+          <span class="logo-text">risto</span>
         </div>
         <nav class="nav-list">
-          <router-link to="/dashboard" class="nav-item" active-class="active">官网运营</router-link>
-          <router-link to="/orders" class="nav-item" active-class="active">订单管理</router-link>
-          <router-link to="/user-management" class="nav-item" active-class="active">用户管理</router-link>
-          <router-link to="/marketing" class="nav-item" active-class="active">营销工具</router-link>
-          <router-link to="/reports" class="nav-item" active-class="active">报表中心</router-link>
+          <router-link
+            v-for="group in topMenus"
+            :key="group.key"
+            :to="group.children[0]?.path || '/'"
+            class="nav-item"
+            :class="{ active: isTopActive(group) }"
+          >
+            {{ group.title }}
+          </router-link>
         </nav>
         <div class="header-right">
           <div class="user-profile-dropdown">
@@ -33,18 +37,15 @@
       <!-- Side Menu -->
       <aside class="side-menu">
         <nav class="menu-list">
-          <router-link to="/dashboard" class="menu-item" active-class="active">仪表盘</router-link>
-          <router-link to="/user-management" class="menu-item" active-class="active">用户管理</router-link>
-          <router-link to="/role-management" class="menu-item" active-class="active">角色管理</router-link>
-          <router-link to="/dict" class="menu-item" active-class="active">字典管理</router-link>
-          <router-link to="/design-review" class="menu-item" active-class="active">设计审核</router-link>
-          <router-link to="/packaging-logs" class="menu-item" active-class="active">打包记录</router-link>
-          <router-link to="/subscription-plans" class="menu-item" active-class="active">订阅计划</router-link>
-          <router-link to="/products" class="menu-item" active-class="active">产品管理</router-link>
-          <router-link to="/categories" class="menu-item" active-class="active">分类管理</router-link>
-          <router-link to="/history" class="menu-item" active-class="active">历史记录</router-link>
-          <router-link to="/discounts" class="menu-item" active-class="active">优惠管理</router-link>
-          <router-link to="/profile" class="menu-item" active-class="active">个人资料</router-link>
+          <router-link
+            v-for="item in activeChildren"
+            :key="item.key"
+            :to="item.path"
+            class="menu-item"
+            active-class="active"
+          >
+            {{ item.title }}
+          </router-link>
         </nav>
       </aside>
       <!-- Main Content -->
@@ -79,8 +80,10 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@/store/user'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Breadcrumb from '@/components/Breadcrumb.vue'
+import { topMenus } from '@/config/menu'
 const userStore = useUserStore()
 const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
 const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
@@ -94,6 +97,12 @@ const isDropdownOpen = ref(false)
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
 }
+
+// 动态菜单：根据当前路由选择顶部分组与侧边二级菜单
+const route = useRoute()
+const isTopActive = (group: any) => group.basePaths?.some((p: string) => route.path.startsWith(p))
+const activeTop = computed(() => topMenus.find((g) => isTopActive(g)) || topMenus[0])
+const activeChildren = computed(() => activeTop.value?.children || [])
 </script>
 
 <style lang="scss" scoped>
@@ -122,6 +131,7 @@ const toggleDropdown = () => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 32px;
+  position: relative; /* 为居中用户名提供定位上下文 */
 }
 .logo {
   display: flex;
@@ -244,7 +254,7 @@ const toggleDropdown = () => {
   padding: 10px 0;
   position: absolute;
   right: 0;
-  top: 60px;
+  top: 64px;
   min-width: 160px;
   z-index: 100;
 }
@@ -264,23 +274,29 @@ const toggleDropdown = () => {
 }
 .user-profile-dropdown {
   position: relative;
-  height: 56px;
+  height: 64px; /* 与 header 高度一致，保证垂直居中 */
   display: flex;
   align-items: center;
-  padding: 0 32px;
+  padding: 0 16px;
+  /* 合并下方重复定义的附加属性，避免覆盖布局 */
+  margin-top: auto;
+  width: 100%;
 }
 .user-profile-name {
   cursor: pointer;
   display: flex;
   align-items: center;
-  height: 56px;
+  height: 64px; /* 与 header 同高，保持垂直居中 */
+  line-height: normal; /* 由 flex 控制垂直居中，避免基线偏移 */
+  gap: 6px;
   font-size: 1rem;
 }
 .dropdown-arrow {
   margin-left: 6px;
-  font-size: 0.9em;
+  font-size: 0.8em;
   display: flex;
   align-items: center;
+  line-height: 1; /* 防止图标产生额外行高 */
 }
 .side-main-wrapper {
   display: flex;
@@ -318,9 +334,5 @@ const toggleDropdown = () => {
   color: #19b36b;
   font-weight: 600;
 }
-.user-profile-dropdown {
-  margin-top: auto;
-  width: 100%;
-  padding: 0 32px 32px 32px;
-}
+/* 移除重复的 .user-profile-dropdown 定义，避免覆盖上方布局样式 */
 </style> 

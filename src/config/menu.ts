@@ -1,52 +1,66 @@
-import { Component } from 'vue'
-
-export interface MenuItem {
+export interface SubMenuItem {
   key: string
   title: string
   path: string
-  icon?: Component
-  children?: MenuItem[]
 }
 
-export const menuItems: MenuItem[] = [
+export interface TopMenuGroup {
+  key: string
+  title: string
+  // 用于自动判断当前路由属于哪个分组
+  basePaths: string[]
+  children: SubMenuItem[]
+}
+
+export const topMenus: TopMenuGroup[] = [
   {
-    key: 'dashboard',
-    title: '仪表盘',
-    path: '/dashboard'
+    key: 'official',
+    title: '官网运营',
+    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans'],
+    children: [
+      { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
+      { key: 'products', title: '产品管理', path: '/products' },
+      { key: 'categories', title: '分类管理', path: '/categories' },
+      { key: 'discounts', title: '优惠管理', path: '/discounts' },
+      { key: 'history', title: '历史记录', path: '/history' },
+      { key: 'design-review', title: '设计审核', path: '/design-review' },
+      { key: 'packaging-logs', title: '打包记录', path: '/packaging-logs' },
+      { key: 'subscription-plans', title: '订阅计划', path: '/subscription-plans' },
+    ],
   },
   {
-    key: 'products',
-    title: '商品管理',
-    path: '/products'
+    key: 'orders',
+    title: '订单管理',
+    basePaths: ['/orders'],
+    children: [
+      { key: 'orders', title: '订单列表', path: '/orders' },
+    ],
   },
   {
-    key: 'categories',
-    title: '分类管理',
-    path: '/categories'
-  },
-  {
-    key: 'discounts',
-    title: '优惠管理',
-    path: '/discounts'
-  },
-  {
-    key: 'history',
-    title: '历史记录',
-    path: '/history'
-  },
-  {
-    key: 'user',
+    key: 'users',
     title: '用户管理',
-    path: '/user-management'
+    basePaths: ['/user-management', '/role-management', '/dict', '/profile'],
+    children: [
+      { key: 'user-management', title: '用户管理', path: '/user-management' },
+      { key: 'role-management', title: '角色管理', path: '/role-management' },
+      { key: 'dict', title: '字典管理', path: '/dict' },
+      { key: 'profile', title: '个人资料', path: '/profile' },
+    ],
   },
   {
-    key: 'role',
-    title: '角色管理',
-    path: '/role-management'
+    key: 'marketing',
+    title: '营销工具',
+    basePaths: ['/marketing'],
+    children: [
+      { key: 'marketing', title: '营销工具', path: '/marketing' },
+    ],
   },
   {
-    key: 'profile',
-    title: '个人中心',
-    path: '/profile'
-  }
-] 
+    key: 'reports',
+    title: '报表中心',
+    basePaths: ['/reports'],
+    children: [
+      { key: 'reports', title: '报表中心', path: '/reports' },
+    ],
+  },
+]

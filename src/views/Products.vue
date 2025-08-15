@@ -40,6 +40,8 @@
             v-if="row.garminImageUrl || row.heroFile?.url"
             :src="row.garminImageUrl || row.heroFile?.url"
             :preview-src-list="[row.garminImageUrl || row.heroFile?.url]"
+            :z-index="5000"
+            :preview-teleported="true"
             fit="cover"
             style="width: 50px; height: 50px"
           />
