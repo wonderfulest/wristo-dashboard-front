@@ -7,6 +7,7 @@
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="分类名称" />
       <el-table-column prop="slug" label="标识" />
+      <el-table-column prop="sort" label="排序" width="100" />
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
           <el-switch
@@ -68,6 +69,9 @@
         <el-form-item label="标识" prop="slug">
           <el-input v-model="form.slug" placeholder="请输入分类标识" />
         </el-form-item>
+        <el-form-item label="排序" prop="sort">
+          <el-input-number v-model="form.sort" :min="0" :max="999999" :step="1" controls-position="right" />
+        </el-form-item>
         <el-form-item label="状态" prop="isActive">
           <el-switch
             v-model="form.isActive"
@@ -124,6 +128,7 @@ const form = ref({
   name: '',
   slug: '',
   image: '',
+  sort: 0,
   isActive: 1
 })
 
@@ -135,6 +140,9 @@ const rules: FormRules = {
   slug: [
     { required: true, message: '请输入分类标识', trigger: 'blur' },
     { pattern: /^[a-z0-9-]+$/, message: '只能包含小写字母、数字和连字符', trigger: 'blur' }
+  ],
+  sort: [
+    { type: 'number', message: '排序必须为数字', trigger: 'change' }
   ]
 }
 
@@ -144,7 +152,8 @@ const fetchCategories = async () => {
   try {
     const res = await fetchCategoryPage({
       pageNum: currentPage.value,
-      pageSize: pageSize.value
+      pageSize: pageSize.value,
+      orderBy: 'sort:desc'
     })
     if (res.code === 0) {
       categories.value = res.data?.list || []
@@ -167,6 +176,7 @@ const handleAdd = () => {
     name: '',
     slug: '',
     image: '',
+    sort: 0,
     isActive: 1
   }
   dialogVisible.value = true
@@ -175,7 +185,7 @@ const handleAdd = () => {
 // 编辑分类
 const handleEdit = (row: Category) => {
   dialogType.value = 'edit'
-  form.value = { ...row, image: row.image || '' }
+  form.value = { ...row, image: row.image || '', sort: row.sort ?? 0 }
   dialogVisible.value = true
 }
 
@@ -238,7 +248,8 @@ const handleSubmit = async () => {
           const res = await createCategory({
             name: form.value.name,
             slug: form.value.slug,
-            image: form.value.image
+            image: form.value.image,
+            sort: form.value.sort
           })
           if (res.code === 0) {
             ElMessage.success('新增成功')
@@ -252,6 +263,7 @@ const handleSubmit = async () => {
             name: form.value.name,
             slug: form.value.slug,
             image: form.value.image,
+            sort: form.value.sort,
             isActive: form.value.isActive
           })
           if (res.code === 0) {
