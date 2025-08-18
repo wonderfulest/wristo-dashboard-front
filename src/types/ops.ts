@@ -16,8 +16,8 @@ export interface DbBackupJob {
   message: string
   operator: string
   createdAt: string
-  updatedAt: string | null
-  startedAt: string | null
-  finishedAt: string | null
+  updatedAt: string
+  startedAt: string
+  finishedAt: string
   isDeleted: number
 }

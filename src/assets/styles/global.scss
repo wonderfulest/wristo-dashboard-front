@@ -1,5 +1,5 @@
-@import './variables.scss';
-@import './element-plus.scss';
+@use './variables.scss' as *;
+@use './element-plus.scss';
 
 body {
   background: $color-bg;
