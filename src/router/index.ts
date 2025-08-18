@@ -5,6 +5,12 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/db-backups',
+      name: 'DbBackups',
+      component: () => import('@/views/DbBackups.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/subscription-plans',
       name: 'SubscriptionPlans',
       component: () => import('@/views/SubscriptionPlans.vue'),

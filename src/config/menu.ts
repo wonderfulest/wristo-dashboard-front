@@ -29,6 +29,14 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
+    key: 'ops',
+    title: '运维工具',
+    basePaths: ['/db-backups'],
+    children: [
+      { key: 'db-backups', title: '数据库备份', path: '/db-backups' },
+    ],
+  },
+  {
     key: 'orders',
     title: '订单管理',
     basePaths: ['/orders'],
