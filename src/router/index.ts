@@ -65,6 +65,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/fonts',
+      name: 'Fonts',
+      component: () => import('@/views/Fonts.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/profile',
       name: 'Profile',
       component: () => import('@/views/Profile.vue'),

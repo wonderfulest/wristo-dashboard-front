@@ -16,7 +16,7 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans'],
+    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'products', title: '产品管理', path: '/products' },
@@ -26,6 +26,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'design-review', title: '设计审核', path: '/design-review' },
       { key: 'packaging-logs', title: '打包记录', path: '/packaging-logs' },
       { key: 'subscription-plans', title: '订阅计划', path: '/subscription-plans' },
+      { key: 'fonts', title: '字体管理', path: '/fonts' },
     ],
   },
   {
