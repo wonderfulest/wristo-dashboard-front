@@ -4,11 +4,19 @@
       <h2>用户管理</h2>
       <el-button type="success" @click="handleAdd">新增用户</el-button>
     </div>
+    <div class="filters">
+      <el-input v-model="query.username" placeholder="按用户名搜索" clearable style="width: 220px; margin-right: 12px;" />
+      <el-select v-model="query.roleId" clearable filterable placeholder="按角色筛选" style="width: 220px; margin-right: 12px;">
+        <el-option v-for="role in roleOptions" :key="role.id" :label="role.roleName" :value="role.id" />
+      </el-select>
+      <el-button type="primary" @click="handleSearch">查询</el-button>
+      <el-button @click="handleReset">重置</el-button>
+    </div>
     <el-table :data="users" style="width: 100%" :loading="loading">
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="username" label="用户名" width="180" />
       <el-table-column prop="nickname" label="昵称" width="180" />
-      <el-table-column prop="email" label="邮箱" width="220" />
+      <el-table-column prop="email" label="邮箱" width="280" />
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
       <el-table-column label="操作" width="180">
         <template #default="scope">
@@ -17,6 +25,18 @@
         </template>
       </el-table-column>
     </el-table>
+    <div class="pagination-bar">
+      <el-pagination
+        background
+        layout="total, sizes, prev, pager, next, jumper"
+        :current-page="query.pageNum"
+        :page-size="query.pageSize"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        @current-change="handlePageChange"
+        @size-change="handleSizeChange"
+      />
+    </div>
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '新增用户'">
       <el-form :model="currentUser" label-width="80px">
         <el-form-item label="ID">
@@ -51,19 +71,28 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserList, createUser, updateUser, deleteUser } from '@/api/user'
+import { pageUsers, createUser, updateUser, deleteUser } from '@/api/user'
 import { getRoleList } from '@/api/role'
 import type { UserInfo, RoleInfo } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
+import type { UserPageQueryDTO } from '@/api/user'
 
 const users = ref<UserInfo[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const currentUser = ref<Partial<UserInfo> & { roles?: string | string[] }>({})
+const currentUser = ref<Partial<UserInfo>>({})
 const rolesInput = ref<string[]>([])
 const password = ref('')
 const roleOptions = ref<RoleInfo[]>([])
+const total = ref(0)
+
+const query = ref<UserPageQueryDTO>({
+  pageNum: 1,
+  pageSize: 10,
+  username: undefined,
+  roleId: undefined,
+})
 
 const roleFormatter = (row: any) => {
   if (Array.isArray(row.roles)) {
@@ -80,9 +109,10 @@ const roleFormatter = (row: any) => {
 const fetchUsers = async () => {
   loading.value = true
   try {
-    const res = await getUserList()
+    const res = await pageUsers(query.value)
     if (res.code === 0 && res.data) {
-      users.value = res.data
+      users.value = res.data.list
+      total.value = res.data.total
     } else {
       ElMessage.error(res.msg || '获取用户列表失败')
     }
@@ -102,6 +132,27 @@ const fetchRoles = async () => {
   } catch {}
 }
 
+const handleSearch = () => {
+  query.value.pageNum = 1
+  fetchUsers()
+}
+
+const handleReset = () => {
+  query.value = { pageNum: 1, pageSize: query.value.pageSize }
+  fetchUsers()
+}
+
+const handlePageChange = (page: number) => {
+  query.value.pageNum = page
+  fetchUsers()
+}
+
+const handleSizeChange = (size: number) => {
+  query.value.pageSize = size
+  query.value.pageNum = 1
+  fetchUsers()
+}
+
 const handleAdd = () => {
   isEdit.value = false
   currentUser.value = {}
@@ -114,11 +165,8 @@ const handleEdit = (row: UserInfo) => {
   isEdit.value = true
   currentUser.value = { ...row }
   if (Array.isArray(row.roles)) {
-    if (row.roles.length > 0 && typeof row.roles[0] === 'object') {
-      rolesInput.value = row.roles.map((r: any) => r.roleCode)
-    } else {
-      rolesInput.value = row.roles.slice()
-    }
+    // 统一将角色映射为 roleCode 字符串数组
+    rolesInput.value = (row.roles as RoleInfo[]).map((r: RoleInfo) => r.roleCode)
   } else {
     rolesInput.value = []
   }
@@ -156,7 +204,7 @@ const handleSave = async () => {
       username: currentUser.value.username,
       nickname: currentUser.value.nickname || undefined,
       avatar: currentUser.value.avatar || undefined,
-      status: currentUser.value.status ? parseInt(currentUser.value.status) : undefined,
+      status: currentUser.value.status ?? undefined,
       roles: rolesInput.value
     }
     res = await updateUser(currentUser.value.id, updatePayload)
@@ -216,4 +264,16 @@ onMounted(() => {
     overflow-y: auto;
   }
 }
-</style> 
+
+.filters {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pagination-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+</style>

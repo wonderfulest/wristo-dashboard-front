@@ -1,5 +1,5 @@
 import instance from '@/config/axios'
-import type { ApiResponse, UserInfo } from '@/types/api'
+import type { ApiResponse, UserInfo, PageData } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
 
 export const getUserInfo = (): Promise<ApiResponse<UserInfo>> => {
@@ -38,4 +38,17 @@ export const updateUser = (id: number, data: UserUpdateDTO): Promise<ApiResponse
 
 export const deleteUser = (id: number): Promise<ApiResponse<null>> => {
   return instance.get(`/admin/users/delete/${id}`)
+}
+
+// 分页查询用户
+export interface UserPageQueryDTO {
+  pageNum: number
+  pageSize: number
+  orderBy?: string
+  username?: string
+  roleId?: number
+}
+
+export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageData<UserInfo>>> => {
+  return instance.post('/admin/users/page?populate=roles', dto)
 }

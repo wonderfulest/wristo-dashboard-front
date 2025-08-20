@@ -19,13 +19,14 @@ export interface UserInfo {
   email: string
   phone: string | null
   avatar: string | null
-  status: string | null
+  status: number
   createdAt: string
   updatedAt: string
   lastLoginTime: string | null
   lastLoginIp: string | null
   isDeleted: string
-  roles?: string[]
+  roles: RoleInfo[] | null
+  activatedApps: number[] | null
 }
 
 export interface LoginResponseData {
@@ -38,6 +39,5 @@ export interface RoleInfo {
   roleName: string
   roleCode: string
   description: string
-  createdAt: string
-  updatedAt: string
+  status: number
 }

@@ -27,3 +27,4 @@ export interface SubscriptionPlanDTO {
   currencyCode: string
   isActive?: boolean
 }
+

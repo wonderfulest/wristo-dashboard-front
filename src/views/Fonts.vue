@@ -6,9 +6,10 @@
         <el-input v-model="searchName" placeholder="按名称搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
         <el-input v-model="searchSlug" placeholder="按 slug 搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
         <el-select v-model="searchStatus" placeholder="状态" clearable style="width: 160px">
-          <el-option label="Pending" value="Pending" />
-          <el-option label="Approved" value="Approved" />
-          <el-option label="Rejected" value="Rejected" />
+          <el-option label="Submitted" value="submitted" />
+          <el-option label="Pending" value="pending" />
+          <el-option label="Approved" value="approved" />
+          <el-option label="Rejected" value="rejected" />
         </el-select>
         <el-select v-model="sortOrder" placeholder="排序方式" style="width: 180px" @change="handleSort">
           <el-option label="创建时间倒序" value="created_at desc" />
@@ -46,9 +47,9 @@
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <el-button type="success" size="small" @click="handleReview(row, 'Approved')">通过</el-button>
-            <el-button type="warning" size="small" @click="handleReview(row, 'Pending')">待定</el-button>
-            <el-button type="danger" size="small" @click="handleReview(row, 'Rejected')">拒绝</el-button>
+            <el-button type="success" size="small" @click="handleReview(row, 'approved')">通过</el-button>
+            <el-button type="warning" size="small" @click="handleReview(row, 'pending')">待定</el-button>
+            <el-button type="danger" size="small" @click="handleReview(row, 'rejected')">拒绝</el-button>
             <el-popconfirm title="确认删除该字体？" confirm-button-text="删除" cancel-button-text="取消" @confirm="() => handleRemove(row)">
               <template #reference>
                 <el-button type="danger" size="small" link>删除</el-button>
