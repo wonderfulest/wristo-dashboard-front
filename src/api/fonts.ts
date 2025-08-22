@@ -1,5 +1,5 @@
 import instance from '@/config/axios'
-import type { ApiResponse, PageData } from '@/types/api'
+import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO, DesignFontPageQueryDTO } from '@/types/font'
 
 // 审核接口：提交状态为 Pending / Approved / Rejected
@@ -31,5 +31,5 @@ export function removeFont(id: number) {
 export function pageFonts(dto: DesignFontPageQueryDTO) {
   const { populate, ...data } = dto as any
   const config = populate ? { params: { populate } } : undefined
-  return instance.post<ApiResponse<PageData<DesignFontVO>>>('/admin/fonts/page', data, config)
+  return instance.post<ApiResponse<PageResponse<DesignFontVO>>>('/admin/fonts/page', data, config)
 }

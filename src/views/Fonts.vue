@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { ApiResponse, PageData } from '@/types/api'
+import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO } from '@/types/font'
 import { pageFonts, reviewFont, removeFont } from '@/api/fonts'
 
@@ -112,7 +112,7 @@ const fetchPage = async () => {
       slug: searchSlug.value || undefined,
       status: searchStatus.value || undefined,
       populate: 'ttf'
-    }) as unknown as ApiResponse<PageData<DesignFontVO>>
+    }) as unknown as ApiResponse<PageResponse<DesignFontVO>>
     fonts.value = resp.data?.list || []
     total.value = resp.data?.total || 0
   } catch (e) {

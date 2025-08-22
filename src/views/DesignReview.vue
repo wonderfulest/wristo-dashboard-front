@@ -85,7 +85,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { formatDate } from '@/utils/date'
 import { fetchDesignReviewPage, approveDesign, rejectDesign } from '@/api/design-review'
-import type { ApiResponse, PageData } from '@/types/api'
+import type { ApiResponse, PageResponse } from '@/types/api'
 import type { Design } from '@/types/design'
 
 const designs = ref<any[]>([])
@@ -108,7 +108,7 @@ const fetchDesigns = async () => {
       userId: searchUserId.value ? Number(searchUserId.value) : undefined,
       designStatus: 'submitted',
       populate: 'cover,product,payment,user'
-    }) as unknown as ApiResponse<PageData<Design>>
+    }) as unknown as ApiResponse<PageResponse<Design>>
     designs.value = resp.data?.list || []
     total.value = resp.data?.total || 0
   } catch (error) {

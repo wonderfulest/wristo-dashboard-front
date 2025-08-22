@@ -1,12 +1,19 @@
+import type { UserBase } from './user'
+import type { ProductBase } from './product'
+
 export interface Bundle {
   bundleId: number
+  userId: number
   bundleName: string
   bundleDesc: string
   price: number
   isActive: number
   createdAt: string
   updatedAt: string
-  products: any[]
+  paddleProductId: string
+  paddlePriceId: string
+  user: UserBase | null
+  products: ProductBase[] | null
 }
 
 export interface CreateBundleDto {

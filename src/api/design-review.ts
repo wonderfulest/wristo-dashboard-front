@@ -1,10 +1,10 @@
 import instance from '@/config/axios'
-import type { ApiResponse, PageData } from '@/types/api'
+import type { ApiResponse, PageResponse } from '@/types/api'
 import type { FetchDesignReviewPageParams, Design } from '@/types/design'
 
 // 获取设计审核列表
 export function fetchDesignReviewPage(params: FetchDesignReviewPageParams) {
-  return instance.get<ApiResponse<PageData<Design>>>('/admin/design/page/review', { params })
+  return instance.get<ApiResponse<PageResponse<Design>>>('/admin/design/page/review', { params })
 }
 
 // 审核通过

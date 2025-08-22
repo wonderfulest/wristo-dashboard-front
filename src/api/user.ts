@@ -1,5 +1,5 @@
 import instance from '@/config/axios'
-import type { ApiResponse, UserInfo, PageData } from '@/types/api'
+import type { ApiResponse, UserInfo, PageResponse } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
 
 export const getUserInfo = (): Promise<ApiResponse<UserInfo>> => {
@@ -49,6 +49,6 @@ export interface UserPageQueryDTO {
   roleId?: number
 }
 
-export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageData<UserInfo>>> => {
+export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageResponse<UserInfo>>> => {
   return instance.post('/admin/users/page?populate=roles', dto)
 }
