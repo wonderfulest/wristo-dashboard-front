@@ -32,9 +32,10 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'ops',
     title: '运维工具',
-    basePaths: ['/db-backups'],
+    basePaths: ['/db-backups', '/system-config'],
     children: [
       { key: 'db-backups', title: '数据库备份', path: '/db-backups' },
+      { key: 'system-config', title: '系统配置', path: '/system-config' },
     ],
   },
   {

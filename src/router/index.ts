@@ -11,6 +11,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/system-config',
+      name: 'SystemConfig',
+      component: () => import('@/views/SystemConfig.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/subscription-plans',
       name: 'SubscriptionPlans',
       component: () => import('@/views/SubscriptionPlans.vue'),
