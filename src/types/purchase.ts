@@ -1,4 +1,4 @@
-import type { ProductBaseVO } from './product'
+import type { ProductBase } from './product'
 import type { Bundle } from './bundle'
 import type { UserBase } from './user'
 
@@ -12,7 +12,7 @@ export interface PurchaseRecordVO {
   appId: number
   bundleId: number
   isBundle: boolean
-  product: ProductBaseVO | null
+  product: ProductBase | null
   bundle: Bundle | null
   transactionId: string
   customerId: string
@@ -46,7 +46,5 @@ export interface PurchaseRecordPageQueryDTO {
   appId?: number | null
   bundleId?: number | null
   status?: number | null
-  paymentMethod?: string | null
-  inPayout?: number | null
   userId?: number
 }

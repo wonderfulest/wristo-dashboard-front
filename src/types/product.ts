@@ -63,16 +63,13 @@ export interface CreateProductDto {
 // 依赖类型
 import type { Category } from '@/types/category'
 
-export interface ProductBaseVO {
+export interface ProductBase {
   appId: number
   name: string
   designId: string
   price: number
   garminImageUrl: string
   garminStoreUrl: string
-  heroFile: {
-    url: string
-  } | null
 }
 
 export interface ProductPackagingLogVO {
@@ -84,7 +81,7 @@ export interface ProductPackagingLogVO {
   version: number
   isDeleted: number
   isActive: number
-  product: ProductBaseVO
+  product: ProductBase
 }
 
 export interface ProductPackagingLogQuery {

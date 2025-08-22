@@ -12,7 +12,7 @@ import type {
 } from '@/types/api'
 
 export const getPurchaseRecordPageList = async (dto: PurchaseRecordPageQueryDTO): Promise<ApiResponse<PageResponse<PurchaseRecordVO>>> => {
-  return instance.post('/admin/purchases/page?populate=product,bundle', dto)
+  return instance.post('/admin/purchases/page?populate=product,bundle,user', dto)
 }
 
 export const getAppSalesSummaryPage = async (

@@ -1,4 +1,4 @@
-import type { ProductBaseVO } from './product'
+import type { ProductBase } from './product'
 
 // ===== Daily Sales (last 60 days) =====
 export interface DailySalesItemVO {
@@ -16,7 +16,7 @@ export interface AppSalesSummaryVO {
   salesCount: number
   totalAmount: number
   bundleTriggerCount: number
-  app: ProductBaseVO | null
+  app: ProductBase | null
 }
 
 export interface AppSalesSummaryPageQueryDTO {
@@ -55,5 +55,5 @@ export interface AppFunnelVO {
   /** 套餐购买 */
   bundlePurchases: number
   /** 应用信息 */
-  app: ProductBaseVO | null
+  app: ProductBase | null
 }
