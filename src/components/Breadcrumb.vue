@@ -29,7 +29,7 @@ const routeTitleMap: Record<string, string> = {
   'dict': '字典管理',
   'design-review': '设计审核',
   'packaging-logs': '打包记录',
-  'products': '产品管理',
+  'products': '作品管理',
   'categories': '分类管理',
   'history': '历史记录',
   'discounts': '优惠管理',

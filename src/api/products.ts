@@ -45,3 +45,13 @@ export const addProductCategory = (appId: number, categoryId: number): Promise<A
 export const deleteProductCategory = (appId: number, categoryId: number): Promise<ApiResponse<Product>> => {
   return instance.post(`/admin/products/category/${appId}/delete?categoryId=${categoryId}`)
 }
+
+// 一键下线某个设计师的所有产品
+export const downAllProductsByUser = (userId: number): Promise<ApiResponse<boolean>> => {
+  return instance.post(`/admin/products/down/${userId}`)
+}
+
+// 一键上架某个设计师的所有产品
+export const upAllProductsByUser = (userId: number): Promise<ApiResponse<boolean>> => {
+  return instance.post(`/admin/products/up/${userId}`)
+}

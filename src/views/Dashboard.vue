@@ -1,6 +1,7 @@
 <template>
   <div class="dashboard">
     <h2>Dashboard</h2>
+    <DesignerBulkToggle />
     <ReviewTimeControl />
     <div class="dashboard-content">
       <!-- 最近60天销售折线图 -->
@@ -20,6 +21,7 @@ import ReviewTimeControl from '@/components/dashboard/ReviewTimeControl.vue'
 import FunnelAnalytics from '@/components/dashboard/FunnelAnalytics.vue'
 import AppSalesSummary from '@/components/dashboard/AppSalesSummary.vue'
 import SalesLineChart from '@/components/dashboard/SalesLineChart.vue'
+import DesignerBulkToggle from '@/components/dashboard/DesignerBulkToggle.vue'
 </script>
 
 <style scoped>

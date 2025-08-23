@@ -20,7 +20,7 @@ export const topMenus: TopMenuGroup[] = [
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'history', title: '订单记录', path: '/history' },
-      { key: 'products', title: '产品管理', path: '/products' },
+      { key: 'products', title: '作品管理', path: '/products' },
       { key: 'categories', title: '分类管理', path: '/categories' },
       { key: 'discounts', title: '优惠管理', path: '/discounts' },
       { key: 'design-review', title: '设计审核', path: '/design-review' },
