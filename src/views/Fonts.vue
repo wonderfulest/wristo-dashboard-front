@@ -33,6 +33,16 @@
       <el-table-column prop="weight" label="字重" width="100" />
       <el-table-column prop="versionName" label="版本" width="120" />
       <el-table-column prop="glyphCount" label="字形数" width="100" />
+      <el-table-column label="系统字体" width="120">
+        <template #default="{ row }">
+          <el-switch
+            v-model="row.isSystem"
+            :active-value="1"
+            :inactive-value="0"
+            @change="(val: number) => handleToggleSystem(row, val)"
+          />
+        </template>
+      </el-table-column>
       <el-table-column label="TTF" width="120">
         <template #default="{ row }">
           <a v-if="row.ttfFile?.url" :href="row.ttfFile.url" target="_blank">下载</a>
@@ -44,9 +54,10 @@
           <el-tag :type="tagType(row.status)">{{ row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="操作" width="320" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <el-button size="small" @click="openEdit(row)">编辑</el-button>
             <el-button type="success" size="small" @click="handleReview(row, 'approved')">通过</el-button>
             <el-button type="warning" size="small" @click="handleReview(row, 'pending')">待定</el-button>
             <el-button type="danger" size="small" @click="handleReview(row, 'rejected')">拒绝</el-button>
@@ -71,6 +82,7 @@
         @current-change="handleCurrentChange"
       />
     </div>
+    <FontEditDialog v-model="showEdit" :font="currentFont" @saved="onSaved" />
   </div>
 </template>
 
@@ -79,7 +91,8 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO } from '@/types/font'
-import { pageFonts, reviewFont, removeFont } from '@/api/fonts'
+import { pageFonts, reviewFont, removeFont, toggleFontSystem } from '@/api/fonts'
+import FontEditDialog from '@/components/FontEditDialog.vue'
 
 const fonts = ref<DesignFontVO[]>([])
 const loading = ref(false)
@@ -99,6 +112,34 @@ const tagType = (status: string) => {
   if (s.includes('reject')) return 'danger'
   if (s.includes('pending') || s.includes('submit')) return 'warning'
   return 'info'
+}
+
+// 切换是否为系统字体
+const handleToggleSystem = async (row: DesignFontVO, val: number) => {
+  const oldVal = row.isSystem
+  row.isSystem = val
+  try {
+    const resp = await toggleFontSystem(row.id, val === 1)
+    if ((resp as any).code === 0) {
+      ElMessage.success(val === 1 ? '已设为系统字体' : '已取消系统字体')
+    } else {
+      row.isSystem = oldVal
+    }
+  } catch (e) {
+    row.isSystem = oldVal
+    ElMessage.error('操作失败')
+  }
+}
+
+// 编辑弹窗
+const showEdit = ref(false)
+const currentFont = ref<DesignFontVO | null>(null)
+const openEdit = (row: DesignFontVO) => {
+  currentFont.value = row
+  showEdit.value = true
+}
+const onSaved = () => {
+  fetchPage()
 }
 
 const fetchPage = async () => {

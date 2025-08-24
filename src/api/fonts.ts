@@ -33,3 +33,13 @@ export function pageFonts(dto: DesignFontPageQueryDTO) {
   const config = populate ? { params: { populate } } : undefined
   return instance.post<ApiResponse<PageResponse<DesignFontVO>>>('/admin/fonts/page', data, config)
 }
+
+// 更新字体属性
+export function updateFont(id: number, payload: Partial<DesignFontVO>) {
+  return instance.post<ApiResponse<DesignFontVO>>(`/admin/fonts/update/${id}`, payload)
+}
+
+// 切换是否为系统字体
+export function toggleFontSystem(id: number, enable: boolean) {
+  return instance.post<ApiResponse<DesignFontVO>>(`/admin/fonts/system/${id}`, null, { params: { enable } })
+}
