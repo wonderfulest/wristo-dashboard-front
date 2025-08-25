@@ -19,13 +19,10 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
-      { key: 'history', title: '订单记录', path: '/history' },
       { key: 'products', title: '作品管理', path: '/products' },
       { key: 'categories', title: '分类管理', path: '/categories' },
-      { key: 'discounts', title: '优惠管理', path: '/discounts' },
       { key: 'design-review', title: '设计审核', path: '/design-review' },
       { key: 'packaging-logs', title: '打包记录', path: '/packaging-logs' },
-      { key: 'subscription-plans', title: '订阅计划', path: '/subscription-plans' },
       { key: 'fonts', title: '字体管理', path: '/fonts' },
     ],
   },
@@ -43,7 +40,9 @@ export const topMenus: TopMenuGroup[] = [
     title: '订单管理',
     basePaths: ['/orders'],
     children: [
-      { key: 'orders', title: '订单列表', path: '/orders' },
+      { key: 'history', title: '订单记录', path: '/orders/history' },
+      { key: 'discounts', title: '优惠管理', path: '/orders/discounts' },
+      { key: 'subscription-plans', title: '订阅计划', path: '/orders/subscription-plans' },
     ],
   },
   {

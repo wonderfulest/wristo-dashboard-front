@@ -16,11 +16,29 @@ const router = createRouter({
       component: () => import('@/views/SystemConfig.vue'),
       meta: { requiresAuth: true }
     },
+    // Orders module (new nested paths)
     {
-      path: '/subscription-plans',
-      name: 'SubscriptionPlans',
+      path: '/orders/history',
+      name: 'OrdersHistory',
+      component: () => import('@/views/History.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/orders/discounts',
+      name: 'OrdersDiscounts',
+      component: () => import('@/views/Discounts.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/orders/subscription-plans',
+      name: 'OrdersSubscriptionPlans',
       component: () => import('@/views/SubscriptionPlans.vue'),
       meta: { requiresAuth: true }
+    },
+    // Backward-compatible redirects
+    {
+      path: '/subscription-plans',
+      redirect: '/orders/subscription-plans'
     },
     {
       path: '/user-management',
@@ -60,15 +78,11 @@ const router = createRouter({
     },
     {
       path: '/history',
-      name: 'History',
-      component: () => import('@/views/History.vue'),
-      meta: { requiresAuth: true }
+      redirect: '/orders/history'
     },
     {
       path: '/discounts',
-      name: 'Discounts',
-      component: () => import('@/views/Discounts.vue'),
-      meta: { requiresAuth: true }
+      redirect: '/orders/discounts'
     },
     {
       path: '/fonts',

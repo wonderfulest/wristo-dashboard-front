@@ -25,14 +25,24 @@
     <el-table :data="fonts" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="fullName" label="名称" min-width="140" />
-      <el-table-column prop="postscriptName" label="PS 名称" min-width="160" />
+      <!-- <el-table-column prop="postscriptName" label="PS 名称" min-width="160" /> -->
       <el-table-column prop="slug" label="Slug" min-width="140" />
       <el-table-column prop="family" label="字族" width="140" />
       <el-table-column prop="language" label="语言" width="100" />
       <el-table-column prop="type" label="类型" width="120" />
       <el-table-column prop="weight" label="字重" width="100" />
-      <el-table-column prop="versionName" label="版本" width="120" />
-      <el-table-column prop="glyphCount" label="字形数" width="100" />
+      <!-- <el-table-column prop="versionName" label="版本" width="120" /> -->
+      <!-- <el-table-column prop="glyphCount" label="字形数" width="100" /> -->
+      <el-table-column label="预览" min-width="220">
+        <template #default="{ row }">
+          <el-tooltip placement="top" effect="light" :show-after="150" :enterable="true" :append-to-body="true">
+            <template #content>
+              <FontPreview :id="row.id" :name="row.fullName" :url="row.ttfFile?.url || null" :full="true" />
+            </template>
+            <FontPreview :id="row.id" :name="row.fullName" :url="row.ttfFile?.url || null" />
+          </el-tooltip>
+        </template>
+      </el-table-column>
       <el-table-column label="系统字体" width="120">
         <template #default="{ row }">
           <el-switch
@@ -59,7 +69,7 @@
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <el-button size="small" @click="openEdit(row)">编辑</el-button>
             <el-button type="success" size="small" @click="handleReview(row, 'approved')">通过</el-button>
-            <el-button type="warning" size="small" @click="handleReview(row, 'pending')">待定</el-button>
+            <!-- <el-button type="warning" size="small" @click="handleReview(row, 'pending')">待定</el-button> -->
             <el-button type="danger" size="small" @click="handleReview(row, 'rejected')">拒绝</el-button>
             <el-popconfirm title="确认删除该字体？" confirm-button-text="删除" cancel-button-text="取消" @confirm="() => handleRemove(row)">
               <template #reference>
@@ -93,6 +103,7 @@ import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO } from '@/types/font'
 import { pageFonts, reviewFont, removeFont, toggleFontSystem } from '@/api/fonts'
 import FontEditDialog from '@/components/FontEditDialog.vue'
+import FontPreview from '@/components/FontPreview.vue'
 
 const fonts = ref<DesignFontVO[]>([])
 const loading = ref(false)
