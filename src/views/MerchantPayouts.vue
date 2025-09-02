@@ -15,8 +15,8 @@
         style="width: 220px; margin-right: 12px;"
       />
       <el-select v-model="sortField" placeholder="排序字段" style="width: 200px; margin-right: 12px;">
-        <el-option label="累计收入" value="total_income_to_date" />
-        <el-option label="当前可提现" value="current_balance" />
+        <el-option label="累计收入($)" value="total_income_to_date" />
+        <el-option label="当前可提现($)" value="current_balance" />
       </el-select>
       <el-select v-model="sortOrder" placeholder="排序" style="width: 140px; margin-right: 12px;">
         <el-option label="降序" value="desc" />
@@ -32,34 +32,33 @@
           {{ row.user?.id ?? row.id }}
         </template>
       </el-table-column>
-      <el-table-column label="头像" width="80">
+      <!-- <el-table-column label="头像" width="80">
         <template #default="{ row }">
           <el-avatar v-if="row.user?.avatar" :src="row.user?.avatar" :size="24" />
         </template>
-      </el-table-column>
-      <el-table-column label="用户名" min-width="140">
+      </el-table-column> -->
+      <el-table-column label="用户名" min-width="100">
         <template #default="{ row }">
           <span class="username">{{ row.user?.username || '-' }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="currencyCode" label="货币" width="90" />
-      <el-table-column label="累计收入">
+      <el-table-column label="累计收入($)" min-width="120" header-align="right" align="right">
         <template #default="{ row }">
-          {{ formatMoney(row.totalIncomeToDate, row.currencyCode) }}
+          {{ formatMoney(row.totalIncomeToDate) }}
         </template>
       </el-table-column>
-      <el-table-column label="当前可提现">
+      <el-table-column label="当前可提现($)" min-width="120" header-align="right" align="right">
         <template #default="{ row }">
-          {{ formatMoney(row.currentBalance, row.currencyCode) }}
+          {{ formatMoney(row.currentBalance) }}
         </template>
       </el-table-column>
-      <el-table-column label="下次应结">
+      <el-table-column label="下次应结($)" min-width="120" header-align="right" align="right">
         <template #default="{ row }">
-          {{ formatMoney(row.nextPayoutAmount, row.currencyCode) }}
+          {{ formatMoney(row.nextPayoutAmount) }}
         </template>
       </el-table-column>
-      <el-table-column prop="nextPayDay" label="下个结算日" width="140" />
-      <el-table-column label="状态" width="140">
+      <el-table-column prop="nextPayDay" label="下个结算日" width="100" />
+      <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="statusType(row.payoutStatus)">{{ row.payoutStatusDesc || row.payoutStatus }}</el-tag>
         </template>
@@ -67,6 +66,18 @@
       <el-table-column prop="updatedAt" label="更新时间" width="180" >
         <template #default="{ row }">
           {{ formatDateTime(row.updatedAt) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" fixed="right" width="200">
+        <template #default="{ row }">
+          <el-button
+            size="small"
+            type="success"
+            :disabled="!canPay(row) || payLoadingId === row.userId"
+            :loading="payLoadingId === row.userId"
+            @click="handlePay(row)"
+            style="margin-left: 8px;"
+          >支付</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -92,8 +103,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { pagePayouts, type PayoutPageQueryDTO } from '@/api/payout'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { pagePayouts, handlePayoutPaid, type PayoutPageQueryDTO } from '@/api/payout'
 import type { PayoutVO } from '@/types/payout'
 
 const loading = ref(false)
@@ -143,13 +154,10 @@ const statusType = (status?: string) => {
   }
 }
 
-const formatMoney = (val?: number, currency?: string) => {
+const formatMoney = (val?: number) => {
   if (val == null) return '-'
-//   try {
-//     return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD' }).format(val)
-//   } catch {
-    return `${currency || 'USD'} ${val.toFixed(2)}`
-//   }
+
+    return `${val.toFixed(2)}`
 }
 
 const formatDateTime = (date?: string) => {
@@ -186,6 +194,41 @@ const handleReset = () => {
     username: undefined,
   }
   fetchData()
+}
+
+// 支付按钮可用性：仅当状态为 settled（兼容后端可能的拼写 'setteld'）
+const canPay = (row: PayoutVO) => {
+  const s = (row.payoutStatus || '').toLowerCase()
+  return s === 'settled' || s === 'setteld'
+}
+
+// 当前支付中的 userId（用于行内 loading/disable）
+const payLoadingId = ref<number | null>(null)
+
+const handlePay = async (row: PayoutVO) => {
+  if (!canPay(row)) return
+  try {
+    await ElMessageBox.confirm(
+      `确认为用户 “${row.user?.username ?? row.userId}” 进行打款吗？`,
+      '确认支付',
+      { type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消' }
+    )
+  } catch {
+    return
+  }
+
+  payLoadingId.value = row.userId
+  try {
+    const res = await handlePayoutPaid(row.userId)
+    if (res.code === 0 && res.data) {
+      ElMessage.success('打款成功')
+      fetchData()
+    }
+  } catch (e) {
+    // axios 拦截器已提示错误
+  } finally {
+    payLoadingId.value = null
+  }
 }
 </script>
 

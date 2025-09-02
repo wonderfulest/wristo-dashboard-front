@@ -21,3 +21,8 @@ export const pagePayouts = (
 ): Promise<ApiResponse<PageResponse<PayoutVO>>> => {
   return instance.post('/admin/payout/page?populate=user', dto)
 }
+
+// 处理打款（管理员）
+export const handlePayoutPaid = (userId: number): Promise<ApiResponse<boolean>> => {
+  return instance.post(`/admin/payout/handle-payout-paid/${userId}`)
+}
