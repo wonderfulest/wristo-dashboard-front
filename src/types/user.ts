@@ -3,6 +3,7 @@ export interface UserBase {
   username: string
   nickname: string | null
   avatar: string | null
+  email?: string | null
 } 
 
 export interface UserUpdateDTO {

@@ -57,11 +57,12 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
-    key: 'marketing',
-    title: '营销工具',
-    basePaths: ['/marketing'],
+    key: 'merchant',
+    title: '商家中心',
+    basePaths: ['/merchant'],
     children: [
-      { key: 'marketing', title: '营销工具', path: '/marketing' },
+      { key: 'merchant', title: '商家中心', path: '/merchant' },
+      { key: 'merchant-payouts', title: '结算管理', path: '/merchant/payouts' },
     ],
   },
   {

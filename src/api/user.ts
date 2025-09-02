@@ -52,3 +52,22 @@ export interface UserPageQueryDTO {
 export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageResponse<UserInfo>>> => {
   return instance.post('/admin/users/page?populate=roles', dto)
 }
+
+// 商家用户分页（固定按商家角色筛选）
+export const MERCHANT_ROLE_ID = 3
+
+export interface MerchantUserPageQueryDTO {
+  pageNum: number
+  pageSize: number
+  orderBy?: string
+  username?: string
+}
+
+export const pageMerchantUsers = (
+  dto: MerchantUserPageQueryDTO
+): Promise<ApiResponse<PageResponse<UserInfo>>> => {
+  return instance.post('/admin/users/page?populate=roles', {
+    ...dto,
+    roleId: MERCHANT_ROLE_ID,
+  })
+}

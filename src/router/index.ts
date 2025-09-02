@@ -77,6 +77,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/merchant',
+      name: 'Merchant',
+      component: () => import('@/views/Merchant.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/merchant/payouts',
+      name: 'MerchantPayouts',
+      component: () => import('@/views/MerchantPayouts.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/history',
       redirect: '/orders/history'
     },
