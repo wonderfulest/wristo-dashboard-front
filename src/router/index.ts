@@ -89,6 +89,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/merchant/refund',
+      name: 'MerchantRefund',
+      component: () => import('@/views/MerchantRefund.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/history',
       redirect: '/orders/history'
     },
