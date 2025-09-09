@@ -57,6 +57,16 @@
           {{ formatMoney(row.nextPayoutAmount) }}
         </template>
       </el-table-column>
+      <el-table-column label="打款方式" min-width="120">
+        <template #default="{ row }">
+          {{ row.payoutMethod }}
+        </template>
+      </el-table-column>
+      <el-table-column label="打款账号" min-width="120">
+        <template #default="{ row }">
+          {{ row.payoutAccount }}
+        </template>
+      </el-table-column>
       <el-table-column prop="nextPayDay" label="下个结算日" width="100" />
       <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">

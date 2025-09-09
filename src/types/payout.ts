@@ -9,6 +9,8 @@ export interface PayoutVO {
   nextPayDay: string
   currencyCode: string
   paddlePayoutId: string | null
+  payoutMethod: string
+  payoutAccount: string
   payoutStatus: string
   payoutStatusDesc: string
   createdAt: string
