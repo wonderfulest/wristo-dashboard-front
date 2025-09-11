@@ -6,6 +6,7 @@
     </div>
     <div class="filters">
       <el-input v-model="query.username" placeholder="按用户名搜索" clearable style="width: 220px; margin-right: 12px;" />
+      <el-input v-model="query.email" placeholder="按邮箱搜索" clearable style="width: 260px; margin-right: 12px;" />
       <el-select v-model="query.roleId" clearable filterable placeholder="按角色筛选" style="width: 220px; margin-right: 12px;">
         <el-option v-for="role in roleOptions" :key="role.id" :label="role.roleName" :value="role.id" />
       </el-select>
@@ -92,6 +93,7 @@ const query = ref<UserPageQueryDTO>({
   pageSize: 10,
   username: undefined,
   roleId: undefined,
+  email: undefined,
 })
 
 const roleFormatter = (row: any) => {
@@ -138,7 +140,7 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  query.value = { pageNum: 1, pageSize: query.value.pageSize }
+  query.value = { pageNum: 1, pageSize: query.value.pageSize, username: undefined, roleId: undefined, email: undefined }
   fetchUsers()
 }
 

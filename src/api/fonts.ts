@@ -7,6 +7,11 @@ export function reviewFont(id: number, status: string) {
   return instance.post<ApiResponse<DesignFontVO>>(`/admin/fonts/${id}/review`, null, { params: { status } })
 }
 
+// 批量审核接口：提交状态为 Pending / Approved / Rejected
+export function reviewFontsBatch(ids: number[], status: string) {
+  return instance.post<ApiResponse<DesignFontVO[]>>('/admin/fonts/review-batch', ids, { params: { status } })
+}
+
 // 按 ID 获取
 export function getFont(id: number, populate?: string) {
   return instance.get<ApiResponse<DesignFontVO>>(`/admin/fonts/get/${id}`, { params: { populate } })

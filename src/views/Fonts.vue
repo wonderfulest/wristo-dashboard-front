@@ -19,10 +19,21 @@
         </el-select>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="fetchPage">刷新</el-button>
+        <span style="margin-left: 8px; color: #999;">|</span>
+        <el-select v-model="batchStatus" placeholder="批量审核状态" clearable style="width: 180px">
+          <el-option label="Submitted" value="submitted" />
+          <el-option label="Pending" value="pending" />
+          <el-option label="Approved" value="approved" />
+          <el-option label="Rejected" value="rejected" />
+        </el-select>
+        <el-button type="success" :disabled="!selectedIds.length || !batchStatus" @click="handleBatchReview">
+          批量审核<span v-if="selectedIds.length">（{{ selectedIds.length }}）</span>
+        </el-button>
       </div>
     </div>
 
-    <el-table :data="fonts" style="width: 100%" v-loading="loading">
+    <el-table ref="tableRef" :data="fonts" style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="fullName" label="名称" min-width="140" />
       <!-- <el-table-column prop="postscriptName" label="PS 名称" min-width="160" /> -->
@@ -99,9 +110,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import type { TableInstance } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO } from '@/types/font'
-import { pageFonts, reviewFont, removeFont, toggleFontSystem } from '@/api/fonts'
+import { pageFonts, reviewFont, reviewFontsBatch, removeFont, toggleFontSystem } from '@/api/fonts'
 import FontEditDialog from '@/components/FontEditDialog.vue'
 import FontPreview from '@/components/FontPreview.vue'
 
@@ -110,6 +122,11 @@ const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+
+// 表格与多选
+const tableRef = ref<TableInstance>()
+const selectedIds = ref<number[]>([])
+const batchStatus = ref<string | undefined>(undefined)
 
 const searchName = ref('')
 const searchSlug = ref('')
@@ -151,6 +168,28 @@ const openEdit = (row: DesignFontVO) => {
 }
 const onSaved = () => {
   fetchPage()
+}
+
+// 多选变化
+const handleSelectionChange = (selection: DesignFontVO[]) => {
+  selectedIds.value = (selection || []).map((x) => x.id)
+}
+
+// 批量审核
+const handleBatchReview = async () => {
+  if (!selectedIds.value.length || !batchStatus.value) return
+  try {
+    const resp = (await reviewFontsBatch(selectedIds.value, batchStatus.value)) as unknown as ApiResponse<DesignFontVO[]>
+    if (resp.code === 0) {
+      ElMessage.success(`批量审核成功，共更新 ${resp.data?.length ?? 0} 项`)
+      // 清空选择
+      tableRef.value?.clearSelection?.()
+      selectedIds.value = []
+      fetchPage()
+    }
+  } catch (e) {
+    ElMessage.error('批量审核失败')
+  }
 }
 
 const fetchPage = async () => {

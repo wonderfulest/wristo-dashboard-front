@@ -15,3 +15,8 @@ export const getDbBackup = (id: number): Promise<ApiResponse<DbBackupJob>> => {
 export const getRecentDbBackups = (limit = 20): Promise<ApiResponse<DbBackupJob[]>> => {
   return instance.get(`${PREFIX}/backup/recent`, { params: { limit } })
 }
+
+// 插入符合条件的产品与指定 bundle 的关系（去重）
+export const insertBundleProductRelations = (bundleId: number): Promise<ApiResponse<number>> => {
+  return instance.post(`${PREFIX}/bundle/relations/insert`, null, { params: { bundleId } })
+}

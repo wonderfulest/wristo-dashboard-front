@@ -62,6 +62,7 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/merchant'],
     children: [
       { key: 'merchant', title: '商家中心', path: '/merchant' },
+      { key: 'merchant-tools', title: '商家工具', path: '/merchant/tools' },
       { key: 'merchant-payouts', title: '结算管理', path: '/merchant/payouts' },
       { key: 'merchant-refund', title: '订单退款', path: '/merchant/refund' },
     ],

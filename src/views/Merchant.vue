@@ -11,6 +11,12 @@
         clearable
         style="width: 220px; margin-right: 12px;"
       />
+      <el-input
+        v-model="query.email"
+        placeholder="按邮箱搜索"
+        clearable
+        style="width: 260px; margin-right: 12px;"
+      />
       <el-button type="primary" @click="handleSearch">查询</el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
@@ -53,6 +59,7 @@ const query = ref<MerchantUserPageQueryDTO>({
   pageSize: 20,
   orderBy: 'id desc',
   username: undefined,
+  email: undefined,
 })
 
 const roleFormatter = (row: any) => {
@@ -88,7 +95,7 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  query.value = { pageNum: 1, pageSize: query.value.pageSize, orderBy: 'id desc' }
+  query.value = { pageNum: 1, pageSize: query.value.pageSize, orderBy: 'id desc', username: undefined, email: undefined }
   fetchUsers()
 }
 

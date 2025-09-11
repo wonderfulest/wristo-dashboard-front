@@ -1,6 +1,7 @@
 import instance from '@/config/axios'
 import type { ApiResponse, UserInfo, PageResponse } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
+import type { PageQueryDTO } from '@/types/api'
 
 export const getUserInfo = (): Promise<ApiResponse<UserInfo>> => {
   return instance.get('/users/info?populate=roles')
@@ -41,12 +42,10 @@ export const deleteUser = (id: number): Promise<ApiResponse<null>> => {
 }
 
 // 分页查询用户
-export interface UserPageQueryDTO {
-  pageNum: number
-  pageSize: number
-  orderBy?: string
+export interface UserPageQueryDTO extends PageQueryDTO {
   username?: string
   roleId?: number
+  email?: string
 }
 
 export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageResponse<UserInfo>>> => {
@@ -56,11 +55,9 @@ export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageRespon
 // 商家用户分页（固定按商家角色筛选）
 export const MERCHANT_ROLE_ID = 3
 
-export interface MerchantUserPageQueryDTO {
-  pageNum: number
-  pageSize: number
-  orderBy?: string
+export interface MerchantUserPageQueryDTO extends PageQueryDTO {
   username?: string
+  email?: string
 }
 
 export const pageMerchantUsers = (

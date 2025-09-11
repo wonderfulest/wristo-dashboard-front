@@ -83,6 +83,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/merchant/tools',
+      name: 'MerchantTools',
+      component: () => import('@/views/MerchantTools.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/merchant/payouts',
       name: 'MerchantPayouts',
       component: () => import('@/views/MerchantPayouts.vue'),

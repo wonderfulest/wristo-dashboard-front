@@ -21,6 +21,7 @@
           <el-button class="circle-btn" type="primary" :loading="refreshing" @click="onRefreshNow">
             刷新为当前时间
           </el-button>
+        
         </div>
 
         <div class="manual-set">
@@ -47,6 +48,10 @@ import { ElMessage } from 'element-plus'
 import { getReviewTime, setReviewTime, refreshReviewTime } from '@/api/config'
 import type { GlobalConfig } from '@/types/ops'
 import { formatDateTime } from '@/utils/date'
+import { insertBundleProductRelations } from '@/api/ops-db'
+
+// 默认用于预处理的 bundleId
+const BUNDLE_ID = 107642
 
 const emit = defineEmits<{ (e: 'updated', value: GlobalConfig | null): void }>()
 const current = ref<GlobalConfig | null>(null)
@@ -85,6 +90,7 @@ const fetchCurrent = async () => {
 const onRefreshNow = async () => {
   refreshing.value = true
   try {
+    await insertBundleProductRelations(BUNDLE_ID)
     const res = await refreshReviewTime()
     if (res?.data?.configValue) {
       reviewTime.value = res.data.configValue
