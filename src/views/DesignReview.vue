@@ -62,7 +62,7 @@
       <el-table-column label="操作" width="180" fixed="right">
         <template #default="{ row }">
           <el-button type="success" size="small" @click="handleApprove(row)">通过</el-button>
-          <el-button type="danger" size="small" @click="handleReject(row)">不通过</el-button>
+          <el-button type="danger" size="small" @click="handleReject(row)">拒绝</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -82,9 +82,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils/date'
-import { fetchDesignReviewPage, approveDesign, rejectDesign } from '@/api/design-review'
+import { fetchDesignReviewPage, approveDesign, rejectDesignWithComment } from '@/api/design-review'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { Design } from '@/types/design'
 
@@ -148,17 +148,34 @@ const handleApprove = async (row: any) => {
     ElMessage.error('操作失败')
   }
 }
+
 const handleReject = async (row: any) => {
   try {
-    const resp: ApiResponse<boolean> = await rejectDesign(row.designUid) as unknown as ApiResponse<boolean>
+    const { value } = await ElMessageBox.prompt('请输入拒绝理由', '拒绝审核', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputType: 'textarea',
+      inputPlaceholder: '请填写拒绝原因（必填）',
+      inputValidator: (val: string) => {
+        if (!val || val.trim().length === 0) return '必须填写拒绝原因'
+        return true
+      }
+    })
+    const resp: ApiResponse<boolean> = await rejectDesignWithComment({
+      designUid: row.designUid,
+      reviewComment: (value as string).trim()
+    }) as unknown as ApiResponse<boolean>
     if (resp.code === 0 && resp.data) {
       ElMessage.success('已拒绝')
       fetchDesigns()
     } else {
       ElMessage.error(resp.msg || '操作失败')
     }
-  } catch (error) {
-    ElMessage.error('操作失败')
+  } catch (error: any) {
+    // 用户取消不提示错误
+    if (error?.action !== 'cancel') {
+      ElMessage.error('操作失败')
+    }
   }
 }
 

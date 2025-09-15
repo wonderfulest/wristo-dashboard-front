@@ -66,6 +66,7 @@
         <template #default="{ row }">
           <div style="display: flex; gap: 8px;">
             <el-button type="primary" link @click="handleViewDetails(row)">查看详情</el-button>
+            <el-button type="danger" link @click="openRejectDialog(row)">拒绝</el-button>
           </div>
         </template>
       </el-table-column>
@@ -112,6 +113,38 @@
         </el-descriptions>
       </div>
     </el-dialog>
+
+    <!-- 拒绝对话框（必须填写原因） -->
+    <el-dialog
+      v-model="rejectDialogVisible"
+      title="拒绝审核"
+      width="520px"
+    >
+      <div v-if="rejectTargetRow">
+        <div style="margin-bottom: 12px; color: #606266;">
+          将拒绝产品：<b>{{ rejectTargetRow.product.name }}</b>
+          （设计ID：{{ rejectTargetRow.product.designId }}）
+        </div>
+        <el-form label-position="top">
+          <el-form-item label="拒绝原因" required>
+            <el-input
+              v-model="rejectReason"
+              type="textarea"
+              :rows="4"
+              maxlength="300"
+              show-word-limit
+              placeholder="请填写拒绝原因，必填"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="rejectDialogVisible = false" :disabled="submittingReject">取消</el-button>
+          <el-button type="danger" @click="submitReject" :loading="submittingReject">确认拒绝</el-button>
+        </span>
+      </template>
+    </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -124,6 +157,7 @@ import { getPackagingStatusOptions, formatPackagingStatusArray } from '@/utils/s
 import { PACKAGING_STATUS } from '@/types/product'
 import { formatDateTime } from '@/utils/date'
 import StatusTag from '@/components/StatusTag.vue'
+import { rejectDesignWithComment } from '@/api/design-review'
 
 // 响应式数据
 const loading = ref(false)
@@ -143,6 +177,12 @@ const searchStatus = ref<string[]>([
 // 详情对话框
 const detailDialogVisible = ref(false)
 const selectedLog = ref<ProductPackagingLogVO | null>(null)
+
+// 拒绝对话框状态
+const rejectDialogVisible = ref(false)
+const rejectReason = ref('')
+const submittingReject = ref(false)
+const rejectTargetRow = ref<ProductPackagingLogVO | null>(null)
 
 // 获取打包记录列表
 const fetchPackagingLogs = async () => {
@@ -200,6 +240,41 @@ const handleCurrentChange = (page: number) => {
 const handleViewDetails = (row: ProductPackagingLogVO) => {
   selectedLog.value = row
   detailDialogVisible.value = true
+}
+
+// 打开拒绝对话框
+const openRejectDialog = (row: ProductPackagingLogVO) => {
+  rejectTargetRow.value = row
+  rejectReason.value = ''
+  rejectDialogVisible.value = true
+}
+
+// 提交拒绝（必须填写原因）
+const submitReject = async () => {
+  if (!rejectTargetRow.value) return
+  if (!rejectReason.value || rejectReason.value.trim().length === 0) {
+    ElMessage.error('必须填写拒绝原因')
+    return
+  }
+  try {
+    submittingReject.value = true
+    const dto = {
+      designUid: rejectTargetRow.value.product.designId,
+      reviewComment: rejectReason.value.trim()
+    }
+    const res = await rejectDesignWithComment(dto)
+    if (res.code === 0 && res.data === true) {
+      ElMessage.success('已拒绝')
+      rejectDialogVisible.value = false
+      rejectReason.value = ''
+      // 刷新列表
+      fetchPackagingLogs()
+    }
+  } catch (e) {
+    // 错误消息在 axios 拦截器里已处理
+  } finally {
+    submittingReject.value = false
+  }
 }
 
 // 初始化
