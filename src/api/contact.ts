@@ -8,3 +8,8 @@ export function fetchEmailSendRecordPage(
 ): Promise<ApiResponse<PageResponse<EmailSendRecord>>> {
   return instance.post('/admin/contact/email-send-record/page', params)
 }
+
+// 重发指定邮件发送记录
+export function resendEmailRecord(id: number): Promise<ApiResponse<EmailSendRecord>> {
+  return instance.post(`/admin/contact/email-send-record/resend/${id}`)
+}

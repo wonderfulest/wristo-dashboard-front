@@ -44,6 +44,16 @@
       <el-table-column label="更新时间" width="180">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
       </el-table-column>
+      <el-table-column label="操作" fixed="right" width="140">
+        <template #default="{ row }">
+          <el-button
+            v-if="row.status !== 1 && row.status !== 0"
+            type="primary"
+            link
+            @click="confirmResend(row)"
+          >重发</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -62,8 +72,8 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { fetchEmailSendRecordPage } from '@/api/contact'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { fetchEmailSendRecordPage, resendEmailRecord } from '@/api/contact'
 import type { EmailSendRecord } from '@/types/contact'
 import { formatDateTime } from '@/utils/date'
 
@@ -128,6 +138,29 @@ const handleReset = () => {
   toEmail.value = ''
   pageNum.value = 1
   fetchPage()
+}
+
+const confirmResend = async (row: EmailSendRecord) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要重发该邮件吗？\nID: ${row.id}\n收件人: ${row.toEmail}`,
+      '确认重发',
+      { type: 'warning', confirmButtonText: '重发', cancelButtonText: '取消' }
+    )
+  } catch {
+    return
+  }
+  try {
+    const res = await resendEmailRecord(row.id)
+    if (res.code === 0) {
+      ElMessage.success('已提交重发')
+      fetchPage()
+    } else {
+      ElMessage.error(res.msg || '重发失败')
+    }
+  } catch (e) {
+    // 错误提示在拦截器
+  }
 }
 
 onMounted(() => {
