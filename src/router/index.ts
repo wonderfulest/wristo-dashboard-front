@@ -101,6 +101,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/merchant/email-records',
+      name: 'MerchantEmailRecords',
+      component: () => import('@/views/MerchantEmailRecords.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/history',
       redirect: '/orders/history'
     },
@@ -130,6 +136,18 @@ const router = createRouter({
       path: '/packaging-logs',
       name: 'PackagingLogs',
       component: () => import('@/views/PackagingLogs.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/app-daily/config',
+      name: 'AppDailyConfig',
+      component: () => import('@/views/AppDailyConfig.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/app-daily/config/edit/:appId',
+      name: 'AppDailyConfigEdit',
+      component: () => import('@/views/AppDailyConfigEdit.vue'),
       meta: { requiresAuth: true }
     },
     {

@@ -16,7 +16,7 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts'],
+    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/app-daily'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'products', title: '作品管理', path: '/products' },
@@ -24,6 +24,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'design-review', title: '设计审核', path: '/design-review' },
       { key: 'packaging-logs', title: '打包记录', path: '/packaging-logs' },
       { key: 'fonts', title: '字体管理', path: '/fonts' },
+      { key: 'app-daily-config', title: '每日一图配置', path: '/app-daily/config' },
     ],
   },
   {
@@ -65,6 +66,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'merchant-tools', title: '商家工具', path: '/merchant/tools' },
       { key: 'merchant-payouts', title: '结算管理', path: '/merchant/payouts' },
       { key: 'merchant-refund', title: '订单退款', path: '/merchant/refund' },
+      { key: 'merchant-email-records', title: '邮件发送历史', path: '/merchant/email-records' },
     ],
   },
   {
