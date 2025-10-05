@@ -50,7 +50,17 @@
       <div v-if="showRelations">
         <el-table ref="relationsTableRef" :data="relations" v-loading="loadingRelations" style="width: 100%">
           <el-table-column prop="id" label="ID" width="90" />
-          <el-table-column prop="imageId" label="图片ID" width="140" />
+          <el-table-column label="图片1" width="200">
+            <template #default="{ row }">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <el-image v-if="getImagePreview(row.image)" :src="getImagePreview(row.image)" style="width:40px;height:40px;border-radius:4px;" fit="cover" />
+                <div>
+                  <div>ID: {{ row.imageId }}</div>
+                  <div style="color:#909399; font-size:12px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ row.image?.name || getImagePreview(row.image) || '-' }}</div>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column prop="weight" label="权重" width="100" />
           <el-table-column prop="sort" label="排序" width="100" />
           <el-table-column prop="isActive" label="启用" width="100">
@@ -65,6 +75,18 @@
             <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
           </el-table-column>
         </el-table>
+        <div style="display:flex; justify-content:flex-end; margin-top: 12px;">
+          <el-pagination
+            background
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total"
+            :page-sizes="[10, 20, 50, 100]"
+            :page-size="pageSize"
+            :current-page="pageNum"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div>
       </div>
     </el-card>
     <RelationCreateDialog
@@ -80,9 +102,9 @@ import { onMounted, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
-import { getAppDailyConfigDetail, listAppDailyRelations } from '@/api/app-daily'
+import { getAppDailyConfigDetail, pageAppDailyRelations } from '@/api/app-daily'
 import RelationCreateDialog from '@/components/appDaily/RelationCreateDialog.vue'
-import type { AppDailyImageConfig, AppDailyImageRelation } from '@/types/app-daily'
+import type { AppDailyImageConfig, AppDailyImageRelation, ImageVO } from '@/types/app-daily'
 
 const route = useRoute()
 const router = useRouter()
@@ -92,12 +114,24 @@ const loadingConfig = ref(false)
 const loadingRelations = ref(false)
 const config = ref<AppDailyImageConfig | null>(null)
 const relations = ref<AppDailyImageRelation[]>([])
+const pageNum = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
 const createDialogVisible = ref(false)
 const showBase = ref(true)
 const showRelations = ref(true)
 const relationsTableRef = ref()
 
 // create relation handled in dialog component
+
+const getImagePreview = (img?: ImageVO | null): string => {
+  if (!img) return ''
+  // try previewUrl -> formats.thumbnail/small -> url
+  const thumb = (img as any)?.formats?.thumbnail?.url || (img as any)?.formats?.small?.url
+  const previewUrl = img.previewUrl || thumb || img.url || ''
+  console.log(previewUrl)
+  return previewUrl
+}
 
 const fetchConfig = async () => {
   loadingConfig.value = true
@@ -118,9 +152,10 @@ const fetchConfig = async () => {
 const fetchRelations = async () => {
   loadingRelations.value = true
   try {
-    const res = await listAppDailyRelations(appId)
-    if (res.code === 0) {
-      relations.value = (res.data || []) as unknown as AppDailyImageRelation[]
+    const res = await pageAppDailyRelations({ appId, pageNum: pageNum.value, pageSize: pageSize.value })
+    if (res.code === 0 && res.data) {
+      relations.value = (res.data.list || []) as unknown as AppDailyImageRelation[]
+      total.value = res.data.total || 0
     } else {
       ElMessage.error(res.msg || '获取关系列表失败')
     }
@@ -129,6 +164,17 @@ const fetchRelations = async () => {
   } finally {
     loadingRelations.value = false
   }
+}
+
+const handleSizeChange = (val: number) => {
+  pageSize.value = val
+  pageNum.value = 1
+  fetchRelations()
+}
+
+const handleCurrentChange = (val: number) => {
+  pageNum.value = val
+  fetchRelations()
 }
 
 const goBack = () => {
