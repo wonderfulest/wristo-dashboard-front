@@ -6,7 +6,8 @@ import type { AppDailyImageConfig, AppDailyConfigPageParams, AppDailyImageRelati
 export function fetchAppDailyConfigPage(
   params: AppDailyConfigPageParams
 ): Promise<ApiResponse<PageResponse<AppDailyImageConfig>>> {
-  return instance.post('/admin/app-daily/config/page', params)
+  // request populated fields: product and fixedImage
+  return instance.post('/admin/app-daily/config/page?populate=product,fixedImage', params)
 }
 
 // 获取指定 app 的配置详情
@@ -17,6 +18,11 @@ export function getAppDailyConfigDetail(appId: number): Promise<ApiResponse<AppD
 // 新增/保存 配置
 export function saveAppDailyConfig(dto: ConfigUpsertDTO): Promise<ApiResponse<AppDailyImageConfig>> {
   return instance.post('/admin/app-daily/config', dto)
+}
+
+// 更新 配置
+export function updateAppDailyConfig(id: number, dto: ConfigUpsertDTO): Promise<ApiResponse<AppDailyImageConfig>> {
+  return instance.post(`/admin/app-daily/config/${id}`, dto)
 }
 
 // 获取指定 app 的图片关系列表

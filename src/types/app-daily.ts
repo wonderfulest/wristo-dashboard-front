@@ -1,4 +1,5 @@
 import type { PageQueryDTO } from './common'
+import type { ProductBase } from '@/types/product'
 
 export interface AppDailyImageConfig {
   id: number
@@ -15,6 +16,9 @@ export interface AppDailyImageConfig {
   isDeleted: number
   createdAt: string
   updatedAt: string
+  // populated
+  product?: ProductBase
+  fixedImage?: ImageVO | null
 }
 
 export interface AppDailyConfigPageParams extends PageQueryDTO {
