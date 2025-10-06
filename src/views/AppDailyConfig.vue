@@ -12,6 +12,7 @@
         />
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
+        <el-button type="success" @click="showCreate = true">新增配置</el-button>
       </div>
     </div>
 
@@ -60,6 +61,7 @@
         @current-change="handleCurrentChange"
       />
     </div>
+    <ConfigCreateDialog v-model="showCreate" @success="fetchPage" />
   </div>
 </template>
 
@@ -67,9 +69,11 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { fetchAppDailyConfigPage } from '@/api/app-daily'
+import { fetchAppDailyConfigPage, saveAppDailyConfig } from '@/api/app-daily'
+import { uploadImage } from '@/api/image'
 import type { AppDailyImageConfig } from '@/types/app-daily'
 import { formatDateTime } from '@/utils/date'
+import ConfigCreateDialog from '@/components/appDaily/ConfigCreateDialog.vue'
 
 const loading = ref(false)
 const rows = ref<AppDailyImageConfig[]>([])
@@ -78,6 +82,8 @@ const pageSize = ref(10)
 const total = ref(0)
 const searchAppId = ref('')
 const router = useRouter()
+const showCreate = ref(false)
+const imagePreviewMap = ref<Record<number, string>>({})
 
 const truncate = (text: string, len = 80) => {
   if (!text) return ''
@@ -135,6 +141,31 @@ const goEdit = (row: AppDailyImageConfig) => {
 onMounted(() => {
   fetchPage()
 })
+
+const handleUploadFixed = async (row: AppDailyImageConfig, uploadFile: any) => {
+  try {
+    const raw: File | null = uploadFile?.raw || null
+    if (!raw) return
+    const up = await uploadImage(raw)
+    if (up.code !== 0 || !up.data) {
+      ElMessage.error(up.msg || '上传失败')
+      return
+    }
+    const img = up.data
+    // 保存 fixedImageId
+    const saveRes = await saveAppDailyConfig({ appId: row.appId, fixedImageId: img.id })
+    if (saveRes.code === 0) {
+      ElMessage.success('已更新固定图片')
+      imagePreviewMap.value[row.appId] = img.previewUrl || (img as any)?.formats?.thumbnail?.url || img.url || ''
+      // 同步本地行的 fixedImageId，避免必须刷新
+      row.fixedImageId = img.id as unknown as number
+    } else {
+      ElMessage.error(saveRes.msg || '保存失败')
+    }
+  } catch (e) {
+    // 错误提示在拦截器
+  }
+}
 </script>
 
 <style scoped lang="scss">

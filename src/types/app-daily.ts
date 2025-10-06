@@ -62,3 +62,16 @@ export interface AppDailyImageRelation {
 export interface RelationPageParams extends PageQueryDTO {
   appId: number
 }
+
+export interface ConfigUpsertDTO {
+  appId: number
+  isEnabled?: number // 1-启用 0-停用
+  selectionMode?: string // weighted_random | fixed | sequential
+  fixedImageId?: number | null
+  noRepeatDays?: number | null
+  refreshTime?: string | null // HH:mm:ss
+  maxDailyPick?: number | null
+  useWeight?: number | null // 1-启用 0-忽略
+  remark?: string | null
+  isActive?: number | null
+}

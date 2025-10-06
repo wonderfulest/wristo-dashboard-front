@@ -1,6 +1,6 @@
 import instance from '@/config/axios'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import type { AppDailyImageConfig, AppDailyConfigPageParams, AppDailyImageRelation, RelationPageParams } from '@/types/app-daily'
+import type { AppDailyImageConfig, AppDailyConfigPageParams, AppDailyImageRelation, RelationPageParams, ConfigUpsertDTO } from '@/types/app-daily'
 
 // 分页查询每日一图配置
 export function fetchAppDailyConfigPage(
@@ -12,6 +12,11 @@ export function fetchAppDailyConfigPage(
 // 获取指定 app 的配置详情
 export function getAppDailyConfigDetail(appId: number): Promise<ApiResponse<AppDailyImageConfig>> {
   return instance.get(`/admin/app-daily/config/detail/${appId}`)
+}
+
+// 新增/保存 配置
+export function saveAppDailyConfig(dto: ConfigUpsertDTO): Promise<ApiResponse<AppDailyImageConfig>> {
+  return instance.post('/admin/app-daily/config', dto)
 }
 
 // 获取指定 app 的图片关系列表

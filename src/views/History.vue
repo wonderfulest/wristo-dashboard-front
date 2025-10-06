@@ -2,7 +2,7 @@
   <div class="account-page">
     <!-- Filters -->
     <div class="filters">
-      <input v-model="searchAppId" class="filter-input" placeholder="Search by App ID" />
+      <AppSearchSelect v-model="searchAppId" :width="'260px'" />
       <input v-model="searchEmail" class="filter-input" placeholder="Search by User Email" />
       <button class="filter-btn primary" @click="fetchPurchaseRecords(1)">Search</button>
       <button class="filter-btn" @click="resetFilters">Reset</button>
@@ -196,13 +196,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { getPurchaseRecordPageList } from '@/api/purchase'
 import type { PurchaseRecordVO, PurchaseRecordPageQueryDTO, PageResponse } from '@/types/api'
 
 const purchaseRecords = ref<PurchaseRecordVO[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-const searchAppId = ref<string>('')
+const searchAppId = ref<number | null | undefined>(undefined)
 const searchEmail = ref<string>('')
 const detailVisible = ref(false)
 const selectedRecord = ref<PurchaseRecordVO | null>(null)
@@ -307,7 +308,7 @@ const fetchPurchaseRecords = async (pageNum: number = 1) => {
       pageNum,
       pageSize: 10,
       email: searchEmail.value || null,
-      appId: searchAppId.value ? Number(searchAppId.value) : null,
+      appId: searchAppId.value ?? null,
       bundleId: null,
       status: null
     }
@@ -340,7 +341,7 @@ const openDetail = (record: PurchaseRecordVO) => {
 }
 
 const resetFilters = () => {
-  searchAppId.value = ''
+  searchAppId.value = null
   searchEmail.value = ''
   fetchPurchaseRecords(1)
 }
