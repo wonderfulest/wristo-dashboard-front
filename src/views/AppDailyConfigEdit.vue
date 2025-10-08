@@ -216,14 +216,6 @@ onMounted(() => {
   fetchConfig()
   fetchRelations()
 })
-
-// 展开时，等待 DOM 更新后重算表格布局，避免表头/内容错位
-watch(showRelations, async (v) => {
-  if (v) {
-    await nextTick()
-    relationsTableRef.value?.doLayout?.()
-  }
-})
 </script>
 
 <style scoped lang="scss">
