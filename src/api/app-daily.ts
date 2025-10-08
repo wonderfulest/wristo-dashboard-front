@@ -7,12 +7,12 @@ export function fetchAppDailyConfigPage(
   params: AppDailyConfigPageParams
 ): Promise<ApiResponse<PageResponse<AppDailyImageConfig>>> {
   // request populated fields: product and fixedImage
-  return instance.post('/admin/app-daily/config/page?populate=product,fixedImage', params)
+  return instance.post('/admin/app-daily/config/page?populate=product,image', params)
 }
 
 // 获取指定 app 的配置详情
 export function getAppDailyConfigDetail(appId: number): Promise<ApiResponse<AppDailyImageConfig>> {
-  return instance.get(`/admin/app-daily/config/detail/${appId}`)
+  return instance.get(`/admin/app-daily/config/detail/${appId}?populate=product,image`)
 }
 
 // 新增/保存 配置
@@ -35,6 +35,11 @@ export function pageAppDailyRelations(
   params: RelationPageParams
 ): Promise<ApiResponse<PageResponse<AppDailyImageRelation>>> {
   return instance.post('/admin/app-daily/relations/page', params)
+}
+
+// 启用/停用 指定图片关系
+export function setRelationActive(id: number, isActive: number) {
+  return instance.post(`/admin/app-daily/relations/${id}/active/${isActive}`)
 }
 
 // 新增图片关系（可上传图片文件）

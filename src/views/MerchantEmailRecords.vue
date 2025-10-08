@@ -20,6 +20,7 @@
       <el-table-column prop="uuid" label="UUID" min-width="260" />
       <el-table-column prop="templateId" label="模板ID" width="100" />
       <el-table-column prop="toEmail" label="收件人" min-width="200" />
+      <el-table-column prop="sendChannel" label="发送渠道" min-width="140" />
       <el-table-column label="变量" min-width="220">
         <template #default="{ row }">
           <el-tooltip :content="row.variables" placement="top">

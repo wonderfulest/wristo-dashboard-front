@@ -5,6 +5,7 @@ export interface EmailSendRecord {
   uuid: string
   templateId: number
   toEmail: string
+  sendChannel: string
   variables: string
   status: number
   retryCount: number

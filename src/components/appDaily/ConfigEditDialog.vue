@@ -2,8 +2,11 @@
   <el-dialog :model-value="modelValue" title="编辑配置" width="640px" @close="emitClose">
     <template v-if="loaded">
       <el-form :model="form" label-width="120px">
-        <el-form-item label="App">
-          <el-input :model-value="form.appId" disabled style="width: 240px" />
+        <el-form-item label="应用">
+          <div style="display:flex; flex-direction:column; align-items:flex-start; gap:4px;">
+            <span>{{ productName || '-' }}</span>
+            <span style="color:#909399; font-size:12px;">AppID：{{ form.appId }}</span>
+          </div>
         </el-form-item>
 
         <el-form-item label="启用">
@@ -80,6 +83,7 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void; (e: 'succ
 const submitting = ref(false)
 const loaded = ref(false)
 const currentId = ref<number | null>(null)
+const productName = ref<string>('')
 
 const form = ref<ConfigUpsertDTO>({
   appId: 0,
@@ -143,8 +147,9 @@ const loadDetail = async (appId: number) => {
         isActive: d.isActive,
       }
       refreshTime.value = form.value.refreshTime || '00:00:00'
-      // preview from populated fixedImage if exists
-      const img: any = (res.data as any).fixedImage
+      // populate: product name & image (support both 'image' and 'fixedImage')
+      productName.value = (res.data as any)?.product?.name || ''
+      const img: any = (res.data as any).image || (res.data as any).fixedImage
       fixedImagePreview.value = img ? (img.previewUrl || img?.formats?.thumbnail?.url || img.url || '') : ''
       loaded.value = true
     } else {
