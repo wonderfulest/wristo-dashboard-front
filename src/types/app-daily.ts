@@ -67,6 +67,29 @@ export interface RelationPageParams extends PageQueryDTO {
   appId: number
 }
 
+// 每日图片 - 分页请求参数
+export interface PickPageParams extends PageQueryDTO {
+  appId: number
+  fromNaturalDay?: string // YYYY-MM-DD, fetch records AFTER this day (inclusive of next day)
+  orderBy?: string // e.g. "natural_day desc, id desc"
+}
+
+// 每日图片 - 选中记录 VO
+export interface AppDailyImagePickVO {
+  id: number
+  naturalDay: string // YYYY-MM-DD
+  dayOfYear: number
+  appId: number
+  imageId: number
+  chosenAt?: string | null
+  isActive: number
+  isDeleted: number
+  createdAt: string
+  updatedAt: string
+  // populated
+  image?: ImageVO | null
+}
+
 export interface ConfigUpsertDTO {
   appId: number
   isEnabled?: number // 1-启用 0-停用

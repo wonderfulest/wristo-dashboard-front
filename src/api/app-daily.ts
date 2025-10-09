@@ -1,6 +1,14 @@
 import instance from '@/config/axios'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import type { AppDailyImageConfig, AppDailyConfigPageParams, AppDailyImageRelation, RelationPageParams, ConfigUpsertDTO } from '@/types/app-daily'
+import type {
+  AppDailyImageConfig,
+  AppDailyConfigPageParams,
+  AppDailyImageRelation,
+  RelationPageParams,
+  ConfigUpsertDTO,
+  PickPageParams,
+  AppDailyImagePickVO
+} from '@/types/app-daily'
 
 // 分页查询每日一图配置
 export function fetchAppDailyConfigPage(
@@ -62,4 +70,16 @@ export function createAppDailyRelation(params: CreateRelationParams): Promise<Ap
   return instance.post('/admin/app-daily/relations', form, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
+}
+
+// ===== 每日图片（picks） =====
+export function pageAppDailyPicks(
+  params: PickPageParams
+): Promise<ApiResponse<PageResponse<AppDailyImagePickVO>>> {
+  return instance.post('/admin/app-daily/picks/page?populate=image', params)
+}
+
+export function generateAppDailyPicks(appId: number, days = 100): Promise<ApiResponse<number>> {
+  // backend signature: POST /picks/generate?appId=...&days=...
+  return instance.post(`/admin/app-daily/picks/generate?appId=${appId}&days=${days}`)
 }

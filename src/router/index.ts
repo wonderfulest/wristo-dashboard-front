@@ -151,6 +151,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/app-daily/picks/:appId',
+      name: 'AppDailyPicks',
+      component: () => import('@/views/AppDailyPicks.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/auth/callback',
       name: 'AuthCallback',
       component: () => import('@/views/AuthCallback.vue'),

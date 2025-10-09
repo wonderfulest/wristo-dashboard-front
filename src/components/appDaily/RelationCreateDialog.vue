@@ -63,9 +63,11 @@ const visible = computed({
   set: (v: boolean) => emit('update:modelValue', v)
 })
 
+const DEFAULT_WEIGHT = 100
+const DEFAULT_SORT = 0
 const form = ref<{ weight: number | null; sort: number | null; isActiveSwitch: boolean }>({
-  weight: null,
-  sort: null,
+  weight: DEFAULT_WEIGHT,
+  sort: DEFAULT_SORT,
   isActiveSwitch: true
 })
 const fileObj = ref<File | null>(null)
@@ -73,7 +75,7 @@ const previewUrl = ref<string>('')
 const submitting = ref(false)
 
 const reset = () => {
-  form.value = { weight: null, sort: null, isActiveSwitch: true }
+  form.value = { weight: DEFAULT_WEIGHT, sort: DEFAULT_SORT, isActiveSwitch: true }
   fileObj.value = null
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   previewUrl.value = ''

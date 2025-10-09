@@ -55,7 +55,9 @@
         <template #default="{ row }">
           <el-button type="primary" link @click="openEdit(row)">编辑配置</el-button>
           <el-divider direction="vertical" />
-          <el-button type="success" link @click="goEditRelations(row)">图片关系</el-button>
+          <el-button type="warning" link @click="goEditRelations(row)">图片库</el-button>
+          <el-divider direction="vertical" />
+          <el-button type="success" link @click="goDailyPicks(row)">每日图片</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -159,6 +161,10 @@ const openEdit = (row: AppDailyImageConfig) => {
 
 const goEditRelations = (row: AppDailyImageConfig) => {
   router.push({ name: 'AppDailyConfigEdit', params: { appId: row.appId }, query: { tab: 'relations' } })
+}
+
+const goDailyPicks = (row: AppDailyImageConfig) => {
+  router.push({ name: 'AppDailyPicks', params: { appId: row.appId } })
 }
 
 onMounted(() => {

@@ -18,12 +18,28 @@
         <el-skeleton v-if="loadingConfig" :rows="4" animated />
         <template v-else>
         <el-descriptions :column="2" border v-if="config">
-          <el-descriptions-item label="AppID">{{ config.appId }}</el-descriptions-item>
+          <el-descriptions-item label="应用名（AppId）">{{ (config.product?.name || '-') + '（' + config.appId + '）' }}</el-descriptions-item>
           <el-descriptions-item label="启用">
             <el-tag :type="config.isEnabled === 1 ? 'success' : 'info'">{{ config.isEnabled === 1 ? '是' : '否' }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="选图模式">{{ config.selectionMode || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="固定图片ID">{{ config.fixedImageId ?? '-' }}</el-descriptions-item>
+          <el-descriptions-item label="固定图片">
+            <div v-if="config.fixedImage || config.fixedImageId" style="display:flex; align-items:center; gap:8px;">
+              <el-image
+                v-if="config.fixedImage && getImagePreview(config.fixedImage)"
+                :src="getImagePreview(config.fixedImage)"
+                style="width:48px;height:48px;border-radius:4px;"
+                fit="cover"
+              />
+              <div>
+                <div>ID: {{ config.fixedImageId ?? '-' }}</div>
+                <div style="color:#909399; font-size:12px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                  {{ config.fixedImage?.name || getImagePreview(config.fixedImage) || '-' }}
+                </div>
+              </div>
+            </div>
+            <span v-else>-</span>
+          </el-descriptions-item>
           <el-descriptions-item label="不重复天数">{{ config.noRepeatDays ?? '-' }}</el-descriptions-item>
           <el-descriptions-item label="刷新时间">{{ config.refreshTime ?? '-' }}</el-descriptions-item>
           <el-descriptions-item label="每日最多选取">{{ config.maxDailyPick ?? '-' }}</el-descriptions-item>
@@ -50,11 +66,11 @@
       <div v-if="showRelations">
         <el-table ref="relationsTableRef" :data="relations" v-loading="loadingRelations" style="width: 100%">
           <el-table-column prop="id" label="ID" width="90" />
-          <el-table-column label="图片1" width="200">
+          <el-table-column label="图片" width="200">
             <template #default="{ row }">
               <div style="display:flex; align-items:center; gap:8px;">
                 <el-image v-if="getImagePreview(row.image)" :src="getImagePreview(row.image)" style="width:40px;height:40px;border-radius:4px;" fit="cover" />
-                <div>
+                <div v-else>
                   <div>ID: {{ row.imageId }}</div>
                   <div style="color:#909399; font-size:12px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ row.image?.name || getImagePreview(row.image) || '-' }}</div>
                 </div>
@@ -146,6 +162,7 @@ const fetchConfig = async () => {
     } else {
       ElMessage.error(res.msg || '获取配置失败')
     }
+  } catch (e) {
     ElMessage.error('网络异常，获取配置失败')
   } finally {
     loadingConfig.value = false
