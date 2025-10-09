@@ -32,11 +32,6 @@
           {{ row.user?.id ?? row.id }}
         </template>
       </el-table-column>
-      <!-- <el-table-column label="头像" width="80">
-        <template #default="{ row }">
-          <el-avatar v-if="row.user?.avatar" :src="row.user?.avatar" :size="24" />
-        </template>
-      </el-table-column> -->
       <el-table-column label="用户名" min-width="100">
         <template #default="{ row }">
           <span class="username">{{ row.user?.username || '-' }}</span>
