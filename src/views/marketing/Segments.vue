@@ -2,7 +2,10 @@
   <div class="segments-page">
     <div class="page-header">
       <h2>用户分群</h2>
-      <el-button type="success" @click="openCreate">新增分群</el-button>
+      <div style="display:flex; gap:8px;">
+        <el-button @click="handleRefreshAll">刷新全部</el-button>
+        <el-button type="success" @click="openCreate">新增分群</el-button>
+      </div>
     </div>
 
     <div class="filters">
@@ -21,9 +24,6 @@
     <el-table :data="list" style="width: 100%" :loading="loading" :default-sort="defaultSort" @sort-change="handleSortChange">
       <el-table-column prop="id" label="ID" width="80" sortable="custom" />
       <el-table-column prop="name" label="名称" min-width="160" sortable="custom" />
-      <el-table-column prop="code" label="编码" min-width="160" sortable="custom" />
-      <el-table-column prop="category" label="分类" min-width="140" sortable="custom" />
-      <el-table-column prop="type" label="类型" min-width="120" sortable="custom" />
       <el-table-column prop="status" label="状态" width="100">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
@@ -32,9 +32,22 @@
       <el-table-column prop="updatedAt" label="更新时间" min-width="180" sortable="custom">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="200">
+      <el-table-column label="操作" width="420">
         <template #default="scope">
           <el-button size="small" @click="openEdit(scope.row)">编辑</el-button>
+          <el-button size="small" @click="handleRefreshOne(scope.row)">刷新</el-button>
+          <el-button
+            v-if="scope.row.status === 0"
+            size="small"
+            type="success"
+            @click="handleActivate(scope.row)"
+          >启用</el-button>
+          <el-button
+            v-else
+            size="small"
+            type="warning"
+            @click="handleDeactivate(scope.row)"
+          >停用</el-button>
           <el-popconfirm title="确定删除该分群吗？" @confirm="doDelete(scope.row)">
             <template #reference>
               <el-button size="small" type="danger">删除</el-button>
@@ -57,54 +70,29 @@
       />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑分群' : '新增分群'" width="720">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="名称" required>
-          <el-input v-model="form.name" maxlength="50" show-word-limit />
-        </el-form-item>
-        <el-form-item label="编码" required>
-          <el-input v-model="form.code" :disabled="isEdit" maxlength="50" show-word-limit />
-        </el-form-item>
-        <el-form-item label="分类">
-          <el-input v-model="form.category" maxlength="50" show-word-limit />
-        </el-form-item>
-        <el-form-item label="类型">
-          <el-input v-model="form.type" maxlength="50" show-word-limit />
-        </el-form-item>
-        <el-form-item label="规则表达式">
-          <el-input v-model="form.ruleExpr" type="textarea" :rows="4" />
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="form.description" type="textarea" :rows="3" maxlength="200" show-word-limit />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="form.status" style="width: 180px;">
-            <el-option :value="1" label="启用" />
-            <el-option :value="0" label="禁用" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
-      </template>
-    </el-dialog>
+    <SegmentEditorDialog
+      v-model:visible="dialogVisible"
+      :isEdit="isEdit"
+      :initial="initialForEditor"
+      @submit="onEditorSubmit"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { pageSegments, createSegment, updateSegment, deleteSegment, type SegmentVO, type SegmentCreateDTO, type SegmentUpdateDTO } from '@/api/segment'
+import { pageSegments, createSegment, updateSegment, deleteSegment, refreshAllSegments, refreshSegment, activateSegment, deactivateSegment, type SegmentVO, type SegmentCreateDTO, type SegmentUpdateDTO } from '@/api/segment'
 import { formatDateTime } from '@/utils/date'
+import SegmentEditorDialog from '@/views/marketing/components/SegmentEditorDialog.vue'
 
 const loading = ref(false)
-const saving = ref(false)
 const list = ref<SegmentVO[]>([])
 const total = ref(0)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const currentId = ref<number | null>(null)
+const initialForEditor = ref<Partial<SegmentVO> | null>(null)
 
 const defaultSort = ref<{ prop: string; order: 'ascending' | 'descending' }>({ prop: 'id', order: 'descending' })
 
@@ -119,15 +107,7 @@ const query = ref({
   orderBy: 'id desc' as string | undefined,
 })
 
-const form = ref<SegmentCreateDTO>({
-  name: '',
-  code: '',
-  category: '',
-  type: '',
-  ruleExpr: '',
-  description: '',
-  status: 1,
-})
+// moved to SegmentEditorDialog
 
 const fetchPage = async () => {
   loading.value = true
@@ -183,57 +163,35 @@ const handleSortChange = (payload: { column: any; prop: string; order: 'ascendin
 const openCreate = () => {
   isEdit.value = false
   currentId.value = null
-  form.value = { name: '', code: '', category: '', type: '', ruleExpr: '', description: '', status: 1 }
+  initialForEditor.value = { name: '', code: '', category: '', type: '', ruleExpr: '', description: '', status: 1 }
   dialogVisible.value = true
 }
 
 const openEdit = (row: SegmentVO) => {
   isEdit.value = true
   currentId.value = row.id
-  form.value = {
-    name: row.name,
-    code: row.code,
-    category: row.category,
-    type: row.type,
-    ruleExpr: row.ruleExpr,
-    description: row.description,
-    status: row.status,
-  }
+  initialForEditor.value = { ...row }
   dialogVisible.value = true
 }
 
-const handleSave = async () => {
-  if (!form.value.name?.trim()) {
-    ElMessage.error('名称不能为空')
-    return
-  }
-  if (!isEdit.value && !form.value.code?.trim()) {
-    ElMessage.error('编码不能为空')
-    return
-  }
-  saving.value = true
+const onEditorSubmit = async (payload: { isEdit: boolean; id?: number; create?: SegmentCreateDTO; update?: SegmentUpdateDTO }) => {
   try {
-    if (isEdit.value && currentId.value) {
-      const { name, category, type, ruleExpr, description, status } = form.value
-      const payload: SegmentUpdateDTO = { name, category, type, ruleExpr, description, status }
-      const res = await updateSegment(currentId.value, payload)
+    if (payload.isEdit && payload.id && payload.update) {
+      const res = await updateSegment(payload.id, payload.update)
       if (res.code === 0) {
         ElMessage.success('更新成功')
         dialogVisible.value = false
         fetchPage()
       }
-    } else {
-      const payload: SegmentCreateDTO = { ...form.value, code: form.value.code.trim() }
-      const res = await createSegment(payload)
+    } else if (!payload.isEdit && payload.create) {
+      const res = await createSegment(payload.create)
       if (res.code === 0) {
         ElMessage.success('创建成功')
         dialogVisible.value = false
         fetchPage()
       }
     }
-  } finally {
-    saving.value = false
-  }
+  } catch {}
 }
 
 const doDelete = async (row: SegmentVO) => {
@@ -246,7 +204,44 @@ const doDelete = async (row: SegmentVO) => {
   } catch {}
 }
 
-onMounted(fetchPage)
+onMounted(() => {
+  fetchPage()
+})
+
+// 刷新相关
+const handleRefreshAll = async () => {
+  try {
+    await refreshAllSegments()
+    ElMessage.success('已触发刷新全部分群')
+  } catch {}
+}
+const handleRefreshOne = async (row: SegmentVO) => {
+  try {
+    await refreshSegment(row.id)
+    ElMessage.success('已触发刷新')
+  } catch {}
+}
+
+const handleActivate = async (row: SegmentVO) => {
+  try {
+    const res = await activateSegment(row.id)
+    if (res.code === 0) {
+      ElMessage.success('已启用')
+      fetchPage()
+    }
+  } catch {}
+}
+
+const handleDeactivate = async (row: SegmentVO) => {
+  try {
+    const res = await deactivateSegment(row.id)
+    if (res.code === 0) {
+      ElMessage.success('已停用')
+      fetchPage()
+    }
+  } catch {}
+}
+
 </script>
 
 <style scoped>
@@ -283,4 +278,5 @@ onMounted(fetchPage)
   justify-content: flex-end;
   margin-top: 12px;
 }
+
 </style>
