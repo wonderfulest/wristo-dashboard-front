@@ -44,6 +44,7 @@ export interface ImageVO {
   provider?: string
   providerMetadata?: Record<string, any>
   folderPath?: string
+  usageType?: string
   createdAt?: string
   updatedAt?: string
   publishedAt?: string

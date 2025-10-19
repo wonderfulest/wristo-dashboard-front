@@ -2,6 +2,7 @@
   <el-select
     :model-value="modelValue"
     @update:modelValue="$emit('update:modelValue', $event)"
+    @change="onChange"
     filterable
     remote
     reserve-keyword
@@ -41,6 +42,11 @@ const options = ref<Product[]>([])
 const loading = ref(false)
 let timer: number | undefined
 
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: number | null | undefined): void
+  (e: 'selected', value: Product): void
+}>()
+
 const onRemote = (query: string) => {
   if (timer) window.clearTimeout(timer)
   timer = window.setTimeout(async () => {
@@ -54,5 +60,12 @@ const onRemote = (query: string) => {
       loading.value = false
     }
   }, 300)
+}
+
+const onChange = (val: number) => {
+  const found = options.value.find(p => p.appId === val)
+  if (found) {
+    emit('selected', found)
+  }
 }
 </script>

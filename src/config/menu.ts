@@ -16,7 +16,7 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/app-daily'],
+    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'products', title: '作品管理', path: '/products' },
@@ -24,7 +24,22 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'design-review', title: '设计审核', path: '/design-review' },
       { key: 'packaging-logs', title: '打包记录', path: '/packaging-logs' },
       { key: 'fonts', title: '字体管理', path: '/fonts' },
+      { key: 'images', title: '图片素材', path: '/images' },
       { key: 'app-daily-config', title: '每日一图配置', path: '/app-daily/config' },
+    ],
+  },
+  {
+    key: 'marketing',
+    title: '营销工具',
+    basePaths: ['/marketing'],
+    children: [
+      { key: 'customers', title: '客户管理', path: '/marketing/customers' },
+      { key: 'user-profiles', title: '用户画像', path: '/marketing/user-profiles' },
+      { key: 'tags', title: '标签管理', path: '/marketing/tags' },
+      { key: 'segments', title: '用户分群', path: '/marketing/segments' },
+      { key: 'promotion-campaigns', title: '营销活动', path: '/marketing/campaigns' },
+      { key: 'email-templates', title: '邮件模板', path: '/marketing/email-templates' },
+      { key: 'email-records', title: '邮件发送历史', path: '/marketing/email-records' },
     ],
   },
   {
@@ -42,6 +57,7 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/orders'],
     children: [
       { key: 'history', title: '订单记录', path: '/orders/history' },
+      { key: 'refund', title: '订单退款', path: '/orders/refund' },
       { key: 'discounts', title: '优惠管理', path: '/orders/discounts' },
       { key: 'subscription-plans', title: '订阅计划', path: '/orders/subscription-plans' },
     ],
@@ -65,8 +81,6 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'merchant', title: '商家管理', path: '/merchant' },
       { key: 'merchant-tools', title: '商家工具', path: '/merchant/tools' },
       { key: 'merchant-payouts', title: '结算管理', path: '/merchant/payouts' },
-      { key: 'merchant-refund', title: '订单退款', path: '/merchant/refund' },
-      { key: 'merchant-email-records', title: '邮件发送历史', path: '/merchant/email-records' },
     ],
   },
 ]

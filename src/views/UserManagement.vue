@@ -13,11 +13,11 @@
       <el-button type="primary" @click="handleSearch">查询</el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
-    <el-table :data="users" style="width: 100%" :loading="loading">
-      <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column prop="username" label="用户名" width="180" />
-      <el-table-column prop="nickname" label="昵称" width="180" />
-      <el-table-column prop="email" label="邮箱" width="280" />
+    <el-table :data="users" style="width: 100%" :loading="loading" :default-sort="defaultSort" @sort-change="handleSortChange">
+      <el-table-column prop="id" label="ID" width="60" sortable="custom" />
+      <el-table-column prop="username" label="用户名" width="180" sortable="custom" />
+      <el-table-column prop="nickname" label="昵称" width="180" sortable="custom" />
+      <el-table-column prop="email" label="邮箱" width="280" sortable="custom" />
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
       <el-table-column label="操作" width="180">
         <template #default="scope">
@@ -87,6 +87,7 @@ const rolesInput = ref<string[]>([])
 const password = ref('')
 const roleOptions = ref<RoleInfo[]>([])
 const total = ref(0)
+const defaultSort = ref<{ prop: string; order: 'ascending' | 'descending' }>({ prop: 'id', order: 'descending' })
 
 const query = ref<UserPageQueryDTO>({
   pageNum: 1,
@@ -94,6 +95,7 @@ const query = ref<UserPageQueryDTO>({
   username: undefined,
   roleId: undefined,
   email: undefined,
+  orderBy: 'id desc',
 })
 
 const roleFormatter = (row: any) => {
@@ -151,6 +153,18 @@ const handlePageChange = (page: number) => {
 
 const handleSizeChange = (size: number) => {
   query.value.pageSize = size
+  query.value.pageNum = 1
+  fetchUsers()
+}
+
+const handleSortChange = (payload: { column: any; prop: string; order: 'ascending' | 'descending' | null }) => {
+  const { prop, order } = payload || ({} as any)
+  if (!order || !prop) {
+    query.value.orderBy = undefined
+  } else {
+    const dir = order === 'ascending' ? 'asc' : 'desc'
+    query.value.orderBy = `${prop} ${dir}`
+  }
   query.value.pageNum = 1
   fetchUsers()
 }

@@ -68,3 +68,21 @@ export const pageMerchantUsers = (
     roleId: MERCHANT_ROLE_ID,
   })
 }
+
+// 同步 Paddle Customers
+export interface SyncPaddleCustomersResult {
+  after?: string
+  created: number
+}
+
+export const syncPaddleCustomers = (
+  params: { after?: string; perPage?: number; pages?: number } = {}
+): Promise<ApiResponse<SyncPaddleCustomersResult>> => {
+  const search = new URLSearchParams()
+  if (params.after) search.append('after', params.after)
+  if (typeof params.perPage === 'number') search.append('perPage', String(params.perPage))
+  if (typeof params.pages === 'number') search.append('pages', String(params.pages))
+  const q = search.toString()
+  const url = q ? `/admin/users/sync/paddle/customers?${q}` : '/admin/users/sync/paddle/customers'
+  return instance.post(url)
+}

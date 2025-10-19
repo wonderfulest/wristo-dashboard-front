@@ -4,6 +4,32 @@ import { useUserStore } from '@/store/user'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    // Marketing Email module (moved under /marketing)
+    {
+      path: '/marketing/email-templates',
+      name: 'EmailTemplates',
+      component: () => import('@/views/marketing/EmailTemplates.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/email-templates/:id/edit',
+      name: 'EmailTemplateEdit',
+      component: () => import('@/views/marketing/EmailTemplateEdit.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/email-records',
+      name: 'MerchantEmailRecords',
+      component: () => import('@/views/marketing/EmailRecords.vue'),
+      meta: { requiresAuth: true }
+    },
+    // Backward-compatible redirects from old /email paths
+    { path: '/email/email-templates', redirect: '/marketing/email-templates' },
+    { path: '/email/email-templates/:id/edit', redirect: to => ({ path: `/marketing/email-templates/${to.params.id}/edit` }) },
+    { path: '/email/email-records', redirect: '/marketing/email-records' },
+    { path: '/email-templates', redirect: '/marketing/email-templates' },
+    { path: '/email-templates/:id/edit', redirect: to => ({ path: `/marketing/email-templates/${to.params.id}/edit` }) },
+    { path: '/email-records', redirect: '/marketing/email-records' },
     {
       path: '/db-backups',
       name: 'DbBackups',
@@ -20,19 +46,19 @@ const router = createRouter({
     {
       path: '/orders/history',
       name: 'OrdersHistory',
-      component: () => import('@/views/History.vue'),
+      component: () => import('@/views/orders/History.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/orders/discounts',
       name: 'OrdersDiscounts',
-      component: () => import('@/views/Discounts.vue'),
+      component: () => import('@/views/orders/Discounts.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/orders/subscription-plans',
       name: 'OrdersSubscriptionPlans',
-      component: () => import('@/views/SubscriptionPlans.vue'),
+      component: () => import('@/views/orders/SubscriptionPlans.vue'),
       meta: { requiresAuth: true }
     },
     // Backward-compatible redirects
@@ -95,29 +121,55 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/merchant/refund',
-      name: 'MerchantRefund',
-      component: () => import('@/views/MerchantRefund.vue'),
+      path: '/orders/refund',
+      name: 'OrdersRefund',
+      component: () => import('@/views/orders/OrdersRefund.vue'),
       meta: { requiresAuth: true }
-    },
-    {
-      path: '/merchant/email-records',
-      name: 'MerchantEmailRecords',
-      component: () => import('@/views/MerchantEmailRecords.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/history',
-      redirect: '/orders/history'
-    },
-    {
-      path: '/discounts',
-      redirect: '/orders/discounts'
     },
     {
       path: '/fonts',
       name: 'Fonts',
       component: () => import('@/views/Fonts.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/campaigns',
+      name: 'PromotionCampaigns',
+      component: () => import('@/views/marketing/PromotionCampaigns.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/customers',
+      name: 'Customers',
+      component: () => import('@/views/marketing/Customers.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/tags',
+      name: 'Tags',
+      component: () => import('@/views/marketing/Tags.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/segments',
+      name: 'Segments',
+      component: () => import('@/views/marketing/Segments.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/user-profiles',
+      name: 'UserProfiles',
+      component: () => import('@/views/marketing/UserProfiles.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing',
+      redirect: '/marketing/campaigns'
+    },
+    {
+      path: '/images',
+      name: 'Images',
+      component: () => import('@/views/ImageAssets.vue'),
       meta: { requiresAuth: true }
     },
     {
