@@ -1,0 +1,116 @@
+<template>
+  <el-dialog v-model="visibleInner" title="新建活动" width="640px" @closed="$emit('closed')">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+      <el-form-item label="活动名称" prop="name">
+        <el-input v-model="form.name" placeholder="请输入活动名称" />
+      </el-form-item>
+      <el-form-item label="时间范围">
+        <el-date-picker
+          v-model="dateRange"
+          type="datetimerange"
+          range-separator="至"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          style="width: 100%"
+        />
+      </el-form-item>
+      <el-form-item label="描述">
+        <el-input v-model="form.description" type="textarea" :rows="3" placeholder="活动描述（可选）" />
+      </el-form-item>
+      <el-form-item label="创建人">
+        <el-input v-model="form.creator" placeholder="创建人（可选）" />
+      </el-form-item>
+      <el-form-item label="分群">
+        <el-select v-model="form.segmentId" filterable clearable placeholder="选择分群" style="width: 100%" :loading="loadingSegments">
+          <el-option v-for="s in segmentOptions" :key="s.id" :label="`${s.name} (#${s.id})`" :value="s.id" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="邮件模板">
+        <el-select v-model="form.emailTemplateId" filterable clearable placeholder="选择邮件模板" style="width: 100%" :loading="loadingEmailTpls">
+          <el-option v-for="t in emailTplOptions" :key="t.id" :label="`${t.name} (#${t.id})`" :value="t.id" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="状态">
+        <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%">
+          <el-option label="草稿" :value="0" />
+          <el-option label="进行中" :value="1" />
+          <el-option label="已结束" :value="2" />
+        </el-select>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="visibleInner = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="submit">保存</el-button>
+      </span>
+    </template>
+  </el-dialog>
+</template>
+
+<script setup lang="ts">
+import { ref, watch, reactive } from 'vue'
+import type { FormInstance, FormRules } from 'element-plus'
+import type { PromotionCampaignCreateDTO } from '@/types/promotion'
+import { listSegments, type SegmentVO } from '@/api/segment'
+import { fetchEmailTemplatePage } from '@/api/email-template'
+import type { ApiResponse, PageResponse } from '@/types/api'
+
+const props = defineProps<{ visible: boolean }>()
+const emit = defineEmits<{ (e: 'update:visible', v: boolean): void; (e: 'submit', v: PromotionCampaignCreateDTO): void; (e: 'closed'): void }>()
+
+const visibleInner = ref(false)
+watch(() => props.visible, v => (visibleInner.value = v), { immediate: true })
+watch(visibleInner, v => emit('update:visible', v))
+
+const formRef = ref<FormInstance>()
+const form = reactive<PromotionCampaignCreateDTO>({ name: '', startTime: undefined, endTime: undefined, description: '', creator: '', status: 0, segmentId: undefined, emailTemplateId: undefined })
+const rules: FormRules = { name: [{ required: true, message: '请输入活动名称', trigger: 'blur' }, { min: 2, message: '至少2个字符', trigger: 'blur' }] }
+
+const dateRange = ref<[string, string] | undefined>()
+watch(dateRange, (val) => {
+  if (val && val.length === 2) {
+    form.startTime = val[0]
+    form.endTime = val[1]
+  } else {
+    form.startTime = undefined
+    form.endTime = undefined
+  }
+})
+
+// Segment options
+const segmentOptions = ref<SegmentVO[]>([])
+const loadingSegments = ref(false)
+const loadSegments = async () => {
+  loadingSegments.value = true
+  try {
+    const res = await listSegments()
+    segmentOptions.value = res.data || []
+  } finally { loadingSegments.value = false }
+}
+
+// Email template options (first page 100)
+const emailTplOptions = ref<Array<{ id: number; name: string }>>([])
+const loadingEmailTpls = ref(false)
+const loadEmailTemplates = async () => {
+  loadingEmailTpls.value = true
+  try {
+    const res: ApiResponse<PageResponse<any>> = await fetchEmailTemplatePage({ pageNum: 1, pageSize: 100 }) as any
+    emailTplOptions.value = (res.data?.list || []).map((it: any) => ({ id: it.id, name: it.name }))
+  } finally { loadingEmailTpls.value = false }
+}
+
+const saving = ref(false)
+const submit = async () => {
+  if (!formRef.value) return
+  try { await formRef.value.validate() } catch { return }
+  saving.value = true
+  try {
+    emit('submit', { ...form })
+    visibleInner.value = false
+  } finally { saving.value = false }
+}
+
+loadSegments()
+loadEmailTemplates()
+</script>

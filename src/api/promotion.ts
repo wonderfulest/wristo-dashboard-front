@@ -2,7 +2,8 @@ import instance from '@/config/axios'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { PromotionCampaignVO, PromotionCampaignCreateDTO, PromotionCampaignUpdateDTO, PromotionCampaignPageQuery } from '@/types/promotion'
 
-const BASE = '/admin/promotion/campaign'
+// Align to AdminCampaignController
+const BASE = '/admin/campaign'
 
 export const createCampaign = (data: PromotionCampaignCreateDTO): Promise<ApiResponse<PromotionCampaignVO>> => {
   return instance.post(`${BASE}/create`, data)

@@ -134,8 +134,8 @@ const router = createRouter({
     },
     {
       path: '/marketing/campaigns',
-      name: 'PromotionCampaigns',
-      component: () => import('@/views/marketing/PromotionCampaigns.vue'),
+      name: 'Campaigns',
+      component: () => import('@/views/marketing/Campaigns.vue'),
       meta: { requiresAuth: true }
     },
     {

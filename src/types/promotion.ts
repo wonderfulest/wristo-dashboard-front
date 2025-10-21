@@ -7,6 +7,8 @@ export interface PromotionCampaignVO {
   endTime?: string
   description?: string
   creator?: string
+  segmentId?: number
+  emailTemplateId?: number
   status?: number // 0草稿 1进行中 2结束
   isActive?: number
   createdAt?: string
@@ -20,6 +22,8 @@ export interface PromotionCampaignCreateDTO {
   endTime?: string
   description?: string
   creator?: string
+  segmentId?: number
+  emailTemplateId?: number
   status?: number
 }
 
@@ -29,6 +33,8 @@ export interface PromotionCampaignUpdateDTO {
   endTime?: string
   description?: string
   creator?: string
+  segmentId?: number
+  emailTemplateId?: number
   status?: number
   isActive?: number
   isDeleted?: number

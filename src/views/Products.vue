@@ -23,6 +23,11 @@
     <el-table :data="products" style="width: 100%" v-loading="loading">
       <el-table-column prop="appId" label="ID" width="80" />
       <el-table-column prop="name" label="商品名称" />
+      <el-table-column label="作者" width="140">
+        <template #default="{ row }">
+          {{ row.user?.username || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column prop="designId" label="设计ID" />
       <!-- <el-table-column label="状态" width="100">
         <template #default="{ row }">

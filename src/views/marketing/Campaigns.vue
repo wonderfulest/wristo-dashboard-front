@@ -71,43 +71,8 @@
       />
     </div>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.mode === 'create' ? '新建活动' : '编辑活动'" width="600px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="活动名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入活动名称" />
-        </el-form-item>
-        <el-form-item label="时间范围">
-          <el-date-picker
-            v-model="dateRange"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="活动描述（可选）" />
-        </el-form-item>
-        <el-form-item label="创建人">
-          <el-input v-model="form.creator" placeholder="创建人（可选）" />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%">
-            <el-option label="草稿" :value="0" />
-            <el-option label="进行中" :value="1" />
-            <el-option label="已结束" :value="2" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialog.visible = false">取消</el-button>
-          <el-button type="primary" :loading="saving" @click="submitForm">保存</el-button>
-        </span>
-      </template>
-    </el-dialog>
+    <CampaignCreateDialog v-model:visible="createVisible" @submit="onCreateSubmit" />
+    <CampaignEditDialog v-model:visible="editVisible" :initial="dialog.current || null" @submit="onEditSubmit" />
 
     <!-- 活动应用配置弹窗 -->
     <el-dialog v-model="itemsDialog.visible" :title="`活动应用配置 - #${itemsDialog.campaign?.id} ${itemsDialog.campaign?.name || ''}`" width="900px">
@@ -171,17 +136,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { getCampaignPage, createCampaign, updateCampaign, deleteCampaign } from '@/api/promotion'
 import type { PromotionCampaignVO, PromotionCampaignCreateDTO, PromotionCampaignUpdateDTO, PromotionCampaignPageQuery } from '@/types/promotion'
 import type { PromotionItemDTO, PromotionItemVO } from '@/types/promotion'
 import { listCampaignItems, replaceCampaignItems } from '@/api/promotion-item'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import type { Product } from '@/types/product'
+import CampaignCreateDialog from '@/views/marketing/components/CampaignCreateDialog.vue'
+import CampaignEditDialog from '@/views/marketing/components/CampaignEditDialog.vue'
 
 const loading = ref(false)
-const saving = ref(false)
 const total = ref(0)
 const list = ref<PromotionCampaignVO[]>([])
 
@@ -193,39 +159,11 @@ const query = reactive<PromotionCampaignPageQuery>({
 
 const filters = reactive<{ name?: string; status?: number; isActive?: number }>({})
 
-const dialog = reactive<{ visible: boolean; mode: 'create' | 'edit'; current?: PromotionCampaignVO | null }>({
-  visible: false,
-  mode: 'create',
-  current: null
-})
+const dialog = reactive<{ current?: PromotionCampaignVO | null }>({ current: null })
+const createVisible = ref(false)
+const editVisible = ref(false)
 
-const formRef = ref<FormInstance>()
-const form = reactive<PromotionCampaignCreateDTO & PromotionCampaignUpdateDTO>({
-  name: '',
-  startTime: undefined,
-  endTime: undefined,
-  description: '',
-  creator: '',
-  status: 0
-})
-
-const rules: FormRules = {
-  name: [
-    { required: true, message: '请输入活动名称', trigger: 'blur' },
-    { min: 2, message: '至少2个字符', trigger: 'blur' }
-  ]
-}
-
-const dateRange = ref<[string, string] | undefined>()
-watch(dateRange, (val) => {
-  if (val && val.length === 2) {
-    form.startTime = val[0]
-    form.endTime = val[1]
-  } else {
-    form.startTime = undefined
-    form.endTime = undefined
-  }
-})
+// create/edit dialogs are handled by child components
 
 const statusType = (status?: number) => {
   switch (status) {
@@ -294,54 +232,33 @@ const resetSearch = () => {
 }
 
 const openCreate = () => {
-  dialog.mode = 'create'
   dialog.current = null
-  Object.assign(form, { name: '', startTime: undefined, endTime: undefined, description: '', creator: '', status: 0 })
-  dateRange.value = undefined
-  dialog.visible = true
+  createVisible.value = true
 }
 
 const openEdit = (row: PromotionCampaignVO) => {
-  dialog.mode = 'edit'
   dialog.current = row
-  Object.assign(form, {
-    name: row.name,
-    startTime: row.startTime,
-    endTime: row.endTime,
-    description: row.description,
-    creator: row.creator,
-    status: row.status
-  })
-  if (row.startTime && row.endTime) {
-    dateRange.value = [row.startTime as unknown as string, row.endTime as unknown as string]
-  } else {
-    dateRange.value = undefined
-  }
-  dialog.visible = true
+  editVisible.value = true
 }
 
-const submitForm = async () => {
-  if (!formRef.value) return
+const onCreateSubmit = async (payload: PromotionCampaignCreateDTO) => {
   try {
-    await formRef.value.validate()
-  } catch {
-    return
-  }
-  saving.value = true
-  try {
-    if (dialog.mode === 'create') {
-      await createCampaign(form as PromotionCampaignCreateDTO)
-      ElMessage.success('创建成功')
-    } else if (dialog.current) {
-      await updateCampaign(dialog.current.id as number, form as PromotionCampaignUpdateDTO)
-      ElMessage.success('更新成功')
-    }
-    dialog.visible = false
+    await createCampaign(payload)
+    ElMessage.success('创建成功')
     fetchPage()
   } catch (e:any) {
     ElMessage.error(e?.msg || '保存失败')
-  } finally {
-    saving.value = false
+  }
+}
+
+const onEditSubmit = async (payload: PromotionCampaignUpdateDTO) => {
+  if (!dialog.current) return
+  try {
+    await updateCampaign(dialog.current.id as number, payload)
+    ElMessage.success('更新成功')
+    fetchPage()
+  } catch (e:any) {
+    ElMessage.error(e?.msg || '保存失败')
   }
 }
 
