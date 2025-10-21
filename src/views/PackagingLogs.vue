@@ -23,13 +23,33 @@
 
     <el-table :data="packagingLogs" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column label="产品信息" min-width="200">
+      <el-table-column label="产品信息" min-width="320">
         <template #default="{ row }">
           <div class="product-info">
-            <div class="product-name">{{ row.product.name }}</div>
-            <div class="product-details">
-              <span>ID: {{ row.product.appId }}</span>
-              <span>设计ID: {{ row.product.designId }}</span>
+            <el-image
+              v-if="row.product.garminImageUrl"
+              :src="row.product.garminImageUrl"
+              :preview-src-list="[row.product.garminImageUrl]"
+              :z-index="5000"
+              :preview-teleported="true"
+              fit="cover"
+              class="product-thumb"
+              style="width: 56px; height: 56px"
+            />
+            <div class="product-meta">
+              <div class="product-name">
+                <a
+                  v-if="row.product.garminStoreUrl"
+                  :href="row.product.garminStoreUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >{{ row.product.name }}</a>
+                <span v-else>{{ row.product.name }}</span>
+              </div>
+              <div class="product-details">
+                <span>appId: {{ row.product.appId }}</span>
+                <span>设计ID: {{ row.product.designId }}</span>
+              </div>
             </div>
           </div>
         </template>
@@ -306,10 +326,24 @@ onMounted(() => {
 }
 
 .product-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  .product-thumb {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    flex: 0 0 56px;
+  }
+  .product-meta { min-width: 0; }
   .product-name {
     font-weight: 600;
     color: #333;
     margin-bottom: 4px;
+    a { color: #409EFF; text-decoration: none; }
+    a:hover { text-decoration: underline; }
   }
   
   .product-details {

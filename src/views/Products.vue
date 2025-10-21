@@ -22,23 +22,40 @@
 
     <el-table :data="products" style="width: 100%" v-loading="loading">
       <el-table-column prop="appId" label="ID" width="80" />
-      <el-table-column prop="name" label="商品名称" width="160" />
+      <el-table-column label="商品信息" min-width="320">
+        <template #default="{ row }">
+          <div class="product-info">
+            <el-image
+              v-if="row.garminImageUrl || row.heroFile?.url"
+              :src="row.garminImageUrl || row.heroFile?.url"
+              :preview-src-list="[row.garminImageUrl || row.heroFile?.url]"
+              :z-index="5000"
+              :preview-teleported="true"
+              fit="cover"
+              class="product-thumb"
+              style="width: 56px; height: 56px"
+            />
+            <div class="product-meta">
+              <div class="product-name">
+                <a
+                  v-if="row.garminStoreUrl"
+                  :href="row.garminStoreUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >{{ row.name }}</a>
+                <span v-else>{{ row.name }}</span>
+              </div>
+              <div class="product-details">
+                <span>appId: {{ row.appId }}</span>
+                <span>设计ID: {{ row.designId }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="作者" width="80">
         <template #default="{ row }">
           {{ row.user?.username || '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="designId" label="设计ID" width="200"/>
-      <el-table-column label="Garmin Store" width="100">
-        <template #default="{ row }">
-          <el-link
-            v-if="row.garminStoreUrl"
-            :href="row.garminStoreUrl"
-            type="primary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >Link</el-link>
-          <span v-else>-</span>
         </template>
       </el-table-column>
       <!-- <el-table-column label="状态" width="100">
@@ -51,20 +68,7 @@
           />
         </template>
       </el-table-column> -->
-      <el-table-column label="图片" width="100">
-        <template #default="{ row }">
-          <el-image
-            v-if="row.garminImageUrl || row.heroFile?.url"
-            :src="row.garminImageUrl || row.heroFile?.url"
-            :preview-src-list="[row.garminImageUrl || row.heroFile?.url]"
-            :z-index="5000"
-            :preview-teleported="true"
-            fit="cover"
-            style="width: 50px; height: 50px"
-          />
-          <span v-else>无图片</span>
-        </template>
-      </el-table-column>
+      
       <el-table-column label="分类" width="220">
         <template #default="{ row }">
           <span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px;">
@@ -573,4 +577,37 @@ onMounted(() => {
   display: block;
   object-fit: cover;
 }
-</style> 
+
+.product-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.product-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  flex: 0 0 56px;
+}
+.product-meta { min-width: 0; }
+.product-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+.product-name a { color: #409EFF; text-decoration: none; }
+.product-name a:hover { text-decoration: underline; }
+.product-details {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #666;
+}
+.product-details span {
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+</style>

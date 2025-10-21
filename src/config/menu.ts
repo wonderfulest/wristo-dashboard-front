@@ -16,7 +16,7 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily'],
+    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily', '/data-type-options'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'products', title: '作品管理', path: '/products' },
@@ -26,6 +26,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'fonts', title: '字体管理', path: '/fonts' },
       { key: 'images', title: '图片素材', path: '/images' },
       { key: 'app-daily-config', title: '每日一图配置', path: '/app-daily/config' },
+      { key: 'data-type-options', title: '数据项配置', path: '/data-type-options' },
     ],
   },
   {

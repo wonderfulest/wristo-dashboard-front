@@ -173,6 +173,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/data-type-options',
+      name: 'DataTypeOptions',
+      component: () => import('@/views/DataTypeOptions.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/profile',
       name: 'Profile',
       component: () => import('@/views/Profile.vue'),

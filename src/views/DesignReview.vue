@@ -25,21 +25,35 @@
       </div>
     </div>
     <el-table :data="designs" style="width: 90%" v-loading="loading">
-      <el-table-column prop="product.appId" label="商品ID" width="120" />
-      <el-table-column prop="designUid" label="设计ID" width="200" />
-      <el-table-column prop="name" label="名称" width="200" />
-      <el-table-column label="预览图" width="100">
+      <el-table-column label="产品信息" min-width="320">
         <template #default="{ row }">
-          <el-image
-            v-if="row.cover?.url"
-            :src="row.cover.url"
-            :preview-src-list="[row.cover.url]"
-            :z-index="5000"
-            :preview-teleported="true"
-            fit="cover"
-            style="width: 50px; height: 50px"
-          />
-          <span v-else>无图片</span>
+          <div class="product-info">
+            <el-image
+              v-if="row.cover?.url || row.product?.garminImageUrl"
+              :src="row.cover?.url || row.product?.garminImageUrl"
+              :preview-src-list="[row.cover?.url || row.product?.garminImageUrl]"
+              :z-index="5000"
+              :preview-teleported="true"
+              fit="cover"
+              class="product-thumb"
+              style="width: 56px; height: 56px"
+            />
+            <div class="product-meta">
+              <div class="product-name">
+                <a
+                  v-if="row.product?.garminStoreUrl"
+                  :href="row.product.garminStoreUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >{{ row.name }}</a>
+                <span v-else>{{ row.name }}</span>
+              </div>
+              <div class="product-details">
+                <span>appId: {{ row.product?.appId || '-' }}</span>
+                <span>设计ID: {{ row.designUid }}</span>
+              </div>
+            </div>
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="designStatus" label="状态" width="100" />
@@ -202,5 +216,38 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.product-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.product-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  flex: 0 0 56px;
+}
+.product-meta { min-width: 0; }
+.product-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+.product-name a { color: #409EFF; text-decoration: none; }
+.product-name a:hover { text-decoration: underline; }
+.product-details {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #666;
+}
+.product-details span {
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 </style> 
