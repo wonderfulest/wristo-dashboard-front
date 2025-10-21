@@ -22,13 +22,25 @@
 
     <el-table :data="products" style="width: 100%" v-loading="loading">
       <el-table-column prop="appId" label="ID" width="80" />
-      <el-table-column prop="name" label="商品名称" />
-      <el-table-column label="作者" width="140">
+      <el-table-column prop="name" label="商品名称" width="160" />
+      <el-table-column label="作者" width="80">
         <template #default="{ row }">
           {{ row.user?.username || '-' }}
         </template>
       </el-table-column>
-      <el-table-column prop="designId" label="设计ID" />
+      <el-table-column prop="designId" label="设计ID" width="200"/>
+      <el-table-column label="Garmin Store" width="100">
+        <template #default="{ row }">
+          <el-link
+            v-if="row.garminStoreUrl"
+            :href="row.garminStoreUrl"
+            type="primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Link</el-link>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <!-- <el-table-column label="状态" width="100">
         <template #default="{ row }">
           <el-switch

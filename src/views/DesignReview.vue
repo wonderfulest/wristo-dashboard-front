@@ -24,22 +24,25 @@
         <el-button @click="fetchDesigns">刷新</el-button>
       </div>
     </div>
-    <el-table :data="designs" style="width: 100%" v-loading="loading">
-      <el-table-column prop="designUid" label="设计ID" width="180" />
-      <el-table-column prop="name" label="名称" />
-      <el-table-column prop="designStatus" label="状态" width="100" />
-      <el-table-column label="图片" width="100">
+    <el-table :data="designs" style="width: 90%" v-loading="loading">
+      <el-table-column prop="product.appId" label="商品ID" width="120" />
+      <el-table-column prop="designUid" label="设计ID" width="200" />
+      <el-table-column prop="name" label="名称" width="200" />
+      <el-table-column label="预览图" width="100">
         <template #default="{ row }">
           <el-image
-            v-if="row.coverImage && row.coverImage.url"
-            :src="row.coverImage.url"
-            :preview-src-list="[row.coverImage.url]"
+            v-if="row.cover?.url"
+            :src="row.cover.url"
+            :preview-src-list="[row.cover.url]"
+            :z-index="5000"
+            :preview-teleported="true"
             fit="cover"
             style="width: 50px; height: 50px"
           />
           <span v-else>无图片</span>
         </template>
       </el-table-column>
+      <el-table-column prop="designStatus" label="状态" width="100" />
       <el-table-column label="用户" width="120">
         <template #default="{ row }">
           {{ row.user?.username || '-' }}
@@ -47,13 +50,14 @@
       </el-table-column>
       <el-table-column label="支付" width="160">
         <template #default="{ row }">
-          <div v-if="row.payment">
-            <div>{{ row.payment.paymentMethodDesc }}</div>
-            <div>${{ row.payment.price }} {{ row.payment.currency }}</div>
+          <div v-if="row.product?.payment">
+            <div>{{ row.product.payment.paymentMethodDesc }}</div>
+            <div>${{ row.product.payment.price }} {{ row.product.payment.currency }}</div>
           </div>
           <span v-else>-</span>
         </template>
       </el-table-column>
+      <el-table-column prop="product.trialLasts" label="试用时长" width="200" />
       <el-table-column prop="createdAt" label="创建时间" width="160">
         <template #default="{ row }">
           {{ formatDate(row.createdAt) }}
