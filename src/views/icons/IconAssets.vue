@@ -272,14 +272,19 @@ const onEdited = () => {
   background: rgba(17, 21, 42, 0.88);
   border-radius: 12px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: flex-end; /* right side */
+  justify-content: flex-start; /* from top to bottom */
   gap: 8px;
+  padding: 12px;
+  box-sizing: border-box;
   opacity: 0;
   transition: opacity .2s ease;
   z-index: 3;
   pointer-events: none;
 }
+
+.overlay .el-button { width: auto; }
 
 .asset-card:hover .overlay { opacity: 1; pointer-events: auto; }
 

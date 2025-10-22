@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ElMessage, ElLoading } from 'element-plus'
+import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
 import { uploadIconSvgWithProgress } from '@/api/icon-asset'
 
 interface Props {
@@ -57,7 +57,10 @@ const doUpload = async (options: { file: File }) => {
     emit('uploaded')
   } catch (e) {
     stopLoading()
-    ElMessage.error(`${file.name} 上传失败`)
+    await ElMessageBox.alert(`${file.name} 上传失败`, '上传失败', {
+      type: 'error',
+      confirmButtonText: '确定'
+    })
   } finally {
     // no-op
   }
