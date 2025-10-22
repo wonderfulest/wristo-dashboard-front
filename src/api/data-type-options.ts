@@ -27,6 +27,6 @@ export function getDataTypeOptionBySymbol(symbol: string) {
   return instance.get<ApiResponse<DataTypeOptionVO>>(`/admin/data-type-options/get-by-symbol/${symbol}`)
 }
 
-export function pageDataTypeOptions(dto: DataTypeOptionPageQueryDTO) {
-  return instance.post<ApiResponse<PageResponse<DataTypeOptionVO>>>('/admin/data-type-options/page', dto)
+export function pageDataTypeOptions(dto: DataTypeOptionPageQueryDTO): Promise<ApiResponse<PageResponse<DataTypeOptionVO>>> {
+  return instance.post('/admin/data-type-options/page', dto)
 }

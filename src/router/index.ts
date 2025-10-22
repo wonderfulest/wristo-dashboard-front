@@ -173,6 +173,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/icon-library',
+      name: 'IconLibrary',
+      component: () => import('@/views/icons/IconLibrary.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/icon-assets',
+      name: 'IconAssets',
+      component: () => import('@/views/icons/IconAssets.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/data-type-options',
       name: 'DataTypeOptions',
       component: () => import('@/views/DataTypeOptions.vue'),

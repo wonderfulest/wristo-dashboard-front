@@ -1,18 +1,21 @@
 import type { PageQueryDTO, PageResponse, ApiResponse } from './common'
 
+export interface LabelI18nItem {
+  long?: string
+  short?: string
+  medium?: string
+}
+
 export interface DataTypeOptionVO {
   id: number
   metricSymbol: string
   category: string
   valueCode: number
   label: string
-  labelCn: string
+  labelI18n?: Record<string, LabelI18nItem>
   unit: string
   iconUnicode: string
   defaultValue: string
-  enLabelShort: string
-  enLabelMedium: string
-  enLabelLong: string
   isActive: number
   sortOrder: number
   description: string
@@ -23,13 +26,10 @@ export interface DataTypeOptionCreateDTO {
   category: string
   valueCode: number
   label: string
-  labelCn: string
+  labelI18n?: Record<string, LabelI18nItem>
   unit: string
   iconUnicode: string
   defaultValue: string
-  enLabelShort: string
-  enLabelMedium: string
-  enLabelLong: string
   isActive: number
   sortOrder: number
   description: string
