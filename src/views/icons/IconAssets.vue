@@ -33,15 +33,15 @@
             class="thumb-img"
           />
           <div v-else class="thumb-empty">-</div>
-          <div class="overlay">
-            <el-button size="small" text type="primary" @click="openUrl(row.imageUrl || row.previewUrl)" :disabled="!(row.imageUrl || row.previewUrl)">打开</el-button>
-            <el-button size="small" text type="primary" @click="copyUrl(row.imageUrl || row.previewUrl)" :disabled="!(row.imageUrl || row.previewUrl)">复制链接</el-button>
-            <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button size="small" text type="danger" @click="confirmRemove(row.id)">删除</el-button>
-          </div>
         </div>
         <div class="meta">
           <div class="sub">{{ iconLabelMap[row.iconId] || '-' }}</div>
+        </div>
+        <div class="overlay">
+          <el-button size="small" text type="primary" @click="openUrl(row.imageUrl || row.previewUrl)" :disabled="!(row.imageUrl || row.previewUrl)">打开</el-button>
+          <el-button size="small" text type="primary" @click="copyUrl(row.imageUrl || row.previewUrl)" :disabled="!(row.imageUrl || row.previewUrl)">复制链接</el-button>
+          <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
+          <el-button size="small" text type="danger" @click="confirmRemove(row.id)">删除</el-button>
         </div>
       </div>
       <div v-if="!loading && assets.length === 0" class="empty">暂无数据</div>
@@ -76,7 +76,7 @@ import UploadSvg from '@/views/icons/components/UploadSvg.vue'
 const assets = ref<IconAssetVO[]>([])
 const loading = ref(false)
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(100)
 const total = ref(0)
 const iconLabelMap = ref<Record<number, string>>({})
 
@@ -269,7 +269,7 @@ const onEdited = () => {
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(17, 21, 42, 0.88);
+  background: rgba(17, 21, 42, 0.68);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
