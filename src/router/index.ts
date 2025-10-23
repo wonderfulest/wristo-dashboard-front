@@ -185,6 +185,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/icon-glyphs',
+      name: 'IconGlyphs',
+      component: () => import('@/views/icons/IconGlyphs.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/icon-glyphs/:glyphId/assets',
+      name: 'IconGlyphAssets',
+      component: () => import('@/views/icons/IconGlyphAssets.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/data-type-options',
       name: 'DataTypeOptions',
       component: () => import('@/views/DataTypeOptions.vue'),

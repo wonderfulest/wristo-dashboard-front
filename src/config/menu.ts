@@ -1,13 +1,13 @@
 export interface SubMenuItem {
   key: string
   title: string
-  path: string
+  path?: string
+  children?: SubMenuItem[]
 }
 
 export interface TopMenuGroup {
   key: string
   title: string
-  // 用于自动判断当前路由属于哪个分组
   basePaths: string[]
   children: SubMenuItem[]
 }
@@ -16,19 +16,38 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily', '/data-type-options', '/icon-assets'],
+    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily', '/data-type-options', '/icon-assets', '/icon-glyphs'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
-      { key: 'products', title: '作品管理', path: '/products' },
-      { key: 'categories', title: '分类管理', path: '/categories' },
-      { key: 'design-review', title: '设计审核', path: '/design-review' },
-      { key: 'packaging-logs', title: '打包记录', path: '/packaging-logs' },
+      {
+        key: 'products',
+        title: '作品管理',
+        children: [
+          { key: 'products', title: '应用上线', path: '/products' },
+          { key: 'categories', title: '应用分类', path: '/categories' },
+          { key: 'app-daily-config', title: '每日一图配置', path: '/app-daily/config' },
+        ],
+      },
       { key: 'fonts', title: '字体管理', path: '/fonts' },
       { key: 'images', title: '图片素材', path: '/images' },
-      { key: 'app-daily-config', title: '每日一图配置', path: '/app-daily/config' },
       { key: 'data-type-options', title: '数据项配置', path: '/data-type-options' },
-      { key: 'icon-library', title: '图标库', path: '/icon-library' },
-      { key: 'icon-assets', title: '图标素材', path: '/icon-assets' },
+      {
+        key: 'packaging',
+        title: '打包',
+        children: [
+          { key: 'design-review', title: '设计审核', path: '/design-review' },
+          { key: 'packaging-logs', title: '打包记录', path: '/packaging-logs' },
+        ],
+      },
+      {
+        key: 'icons',
+        title: '图标',
+        children: [
+          { key: 'icon-library', title: '图标库', path: '/icon-library' },
+          { key: 'icon-assets', title: '图标素材', path: '/icon-assets' },
+          { key: 'icon-glyphs', title: '图标字体管理', path: '/icon-glyphs' },
+        ],
+      },
     ],
   },
   {

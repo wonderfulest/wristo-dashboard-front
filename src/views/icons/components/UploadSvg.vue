@@ -1,14 +1,31 @@
 <template>
   <div class="upload-wrap">
-    <el-upload
-      :show-file-list="false"
-      :before-upload="beforeUpload"
-      :http-request="doUpload"
-      accept=".svg"
-      multiple
-    >
-      <el-button type="success" :loading="uploading">上传SVG</el-button>
-    </el-upload>
+    <el-button type="success" :loading="uploading" @click="dialogVisible = true">上传SVG</el-button>
+
+    <el-dialog v-model="dialogVisible" title="上传 SVG" width="520px" :close-on-click-modal="false">
+      <el-upload
+        drag
+        :show-file-list="false"
+        :before-upload="beforeUpload"
+        :http-request="doUpload"
+        accept=".svg"
+        multiple
+        :disabled="uploading"
+      >
+        <div class="el-upload__text">将 SVG 拖拽到此处，或点击选择</div>
+        <template #tip>
+          <div class="el-upload__tip">
+            <br>1. 仅支持 .svg 文件，支持多文件</br>
+            <br>2. svg文件名需要与icon的 Symbol Code保持一致，比如 heart_rate.svg</br>
+          </div>
+        </template>
+      </el-upload>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false" :disabled="uploading">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -30,6 +47,7 @@ const emit = defineEmits<{
 const uploading = ref(false)
 const activeUploads = ref(0)
 let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
+const dialogVisible = ref(false)
 
 const beforeUpload = (file: File) => {
   const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')
