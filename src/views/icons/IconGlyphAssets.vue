@@ -173,7 +173,7 @@ const fetchBindList = async () => {
       pageSize: bindPageSize.value,
       iconId: iconId,
       keyword: bindKeyword.value,
-      orderBy: 'id desc'
+      orderBy: 'id:desc'
     } as any)
     const data = (resp as any)?.data
     bindRows.value = data?.list || []
