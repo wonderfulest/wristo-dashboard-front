@@ -40,6 +40,7 @@ export interface GarminDeviceUpdateDTO extends GarminDeviceCreateDTO {}
 
 export interface GarminDevicePageQueryDTO extends PageQueryDTO {
   keyword?: string
+  displayName?: string
 }
 
 export type GarminDevicePageResp = ApiResponse<PageResponse<GarminDeviceVO>>

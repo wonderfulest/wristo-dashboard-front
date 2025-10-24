@@ -23,3 +23,36 @@ export function getGarminDevice(id: number) {
 export function pageGarminDevices(dto: GarminDevicePageQueryDTO) {
   return instance.post<ApiResponse<{ list: GarminDeviceVO[]; total: number }>>(`${BASE}/page`, dto)
 }
+
+// Multipart versions for new backend (ModelAttribute + Multipart)
+export function createGarminDeviceForm(params: {
+  deviceId: string
+  simulatorFile?: File
+  compilerFile?: File
+  devicePngFile?: File
+}) {
+  const form = new FormData()
+  form.append('deviceId', params.deviceId)
+  if (params.simulatorFile) form.append('simulator', params.simulatorFile)
+  if (params.compilerFile) form.append('compiler', params.compilerFile)
+  if (params.devicePngFile) form.append('devicePngFile', params.devicePngFile)
+  return instance.post<ApiResponse<GarminDeviceVO>>(`${BASE}/create`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
+export function updateGarminDeviceForm(params: {
+  deviceId: string
+  simulatorFile?: File
+  compilerFile?: File
+  devicePngFile?: File
+}) {
+  const form = new FormData()
+  form.append('deviceId', params.deviceId)
+  if (params.simulatorFile) form.append('simulator', params.simulatorFile)
+  if (params.compilerFile) form.append('compiler', params.compilerFile)
+  if (params.devicePngFile) form.append('devicePngFile', params.devicePngFile)
+  return instance.post<ApiResponse<GarminDeviceVO>>(`${BASE}/update`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}

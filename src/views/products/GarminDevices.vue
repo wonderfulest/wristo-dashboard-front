@@ -2,7 +2,13 @@
   <div class="page">
     <div class="header">
       <div class="filters">
-        <el-input v-model="keyword" placeholder="关键字 (ID/名称/系列)" clearable style="width: 240px" @keyup.enter="loadData" />
+        <el-input
+          v-model="displayName"
+          placeholder="设备名称（模糊搜索）"
+          clearable
+          style="width: 240px"
+          @input="onNameInput"
+        />
         <el-select v-model="orderBy" placeholder="排序" clearable style="width: 180px">
           <el-option label="创建时间倒序" value="id:desc" />
           <el-option label="创建时间正序" value="id:asc" />
@@ -13,13 +19,18 @@
     </div>
 
     <el-table :data="list" border v-loading="loading" style="width: 100%">
-      <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column prop="id" label="ID" width="60" />
+      <el-table-column label="图片" width="80" align="center">
+        <template #default="{ row }">
+          <el-image v-if="row.imageUrl" :src="row.imageUrl" style="width: 48px; height: 48px" fit="cover" />
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="displayName" label="设备名称" min-width="180" />
       <el-table-column prop="deviceId" label="Device ID" min-width="140" />
       <el-table-column prop="partNumber" label="Part No." min-width="140" />
       <el-table-column prop="deviceFamily" label="系列" width="120" />
-      <el-table-column prop="deviceGroup" label="分组" width="120" />
-      <el-table-column prop="deviceVersion" label="版本" width="100" />
+      <el-table-column prop="deviceGroup" label="API分组" width="120" />
       <el-table-column prop="resolutionWidth" label="分辨率" width="120">
         <template #default="{ row }">{{ row.resolutionWidth }} × {{ row.resolutionHeight }}</template>
       </el-table-column>
@@ -27,7 +38,13 @@
       <el-table-column prop="enhancedGraphicSupport" label="增强图形" width="100">
         <template #default="{ row }"><el-tag :type="row.enhancedGraphicSupport ? 'success' : 'info'">{{ row.enhancedGraphicSupport ? '是' : '否' }}</el-tag></template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column label="设备PNG" width="100">
+        <template #default="{ row }">
+          <el-image v-if="row.devicePng" :src="row.devicePng" style="width: 48px; height: 48px" fit="cover" />
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="200" align="center">
         <template #default="{ row }">
           <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
           <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
@@ -47,73 +64,43 @@
       />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogType === 'add' ? '新增设备' : '编辑设备'" width="720px">
-      <el-form ref="formRef" :model="form" label-width="140px">
-        <div class="form-grid">
-          <el-form-item label="设备名称" prop="displayName"><el-input v-model="form.displayName" /></el-form-item>
-          <el-form-item label="Device ID" prop="deviceId"><el-input v-model="form.deviceId" /></el-form-item>
-          <el-form-item label="Part Number" prop="partNumber"><el-input v-model="form.partNumber" /></el-form-item>
-          <el-form-item label="系列 (Family)" prop="deviceFamily"><el-input v-model="form.deviceFamily" /></el-form-item>
-          <el-form-item label="分组 (Group)" prop="deviceGroup"><el-input v-model="form.deviceGroup" /></el-form-item>
-          <el-form-item label="版本 (Version)" prop="deviceVersion"><el-input v-model="form.deviceVersion" /></el-form-item>
-          <el-form-item label="显示类型" prop="displayType"><el-input v-model="form.displayType" /></el-form-item>
-          <el-form-item label="像素格式" prop="pixelFormat"><el-input v-model="form.pixelFormat" /></el-form-item>
-          <el-form-item label="分辨率(宽)" prop="resolutionWidth"><el-input-number v-model="form.resolutionWidth" :min="0" /></el-form-item>
-          <el-form-item label="分辨率(高)" prop="resolutionHeight"><el-input-number v-model="form.resolutionHeight" :min="0" /></el-form-item>
-          <el-form-item label="增强图形支持" prop="enhancedGraphicSupport"><el-switch v-model="form.enhancedGraphicSupport" /></el-form-item>
-          <el-form-item label="旋转支持" prop="screenRotationSupport"><el-switch v-model="form.screenRotationSupport" /></el-form-item>
-          <el-form-item label="硬件 Part No." prop="hardwarePartNumber"><el-input v-model="form.hardwarePartNumber" /></el-form-item>
-          <el-form-item label="设备图片 URL" prop="imageUrl"><el-input v-model="form.imageUrl" /></el-form-item>
-        </div>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSave">保存</el-button>
-        </span>
-      </template>
-    </el-dialog>
+    <GarminDeviceCreateDialog
+      v-model="createVisible"
+      @success="onDialogSuccess"
+    />
+    <GarminDeviceEditDialog
+      v-model="editVisible"
+      :device="editingDevice"
+      @success="onDialogSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { GarminDeviceVO, GarminDeviceCreateDTO, GarminDeviceUpdateDTO } from '@/types/garmin-device'
-import { pageGarminDevices, createGarminDevice, updateGarminDevice, deleteGarminDevice } from '@/api/garmin-device'
+import type { GarminDeviceVO } from '@/types/garmin-device'
+import { pageGarminDevices, deleteGarminDevice } from '@/api/garmin-device'
+import GarminDeviceCreateDialog from './components/GarminDeviceCreateDialog.vue'
+import GarminDeviceEditDialog from './components/GarminDeviceEditDialog.vue'
 
 const list = ref<GarminDeviceVO[]>([])
 const total = ref(0)
 const pageNum = ref(1)
 const pageSize = ref(20)
 const orderBy = ref<string | undefined>('id:desc')
-const keyword = ref<string>('')
+const displayName = ref<string>('')
+const searchTimer = ref<number | undefined>(undefined)
 const loading = ref(false)
 
-const dialogVisible = ref(false)
-const dialogType = ref<'add' | 'edit'>('add')
-const formRef = ref()
-const form = ref<Partial<GarminDeviceVO>>({
-  displayName: '',
-  deviceId: '',
-  partNumber: '',
-  deviceFamily: '',
-  deviceGroup: '',
-  deviceVersion: '',
-  displayType: '',
-  enhancedGraphicSupport: false,
-  hardwarePartNumber: '',
-  imageUrl: '',
-  pixelFormat: '',
-  resolutionHeight: 0,
-  resolutionWidth: 0,
-  screenRotationSupport: false,
-})
+const createVisible = ref(false)
+const editVisible = ref(false)
+const editingDevice = ref<GarminDeviceVO | null>(null)
 
 async function loadData() {
   loading.value = true
   try {
-    const resp = await pageGarminDevices({ pageNum: pageNum.value, pageSize: pageSize.value, orderBy: orderBy.value, keyword: keyword.value || undefined })
+    const resp = await pageGarminDevices({ pageNum: pageNum.value, pageSize: pageSize.value, orderBy: orderBy.value, displayName: displayName.value || undefined })
     const data: any = (resp as any)?.data
     list.value = data?.list || []
     total.value = data?.total || 0
@@ -124,48 +111,25 @@ async function loadData() {
   }
 }
 
+function onNameInput() {
+  pageNum.value = 1
+  if (searchTimer.value) window.clearTimeout(searchTimer.value)
+  searchTimer.value = window.setTimeout(() => {
+    loadData()
+  }, 300)
+}
+
 function handleAdd() {
-  dialogType.value = 'add'
-  form.value = {
-    displayName: '',
-    deviceId: '',
-    partNumber: '',
-    deviceFamily: '',
-    deviceGroup: '',
-    deviceVersion: '',
-    displayType: '',
-    enhancedGraphicSupport: false,
-    hardwarePartNumber: '',
-    imageUrl: '',
-    pixelFormat: '',
-    resolutionHeight: 0,
-    resolutionWidth: 0,
-    screenRotationSupport: false,
-  }
-  dialogVisible.value = true
+  createVisible.value = true
 }
 
 function handleEdit(row: GarminDeviceVO) {
-  dialogType.value = 'edit'
-  form.value = { ...row }
-  dialogVisible.value = true
+  editingDevice.value = { ...row }
+  editVisible.value = true
 }
 
-async function handleSave() {
-  try {
-    if (dialogType.value === 'add') {
-      const payload: GarminDeviceCreateDTO = { ...form.value } as any
-      await createGarminDevice(payload)
-      ElMessage.success('创建成功')
-    } else {
-      await updateGarminDevice(Number(form.value.id), form.value as GarminDeviceUpdateDTO)
-      ElMessage.success('更新成功')
-    }
-    dialogVisible.value = false
-    loadData()
-  } catch (e) {
-    ElMessage.error('保存失败')
-  }
+function onDialogSuccess() {
+  loadData()
 }
 
 async function handleDelete(row: GarminDeviceVO) {
