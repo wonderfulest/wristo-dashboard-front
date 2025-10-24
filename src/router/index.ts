@@ -103,6 +103,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/products/garmin-devices',
+      name: 'GarminDevices',
+      component: () => import('@/views/products/GarminDevices.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/merchant',
       name: 'Merchant',
       component: () => import('@/views/Merchant.vue'),

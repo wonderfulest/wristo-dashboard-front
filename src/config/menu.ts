@@ -16,9 +16,10 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily', '/data-type-options', '/icon-assets', '/icon-glyphs'],
+    basePaths: ['/dashboard', '/products', '/products/garmin-devices', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily', '/data-type-options', '/icon-assets', '/icon-glyphs'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
+      { key: 'garmin-devices', title: '佳明设备', path: '/products/garmin-devices' },
       {
         key: 'products',
         title: '作品管理',
@@ -43,7 +44,7 @@ export const topMenus: TopMenuGroup[] = [
         key: 'icons',
         title: '图标',
         children: [
-          { key: 'icon-library', title: '图标库', path: '/icon-library' },
+          { key: 'icon-library', title: '图标字典', path: '/icon-library' },
           { key: 'icon-assets', title: '图标素材', path: '/icon-assets' },
           { key: 'icon-glyphs', title: '图标字体管理', path: '/icon-glyphs' },
         ],

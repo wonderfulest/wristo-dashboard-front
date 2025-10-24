@@ -10,6 +10,7 @@
         />
         <div class="edit-actions">
           <el-button @click="autoCropAndCenter" :disabled="!editSvgContent">自动裁剪居中</el-button>
+          <el-button @click="processDuotone" :disabled="!editSvgContent">双色（前景黑）</el-button>
           <el-button type="primary" :loading="saving" @click="save">保存</el-button>
           <el-button @click="visibleInner = false">取消</el-button>
         </div>
@@ -29,6 +30,94 @@ import { getIconAssetDetail, cropIconSvg } from '@/api/icon-asset'
 interface Props {
   modelValue: boolean
   assetId: number | null
+}
+
+// 将 SVG 转换为前景/背景分层：
+// - 前景层：所有图形填充为黑色（#000），去除描边
+// - 背景层：完全透明（无填充、无描边），仅作为占位层
+const processDuotone = () => {
+  const src = editSvgContent.value?.trim()
+  if (!src) return
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(src, 'image/svg+xml')
+    const svg = doc.documentElement as unknown as SVGSVGElement
+    if (!svg || svg.tagName.toLowerCase() !== 'svg') {
+      ElMessage.error('无效的 SVG')
+      return
+    }
+
+    // 收集合并所有内容节点（保留 defs 原样）
+    const defs: Element[] = []
+    const contentNodes: Element[] = []
+    const shapeTags = new Set(['path','rect','circle','ellipse','polygon','polyline','line','use'])
+    const isShapeTag = (tag: string) => shapeTags.has(tag)
+
+    // 复制 defs
+    const defsNodes = svg.querySelectorAll('defs')
+    defsNodes.forEach(d => defs.push(d.cloneNode(true) as Element))
+
+    // 收集形状（如果已有 duotone，优先从前景层收集，避免重复加深）
+    const fgExisting = svg.querySelector('#duotone-fg') as Element | null
+    const collectShapes = (el: Element) => {
+      const tag = el.tagName.toLowerCase()
+      if (isShapeTag(tag)) contentNodes.push(el)
+      for (let i = 0; i < el.children.length; i++) collectShapes(el.children[i])
+    }
+    if (fgExisting) {
+      collectShapes(fgExisting)
+    } else {
+      collectShapes(svg)
+    }
+
+    // 构建新的 SVG 根
+    const newDoc = document.implementation.createDocument('http://www.w3.org/2000/svg', 'svg', null)
+    const root = newDoc.documentElement as unknown as SVGSVGElement
+    // 复制重要属性
+    const copyAttrs = ['viewBox', 'width', 'height', 'xmlns', 'xmlns:xlink', 'preserveAspectRatio']
+    copyAttrs.forEach((k) => {
+      const v = svg.getAttribute(k)
+      if (v != null) root.setAttribute(k, v)
+    })
+    if (!root.getAttribute('xmlns')) root.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!root.getAttribute('xmlns:xlink')) root.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+
+    // 追加 defs
+    defs.forEach(d => root.appendChild(newDoc.importNode(d, true)))
+
+    // 背景层（透明）：既无填充也无描边，仅保留结构（如有需要可用于后续扩展）
+    const bg = newDoc.createElementNS('http://www.w3.org/2000/svg', 'g')
+    bg.setAttribute('id', 'duotone-bg')
+    contentNodes.forEach((node) => {
+      const cloned = node.cloneNode(true) as Element
+      // 背景透明：无填充、无描边
+      cloned.setAttribute('fill', 'none')
+      cloned.setAttribute('stroke', 'none')
+      cloned.removeAttribute('stroke-width')
+      bg.appendChild(newDoc.importNode(cloned, true))
+    })
+
+    // 前景层（黑色填充）
+    const fg = newDoc.createElementNS('http://www.w3.org/2000/svg', 'g')
+    fg.setAttribute('id', 'duotone-fg')
+    contentNodes.forEach((node) => {
+      const cloned = node.cloneNode(true) as Element
+      // 前景以填充为主，统一为黑色
+      cloned.setAttribute('fill', '#000000')
+      cloned.removeAttribute('stroke')
+      fg.appendChild(newDoc.importNode(cloned, true))
+    })
+
+    root.appendChild(bg)
+    root.appendChild(fg)
+
+    const serializer = new XMLSerializer()
+    const out = serializer.serializeToString(root)
+    editSvgContent.value = out
+    ElMessage.success('已转换为双色（前景黑）')
+  } catch (e) {
+    ElMessage.error('处理失败')
+  }
 }
 
 const props = defineProps<Props>()
