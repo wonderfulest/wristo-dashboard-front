@@ -14,14 +14,27 @@
       >
         <div class="el-upload__text">
           <div>将 SVG 拖拽到此处，或点击选择，支持多文件</div>
-          <div>文件名需要与 icon 的 Symbol Code 保持一致，比如 heart_rate.svg</div>
+          <div>1. 支持选择上传的图标，只能同时上传一种类型的图标</div>
+          <div>2. 如果不选择，则上传文件名需要与 icon 的 Symbol Code 保持一致，比如 heart_rate.svg，可以同时上传多种类型的图标</div>
         </div>
         <template #tip>
           <div class="el-upload__tip">
             <div class="symbol-quick">
               <div class="label">Symbol Code 速查表</div>
+              <div class="symbol-selected">
+                <span>已选择图标类型：</span>
+                <span class="code" v-if="selectedSymbolCode">{{ selectedSymbolCode }}</span>
+                <span v-else>未选择</span>
+                <el-button v-if="selectedSymbolCode" link type="primary" @click="clearSelect" :disabled="uploading">清除选择</el-button>
+              </div>
               <div class="symbol-grid">
-                <div v-for="it in iconList" :key="it.symbolCode" class="symbol-card">
+                <div
+                  v-for="it in iconList"
+                  :key="it.symbolCode"
+                  class="symbol-card"
+                  :class="{ active: selectedSymbolCode === it.symbolCode }"
+                  @click="toggleSelect(it.symbolCode)"
+                >
                   <div class="symbol-code">{{ it.symbolCode }}</div>
                   <div class="symbol-label">{{ it.label }}</div>
                 </div>
@@ -60,6 +73,21 @@ const activeUploads = ref(0)
 let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
 const dialogVisible = ref(false)
 const iconList = ref<{ symbolCode: string; label: string }[]>([])
+const selectedSymbolCode = ref<string | undefined>(props.symbolCode)
+
+watch(
+  () => props.symbolCode,
+  (v) => {
+    selectedSymbolCode.value = v
+  }
+)
+
+watch(
+  () => selectedSymbolCode.value,
+  (v) => {
+    emit('update:symbolCode', v)
+  }
+)
 
 watch(dialogVisible, async (v) => {
   if (v && iconList.value.length === 0) {
@@ -89,7 +117,7 @@ const doUpload = async (options: { file: File }) => {
   if (!beforeUpload(file)) return
   startLoading(`正在上传 ${file.name} ...`)
   try {
-    await uploadIconSvgWithProgress(file, props.symbolCode, (evt: any) => {
+    await uploadIconSvgWithProgress(file, selectedSymbolCode.value, (evt: any) => {
       const total = evt?.total || 0
       if (total && loadingInstance) {
         const percent = Math.min(100, Math.round((evt.loaded / total) * 100))
@@ -128,6 +156,20 @@ function stopLoading() {
   }
   uploading.value = activeUploads.value > 0
 }
+
+function toggleSelect(code?: string) {
+  if (uploading.value) return
+  if (!code) {
+    selectedSymbolCode.value = undefined
+    return
+  }
+  selectedSymbolCode.value = selectedSymbolCode.value === code ? undefined : code
+}
+
+function clearSelect() {
+  if (uploading.value) return
+  selectedSymbolCode.value = undefined
+}
 </script>
 
 <style scoped>
@@ -136,7 +178,10 @@ function stopLoading() {
 .symbol-quick .label { font-size: 12px; color: #909399; margin-bottom: 6px; }
 .symbol-table { max-height: 220px; overflow: auto; width: 100%; }
 .symbol-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-.symbol-card { border: 1px solid #ebeef5; border-radius: 6px; padding: 8px 10px; background: #f9fafc; }
+.symbol-card { border: 1px solid #ebeef5; border-radius: 6px; padding: 8px 10px; background: #f9fafc; cursor: pointer; }
+.symbol-card.active { border-color: #409eff; box-shadow: 0 0 0 1px #409eff inset; }
 .symbol-code { font-weight: 600; color: #303133; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 .symbol-label { font-size: 12px; color: #909399; margin-top: 4px; }
+.symbol-selected { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: #606266; }
+.symbol-selected .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-weight: 600; color: #303133; }
 </style>
