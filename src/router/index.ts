@@ -18,18 +18,11 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/marketing/email-records',
-      name: 'MerchantEmailRecords',
-      component: () => import('@/views/marketing/EmailRecords.vue'),
+      path: '/email-records',
+      name: 'EmailRecords',
+      component: () => import('@/views/dashboard/EmailRecords.vue'),
       meta: { requiresAuth: true }
     },
-    // Backward-compatible redirects from old /email paths
-    { path: '/email/email-templates', redirect: '/marketing/email-templates' },
-    { path: '/email/email-templates/:id/edit', redirect: to => ({ path: `/marketing/email-templates/${to.params.id}/edit` }) },
-    { path: '/email/email-records', redirect: '/marketing/email-records' },
-    { path: '/email-templates', redirect: '/marketing/email-templates' },
-    { path: '/email-templates/:id/edit', redirect: to => ({ path: `/marketing/email-templates/${to.params.id}/edit` }) },
-    { path: '/email-records', redirect: '/marketing/email-records' },
     // Ops module (new nested paths)
     {
       path: '/ops/db-backups',
@@ -94,7 +87,7 @@ const router = createRouter({
     {
       path: '/dashboard',
       name: 'Dashboard',
-      component: () => import('@/views/Dashboard.vue'),
+      component: () => import('@/views/dashboard/Dashboard.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -106,7 +99,7 @@ const router = createRouter({
     {
       path: '/products',
       name: 'Products',
-      component: () => import('@/views/Products.vue'),
+      component: () => import('@/views/products/Products.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -124,19 +117,19 @@ const router = createRouter({
     {
       path: '/merchant',
       name: 'Merchant',
-      component: () => import('@/views/Merchant.vue'),
+      component: () => import('@/views/merchant/Merchant.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/merchant/tools',
       name: 'MerchantTools',
-      component: () => import('@/views/MerchantTools.vue'),
+      component: () => import('@/views/merchant/MerchantTools.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/merchant/payouts',
       name: 'MerchantPayouts',
-      component: () => import('@/views/MerchantPayouts.vue'),
+      component: () => import('@/views/merchant/MerchantPayouts.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -148,7 +141,7 @@ const router = createRouter({
     {
       path: '/fonts',
       name: 'Fonts',
-      component: () => import('@/views/Fonts.vue'),
+      component: () => import('@/views/dashboard/Fonts.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -188,7 +181,7 @@ const router = createRouter({
     {
       path: '/images',
       name: 'Images',
-      component: () => import('@/views/ImageAssets.vue'),
+      component: () => import('@/views/dashboard/ImageAssets.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -222,17 +215,25 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/tickets',
+      name: 'Tickets',
+      component: () => import('@/views/dashboard/Tickets.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/profile',
       name: 'Profile',
       component: () => import('@/views/Profile.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/categories',
+      path: '/products/categories',
       name: 'Categories',
-      component: () => import('@/views/Categories.vue'),
+      component: () => import('@/views/products/Categories.vue'),
       meta: { requiresAuth: true }
     },
+    // Redirect from old categories path
+    { path: '/categories', redirect: '/products/categories' },
     {
       path: '/packaging-logs',
       name: 'PackagingLogs',
@@ -240,23 +241,24 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/app-daily/config',
+      path: '/products/app-daily/config',
       name: 'AppDailyConfig',
-      component: () => import('@/views/AppDailyConfig.vue'),
+      component: () => import('@/views/products/AppDailyConfig.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/app-daily/config/edit/:appId',
+      path: '/products/app-daily/config/edit/:appId',
       name: 'AppDailyConfigEdit',
-      component: () => import('@/views/AppDailyConfigEdit.vue'),
+      component: () => import('@/views/products/AppDailyConfigEdit.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/app-daily/picks/:appId',
+      path: '/products/app-daily/picks/:appId',
       name: 'AppDailyPicks',
-      component: () => import('@/views/AppDailyPicks.vue'),
+      component: () => import('@/views/products/AppDailyPicks.vue'),
       meta: { requiresAuth: true }
     },
+    // Redirects from old app-daily paths
     {
       path: '/auth/callback',
       name: 'AuthCallback',

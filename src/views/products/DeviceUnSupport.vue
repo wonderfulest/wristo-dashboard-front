@@ -54,6 +54,17 @@
               <div class="product-name">
                 <a v-if="row.garminStoreUrl" :href="row.garminStoreUrl" target="_blank" rel="noopener noreferrer">{{ row.name }}</a>
                 <span v-else>{{ row.name }}</span>
+                <a
+                  v-if="row.designId"
+                  :href="'https://studio.wristo.io/design?id=' + row.designId"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="margin-left: 8px"
+                >
+                  <el-button link type="primary" size="small">
+                    <el-icon><EditPen /></el-icon>
+                  </el-button>
+                </a>
               </div>
               <div class="product-details">
                 <span>appId: {{ row.appId }}</span>
@@ -73,8 +84,62 @@
       <el-table-column prop="createdAt" label="创建时间" width="160">
         <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
       </el-table-column>
+      <el-table-column label="操作" width="120">
+        <template #default="{ row }">
+          <el-button size="small" type="primary" @click="openCreateTicket(row)">创建工单</el-button>
+        </template>
+      </el-table-column>
       
     </el-table>
+
+    <!-- 创建工单弹窗 -->
+    <el-dialog v-model="ticketDialogVisible" title="创建工单" width="600px">
+      <el-form :model="ticketForm" label-width="100px">
+        <el-form-item label="标题">
+          <el-input v-model="ticketForm.title" />
+        </el-form-item>
+        <el-form-item label="优先级">
+          <el-select v-model="ticketForm.priority" placeholder="选择优先级" style="width: 180px">
+            <el-option label="Low" value="low" />
+            <el-option label="Medium" value="medium" />
+            <el-option label="High" value="high" />
+            <el-option label="Urgent" value="urgent" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="指派人">
+          <div style="display:flex; gap:8px; align-items:center; width:100%">
+            <span v-if="assigneeLoading" style="color:#6c757d; font-size:12px">加载中…</span>
+            <span v-else-if="assigneeDetail" style="color:#495057; font-size:14px; font-weight:500">
+              {{ assigneeDetail.username }}
+              <span v-if="assigneeDetail.email" style="color:#6c757d; font-weight:400">（{{ assigneeDetail.email }}）</span>
+            </span>
+            <span v-else style="color:#6c757d; font-size:12px">—</span>
+          </div>
+        </el-form-item>
+        <el-form-item label="截止日期">
+          <el-date-picker v-model="ticketForm.dueDate" type="datetime" placeholder="选择日期时间" value-format="YYYY-MM-DD HH:mm:ss" />
+        </el-form-item>
+        <el-form-item label="标签">
+          <el-select v-model="tagsSelected" multiple filterable placeholder="选择标签" style="width: 100%">
+            <el-option
+              v-for="t in tagsOptions"
+              :key="t"
+              :label="t"
+              :value="t"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="ticketForm.description" type="textarea" rows="4" placeholder="请填写工单描述" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="ticketDialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="ticketSubmitting" @click="submitCreateTicket">创建</el-button>
+        </span>
+      </template>
+    </el-dialog>
 
     <div class="pagination">
       <el-pagination
@@ -93,13 +158,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchUnSupportByDevicePage } from '@/api/products'
 import { pageGarminDevices } from '@/api/garmin-device'
 import type { Product } from '@/types/product'
 import { formatDate } from '@/utils/date'
+import { createTicket, fetchTicketTags } from '@/api/ticket'
+import { getUserDetail } from '@/api/user'
+import { useUserStore } from '@/store/user'
+import type { UserInfo } from '@/types/api'
+import type { TicketCreateDTO } from '@/types/api'
+import { EditPen } from '@element-plus/icons-vue'
  
+
+const userStore = useUserStore()
+
+// Local form model to ensure nullable IDs are allowed during editing
+type TicketFormModel = {
+  title: string
+  description?: string
+  priority?: string
+  assigneeId?: number | null
+  creatorId?: number | null
+  dueDate?: string | null
+  tags?: string | null
+  attachments?: string | null
+  productId?: number | null
+}
 
 const deviceId = ref<number | null>(null)
 const selectedDevice = ref<any | null>(null)
@@ -190,7 +276,117 @@ const onPageChange = (val: number) => {
   fetchList()
 }
 
- 
+// 创建工单
+const ticketDialogVisible = ref(false)
+const ticketSubmitting = ref(false)
+const ticketForm = ref<TicketFormModel>({
+  title: '请求重新设计',
+  description: '',
+  priority: 'medium',
+  assigneeId: null,
+  creatorId: null,
+  dueDate: null,
+  tags: '',
+  attachments: null,
+  productId: null,
+})
+const tagsOptions = ref<string[]>([])
+const tagsSelected = ref<string[]>([])
+
+function openCreateTicket(row: any) {
+  ticketForm.value = {
+    title: '请求重新设计',
+    description: '',
+    priority: 'medium',
+    assigneeId: row?.user?.id ?? null,
+    creatorId: userStore.userInfo?.id ?? null,
+    dueDate: null,
+    tags: '',
+    attachments: null,
+    productId: row?.appId ?? null,
+  }
+  // 初始化已选标签
+  if (ticketForm.value.tags) {
+    try {
+      const arr = JSON.parse(ticketForm.value.tags)
+      tagsSelected.value = Array.isArray(arr) ? arr : []
+    } catch {
+      tagsSelected.value = []
+    }
+  } else {
+    tagsSelected.value = []
+  }
+  // 懒加载标签选项
+  if (!tagsOptions.value.length) {
+    fetchTicketTags().then(res => {
+      if (res.code === 0 && res.data) {
+        tagsOptions.value = res.data
+      }
+    })
+  }
+  // 预加载指派人信息
+  if (ticketForm.value.assigneeId) loadAssignee(ticketForm.value.assigneeId)
+  ticketDialogVisible.value = true
+}
+
+const submitCreateTicket = async () => {
+  if (!ticketForm.value.description) {
+    ElMessage.error('请填写工单描述')
+    return
+  }
+  if (!userStore.userInfo?.id) {
+    ElMessage.error('未获取到当前登录用户信息')
+    return
+  }
+  try {
+    ticketSubmitting.value = true
+    const payload: TicketFormModel = {
+      title: ticketForm.value.title,
+      description: ticketForm.value.description,
+      priority: ticketForm.value.priority,
+      assigneeId: ticketForm.value.assigneeId ?? null,
+      creatorId: userStore.userInfo.id,
+      dueDate: ticketForm.value.dueDate,
+      tags: JSON.stringify(tagsSelected.value || []),
+      attachments: ticketForm.value.attachments,
+      productId: ticketForm.value.productId ?? null,
+    }
+    const res = await createTicket(payload as unknown as TicketCreateDTO)
+    if (res.code === 0) {
+      ElMessage.success('工单已创建')
+      ticketDialogVisible.value = false
+    } else {
+      ElMessage.error(res.msg || '创建失败')
+    }
+  } catch (e) {
+    ElMessage.error('创建失败')
+  } finally {
+    ticketSubmitting.value = false
+  }
+}
+
+// 指派人信息联动
+const assigneeDetail = ref<UserInfo | null>(null)
+const assigneeLoading = ref(false)
+async function loadAssignee(id: number) {
+  try {
+    assigneeLoading.value = true
+    assigneeDetail.value = null
+    const res = await getUserDetail(id)
+    if (res.code === 0 && res.data) assigneeDetail.value = res.data
+  } finally {
+    assigneeLoading.value = false
+  }
+}
+
+watch(() => ticketForm.value.assigneeId, (val) => {
+  if (typeof val === 'number' && val > 0) {
+    loadAssignee(val)
+  } else {
+    assigneeDetail.value = null
+  }
+})
+
 </script>
 
 <style scoped>

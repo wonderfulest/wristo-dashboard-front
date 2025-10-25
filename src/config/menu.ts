@@ -16,23 +16,24 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/products/garmin-devices', '/products/device-un-support', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily', '/data-type-options', '/icon-assets', '/icon-glyphs'],
+    basePaths: ['/dashboard', '/products', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/data-type-options', '/tickets', '/icon-assets', '/icon-glyphs'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
-      { key: 'garmin-devices', title: '佳明设备', path: '/products/garmin-devices' },
+      { key: 'tickets', title: '工单管理', path: '/tickets' },
       {
         key: 'products',
-        title: '作品管理',
+        title: '应用管理',
         children: [
           { key: 'products', title: '应用上线', path: '/products' },
-          { key: 'categories', title: '应用分类', path: '/categories' },
-          { key: 'app-daily-config', title: '每日一图配置', path: '/app-daily/config' },
+          { key: 'categories', title: '应用分类', path: '/products/categories' },
+          { key: 'app-daily-config', title: '每日一图配置', path: '/products/app-daily/config' },
           { key: 'device-un-support', title: '未支持应用', path: '/products/device-un-support' },
         ],
       },
       { key: 'fonts', title: '字体管理', path: '/fonts' },
       { key: 'images', title: '图片素材', path: '/images' },
       { key: 'data-type-options', title: '数据项配置', path: '/data-type-options' },
+
       {
         key: 'packaging',
         title: '打包',
@@ -50,6 +51,8 @@ export const topMenus: TopMenuGroup[] = [
           { key: 'icon-glyphs', title: '图标字体管理', path: '/icon-glyphs' },
         ],
       },
+      { key: 'garmin-devices', title: '佳明设备', path: '/products/garmin-devices' },
+      { key: 'email-records', title: '邮件发送历史', path: '/email-records' },
     ],
   },
   {
@@ -63,7 +66,6 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'segments', title: '用户分群', path: '/marketing/segments' },
       { key: 'email-templates', title: '邮件模板', path: '/marketing/email-templates' },
       { key: 'promotion-campaigns', title: '营销活动', path: '/marketing/campaigns' },
-      { key: 'email-records', title: '邮件发送历史', path: '/marketing/email-records' },
     ],
   },
   {
