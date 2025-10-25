@@ -30,16 +30,23 @@ const router = createRouter({
     { path: '/email-templates', redirect: '/marketing/email-templates' },
     { path: '/email-templates/:id/edit', redirect: to => ({ path: `/marketing/email-templates/${to.params.id}/edit` }) },
     { path: '/email-records', redirect: '/marketing/email-records' },
+    // Ops module (new nested paths)
     {
-      path: '/db-backups',
+      path: '/ops/db-backups',
       name: 'DbBackups',
-      component: () => import('@/views/DbBackups.vue'),
+      component: () => import('@/views/ops/DbBackups.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/system-config',
+      path: '/ops/system-config',
       name: 'SystemConfig',
-      component: () => import('@/views/SystemConfig.vue'),
+      component: () => import('@/views/ops/SystemConfig.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ops/s3-ops',
+      name: 'S3Ops',
+      component: () => import('@/views/ops/S3Ops.vue'),
       meta: { requiresAuth: true }
     },
     // Orders module (new nested paths)
@@ -106,6 +113,12 @@ const router = createRouter({
       path: '/products/garmin-devices',
       name: 'GarminDevices',
       component: () => import('@/views/products/GarminDevices.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/products/device-un-support',
+      name: 'ProductsDeviceUnSupport',
+      component: () => import('@/views/products/DeviceUnSupport.vue'),
       meta: { requiresAuth: true }
     },
     {

@@ -2,6 +2,20 @@ import instance from '@/config/axios'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { Product, ProductPackagingLogQuery, ProductPackagingLogVO, ProductPageQuery } from '@/types/product'
 
+// 根据设备型号,分页查询未支持的应用列表,默认按下载量倒序
+export interface UnSupportDevicePageQueryDTO {
+  deviceId?: number
+  pageNum: number
+  pageSize: number
+  orderBy?: string // e.g. 'download:desc'
+}
+
+export const fetchUnSupportByDevicePage = (
+  params: UnSupportDevicePageQueryDTO
+): Promise<ApiResponse<PageResponse<Product>>> => {
+  return instance.post('/admin/products/page/device-un-support?populate=*', params)
+}
+
 export const fetchProductPage = (params: ProductPageQuery): Promise<ApiResponse<PageResponse<Product>>> => {
   return instance.post('/admin/products/page?populate=*', params)
 }

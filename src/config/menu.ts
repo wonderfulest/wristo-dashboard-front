@@ -16,7 +16,7 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/products/garmin-devices', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily', '/data-type-options', '/icon-assets', '/icon-glyphs'],
+    basePaths: ['/dashboard', '/products', '/products/garmin-devices', '/products/device-un-support', '/categories', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/app-daily', '/data-type-options', '/icon-assets', '/icon-glyphs'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'garmin-devices', title: '佳明设备', path: '/products/garmin-devices' },
@@ -27,6 +27,7 @@ export const topMenus: TopMenuGroup[] = [
           { key: 'products', title: '应用上线', path: '/products' },
           { key: 'categories', title: '应用分类', path: '/categories' },
           { key: 'app-daily-config', title: '每日一图配置', path: '/app-daily/config' },
+          { key: 'device-un-support', title: '未支持应用', path: '/products/device-un-support' },
         ],
       },
       { key: 'fonts', title: '字体管理', path: '/fonts' },
@@ -68,10 +69,11 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'ops',
     title: '运维工具',
-    basePaths: ['/db-backups', '/system-config'],
+    basePaths: ['/ops'],
     children: [
-      { key: 'db-backups', title: '数据库备份', path: '/db-backups' },
-      { key: 'system-config', title: '系统配置', path: '/system-config' },
+      { key: 'db-backups', title: '数据库备份', path: '/ops/db-backups' },
+      { key: 'system-config', title: '系统配置', path: '/ops/system-config' },
+      { key: 's3-ops', title: 'S3 运维', path: '/ops/s3-ops' },
     ],
   },
   {
