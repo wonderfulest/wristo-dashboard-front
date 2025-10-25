@@ -281,7 +281,6 @@ const comments = ref<TicketComment[]>([])
 const history = ref<TicketHistory[]>([])
 const userStore = useUserStore()
 const closingIds = ref<Set<number>>(new Set())
-const statusChangingIds = ref<Set<number>>(new Set())
 
 // comment dialog state
 const commentDialogVisible = ref(false)
@@ -348,7 +347,7 @@ const parseTags = (tags?: string | null): string[] => {
 
 // navigate to product design edit by designId
 const navigateToDesign = (row: TicketVO) => {
-  const did = row?.product?.designId as any
+  const did = (row?.product as any)?.designId
   if (!did) {
     ElMessage.info('无可编辑的 Design ID')
     return

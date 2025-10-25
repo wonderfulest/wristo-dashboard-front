@@ -181,7 +181,7 @@ const total = ref(0)
 const pageNum = ref(1)
 const pageSize = ref(100)
 
-const query = reactive<DataTypeOptionPageQueryDTO>({ category: '', active: undefined, keyword: '' })
+const query = reactive<Partial<DataTypeOptionPageQueryDTO>>({ category: '', active: undefined, keyword: '' })
 
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
