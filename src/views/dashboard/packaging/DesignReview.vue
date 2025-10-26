@@ -47,6 +47,17 @@
                   rel="noopener noreferrer"
                 >{{ row.name }}</a>
                 <span v-else>{{ row.name }}</span>
+                <a
+                  v-if="row.designUid"
+                  :href="`http://studio.wristo.io/design?id=${row.designUid}`"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="margin-left: 8px"
+                >
+                  <el-button link type="primary" size="small">
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
+                </a>
               </div>
               <div class="product-details">
                 <span>appId: {{ row.product?.appId || '-' }}</span>
@@ -105,6 +116,7 @@ import { formatDate } from '@/utils/date'
 import { fetchDesignReviewPage, approveDesign, rejectDesignWithComment } from '@/api/design-review'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { Design } from '@/types/design'
+import { Edit } from '@element-plus/icons-vue'
 
 const designs = ref<any[]>([])
 const loading = ref(false)

@@ -20,6 +20,7 @@ export const topMenus: TopMenuGroup[] = [
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'tickets', title: '工单管理', path: '/tickets' },
+      { key: 'template-variables', title: '模板变量', path: '/system/template-variables' },
       {
         key: 'products',
         title: '应用管理',
@@ -38,8 +39,8 @@ export const topMenus: TopMenuGroup[] = [
         key: 'packaging',
         title: '打包',
         children: [
-          { key: 'design-review', title: '设计审核', path: '/design-review' },
-          { key: 'packaging-logs', title: '打包记录', path: '/packaging-logs' },
+          { key: 'design-review', title: '设计审核', path: '/packaging/design-review' },
+          { key: 'packaging-logs', title: '打包记录', path: '/packaging/packaging-logs' },
         ],
       },
       {

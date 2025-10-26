@@ -352,7 +352,7 @@ const navigateToDesign = (row: TicketVO) => {
     ElMessage.info('无可编辑的 Design ID')
     return
   }
-  window.open(`/products?designId=${encodeURIComponent(String(did))}`,'_blank')
+  window.open(`http://studio.wristo.io/design?id=${encodeURIComponent(String(did))}`,'_blank')
 }
 
 const search = async (pageNum = 1) => {

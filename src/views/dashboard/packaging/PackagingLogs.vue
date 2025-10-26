@@ -45,6 +45,17 @@
                   rel="noopener noreferrer"
                 >{{ row.product.name }}</a>
                 <span v-else>{{ row.product.name }}</span>
+                <a
+                  v-if="row.product?.designId"
+                  :href="`http://studio.wristo.io/design?id=${row.product.designId}`"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="margin-left: 8px"
+                >
+                  <el-button link type="primary" size="small">
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
+                </a>
               </div>
               <div class="product-details">
                 <span>appId: {{ row.product.appId }}</span>
@@ -178,6 +189,7 @@ import { PACKAGING_STATUS } from '@/types/product'
 import { formatDateTime } from '@/utils/date'
 import StatusTag from '@/components/StatusTag.vue'
 import { rejectDesignWithComment } from '@/api/design-review'
+import { Edit } from '@element-plus/icons-vue'
 
 // 响应式数据
 const loading = ref(false)

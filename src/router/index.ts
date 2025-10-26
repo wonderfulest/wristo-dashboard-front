@@ -91,9 +91,15 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/design-review',
+      path: '/packaging/design-review',
       name: 'DesignReview',
-      component: () => import('@/views/DesignReview.vue'),
+      component: () => import('@/views/dashboard/packaging/DesignReview.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/packaging/packaging-logs',
+      name: 'PackagingLogs',
+      component: () => import('@/views/dashboard/packaging/PackagingLogs.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -227,17 +233,15 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/system/template-variables',
+      name: 'TemplateVariables',
+      component: () => import('@/views/dashboard/system/TemplateVariables.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products/categories',
       name: 'Categories',
       component: () => import('@/views/products/Categories.vue'),
-      meta: { requiresAuth: true }
-    },
-    // Redirect from old categories path
-    { path: '/categories', redirect: '/products/categories' },
-    {
-      path: '/packaging-logs',
-      name: 'PackagingLogs',
-      component: () => import('@/views/PackagingLogs.vue'),
       meta: { requiresAuth: true }
     },
     {

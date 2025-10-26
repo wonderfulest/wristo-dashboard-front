@@ -27,6 +27,11 @@
       <el-table-column prop="nickname" label="昵称" width="180" />
       <el-table-column prop="email" label="邮箱" width="260" />
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
+      <el-table-column label="操作" width="160" fixed="right">
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openDesignerConfig(row)">查看默认配置</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <div class="pagination-bar">
@@ -41,6 +46,25 @@
         @size-change="handleSizeChange"
       />
     </div>
+
+    <!-- 设计师默认配置对话框 -->
+    <el-dialog v-model="configDialogVisible" title="设计师默认配置" width="560px">
+      <div v-if="configLoading" style="padding: 12px;">加载中...</div>
+      <el-descriptions v-else :column="2" border size="small">
+        <el-descriptions-item label="用户ID">{{ currentConfig?.userId ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="启用">{{ currentConfig?.isActive === 1 ? '是' : '否' }}</el-descriptions-item>
+        <el-descriptions-item label="默认支付">{{ currentConfig?.defaultPaymentMethod || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="自动发布">{{ currentConfig?.enableAutoPublish === 1 ? '是' : '否' }}</el-descriptions-item>
+        <el-descriptions-item label="默认价格">{{ currentConfig?.defaultPrice ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="默认币种">{{ currentConfig?.defaultCurrency || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="描述模板" :span="2"><div style="white-space: pre-wrap;">{{ currentConfig?.descriptionTemplate || '-' }}</div></el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ currentConfig?.createdAt || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="更新时间">{{ currentConfig?.updatedAt || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="configDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -49,6 +73,8 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { pageMerchantUsers, type MerchantUserPageQueryDTO } from '@/api/user'
 import type { UserInfo } from '@/types/api'
+import { getDesignerDefaultConfigByUser } from '@/api/designer-default-config'
+import type { DesignerDefaultConfigVO } from '@/types/designer-default-config'
 
 const users = ref<UserInfo[]>([])
 const loading = ref(false)
@@ -108,6 +134,39 @@ const handleSizeChange = (size: number) => {
   query.value.pageSize = size
   query.value.pageNum = 1
   fetchUsers()
+}
+
+// 查看设计师默认配置
+const configDialogVisible = ref(false)
+const configLoading = ref(false)
+const currentConfig = ref<DesignerDefaultConfigVO | null>(null)
+
+const openDesignerConfig = async (row: any) => {
+  if (!row?.id) return
+  configDialogVisible.value = true
+  configLoading.value = true
+  currentConfig.value = null
+  try {
+    const res = await getDesignerDefaultConfigByUser(Number(row.id))
+    if (res.code === 0) {
+      currentConfig.value = res.data || null
+      if (!currentConfig.value) {
+        ElMessage.info('未找到默认配置')
+      }
+    } else {
+      ElMessage.error(res.msg || '获取默认配置失败')
+    }
+  } catch (e: any) {
+    const msg = e?.msg || e?.message || ''
+    if (e?.code === -1 && /not found|不存在/i.test(msg)) {
+      currentConfig.value = null
+      ElMessage.info('未找到默认配置')
+    } else {
+      ElMessage.error(msg || '获取默认配置失败')
+    }
+  } finally {
+    configLoading.value = false
+  }
 }
 
 onMounted(() => {
