@@ -4,6 +4,25 @@ import { useUserStore } from '@/store/user'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    // Blog module
+    {
+      path: '/blog/posts',
+      name: 'BlogPosts',
+      component: () => import('@/views/blog/Posts.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/blog/posts/:id/edit',
+      name: 'BlogPostEdit',
+      component: () => import('@/views/blog/PostEdit.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/blog/categories',
+      name: 'BlogCategories',
+      component: () => import('@/views/blog/Categories.vue'),
+      meta: { requiresAuth: true }
+    },
     // Marketing Email module (moved under /marketing)
     {
       path: '/marketing/email-templates',

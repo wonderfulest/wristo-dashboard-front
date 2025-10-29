@@ -300,7 +300,7 @@ const statusSubmitting = ref(false)
 const fmtDate = (v?: string | null) => {
   if (!v) return '—'
   const d = new Date(v)
-  return isNaN(d.getTime()) ? '—' : d.toLocaleString('zh-CN')
+  return isNaN(d.getTime()) ? '—' : d.toLocaleString('zh')
 }
 
 const formatEnumLabel = (val: string) => {
