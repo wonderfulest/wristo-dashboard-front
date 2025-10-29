@@ -30,6 +30,8 @@ const config = computed(() => ({
       '|',
       'bulletedList', 'numberedList', 'blockQuote',
       '|',
+      'alignment',
+      '|',
       'undo', 'redo'
     ],
     shouldNotGroupWhenFull: true
