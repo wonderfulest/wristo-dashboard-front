@@ -78,6 +78,7 @@
         </el-form-item>
 
         <el-form-item label="正文">
+          <!-- <ContentEditorQuill v-model="contentHtml" /> -->
           <ContentEditor v-model="contentHtml" />
         </el-form-item>
       </el-form>
