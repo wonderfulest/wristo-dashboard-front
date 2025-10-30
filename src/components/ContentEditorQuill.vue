@@ -16,6 +16,19 @@ import 'quill/dist/quill.snow.css'
 import 'quill/dist/quill.core.css'
 import 'quill-better-table/dist/quill-better-table.css'
 
+// Polyfill: vue3-quill calls quill.pasteHTML (Quill v1 API). Quill v2 uses clipboard.dangerouslyPasteHTML.
+// Provide a compatibility method on the prototype to avoid runtime errors.
+const QAny = Quill as any
+if (QAny && QAny.prototype && typeof QAny.prototype.pasteHTML !== 'function') {
+  QAny.prototype.pasteHTML = function(indexOrHtml: any, html?: any, source?: any) {
+    if (typeof indexOrHtml === 'number') {
+      return this.clipboard.dangerouslyPasteHTML(indexOrHtml, html, source)
+    }
+    // If only HTML is provided, paste at current selection/index
+    return this.clipboard.dangerouslyPasteHTML(indexOrHtml, html)
+  }
+}
+
 defineOptions({
   components: { quillEditor }
 })
@@ -83,6 +96,38 @@ const options = computed(() => ({
 
 <style scoped>
 .quill-height-guard { height: 0; }
-:deep(.ql-editor) { min-height: 420px; padding-bottom: 16px; }
-:deep(.ql-container) { border-radius: 6px; }
+
+/* Ensure toolbar on top, editor below - enforce vertical layout */
+.quill-editor {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+}
+
+.quill-editor :deep(.ql-toolbar) {
+  order: 0 !important;
+  flex-shrink: 0;
+  border-bottom: 1px solid #ccc;
+  width: 100% !important;
+}
+
+.quill-editor :deep(.ql-container) {
+  order: 1 !important;
+  flex: 1;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.quill-editor :deep(.ql-editor) {
+  min-height: 420px;
+  max-height: 560px;
+  overflow-y: auto;
+  padding-bottom: 16px;
+  box-sizing: border-box;
+}
+</style>
+<style>
+.ql-toolbar.ql-snow {
+  width: 100% !important;
+}
 </style>

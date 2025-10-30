@@ -12,6 +12,8 @@
     "@ckeditor/ckeditor5-build-classic": "github:ckeditor/ckeditor5-build-classic",
     "@ckeditor/ckeditor5-vue": "^5",
     "@vueup/vue-quill": "^1.2.0",
+    "@wangeditor/editor": "^5.1.23",
+    "@wangeditor/editor-for-vue": "^5.1.12",
     "axios": "^1.6.7",
     "echarts": "^6.0.0",
     "element-plus": "^2.9.11",
