@@ -23,6 +23,12 @@ const router = createRouter({
       component: () => import('@/views/blog/Categories.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/blog/toc',
+      name: 'BlogToc',
+      component: () => import('@/views/blog/TocItems.vue'),
+      meta: { requiresAuth: true }
+    },
     // Marketing Email module (moved under /marketing)
     {
       path: '/marketing/email-templates',

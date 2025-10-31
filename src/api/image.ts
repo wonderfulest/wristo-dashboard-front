@@ -10,6 +10,14 @@ export const uploadImage = (file: File): Promise<ApiResponse<ImageVO>> => {
   })
 }
 
+export const uploadVideo = (file: File): Promise<ApiResponse<ImageVO>> => {
+  const form = new FormData()
+  form.append('file', file)
+  return instance.post('/admin/image/upload', form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
 // 分页查询图片素材
 export interface ImagePageParams {
   pageNum?: number

@@ -40,8 +40,8 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="作者ID">
-          <el-input-number v-model="post.authorId" :min="0" :controls="false" placeholder="可选" />
+        <el-form-item label="作者">
+          <el-input :model-value="displayUsername" disabled />
         </el-form-item>
         <el-form-item label="封面图URL">
           <el-input v-model="post.coverImageUrl" placeholder="https://..." />
@@ -94,6 +94,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useUserStore } from '@/store/user'
 import type { BlogPostCreateDTO, BlogPostTranslationCreateDTO, BlogPostTranslationUpdateDTO, BlogCategoryVO, BlogPostUpdateDTO, BlogUpdateDTO } from '@/types/blog'
 import { fetchCategoryList, fetchBlogPostDetail, fetchSystemLanguages, updateBlogCombined, deletePostTranslation } from '@/api/blog'
 import { ElMessageBox, ElMessage } from 'element-plus'
@@ -115,6 +116,13 @@ const post = ref<BlogPostCreateDTO>({
   title: '',
   slug: ''
 })
+
+const userStore = useUserStore()
+const displayUsername = computed(() => userStore.userInfo?.nickname || userStore.userInfo?.username || (userStore.userInfo?.id ? `用户#${userStore.userInfo.id}` : '—'))
+// 默认作者：如果为空则使用当前登录用户
+if (!post.value.authorId && userStore?.userInfo?.id) {
+  post.value.authorId = userStore.userInfo.id as any
+}
 
 const trans = ref<BlogPostTranslationCreateDTO>({
   lang: 'zh',
@@ -178,6 +186,10 @@ onMounted(async () => {
             lang: base.translations?.[0]?.lang || 'zh',
             title: base.translations?.[0]?.title || '',
             slug: base.translations?.[0]?.slug || ''
+          }
+          // 若后端未回填作者ID，则使用当前登录用户
+          if (!post.value.authorId && userStore?.userInfo?.id) {
+            post.value.authorId = userStore.userInfo.id as any
           }
           const first = base.translations?.[0]
           if (first) {

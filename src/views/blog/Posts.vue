@@ -30,17 +30,17 @@
     <el-card class="card" style="margin-top: 12px;">
       <el-table :data="pageData.list" v-loading="loading" style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="标题">
+        <el-table-column label="标题" width="300">
           <template #default="{ row }">
-            <div class="title-line">{{ (row.translations && row.translations[0]?.title) || '—' }}</div>
-            <div class="muted">{{ (row.translations && row.translations[0]?.summary) || '' }}</div>
+            <div class="title-line">{{ row.title || (row.translations && row.translations[0]?.title) || '—' }}</div>
+            <div class="muted">{{ row.summary || (row.translations && row.translations[0]?.summary) || '' }}</div>
           </template>
         </el-table-column>
         <el-table-column label="Slug" width="160">
-          <template #default="{ row }">{{ (row.translations && row.translations[0]?.slug) || '—' }}</template>
+          <template #default="{ row }">{{ joinTrans(row, 'slug') }}</template>
         </el-table-column>
         <el-table-column label="语言" width="110">
-          <template #default="{ row }">{{ (row.translations && row.translations[0]?.lang) || '—' }}</template>
+          <template #default="{ row }">{{ joinTrans(row, 'lang') }}</template>
         </el-table-column>
         <el-table-column label="发布" width="110">
           <template #default="{ row }">
@@ -54,10 +54,17 @@
         <el-table-column label="更新时间" width="200">
           <template #default="{ row }">{{ fmtDate(row.updatedAt) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <el-switch
+                :model-value="row.isPublished === 1"
+                :loading="publishLoading[row.id] === true"
+                @change="(val: boolean) => onSwitchPublish(row, val)"
+              />
+              <el-button type="primary" link size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -80,8 +87,8 @@
             <el-option v-for="c in categories" :key="c.id" :label="c.name || c.slug || ('分类#' + c.id)" :value="c.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="作者ID">
-          <el-input-number v-model="createForm.authorId" :min="0" :controls="false" placeholder="可选" />
+        <el-form-item label="作者">
+          <el-input :model-value="displayUsername" disabled />
         </el-form-item>
         <el-form-item label="封面图URL">
           <el-input v-model="createForm.coverImageUrl" placeholder="https://..." />
@@ -115,14 +122,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/store/user'
 import type { PageResponse, ApiResponse } from '@/types/api'
-import type { BlogPostVO, BlogPostPageQueryDTO } from '@/types/blog'
-import { fetchBlogPostPage, deleteBlogPost, createBlogPost, fetchCategoryList } from '@/api/blog'
+import type { BlogPostVO, BlogPostPageQueryDTO, BlogPostTranslationVO } from '@/types/blog'
+import { fetchBlogPostPage, deleteBlogPost, createBlogPost, fetchCategoryList, updatePostIsPublished } from '@/api/blog'
 import { ElMessageBox, ElMessage } from 'element-plus'
 
 const router = useRouter()
+const userStore = useUserStore()
+const displayUsername = computed(() => userStore.userInfo?.nickname || userStore.userInfo?.username || (userStore.userInfo?.id ? `用户#${userStore.userInfo.id}` : '—'))
 const loading = ref(true)
 const error = ref<string | null>(null)
 
@@ -135,6 +145,36 @@ const fmtDate = (v?: string | null) => {
   if (!v) return '—'
   const d = new Date(v)
   return isNaN(d.getTime()) ? '—' : d.toLocaleString('zh')
+}
+
+// Publish toggle state and handler
+const publishLoading = ref<Record<number, boolean>>({})
+const onSwitchPublish = async (row: BlogPostVO, val: boolean) => {
+  const nextVal = val ? 1 : 0
+  const prevVal = row.isPublished === 1 ? 1 : 0
+  if (nextVal === prevVal) return
+  publishLoading.value[row.id] = true
+  const old = prevVal
+  // optimistic update for snappy UI
+  row.isPublished = nextVal
+  try {
+    const res = await updatePostIsPublished(row.id, nextVal)
+    if ((res as any)?.code !== 0) throw new Error((res as any)?.msg || '更新失败')
+    ElMessage.success(nextVal === 1 ? '已发布' : '已取消发布')
+  } catch (e: any) {
+    row.isPublished = old
+    ElMessage.error(e?.message || '操作失败')
+  } finally {
+    publishLoading.value[row.id] = false
+  }
+}
+
+const joinTrans = (row: BlogPostVO, key: 'slug' | 'lang'): string => {
+  const arr = Array.isArray(row.translations) ? row.translations : []
+  const vals = arr
+    .map((t: BlogPostTranslationVO) => t?.[key])
+    .filter((v): v is string => Boolean(v && v.length > 0))
+  return vals.length ? vals.join(', ') : '—'
 }
 
 const search = async (pageNum = 1) => {
@@ -216,6 +256,10 @@ const categories = ref<Array<{ id: number; name?: string | null; slug: string }>
 const openCreateDialog = async () => {
   createForm.value = { categoryId: undefined, authorId: undefined, coverImageUrl: '', isPublished: 0, publishedAt: '', lang: 'zh', title: '', slug: '' }
   createDialogVisible.value = true
+  // 默认作者：如果为空则使用当前登录用户
+  if (!createForm.value.authorId && userStore?.userInfo?.id) {
+    createForm.value.authorId = userStore.userInfo.id as any
+  }
   try {
     const res = await fetchCategoryList()
     if ((res as any)?.code === 0 && Array.isArray((res as any)?.data)) categories.value = (res as any).data

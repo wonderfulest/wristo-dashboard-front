@@ -1,5 +1,10 @@
 export interface BlogPostVO {
   id: number
+  // top-level fields for easier UI display (also present in translations)
+  title?: string | null
+  summary?: string | null
+  contentHtml?: string | null
+  slug?: string | null
   categoryId?: number | null
   authorId?: number | null
   coverImageUrl?: string | null
@@ -136,4 +141,59 @@ export interface UserBaseVO {
   id: number
   username?: string | null
   nickname?: string | null
+}
+
+// Blog TOC item types
+export interface BlogPostTocItemVO {
+  id: number
+  postId: number
+  parentId?: number | null
+  title: string
+  anchor?: string | null
+  orderIndex?: number | null
+  depth?: number | null
+  linkUrl?: string | null
+  isActive?: number | null
+  createdAt?: string | null
+  updatedAt?: string | null
+  children?: BlogPostTocItemVO[]
+  post?: BlogPostVO | null
+}
+
+export interface BlogPostTocItemCreateDTO {
+  postId?: number | null
+  parentId?: number | null
+  title: string
+  anchor?: string | null
+  orderIndex?: number | null
+  depth?: number | null
+  linkUrl?: string | null
+}
+
+export interface BlogPostTocItemUpdateDTO {
+  id: number
+  postId?: number | null
+  parentId?: number | null
+  title?: string | null
+  anchor?: string | null
+  orderIndex?: number | null
+  depth?: number | null
+  linkUrl?: string | null
+  isActive?: number | null
+}
+
+export interface BlogPostTocItemTreeQueryDTO {
+  parentId: number
+}
+
+// Post search & TOC bind
+export interface BlogPostSearchDTO {
+  keyword?: string | null
+  lang?: string | null
+  limit?: number | null
+}
+
+export interface BlogPostTocBindDTO {
+  postId: number
+  id: number // toc item id
 }

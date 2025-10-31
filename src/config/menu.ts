@@ -59,10 +59,11 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'blog',
     title: '博客',
-    basePaths: ['/blog', '/blog/posts', '/blog/categories'],
+    basePaths: ['/blog'],
     children: [
       { key: 'post-list', title: '文章列表', path: '/blog/posts' },
       { key: 'categories', title: '分类管理', path: '/blog/categories' },
+      { key: 'toc', title: '博客目录管理', path: '/blog/toc' },
     ],
   },
   {

@@ -7,6 +7,8 @@
       mode="default"
       @onCreated="handleCreated"
       @onChange="handleChange"
+      @onFocus="handleFocus"
+      @onBlur="handleBlur"
       class="we-editor"
     />
   </div>
@@ -16,7 +18,7 @@
 import { ref, shallowRef, watch, onBeforeUnmount } from 'vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import '@wangeditor/editor/dist/css/style.css'
-import { uploadImage } from '@/api/image'
+import { uploadImage, uploadVideo } from '@/api/image'
 
 const props = withDefaults(defineProps<{ modelValue: string; placeholder?: string }>(), {
   modelValue: '',
@@ -39,15 +41,60 @@ const editorConfig = ref<Record<string, any>>({
         const alt = img?.alternativeText || img?.name || ''
         insertFn(url, alt, url)
       }
+    },
+    uploadVideo: {
+      customUpload: async (file: File, insertFn: (url: string, alt?: string, href?: string) => void) => {
+        const res = await uploadVideo(file)
+        const video = res.data
+        const url = video?.url || ''
+        const alt = video?.alternativeText || video?.name || ''
+        insertFn(url, alt, url)
+      }
     }
   }
 })
 
+const handleFocus = () => {
+  console.log('🟢 Editor focused - handleFocus triggered')
+  // 聚焦时也检查内容是否有变化
+  const editor = editorRef.value
+  if (editor) {
+    try {
+      const currentHtml = editor.getHtml()
+      if (currentHtml !== valueHtml.value) {
+        valueHtml.value = currentHtml
+        emit('update:modelValue', currentHtml)
+        console.warn('🔄 Content synced on focus:', currentHtml)
+      }
+    } catch (e) {
+      console.error('Failed to sync on focus:', e)
+    }
+  }
+}
+
+const handleBlur = () => {
+  console.log('🔴 Editor blurred - handleBlur triggered')
+  // 失焦时强制同步内容，确保工具栏操作的结果被保存
+  const editor = editorRef.value
+  if (editor) {
+    try {
+      const currentHtml = editor.getHtml()
+      if (currentHtml !== valueHtml.value) {
+        valueHtml.value = currentHtml
+        emit('update:modelValue', currentHtml)
+        console.log('Force sync on blur:', currentHtml)
+      }
+    } catch (e) {
+      console.warn('Failed to get editor content on blur:', e)
+    }
+  }
+}
 const handleCreated = (editor: any) => {
   editorRef.value = editor
 }
 
 const handleChange = () => {
+  console.log('handleChange', valueHtml.value)
   emit('update:modelValue', valueHtml.value || '')
 }
 
