@@ -17,39 +17,37 @@ import type {
   BlogPostTocBindDTO
 } from '@/types/blog'
 
-const BASE = '/admin/blog/posts'
-const SYS_PUBLIC_BASE = '/public/system'
 
 export function fetchBlogPostPage(dto: BlogPostPageQueryDTO): Promise<ApiResponse<PageResponse<BlogPostVO>>> {
-  return instance.post(`${BASE}/page?populate=translations,category,author`, dto)
+  return instance.post(`/admin/blog/posts/page?populate=translations,category,author`, dto)
 }
 
 export function createBlogPost(dto: BlogPostCreateDTO): Promise<ApiResponse<BlogPostVO>> {
-  return instance.post(`${BASE}/create`, dto)
+  return instance.post(`/admin/blog/posts/create`, dto)
 }
 
 export function deleteBlogPost(id: number): Promise<ApiResponse<boolean>> {
-  return instance.post(`${BASE}/delete`, { id })
+  return instance.post(`/admin/blog/posts/delete`, { id })
 }
 
 export function fetchBlogPostDetail(id: number): Promise<ApiResponse<BlogPostVO>> {
-  return instance.get(`${BASE}/detail?populate=*`, { params: { id } })
+  return instance.get(`/admin/blog/posts/detail?populate=*`, { params: { id } })
 }
 
 // Combined update (post + translation)
 export function updateBlogCombined(dto: BlogUpdateDTO): Promise<ApiResponse<any>> {
-  return instance.post(`${BASE}/update`, dto)
+  return instance.post(`/admin/blog/posts/update`, dto)
 }
 
 // Delete a specific translation by language
 export function deletePostTranslation(postId: number, lang: string): Promise<ApiResponse<boolean>> {
-  return instance.post(`${BASE}/delete/translation`, null, { params: { id: postId, lang } })
+  return instance.post(`/admin/blog/posts/delete/translation`, null, { params: { id: postId, lang } })
 }
 
 // Update publish status for a post (partial update via combined update endpoint)
 export function updatePostIsPublished(id: number, isPublished: number): Promise<ApiResponse<boolean>> {
   // Backend is expected to accept a payload with only the 'post' object for partial update
-  return instance.post(`${BASE}/update`, { post: { id, isPublished } } as any)
+  return instance.post(`/admin/blog/posts/update`, { post: { id, isPublished } } as any)
 }
 
 // Category APIs
@@ -75,10 +73,6 @@ export function fetchCategoryList(): Promise<ApiResponse<BlogCategoryVO[]>> {
   return instance.get(`${CAT_BASE}/list`)
 }
 
-// System public APIs
-export function fetchSystemLanguages(): Promise<ApiResponse<string[]>> {
-  return instance.get(`${SYS_PUBLIC_BASE}/languages`)
-}
 
 // Blog TOC item APIs
 const TOC_BASE = '/admin/blog/toc-items'
@@ -101,7 +95,7 @@ export function deleteTocItem(id: number): Promise<ApiResponse<boolean>> {
 
 // Search posts
 export function searchBlogPosts(dto: BlogPostSearchDTO): Promise<ApiResponse<BlogPostVO[]>> {
-  return instance.post(`${BASE}/search`, dto)
+  return instance.post(`/admin/blog/posts/search`, dto)
 }
 
 // Bind toc item to post
