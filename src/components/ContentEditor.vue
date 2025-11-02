@@ -29,7 +29,9 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: string): void }>()
 const editorRef = shallowRef<any>()
 const valueHtml = ref<string>(props.modelValue || '')
 
-const toolbarConfig = ref<Record<string, any>>({})
+const toolbarConfig = ref<Record<string, any>>({
+  excludeKeys: ['fullScreen']
+})
 const editorConfig = ref<Record<string, any>>({
   placeholder: props.placeholder,
   MENU_CONF: {
@@ -55,7 +57,6 @@ const editorConfig = ref<Record<string, any>>({
 })
 
 const handleFocus = () => {
-  console.log('🟢 Editor focused - handleFocus triggered')
   // 聚焦时也检查内容是否有变化
   const editor = editorRef.value
   if (editor && !editor.isDestroyed && typeof editor.getHtml === 'function') {
@@ -64,7 +65,6 @@ const handleFocus = () => {
       if (currentHtml !== valueHtml.value) {
         valueHtml.value = currentHtml
         emit('update:modelValue', currentHtml)
-        console.warn('🔄 Content synced on focus:', currentHtml)
       }
     } catch (e) {
       console.error('Failed to sync on focus:', e)
@@ -73,7 +73,6 @@ const handleFocus = () => {
 }
 
 const handleBlur = () => {
-  console.log('🔴 Editor blurred - handleBlur triggered')
   // 失焦时强制同步内容，确保工具栏操作的结果被保存
   const editor = editorRef.value
   if (editor && !editor.isDestroyed && typeof editor.getHtml === 'function') {
@@ -82,7 +81,6 @@ const handleBlur = () => {
       if (currentHtml !== valueHtml.value) {
         valueHtml.value = currentHtml
         emit('update:modelValue', currentHtml)
-        console.log('Force sync on blur:', currentHtml)
       }
     } catch (e) {
       console.warn('Failed to get editor content on blur:', e)
@@ -94,7 +92,6 @@ const handleCreated = (editor: any) => {
 }
 
 const handleChange = () => {
-  console.log('handleChange', valueHtml.value)
   emit('update:modelValue', valueHtml.value || '')
 }
 
@@ -125,23 +122,15 @@ onBeforeUnmount(() => {
 /* Ensure toolbar full width and editor scrolling behavior */
 :deep(.w-e-toolbar) { width: 100%; }
 :deep(.w-e-text-container) {
-  min-height: 420px;
+  min-height: 620px;
   /* overflow on scroll node to avoid position drift */
   overflow: visible;
   position: relative;
 }
 :deep(.w-e-scroll) {
-  min-height: 420px;
-  max-height: 560px;
+  min-height: 620px;
+  max-height: 660px;
   overflow-y: auto;
 }
 
-/* Raise z-index for WangEditor floating UI so it stays above tables/modals */
-:deep(.w-e-tooltip),
-:deep(.w-e-modal),
-:deep(.w-e-panel),
-:deep(.w-e-drop-panel),
-:deep(.w-e-hover-bar) {
-  z-index: 3001;
-}
 </style>
