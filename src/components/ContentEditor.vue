@@ -58,7 +58,7 @@ const handleFocus = () => {
   console.log('🟢 Editor focused - handleFocus triggered')
   // 聚焦时也检查内容是否有变化
   const editor = editorRef.value
-  if (editor) {
+  if (editor && !editor.isDestroyed && typeof editor.getHtml === 'function') {
     try {
       const currentHtml = editor.getHtml()
       if (currentHtml !== valueHtml.value) {
@@ -76,7 +76,7 @@ const handleBlur = () => {
   console.log('🔴 Editor blurred - handleBlur triggered')
   // 失焦时强制同步内容，确保工具栏操作的结果被保存
   const editor = editorRef.value
-  if (editor) {
+  if (editor && !editor.isDestroyed && typeof editor.getHtml === 'function') {
     try {
       const currentHtml = editor.getHtml()
       if (currentHtml !== valueHtml.value) {
@@ -104,8 +104,13 @@ watch(() => props.modelValue, (v) => {
 
 onBeforeUnmount(() => {
   const editor = editorRef.value
-  if (editor == null) return
-  editor.destroy()
+  if (editor == null || editor.isDestroyed) return
+  try {
+    editor.destroy()
+  } catch (e) {
+    console.warn('Failed to destroy editor:', e)
+  }
+  editorRef.value = null
 })
 </script>
 

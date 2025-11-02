@@ -2,7 +2,7 @@
   <div class="page">
     <div class="page-header">
       <div class="title">编辑文章</div>
-      <div class="actions">
+      <div class="actions" v-loading="switchingLang" element-loading-text="保存中…">
         <el-tabs v-if="availableLangs.length" v-model="activeLang" type="card" size="small">
           <el-tab-pane v-for="l in availableLangs" :key="l" :name="l">
             <template #label>
@@ -78,7 +78,7 @@
         </el-form-item>
 
         <el-form-item label="正文">
-          <ContentEditor v-model="contentHtml" />
+          <ContentEditor :key="activeLang" v-model="contentHtml" />
         </el-form-item>
       </el-form>
     </el-card>
@@ -146,6 +146,7 @@ const postDetail = ref<any | null>(null)
 const addLangSelect = ref<string | undefined>(undefined)
 const addableLangs = computed(() => languages.value.filter(l => !availableLangs.value.includes(l)))
 const showMeta = ref(false)
+const switchingLang = ref(false)
 
 onMounted(async () => {
   try {
@@ -226,9 +227,29 @@ watch(activeLang, (lang) => {
   contentHtml.value = t.contentHtml || ''
 })
 
-// 添加新语言：加入 tabs 并切换到该语言
-const addLanguage = (lang: string) => {
+// 添加新语言：先保存当前语言，再加入 tabs 并切换到该语言
+const addLanguage = async (lang: string) => {
   if (!lang) return
+  if (switchingLang.value) return
+  
+  try {
+    switchingLang.value = true
+    // 先保存当前语言
+    const success = await saveCurrentLanguage()
+    if (!success) {
+      console.error('保存失败，不进行切换')
+      // 保存失败，不进行切换
+      switchingLang.value = false
+      return 
+    }
+    console.log('保存成功，进行切换')
+  } catch (e: any) {
+    console.error('保存失败，不进行切换')
+    // 保存失败，不进行切换
+    switchingLang.value = false
+    return
+  }
+  
   if (!availableLangs.value.includes(lang)) {
     availableLangs.value.push(lang)
   }
@@ -242,6 +263,7 @@ const addLanguage = (lang: string) => {
   }
   activeLang.value = lang
   addLangSelect.value = undefined
+  switchingLang.value = false
 }
 
 // 删除指定语言翻译
@@ -293,16 +315,25 @@ const normalizeDateTime = (s?: string | null): string | undefined => {
 }
 
 const validate = (): string | null => {
-  if (!trans.value.slug?.trim()) return '请填写 Slug'
-  if (!trans.value.title?.trim()) return '请填写标题'
+  if (!trans.value.slug?.trim()) {
+    ElMessageBox.alert('请填写 Slug', '提示', { type: 'warning' })
+    return '请填写 Slug'
+  }
+  if (!trans.value.title?.trim()) {
+    ElMessageBox.alert('请填写标题', '提示', { type: 'warning' })
+    return '请填写标题'
+  }
   return null
 }
 
-const submit = async () => {
+// 保存当前语言的文章内容
+const saveCurrentLanguage = async (): Promise<boolean> => {
   const v = validate()
-  if (v) { error.value = v; return }
+  if (v) { 
+    error.value = v
+    return false
+  }
   try {
-    submitting.value = true
     error.value = null
     if (isEdit() && editId.value) {
       // 编辑：使用合并接口一次性更新文章与翻译
@@ -347,10 +378,23 @@ const submit = async () => {
         }
       }
       await updateBlogCombined(payload)
+      return true
+    }
+    return false
+  } catch (e: any) {
+    error.value = e?.msg || e?.message || '保存失败'
+    return false
+  }
+}
+
+// 提交并跳转
+const submit = async () => {
+  try {
+    submitting.value = true
+    const success = await saveCurrentLanguage()
+    if (success) {
       router.push('/blog/posts')
     }
-  } catch (e: any) {
-    error.value = e?.msg || e?.message || '提交失败'
   } finally {
     submitting.value = false
   }
