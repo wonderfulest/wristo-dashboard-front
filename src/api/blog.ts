@@ -78,8 +78,12 @@ export function fetchCategoryList(): Promise<ApiResponse<BlogCategoryVO[]>> {
 // Blog TOC item APIs
 const TOC_BASE = '/admin/blog/toc'
 
-export function fetchTocTree(dto: BlogPostTocItemTreeQueryDTO): Promise<ApiResponse<BlogPostTocItemVO[]>> {
-  return instance.post(`${TOC_BASE}/tree?populate=post,translations,category,author`, dto)
+export function fetchTocTree(dto: BlogPostTocItemTreeQueryDTO, lang?: string): Promise<ApiResponse<BlogPostTocItemVO[]>> {
+  return instance.post(
+    `${TOC_BASE}/tree?populate=post,translations,category,author`,
+    dto,
+    { params: lang ? { lang } : undefined }
+  )
 }
 
 export function createTocItem(dto: BlogPostTocItemCreateDTO): Promise<ApiResponse<BlogPostTocItemVO>> {

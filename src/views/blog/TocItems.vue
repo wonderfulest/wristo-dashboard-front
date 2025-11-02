@@ -6,6 +6,22 @@
 
     <el-alert v-if="error" :title="error" type="error" show-icon style="margin-bottom: 12px;" />
 
+    <div class="lang-switcher" role="navigation" aria-label="Language Switcher">
+      <span class="label">Language</span>
+      <div class="buttons">
+        <button
+          v-for="t in normalized"
+          :key="t.lang"
+          class="pill"
+          :class="{ active: t.lang === currentLang }"
+          type="button"
+          @click="switchLanguage(t.lang)"
+        >
+          {{ t.lang.toUpperCase() }}
+        </button>
+      </div>
+    </div>
+
     <el-card>
       <div class="tool-row">
         <el-button type="primary" @click="openCreateRoot">新增根节点</el-button>
@@ -24,7 +40,7 @@
       >
         <template #default="{ data }">
           <div class="tree-row">
-            <span class="node-title">{{ data.title }}</span>
+            <span class="node-title">{{ tocTitle(data) }}</span>
             <span class="muted" v-if="data.anchor">#{{ data.anchor }}</span>
             <span class="muted" v-if="data.post">（文章：{{ postTitle(data.post) }}）</span>
             <div class="node-actions">
@@ -141,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import type { BlogPostVO, BlogPostTocItemVO, BlogPostTocItemCreateDTO, BlogPostTocItemUpdateDTO, BlogPostTocItemTranslationDTO } from '@/types/blog'
 import { fetchTocTree, createTocItem, updateTocItem, deleteTocItem, searchBlogPosts, bindTocItemPost, fetchTocItemDetail } from '@/api/blog'
@@ -155,13 +171,20 @@ const treeData = ref<BlogPostTocItemVO[]>([])
 const treeProps = { children: 'children', label: 'title' }
 const systemLanguages = ref<string[]>([])
 const activeTransLang = ref<string>('')
+const currentLang = ref<string>('')
+const normalized = computed(() => (systemLanguages.value || []).map(l => ({ lang: l })))
+
+const switchLanguage = (lang: string) => {
+  currentLang.value = lang
+  loadTree()
+}
 
 const loadTree = async () => {
   if (typeof parentId.value !== 'number') { error.value = '请先输入父节点ID(默认 -1)'; return }
   try {
     loading.value = true
     error.value = null
-    const res = await fetchTocTree({ parentId: parentId.value })
+    const res = await fetchTocTree({ parentId: parentId.value }, currentLang.value || undefined)
     if ((res as any)?.code === 0 && Array.isArray((res as any)?.data)) {
       treeData.value = (res as any).data
     } else {
@@ -205,6 +228,17 @@ const joinTrans = (row: BlogPostVO, key: 'slug' | 'lang'): string => {
     .map((t: any) => (t && typeof t[key] === 'string' ? t[key] : undefined))
     .filter((v): v is string => Boolean(v && v.length > 0))
   return vals.length ? vals.join(', ') : '—'
+}
+
+const tocTitle = (n: BlogPostTocItemVO): string => {
+  const arr: any[] = Array.isArray((n as any).translations) ? (n as any).translations : []
+  if (currentLang.value) {
+    const t = arr.find((x: any) => x && x.lang === currentLang.value)
+    if (t && typeof t.title === 'string' && t.title.length) return t.title
+  }
+  if (typeof (n as any).title === 'string' && (n as any).title.length) return (n as any).title
+  const t0 = arr[0]
+  return (t0 && t0.title) ? t0.title : `#${n.id}`
 }
 
 const openBind = (node: BlogPostTocItemVO) => {
@@ -260,6 +294,8 @@ onMounted(async () => {
     const res = await fetchSystemLanguages()
     const list = (res as any)?.data
     if (Array.isArray(list)) systemLanguages.value = list as string[]
+    currentLang.value = systemLanguages.value[0] || ''
+    loadTree()
   } catch {}
 })
 
@@ -301,8 +337,8 @@ const openEdit = async (n: BlogPostTocItemVO) => {
         ? item.translations.map((t: any) => ({ id: t.id, tocItemId: t.tocItemId, lang: t.lang, title: t.title, isActive: t.isActive }))
         : []
     }
-    const firstLang = (form.value.translations as any[])?.[0]?.lang || ''
-    activeTransLang.value = firstLang
+    const langs = ((form.value.translations as any[]) || []).map(x => x.lang)
+    activeTransLang.value = (currentLang.value && langs.includes(currentLang.value)) ? currentLang.value : (langs[0] || '')
   } catch (e: any) {
     // fallback to basic info if detail fails
     form.value = { id: n.id, title: n.title, anchor: n.anchor ?? '', orderIndex: n.orderIndex ?? 0, depth: n.depth ?? 0, linkUrl: n.linkUrl ?? '', isActive: n.isActive ?? 1, translations: [] }
@@ -430,4 +466,9 @@ const removeNode = async (n: BlogPostTocItemVO) => {
 .node-title { font-weight: 500; }
 .node-actions { margin-left: auto; display: flex; gap: 4px; }
 .muted { color: #909399; font-size: 12px; }
+.lang-switcher { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.lang-switcher .label { font-size: 12px; color: #909399; }
+.lang-switcher .buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill { border: 1px solid #dcdfe6; background: #fff; border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.pill.active { background: #409EFF; color: #fff; border-color: #409EFF; }
 </style>
