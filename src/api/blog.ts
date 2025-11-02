@@ -115,5 +115,5 @@ export function searchBlogPosts(dto: BlogPostSearchDTO): Promise<ApiResponse<Blo
 
 // Bind toc item to post
 export function bindTocItemPost(dto: BlogPostTocBindDTO): Promise<ApiResponse<boolean>> {
-  return instance.post(`/admin/blog/toc-items/bind`, dto)
+  return instance.post(`/admin/blog/toc/bind`, dto)
 }
