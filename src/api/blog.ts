@@ -14,7 +14,8 @@ import type {
   BlogPostTocItemUpdateDTO,
   BlogPostTocItemTreeQueryDTO,
   BlogPostSearchDTO,
-  BlogPostTocBindDTO
+  BlogPostTocBindDTO,
+  BlogPostTocItemTranslationVO
 } from '@/types/blog'
 
 
@@ -75,7 +76,7 @@ export function fetchCategoryList(): Promise<ApiResponse<BlogCategoryVO[]>> {
 
 
 // Blog TOC item APIs
-const TOC_BASE = '/admin/blog/toc-items'
+const TOC_BASE = '/admin/blog/toc'
 
 export function fetchTocTree(dto: BlogPostTocItemTreeQueryDTO): Promise<ApiResponse<BlogPostTocItemVO[]>> {
   return instance.post(`${TOC_BASE}/tree?populate=post,translations,category,author`, dto)
@@ -90,7 +91,17 @@ export function updateTocItem(dto: BlogPostTocItemUpdateDTO): Promise<ApiRespons
 }
 
 export function deleteTocItem(id: number): Promise<ApiResponse<boolean>> {
-  return instance.post(`${TOC_BASE}/delete`, { id })
+  return instance.post(`${TOC_BASE}/delete/${id}`)
+}
+
+// Fetch a single toc item detail (with translations)
+export function fetchTocItemDetail(id: number): Promise<ApiResponse<BlogPostTocItemVO>> {
+  return instance.get(`${TOC_BASE}/detail/${id}`)
+}
+
+// Fetch translations for a toc item
+export function fetchTocItemTranslations(id: number): Promise<ApiResponse<BlogPostTocItemTranslationVO[]>> {
+  return instance.get(`${TOC_BASE}/translations/${id}`)
 }
 
 // Search posts

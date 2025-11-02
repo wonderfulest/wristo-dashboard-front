@@ -38,7 +38,7 @@
       </el-tree>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="dialogMode === 'create' ? '新增目录项' : '编辑目录项'" width="600px">
+    <el-dialog v-model="dialogVisible" :title="dialogMode === 'create' ? '新增目录项' : '编辑目录项'" width="720px">
       <el-form label-width="110px">
         <el-form-item label="标题">
           <el-input v-model="form.title" placeholder="标题" />
@@ -60,6 +60,37 @@
             <el-option :value="1" label="启用" />
             <el-option :value="0" label="停用" />
           </el-select>
+        </el-form-item>
+        <el-form-item v-if="dialogMode === 'edit'" label="多语言标题">
+          <el-tabs v-model="activeTransLang" type="card" editable @edit="onTransTabsEdit">
+            <el-tab-pane
+              v-for="t in (form.translations || [])"
+              :key="t.lang"
+              :label="t.lang || '未命名'"
+              :name="t.lang"
+            >
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <el-select
+                  v-model="t.lang"
+                  placeholder="选择语言"
+                  filterable
+                  allow-create
+                  default-first-option
+                  style="max-width: 220px;"
+                  @change="onLangChanged(t)"
+                >
+                  <el-option
+                    v-for="l in systemLanguages"
+                    :key="l"
+                    :label="l"
+                    :value="l"
+                  />
+                </el-select>
+                <el-input v-model="t.title" placeholder="标题" />
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+          <div class="muted" style="margin-top: 6px;">可通过标签栏右侧 + 按钮新增语言，单个标签的关闭按钮可删除该语言</div>
         </el-form-item>
         <el-alert v-if="dialogError" :title="dialogError" type="error" show-icon />
       </el-form>
@@ -112,8 +143,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import type { BlogPostVO, BlogPostTocItemVO, BlogPostTocItemCreateDTO, BlogPostTocItemUpdateDTO } from '@/types/blog'
-import { fetchTocTree, createTocItem, updateTocItem, deleteTocItem, searchBlogPosts, bindTocItemPost } from '@/api/blog'
+import type { BlogPostVO, BlogPostTocItemVO, BlogPostTocItemCreateDTO, BlogPostTocItemUpdateDTO, BlogPostTocItemTranslationDTO } from '@/types/blog'
+import { fetchTocTree, createTocItem, updateTocItem, deleteTocItem, searchBlogPosts, bindTocItemPost, fetchTocItemDetail } from '@/api/blog'
+import { fetchSystemLanguages } from '@/api/system'
 
 const parentId = ref<number>(-1)
 const loading = ref(false)
@@ -121,6 +153,8 @@ const error = ref<string | null>(null)
 const treeData = ref<BlogPostTocItemVO[]>([])
 
 const treeProps = { children: 'children', label: 'title' }
+const systemLanguages = ref<string[]>([])
+const activeTransLang = ref<string>('')
 
 const loadTree = async () => {
   if (typeof parentId.value !== 'number') { error.value = '请先输入父节点ID(默认 -1)'; return }
@@ -220,7 +254,14 @@ const submitBind = async () => {
   }
 }
 
-onMounted(() => { loadTree() })
+onMounted(async () => {
+  loadTree()
+  try {
+    const res = await fetchSystemLanguages()
+    const list = (res as any)?.data
+    if (Array.isArray(list)) systemLanguages.value = list as string[]
+  } catch {}
+})
 
 // Dialog state
 const dialogVisible = ref(false)
@@ -240,12 +281,79 @@ const openCreateChild = (p: BlogPostTocItemVO | null) => {
   dialogVisible.value = true
 }
 
-const openEdit = (n: BlogPostTocItemVO) => {
+const openEdit = async (n: BlogPostTocItemVO) => {
   dialogMode.value = 'edit'
   editParentId.value = n.parentId ?? null
-  form.value = { id: n.id, title: n.title, anchor: n.anchor ?? '', orderIndex: n.orderIndex ?? 0, depth: n.depth ?? 0, linkUrl: n.linkUrl ?? '', isActive: n.isActive ?? 1 }
   dialogError.value = null
   dialogVisible.value = true
+  try {
+    const res = await fetchTocItemDetail(n.id)
+    const item = (res as any)?.data || n
+    form.value = {
+      id: item.id,
+      title: item.title,
+      anchor: item.anchor ?? '',
+      orderIndex: item.orderIndex ?? 0,
+      depth: item.depth ?? 0,
+      linkUrl: item.linkUrl ?? '',
+      isActive: item.isActive ?? 1,
+      translations: Array.isArray(item.translations)
+        ? item.translations.map((t: any) => ({ id: t.id, tocItemId: t.tocItemId, lang: t.lang, title: t.title, isActive: t.isActive }))
+        : []
+    }
+    const firstLang = (form.value.translations as any[])?.[0]?.lang || ''
+    activeTransLang.value = firstLang
+  } catch (e: any) {
+    // fallback to basic info if detail fails
+    form.value = { id: n.id, title: n.title, anchor: n.anchor ?? '', orderIndex: n.orderIndex ?? 0, depth: n.depth ?? 0, linkUrl: n.linkUrl ?? '', isActive: n.isActive ?? 1, translations: [] }
+    activeTransLang.value = ''
+  }
+}
+
+const suggestNextLang = (): string => {
+  const used = new Set((form.value.translations || []).map((t: any) => t.lang).filter(Boolean))
+  const candidates = systemLanguages.value.length ? systemLanguages.value : []
+  for (const l of candidates) {
+    if (!used.has(l)) return l
+  }
+  // fallback
+  let base = 'lang'
+  let idx = 1
+  let val = `${base}-${idx}`
+  while (used.has(val)) { idx += 1; val = `${base}-${idx}` }
+  return val
+}
+
+const onTransTabsEdit = (targetName: any, action: 'add' | 'remove') => {
+  if (!Array.isArray(form.value.translations)) form.value.translations = [] as any
+  if (action === 'add') {
+    const lang = suggestNextLang()
+    ;(form.value.translations as BlogPostTocItemTranslationDTO[]).push({ lang, title: '' })
+    activeTransLang.value = lang
+  } else if (action === 'remove') {
+    const arr = form.value.translations as BlogPostTocItemTranslationDTO[]
+    const idx = arr.findIndex(t => t.lang === targetName)
+    if (idx >= 0) arr.splice(idx, 1)
+    if (activeTransLang.value === targetName) {
+      activeTransLang.value = arr[0]?.lang || ''
+    }
+  }
+}
+
+const onLangChanged = (t: BlogPostTocItemTranslationDTO) => {
+  if (!t) return
+  const arr = (form.value.translations as BlogPostTocItemTranslationDTO[]) || []
+  // ensure unique
+  const duplicates = arr.filter(x => x !== t && x.lang === t.lang)
+  if (duplicates.length) {
+    let base = t.lang || 'lang'
+    let idx = 1
+    let newLang = `${base}-${idx}`
+    const used = new Set(arr.map(x => x.lang))
+    while (used.has(newLang)) { idx += 1; newLang = `${base}-${idx}` }
+    t.lang = newLang
+  }
+  activeTransLang.value = t.lang || ''
 }
 
 const submitDialog = async () => {
@@ -272,7 +380,15 @@ const submitDialog = async () => {
         orderIndex: typeof form.value.orderIndex === 'number' ? form.value.orderIndex : undefined,
         depth: typeof form.value.depth === 'number' ? form.value.depth : undefined,
         linkUrl: form.value.linkUrl || undefined,
-        isActive: typeof form.value.isActive === 'number' ? form.value.isActive : undefined
+        isActive: typeof form.value.isActive === 'number' ? form.value.isActive : undefined,
+        translations: Array.isArray(form.value.translations)
+          ? (form.value.translations as BlogPostTocItemTranslationDTO[]).map(t => ({
+              id: t.id ?? undefined,
+              tocItemId: t.tocItemId ?? undefined,
+              lang: String(t.lang || '').trim(),
+              title: String(t.title || '').trim()
+            }))
+          : undefined
       }
       const res = await updateTocItem(dto)
       if ((res as any)?.code !== 0) throw new Error((res as any)?.msg || '更新失败')

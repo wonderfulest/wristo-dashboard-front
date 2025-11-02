@@ -158,6 +158,7 @@ export interface BlogPostTocItemVO {
   updatedAt?: string | null
   children?: BlogPostTocItemVO[]
   post?: BlogPostVO | null
+  translations?: BlogPostTocItemTranslationVO[]
 }
 
 export interface BlogPostTocItemCreateDTO {
@@ -180,10 +181,30 @@ export interface BlogPostTocItemUpdateDTO {
   depth?: number | null
   linkUrl?: string | null
   isActive?: number | null
+  translations?: BlogPostTocItemTranslationDTO[]
 }
 
 export interface BlogPostTocItemTreeQueryDTO {
   parentId: number
+}
+
+// TOC translation types
+export interface BlogPostTocItemTranslationVO {
+  id: number
+  tocItemId: number
+  lang: string
+  title: string
+  isActive?: number | null
+  createdAt?: string | null
+  updatedAt?: string | null
+}
+
+export interface BlogPostTocItemTranslationDTO {
+  id?: number | null
+  tocItemId?: number | null
+  lang: string
+  title: string
+  isActive?: number | null
 }
 
 // Post search & TOC bind
