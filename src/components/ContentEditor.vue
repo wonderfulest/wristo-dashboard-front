@@ -1,7 +1,13 @@
 <template>
   <div class="we-wrapper">
-    <Toolbar :editor="editorRef" :defaultConfig="toolbarConfig" mode="default" class="we-toolbar" />
+    <div class="we-actions">
+      <el-button size="small" @click="toggleMode">
+        {{ isSourceMode ? '返回富文本' : '源码编辑' }}
+      </el-button>
+    </div>
+    <Toolbar v-show="!isSourceMode" :editor="editorRef" :defaultConfig="toolbarConfig" mode="default" class="we-toolbar" />
     <Editor
+      v-show="!isSourceMode"
       v-model="valueHtml"
       :defaultConfig="editorConfig"
       mode="default"
@@ -10,6 +16,13 @@
       @onFocus="handleFocus"
       @onBlur="handleBlur"
       class="we-editor"
+    />
+    <textarea
+      v-show="isSourceMode"
+      v-model="sourceHtml"
+      class="we-source"
+      spellcheck="false"
+      placeholder="直接编辑 HTML 源码…"
     />
   </div>
 </template>
@@ -28,6 +41,8 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: string): void }>()
 
 const editorRef = shallowRef<any>()
 const valueHtml = ref<string>(props.modelValue || '')
+const isSourceMode = ref(false)
+const sourceHtml = ref<string>(props.modelValue || '')
 
 const toolbarConfig = ref<Record<string, any>>({
   excludeKeys: ['fullScreen']
@@ -72,6 +87,14 @@ const handleFocus = () => {
   }
 }
 
+// While in source mode, keep valueHtml in sync and emit updates so parent gets latest HTML
+watch(sourceHtml, (v) => {
+  if (isSourceMode.value) {
+    valueHtml.value = v || ''
+    emit('update:modelValue', valueHtml.value)
+  }
+})
+
 const handleBlur = () => {
   // 失焦时强制同步内容，确保工具栏操作的结果被保存
   const editor = editorRef.value
@@ -93,11 +116,41 @@ const handleCreated = (editor: any) => {
 
 const handleChange = () => {
   emit('update:modelValue', valueHtml.value || '')
+  // keep source in sync while editing rich text
+  if (!isSourceMode.value) sourceHtml.value = valueHtml.value || ''
 }
 
 watch(() => props.modelValue, (v) => {
   if ((v || '') !== (valueHtml.value || '')) valueHtml.value = v || ''
+  if (!isSourceMode.value) sourceHtml.value = v || ''
 })
+
+// Toggle between rich text and source code modes
+const toggleMode = () => {
+  try {
+    if (!isSourceMode.value) {
+      // going into source mode: capture current html from editor
+      const editor = editorRef.value
+      if (editor && !editor.isDestroyed && typeof editor.getHtml === 'function') {
+        const currentHtml = editor.getHtml()
+        sourceHtml.value = currentHtml
+      } else {
+        sourceHtml.value = valueHtml.value || ''
+      }
+    } else {
+      // returning to rich mode: set html back to editor
+      const html = sourceHtml.value || ''
+      valueHtml.value = html
+      const editor = editorRef.value
+      if (editor && !editor.isDestroyed && typeof editor.setHtml === 'function') {
+        editor.setHtml(html)
+      }
+      emit('update:modelValue', html)
+    }
+  } finally {
+    isSourceMode.value = !isSourceMode.value
+  }
+}
 
 onBeforeUnmount(() => {
   const editor = editorRef.value
@@ -113,8 +166,24 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .we-wrapper { display: flex; flex-direction: column; gap: 0; width: 100%; }
+.we-actions { display: flex; justify-content: flex-end; margin-bottom: 6px; }
 .we-toolbar { border: 1px solid #dcdfe6; border-bottom: none; border-radius: 6px 6px 0 0; }
 .we-editor { border: 1px solid #dcdfe6; border-radius: 0 0 6px 6px; overflow: hidden; }
+
+.we-source {
+  width: 100%;
+  min-height: 620px;
+  max-height: 660px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  padding: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #303133;
+  background: #fff;
+  resize: vertical;
+}
 
 /* Avoid clipping floating toolbars/menus */
 .we-wrapper { overflow: visible; }

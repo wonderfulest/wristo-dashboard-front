@@ -34,7 +34,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'fonts', title: '字体管理', path: '/fonts' },
       { key: 'images', title: '图片素材', path: '/images' },
       { key: 'data-type-options', title: '数据项配置', path: '/data-type-options' },
-
+      { key: 'color-type-options', title: '颜色配置', path: '/color-type-options' },
       {
         key: 'packaging',
         title: '打包',
@@ -63,6 +63,7 @@ export const topMenus: TopMenuGroup[] = [
     children: [
       { key: 'post-list', title: '文章列表', path: '/blog/posts' },
       { key: 'categories', title: '分类管理', path: '/blog/categories' },
+      { key: 'tags', title: '标签管理', path: '/blog/tags' },
       { key: 'toc', title: '博客目录管理', path: '/blog/toc' },
     ],
   },

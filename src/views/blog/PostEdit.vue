@@ -40,6 +40,22 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="标签">
+          <el-select
+            v-model="selectedTagIds"
+            multiple
+            filterable
+            placeholder="选择标签"
+            style="min-width: 300px;"
+          >
+            <el-option
+              v-for="t in allTags"
+              :key="t.id"
+              :label="t.name || t.slug || ('标签#' + t.id)"
+              :value="t.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="作者">
           <el-input :model-value="displayUsername" disabled />
         </el-form-item>
@@ -95,8 +111,8 @@
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
-import type { BlogPostCreateDTO, BlogPostTranslationCreateDTO, BlogPostTranslationUpdateDTO, BlogCategoryVO, BlogPostUpdateDTO, BlogUpdateDTO } from '@/types/blog'
-import { fetchCategoryList, fetchBlogPostDetail, updateBlogCombined, deletePostTranslation } from '@/api/blog'
+import type { BlogPostCreateDTO, BlogPostTranslationCreateDTO, BlogPostTranslationUpdateDTO, BlogCategoryVO, BlogPostUpdateDTO, BlogUpdateDTO, BlogTagVO } from '@/types/blog'
+import { fetchCategoryList, fetchBlogPostDetail, updateBlogCombined, deletePostTranslation, fetchPublicAllTags } from '@/api/blog'
 import { fetchSystemLanguages } from '@/api/system'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import ContentEditor from '@/components/ContentEditor.vue'
@@ -139,6 +155,9 @@ const categories = ref<BlogCategoryVO[]>([])
 const editId = ref<number | null>(null)
 const isEdit = () => !!editId.value
 const translationId = ref<number | null>(null)
+// tags
+const allTags = ref<BlogTagVO[]>([])
+const selectedTagIds = ref<number[]>([])
 const languages = ref<string[]>([])
 const availableLangs = ref<string[]>([])
 const activeLang = ref<string>('')
@@ -203,8 +222,15 @@ onMounted(async () => {
             activeLang.value = first.lang || 'zh'
           }
           availableLangs.value = Array.isArray(base.translations) ? (base.translations.map((t: any) => t?.lang).filter((x: any) => !!x)) : []
+          // 回填已绑定标签
+          selectedTagIds.value = Array.isArray(base.tags) ? (base.tags.map((t: any) => t?.id).filter((x: any) => typeof x === 'number')) : []
+          // 初次加载标签（名称随语言）
+          await loadAllTags()
         }
       } catch {}
+    } else {
+      // 非编辑场景也加载一次标签列表（使用系统默认或空语言）
+      await loadAllTags()
     }
 
     // ContentEditor 使用 v-model 绑定，不需要手动初始化
@@ -226,6 +252,18 @@ watch(activeLang, (lang) => {
   trans.value.summary = t.summary || ''
   contentHtml.value = t.contentHtml || ''
 })
+
+// 根据当前编辑语言加载公共标签（名称随语言变化）
+const loadAllTags = async () => {
+  try {
+    const res = await fetchPublicAllTags(activeLang.value || undefined)
+    const list = (res as any)?.data
+    if (Array.isArray(list)) allTags.value = list as BlogTagVO[]
+  } catch {}
+}
+
+// 初次加载和语言切换时刷新标签名称
+watch(activeLang, () => { loadAllTags() })
 
 // 添加新语言：先保存当前语言，再加入 tabs 并切换到该语言
 const addLanguage = async (lang: string) => {
@@ -344,7 +382,8 @@ const saveCurrentLanguage = async (): Promise<boolean> => {
         coverImageUrl: post.value.coverImageUrl ?? undefined,
         isPublished: post.value.isPublished ?? undefined,
         publishedAt: normalizeDateTime(post.value.publishedAt || undefined),
-        isActive: 1
+        isActive: 1,
+        tagIds: (selectedTagIds.value && selectedTagIds.value.length) ? selectedTagIds.value : []
       }
       const translationDto: BlogPostTranslationUpdateDTO = {
         id: translationId.value || 0,

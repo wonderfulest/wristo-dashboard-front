@@ -51,6 +51,8 @@ export interface BlogPostUpdateDTO {
   isPublished?: number | null
   publishedAt?: string | null
   isActive?: number | null
+  // bind blog post with tags
+  tagIds?: number[] | null
 }
 
 export interface BlogPostTranslationCreateDTO {
@@ -132,9 +134,43 @@ export interface BlogCategoryPageQueryDTO {
 export interface BlogTagVO {
   id: number
   slug: string
+  // current language name returned by public APIs
+  name?: string | null
   isActive?: number | null
   createdAt?: string | null
   updatedAt?: string | null
+  translations?: BlogTagTranslationVO[]
+}
+
+export interface BlogTagCreateDTO {
+  slug: string
+}
+
+export interface BlogTagUpdateDTO {
+  id: number
+  slug: string
+  isActive?: number | null
+}
+
+export interface BlogTagPageQueryDTO {
+  pageNum: number
+  pageSize: number
+  keyword?: string | null
+  isActive?: number | null
+}
+
+export interface BlogTagTranslationVO {
+  id: number
+  tagId: number
+  lang: string
+  name: string
+  createdAt?: string | null
+  updatedAt?: string | null
+}
+
+export interface BlogTagTranslationDTO {
+  lang: string
+  name: string
 }
 
 export interface UserBaseVO {

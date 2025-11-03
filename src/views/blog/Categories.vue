@@ -3,23 +3,33 @@
     <div class="page-header">
       <div class="title">分类管理</div>
       <div class="actions">
-        <button class="btn" @click="openCreate">新建分类</button>
+        <el-button type="primary" @click="openCreate">新建分类</el-button>
       </div>
     </div>
 
     <div class="filters">
-      <input v-model.trim="keyword" class="input" placeholder="关键词 (slug)" @keyup.enter="search(1)" />
-      <input v-model.trim="langCode" class="input" placeholder="语言 (默认 en-US)" @keyup.enter="search(1)" />
-      <select v-model="isActive" class="select">
-        <option :value="undefined">状态</option>
-        <option :value="1">启用</option>
-        <option :value="0">停用</option>
-      </select>
-      <button class="btn" @click="search(1)" :disabled="loading">搜索</button>
-      <button class="btn secondary" @click="reset" :disabled="loading">重置</button>
+      <el-input 
+        v-model.trim="keyword" 
+        placeholder="关键词 (slug)" 
+        @keyup.enter="search(1)"
+        style="width: 220px"
+      />
+      <el-input 
+        v-model.trim="langCode" 
+        placeholder="语言 (默认 en-US)" 
+        @keyup.enter="search(1)"
+        style="width: 220px"
+      />
+      <el-select v-model="isActive" placeholder="状态" style="width: 120px">
+        <el-option label="状态" :value="undefined" />
+        <el-option label="启用" :value="1" />
+        <el-option label="停用" :value="0" />
+      </el-select>
+      <el-button @click="search(1)" :loading="loading" type="primary">搜索</el-button>
+      <el-button @click="reset" :disabled="loading">重置</el-button>
     </div>
 
-    <div v-if="error" class="error">{{ error }}</div>
+    <el-alert v-if="error" :title="error" type="error" show-icon />
 
     <div class="card">
       <el-table :data="pageData.list" v-loading="loading" border>
@@ -47,8 +57,8 @@
         </el-table-column>
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
-            <button class="btn" @click="openEdit(row)">编辑</button>
-            <button class="btn danger" @click="remove(row)">删除</button>
+            <el-button size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button size="small" type="danger" @click="remove(row)">删除</el-button>
           </template>
         </el-table-column>
         <template #empty>
@@ -57,36 +67,45 @@
       </el-table>
 
       <div class="pagination" v-if="pageData.pages > 1">
-        <button class="btn" :disabled="pageData.pageNum <= 1 || loading" @click="changePage(pageData.pageNum - 1)">上一页</button>
-        <span class="page-info">第 {{ pageData.pageNum }} / {{ pageData.pages }} 页，共 {{ pageData.total }} 条</span>
-        <button class="btn" :disabled="pageData.pageNum >= pageData.pages || loading" @click="changePage(pageData.pageNum + 1)">下一页</button>
+        <el-pagination
+          v-model:current-page="pageData.pageNum"
+          :page-size="pageData.pageSize"
+          :total="pageData.total"
+          :disabled="loading"
+          layout="prev, pager, next, total"
+          @current-change="changePage"
+        />
       </div>
     </div>
 
     <!-- Dialogs -->
-    <div v-if="dialogVisible" class="dialog-mask">
-      <div class="dialog">
-        <div class="dialog-title">{{ dialogMode === 'create' ? '新建分类' : '编辑分类' }}</div>
-        <div class="dialog-body">
-          <div class="form-row">
-            <label>Slug</label>
-            <input v-model.trim="form.slug" type="text" class="input" placeholder="slug" />
-          </div>
-          <div class="form-row" v-if="dialogMode === 'edit'">
-            <label>状态</label>
-            <select v-model.number="form.isActive" class="select">
-              <option :value="1">启用</option>
-              <option :value="0">停用</option>
-            </select>
-          </div>
-          <div class="error" v-if="dialogError">{{ dialogError }}</div>
-        </div>
-        <div class="dialog-footer">
-          <button class="btn" @click="closeDialog">取消</button>
-          <button class="btn primary" :disabled="submitting" @click="submitDialog">{{ submitting ? '提交中...' : '确认' }}</button>
-        </div>
-      </div>
-    </div>
+    <el-dialog 
+      v-model="dialogVisible" 
+      :title="dialogMode === 'create' ? '新建分类' : '编辑分类'"
+      width="520px"
+      @close="closeDialog"
+    >
+      <el-form :model="form" label-width="80px">
+        <el-form-item label="Slug">
+          <el-input v-model.trim="form.slug" placeholder="slug" />
+        </el-form-item>
+        <el-form-item label="状态" v-if="dialogMode === 'edit'">
+          <el-select v-model="form.isActive" style="width: 100%">
+            <el-option label="启用" :value="1" />
+            <el-option label="停用" :value="0" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="dialogError">
+          <el-alert :title="dialogError" type="error" show-icon :closable="false" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="closeDialog">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitDialog">
+          {{ submitting ? '提交中...' : '确认' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -195,23 +214,9 @@ onMounted(() => search(1))
 .title { font-size: 20px; font-weight: 600; }
 .actions { display: flex; gap: 8px; }
 .filters { display: flex; gap: 8px; align-items: center; }
-.input, .select { padding: 6px 10px; border: 1px solid #dcdfe6; border-radius: 6px; min-width: 220px; }
-.btn { padding: 6px 12px; border: 1px solid #dcdfe6; background: #fff; border-radius: 6px; cursor: pointer; }
-.btn.secondary { background: #f5f7fa; }
-.btn.danger { color: #f56c6c; border-color: #fbc4c4; }
 .card { background: #fff; border: 1px solid #ebeef5; border-radius: 8px; overflow: hidden; }
-.table { width: 100%; border-collapse: collapse; }
-.table th, .table td { padding: 10px 12px; border-bottom: 1px solid #f2f3f5; text-align: left; vertical-align: top; }
 .tag { padding: 2px 8px; border-radius: 12px; border: 1px solid #e4e7ed; font-size: 12px; }
 .tag.success { color: #67c23a; background: #f0f9eb; border-color: #c2e7b0; }
-.pagination { display: flex; gap: 8px; align-items: center; padding: 12px; }
-.page-info { color: #606266; }
+.pagination { display: flex; justify-content: center; padding: 12px; }
 .empty { text-align: center; color: #909399; }
-/* simple dialog */
-.dialog-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; }
-.dialog { width: 520px; background: #fff; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.15); }
-.dialog-title { padding: 12px 16px; font-weight: 600; border-bottom: 1px solid #eee; }
-.dialog-body { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
-.dialog-footer { padding: 12px 16px; display:flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #eee; }
-.form-row { display:flex; flex-direction: column; gap:6px; }
 </style>

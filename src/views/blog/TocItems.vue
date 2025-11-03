@@ -6,21 +6,7 @@
 
     <el-alert v-if="error" :title="error" type="error" show-icon style="margin-bottom: 12px;" />
 
-    <div class="lang-switcher" role="navigation" aria-label="Language Switcher">
-      <span class="label">Language</span>
-      <div class="buttons">
-        <button
-          v-for="t in normalized"
-          :key="t.lang"
-          class="pill"
-          :class="{ active: t.lang === currentLang }"
-          type="button"
-          @click="switchLanguage(t.lang)"
-        >
-          {{ t.lang.toUpperCase() }}
-        </button>
-      </div>
-    </div>
+    <LanguageSwitcher v-model="currentLang" @change="loadTree" @languages-loaded="onLanguagesLoaded" />
 
     <el-card>
       <div class="tool-row">
@@ -96,7 +82,7 @@
                   @change="onLangChanged(t)"
                 >
                   <el-option
-                    v-for="l in systemLanguages"
+                    v-for="l in availableLanguages"
                     :key="l"
                     :label="l"
                     :value="l"
@@ -157,11 +143,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import type { BlogPostVO, BlogPostTocItemVO, BlogPostTocItemCreateDTO, BlogPostTocItemUpdateDTO, BlogPostTocItemTranslationDTO } from '@/types/blog'
 import { fetchTocTree, createTocItem, updateTocItem, deleteTocItem, searchBlogPosts, bindTocItemPost, fetchTocItemDetail } from '@/api/blog'
-import { fetchSystemLanguages } from '@/api/system'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const parentId = ref<number>(-1)
 const loading = ref(false)
@@ -169,14 +155,12 @@ const error = ref<string | null>(null)
 const treeData = ref<BlogPostTocItemVO[]>([])
 
 const treeProps = { children: 'children', label: 'title' }
-const systemLanguages = ref<string[]>([])
 const activeTransLang = ref<string>('')
 const currentLang = ref<string>('')
-const normalized = computed(() => (systemLanguages.value || []).map(l => ({ lang: l })))
+const availableLanguages = ref<string[]>([])
 
-const switchLanguage = (lang: string) => {
-  currentLang.value = lang
-  loadTree()
+const onLanguagesLoaded = (languages: string[]) => {
+  availableLanguages.value = languages
 }
 
 const loadTree = async () => {
@@ -288,15 +272,8 @@ const submitBind = async () => {
   }
 }
 
-onMounted(async () => {
+onMounted(() => {
   loadTree()
-  try {
-    const res = await fetchSystemLanguages()
-    const list = (res as any)?.data
-    if (Array.isArray(list)) systemLanguages.value = list as string[]
-    currentLang.value = systemLanguages.value[0] || ''
-    loadTree()
-  } catch {}
 })
 
 // Dialog state
@@ -348,7 +325,7 @@ const openEdit = async (n: BlogPostTocItemVO) => {
 
 const suggestNextLang = (): string => {
   const used = new Set((form.value.translations || []).map((t: any) => t.lang).filter(Boolean))
-  const candidates = systemLanguages.value.length ? systemLanguages.value : []
+  const candidates = availableLanguages.value.length ? availableLanguages.value : []
   for (const l of candidates) {
     if (!used.has(l)) return l
   }

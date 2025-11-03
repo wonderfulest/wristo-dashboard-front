@@ -24,6 +24,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/blog/tags',
+      name: 'BlogTags',
+      component: () => import('@/views/blog/Tags.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/blog/toc',
       name: 'BlogToc',
       component: () => import('@/views/blog/TocItems.vue'),
@@ -243,6 +249,12 @@ const router = createRouter({
       path: '/data-type-options',
       name: 'DataTypeOptions',
       component: () => import('@/views/DataTypeOptions.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/color-type-options',
+      name: 'ColorTypeOptions',
+      component: () => import('@/views/dashboard/system/ColorTypeOptions.vue'),
       meta: { requiresAuth: true }
     },
     {

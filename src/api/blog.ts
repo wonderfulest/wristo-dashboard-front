@@ -9,6 +9,12 @@ import type {
   BlogCategoryCreateDTO,
   BlogCategoryUpdateDTO,
   BlogUpdateDTO,
+  BlogTagVO,
+  BlogTagPageQueryDTO,
+  BlogTagCreateDTO,
+  BlogTagUpdateDTO,
+  BlogTagTranslationVO,
+  BlogTagTranslationDTO,
   BlogPostTocItemVO,
   BlogPostTocItemCreateDTO,
   BlogPostTocItemUpdateDTO,
@@ -72,6 +78,59 @@ export function deleteCategory(id: number): Promise<ApiResponse<boolean>> {
 
 export function fetchCategoryList(): Promise<ApiResponse<BlogCategoryVO[]>> {
   return instance.get(`${CAT_BASE}/list`)
+}
+
+// Tag APIs
+const TAG_BASE = '/admin/blog/tags'
+
+export function fetchTagPage(dto: BlogTagPageQueryDTO, lang?: string): Promise<ApiResponse<PageResponse<BlogTagVO>>> {
+  const params = lang ? { lang } : undefined
+  return instance.post(`${TAG_BASE}/page?populate=translations`, dto, { params })
+}
+
+export function createTag(dto: BlogTagCreateDTO): Promise<ApiResponse<BlogTagVO>> {
+  return instance.post(`${TAG_BASE}/create`, dto)
+}
+
+export function updateTag(id: number, dto: BlogTagUpdateDTO): Promise<ApiResponse<BlogTagVO>> {
+  return instance.post(`${TAG_BASE}/update/${id}`, dto)
+}
+
+export function deleteTag(id: number): Promise<ApiResponse<boolean>> {
+  return instance.post(`${TAG_BASE}/delete/${id}`)
+}
+
+// Tag Translation APIs
+export function createTagTranslation(tagId: number, dto: BlogTagTranslationDTO): Promise<ApiResponse<BlogTagTranslationVO>> {
+  return instance.post(`${TAG_BASE}/${tagId}/translations`, dto)
+}
+
+export function updateTagTranslation(tagId: number, lang: string, dto: BlogTagTranslationDTO): Promise<ApiResponse<BlogTagTranslationVO>> {
+  return instance.put(`${TAG_BASE}/${tagId}/translations/${lang}`, dto)
+}
+
+export function deleteTagTranslation(tagId: number, lang: string): Promise<ApiResponse<boolean>> {
+  return instance.delete(`${TAG_BASE}/${tagId}/translations/${lang}`)
+}
+
+export function fetchTagTranslations(tagId: number): Promise<ApiResponse<BlogTagTranslationVO[]>> {
+  return instance.get(`${TAG_BASE}/${tagId}/translations`)
+}
+
+export function fetchTagTranslation(tagId: number, lang: string): Promise<ApiResponse<BlogTagTranslationVO>> {
+  return instance.get(`${TAG_BASE}/${tagId}/translations/${lang}`)
+}
+
+export function saveTagTranslations(tagId: number, translations: BlogTagTranslationDTO[]): Promise<ApiResponse<boolean>> {
+  return instance.post(`${TAG_BASE}/${tagId}/translations/batch`, translations)
+}
+
+// Public Tag APIs
+const TAG_PUBLIC_BASE = '/public/blog/tags'
+
+// Fetch all tags (names localized by optional lang)
+export function fetchPublicAllTags(lang?: string): Promise<ApiResponse<BlogTagVO[]>> {
+  return instance.get(`${TAG_PUBLIC_BASE}/all`, { params: lang ? { lang } : undefined })
 }
 
 
