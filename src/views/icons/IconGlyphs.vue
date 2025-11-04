@@ -79,7 +79,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import type { IconGlyphVO } from '@/types/icon-glyph'
+import type { IconAsset, IconGlyphVO, IconLibrary } from '@/types/icon-glyph'
 import { pageIconGlyph, removeIconGlyph, createIconGlyph, listGlyphStyles } from '@/api/icon-glyph'
 import { getGlyphAssets } from '@/api/icon-glyph-asset'
 import type { IconGlyphAssetVO } from '@/types/icon-glyph-asset'
@@ -178,20 +178,22 @@ const saveBlob = (filename: string, blob: Blob) => {
 const downloadGlyphAssets = async (row: IconGlyphVO) => {
   if (!row?.id) return
   try {
-    const resp = (await getGlyphAssets(row.id)) as unknown as { data: IconGlyphAssetVO[] }
-    const list = resp?.data || []
+    const resp: ApiResponse<IconGlyphAssetVO[]> = await getGlyphAssets(row.id)
+    const list = resp.data || []
     const entries: { name: string; content: string }[] = []
     const nameCount: Record<string, number> = {}
     for (const it of list) {
-      const asset: any = (it as any).asset || {}
-      const icon: any = (it as any).icon || {}
-      const svg: string | undefined = asset?.svgContent
-      const symbol: string | undefined = icon?.symbolCode
-      if (svg && symbol) {
-        let base = `${symbol}.svg`
+      const asset: IconAsset = it.asset || {}
+      const icon: IconLibrary = it.icon || {}
+      const svg: string = asset.svgContent || ''
+      const unicodeRaw: string = icon.iconUnicode || ''
+      const baseCode: string = unicodeRaw && unicodeRaw.trim() ? unicodeRaw.trim() : icon.symbolCode || ''
+      if (svg && baseCode) {
+        console.log(baseCode)
+        let base = `${baseCode}.svg`
         if (nameCount[base] == null) nameCount[base] = 0
         nameCount[base] += 1
-        const finalName = nameCount[base] > 1 ? `${symbol}_${nameCount[base]}.svg` : base
+        const finalName = nameCount[base] > 1 ? `${baseCode}_${nameCount[base]}.svg` : base
         entries.push({ name: finalName, content: svg })
       }
     }

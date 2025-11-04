@@ -37,6 +37,7 @@
                 >
                   <div class="symbol-code">{{ it.symbolCode }}</div>
                   <div class="symbol-label">{{ it.label }}</div>
+                  <div class="symbol-code">{{ it.iconUnicode }}</div>
                 </div>
               </div>
             </div>
@@ -72,7 +73,7 @@ const uploading = ref(false)
 const activeUploads = ref(0)
 let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
 const dialogVisible = ref(false)
-const iconList = ref<{ symbolCode: string; label: string }[]>([])
+const iconList = ref<{ symbolCode: string; label: string; iconUnicode: string }[]>([])
 const selectedSymbolCode = ref<string | undefined>(props.symbolCode)
 
 watch(
@@ -94,7 +95,7 @@ watch(dialogVisible, async (v) => {
     try {
       const resp = (await listIconLibrary()) as any
       const arr = (resp?.data || [])
-        .map((it: any) => ({ symbolCode: it?.symbolCode, label: it?.label }))
+        .map((it: any) => ({ symbolCode: it?.symbolCode, label: it?.label, iconUnicode: it?.iconUnicode }))
         .filter((it: any) => !!it.symbolCode)
       iconList.value = arr
     } catch {

@@ -2,10 +2,15 @@ import type { PageQueryDTO, PageResponse, ApiResponse } from './common'
 
 export interface IconGlyphVO {
   id: number
+  glyphId?: number
+  assetId?: number
+  version?: number
   glyphCode?: string
   style?: string
   isDefault?: number
   isActive?: number
+  icon?: IconLibrary
+  asset?: IconAsset
   // legacy/extra fields kept optional for compatibility
   iconId?: number
   name?: string
@@ -13,6 +18,34 @@ export interface IconGlyphVO {
   alias?: string
   svgPath?: string
   svgContent?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface IconLibrary {
+  id?: number
+  iconUnicode?: string
+  symbolCode?: string
+  category?: string
+  label?: string
+  isActive?: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface IconAsset {
+  id?: number
+  iconId?: number
+  sourceType?: string
+  format?: string
+  svgContent?: string
+  imageUrl?: string
+  previewUrl?: string
+  author?: string
+  license?: string
+  tags?: string
+  version?: number
+  isActive?: number
   createdAt?: string
   updatedAt?: string
 }
