@@ -1,6 +1,7 @@
 import type { ApiResponse } from './api'
 import type { IconLibraryVO } from './icon-library'
 import type { IconAssetVO } from './icon-asset'
+import type { PageQueryDTO, PageResponse } from './common'
 
 export interface IconGlyphAssetVO {
   id?: number
@@ -13,3 +14,11 @@ export interface IconGlyphAssetVO {
 }
 
 export type IconGlyphAssetsResp = ApiResponse<IconGlyphAssetVO[]>
+
+export interface IconGlyphAssetPageQueryDTO extends PageQueryDTO {
+  glyphId?: number
+  assetId?: number
+  active?: number
+}
+
+export type IconGlyphAssetPageResp = ApiResponse<PageResponse<IconGlyphAssetVO>>

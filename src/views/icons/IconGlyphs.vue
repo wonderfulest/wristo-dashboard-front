@@ -26,9 +26,10 @@
         </template>
       </el-table-column>
       <el-table-column prop="createdAt" label="创建时间" min-width="180" />
-      <el-table-column label="操作" width="220">
+      <el-table-column label="操作" width="280">
         <template #default="{ row }">
           <el-button size="small" text type="primary" @click="openGlyph(row)">查看</el-button>
+          <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
           <el-button size="small" text type="success" @click="downloadGlyphAssets(row)">下载</el-button>
           <el-button size="small" text type="danger" @click="confirmRemove(row.id)">删除</el-button>
         </template>
@@ -47,31 +48,8 @@
       />
     </div>
 
-    <el-dialog v-model="createVisible" title="新增图标字体" width="600px">
-      <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="100px">
-        <el-form-item label="glyphCode" prop="glyphCode">
-          <el-input v-model="createForm.glyphCode" placeholder="小写英文单词，用中划线连接，如: shopping-cart" />
-        </el-form-item>
-        <el-form-item label="style">
-          <el-select v-model="createForm.style" placeholder="可选" clearable filterable style="width: 100%">
-            <el-option v-for="s in stylesOptions" :key="s" :label="s" :value="s" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="默认">
-          <el-switch v-model="createForm.isDefault" :active-value="1" :inactive-value="0" />
-        </el-form-item>
-        <el-form-item label="启用">
-          <el-switch v-model="createForm.isActive" :active-value="1" :inactive-value="0" />
-        </el-form-item>
-        <div style="color:#909399; font-size:12px; line-height:1.5; margin-left:100px;">
-          glyphCode 需唯一，格式：小写英文单词，使用中划线连接（示例：shopping-cart）。
-        </div>
-      </el-form>
-      <template #footer>
-        <el-button @click="createVisible = false">取消</el-button>
-        <el-button type="primary" :loading="creating" @click="submitCreate">确定</el-button>
-      </template>
-    </el-dialog>
+    <GlyphCreateDialog v-model="createVisible" @created="fetchPage" />
+    <GlyphEditDialog v-model="editVisible" :glyph="editingGlyph" @updated="fetchPage" />
   </div>
 </template>
 
@@ -80,9 +58,11 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { IconAsset, IconGlyphVO, IconLibrary } from '@/types/icon-glyph'
-import { pageIconGlyph, removeIconGlyph, createIconGlyph, listGlyphStyles } from '@/api/icon-glyph'
+import { pageIconGlyph, removeIconGlyph } from '@/api/icon-glyph'
 import { getGlyphAssets } from '@/api/icon-glyph-asset'
 import type { IconGlyphAssetVO } from '@/types/icon-glyph-asset'
+import GlyphCreateDialog from './components/GlyphCreateDialog.vue'
+import GlyphEditDialog from './components/GlyphEditDialog.vue'
 
 const rows = ref<IconGlyphVO[]>([])
 const loading = ref(false)
@@ -94,25 +74,8 @@ const keyword = ref<string | undefined>(undefined)
 const iconId = ref<number | undefined>(undefined)
 
 const createVisible = ref(false)
-const creating = ref(false)
-const createFormRef = ref()
-const createForm = ref<{ glyphCode: string; style?: string; isDefault: number; isActive: number }>({ glyphCode: '', style: '', isDefault: 0, isActive: 1 })
-const createRules = {
-  glyphCode: [
-    { required: true, message: '请填写 glyphCode', trigger: 'blur' },
-    { pattern: /^[a-z]+(-[a-z]+)*$/, message: '格式：小写英文单词用中划线连接，如 shopping-cart', trigger: ['blur', 'change'] }
-  ]
-}
-const stylesOptions = ref<string[]>([])
-const loadStyles = async () => {
-  if (stylesOptions.value.length) return
-  try {
-    const resp = await listGlyphStyles()
-    stylesOptions.value = (resp as any)?.data || []
-  } catch (e) {
-    // silent
-  }
-}
+const editVisible = ref(false)
+const editingGlyph = ref<IconGlyphVO | null>(null)
 
 const fetchPage = async () => {
   loading.value = true
@@ -234,35 +197,8 @@ const confirmRemove = async (id: number) => {
   }
 }
 
-const openCreate = () => {
-  createForm.value = { glyphCode: '', style: '', isDefault: 0, isActive: 1 }
-  createVisible.value = true
-  loadStyles()
-}
-
-const submitCreate = async () => {
-  const form = createFormRef.value as any
-  if (form) {
-    const valid = await form.validate().catch(() => false)
-    if (!valid) return
-  }
-  creating.value = true
-  try {
-    await createIconGlyph({
-      glyphCode: createForm.value.glyphCode,
-      style: createForm.value.style || undefined,
-      isDefault: createForm.value.isDefault,
-      isActive: createForm.value.isActive
-    } as any)
-    ElMessage.success('新增成功')
-    createVisible.value = false
-    fetchPage()
-  } catch (e) {
-    ElMessage.error('新增失败')
-  } finally {
-    creating.value = false
-  }
-}
+const openCreate = () => { createVisible.value = true }
+const openEdit = (row: IconGlyphVO) => { editingGlyph.value = row; editVisible.value = true }
 
 onMounted(() => {
   fetchPage()

@@ -4,6 +4,7 @@
       <h2>字体素材管理</h2>
       <div class="ops">
         <el-button @click="goBack">返回</el-button>
+        <el-button type="success" @click="openImport">导入素材</el-button>
         <el-button type="primary" @click="fetchData">刷新</el-button>
       </div>
     </div>
@@ -19,7 +20,7 @@
 
     <el-table :data="rows" v-loading="loading" border style="width: 100%">
       <el-table-column label="#" width="60">
-        <template #default="{ $index }">{{ $index + 1 }}</template>
+        <template #default="{ $index }">{{ $index + 1 + (pageNum - 1) * pageSize }}</template>
       </el-table-column>
       <el-table-column label="Icon Label" min-width="160" show-overflow-tooltip>
         <template #default="{ row }">{{ row.icon?.label || '-' }}</template>
@@ -52,43 +53,60 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="bindVisible" title="绑定字体素材" width="760px">
-      <div class="bind-toolbar">
-        <el-input v-model="bindKeyword" placeholder="关键词 (assetCode/作者/标签)" clearable style="width: 260px" @keyup.enter.native="fetchBindList" />
-        <el-button type="primary" @click="fetchBindList">搜索</el-button>
+    <div class="pagination mb16">
+      <el-pagination
+        v-model:current-page="pageNum"
+        v-model:page-size="pageSize"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next"
+        @size-change="onSizeChange"
+        @current-change="onPageChange"
+      />
+    </div>
+
+    <el-dialog v-model="importVisible" title="导入字体素材" width="760px">
+      <div class="bind-toolbar" style="margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <el-input v-model="importKeyword" placeholder="关键词 (glyphCode)" clearable style="width: 240px" @keyup.enter.native="fetchImportList" />
+        <el-input-number v-model="importIconId" :min="1" placeholder="IconID(可选)" controls-position="right" />
+        <el-button type="primary" @click="fetchImportList">搜索</el-button>
       </div>
-      <el-table :data="bindRows" v-loading="bindLoading" border height="380px">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="预览" width="80">
+      <el-table :data="importRows" v-loading="importLoading" border height="380px">
+        <el-table-column prop="id" label="ID" width="100" />
+        <el-table-column prop="glyphCode" label="glyphCode" min-width="200" />
+        <el-table-column prop="style" label="style" width="160" />
+        <el-table-column label="启用" width="100">
           <template #default="{ row }">
-            <el-image v-if="row.previewUrl || row.imageUrl" :src="getPreviewUrl(row.previewUrl || row.imageUrl)" fit="contain" style="width:40px;height:40px;border-radius:6px;border:1px solid #eee;" />
-            <span v-else class="muted">-</span>
+            <el-tag size="small" :type="row.isActive === 1 ? 'success' : 'info'">{{ row.isActive === 1 ? '是' : '否' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="format" label="格式" width="120" />
-        <el-table-column prop="version" label="版本" width="100" />
-        <el-table-column prop="author" label="作者" min-width="120" />
         <el-table-column label="操作" width="120">
           <template #default="{ row }">
-            <el-button size="small" type="primary" @click="confirmBind(row)">选择</el-button>
+            <el-button size="small" type="primary" @click="selectImport(row)">选择</el-button>
           </template>
         </el-table-column>
       </el-table>
       <div class="pagination">
         <el-pagination
-          v-model:current-page="bindPageNum"
-          v-model:page-size="bindPageSize"
-          :total="bindTotal"
+          v-model:current-page="importPageNum"
+          v-model:page-size="importPageSize"
+          :total="importTotal"
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next"
-          @size-change="onBindSizeChange"
-          @current-change="onBindPageChange"
+          @size-change="onImportSizeChange"
+          @current-change="onImportPageChange"
         />
       </div>
       <template #footer>
-        <el-button @click="bindVisible = false">关闭</el-button>
+        <el-button @click="importVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <BindIconAssetDialog
+      v-model="bindVisible"
+      :icon-id="bindTarget?.icon?.id || 0"
+      @select="confirmBind"
+    />
 
     <SvgEditor v-model="editVisible" :asset-id="editingId" @saved="onEdited" />
   </div>
@@ -98,11 +116,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getGlyphAssets, bindAssetsToGlyph } from '@/api/icon-glyph-asset'
+import { bindAssetsToGlyph, pageIconGlyphAsset, importToGlyph } from '@/api/icon-glyph-asset'
+import { pageIconGlyph } from '@/api/icon-glyph'
 import type { IconGlyphAssetVO } from '@/types/icon-glyph-asset'
-import { pageIconAsset } from '@/api/icon-asset'
 import type { IconAssetVO } from '@/types/icon-asset'
+import type { IconGlyphVO } from '@/types/icon-glyph'
 import SvgEditor from './components/SvgEditor.vue'
+import BindIconAssetDialog from './components/BindIconAssetDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -110,6 +130,9 @@ const glyphId = Number(route.params.glyphId)
 
 const rows = ref<IconGlyphAssetVO[]>([])
 const loading = ref(false)
+const pageNum = ref(1)
+const pageSize = ref(50)
+const total = ref(0)
 
 const hasMissingAsset = computed(() => rows.value.some(r => !r.asset || Object.keys(r.asset || {}).length === 0))
 
@@ -117,14 +140,24 @@ const fetchData = async () => {
   if (!glyphId) return
   loading.value = true
   try {
-    const resp = await getGlyphAssets(glyphId)
-    rows.value = (resp as any)?.data || []
+    const resp = await pageIconGlyphAsset({
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      glyphId,
+      orderBy: 'id:asc'
+    } as any)
+    const data = (resp as any)?.data
+    rows.value = data?.list || []
+    total.value = data?.total || 0
   } catch (e) {
     ElMessage.error('获取字体素材失败')
   } finally {
     loading.value = false
   }
 }
+
+const onSizeChange = (val: number) => { pageSize.value = val; pageNum.value = 1; fetchData() }
+const onPageChange = (val: number) => { pageNum.value = val; fetchData() }
 
 // Edit asset via SvgEditor
 const editVisible = ref(false)
@@ -144,63 +177,23 @@ const onEdited = () => {
 
 // Bind dialog state
 const bindVisible = ref(false)
-const bindLoading = ref(false)
-const bindRows = ref<IconAssetVO[]>([])
-const bindKeyword = ref<string>('')
-const bindPageNum = ref(1)
-const bindPageSize = ref(20)
-const bindTotal = ref(0)
 let bindTarget: IconGlyphAssetVO | null = null
 
 const openBind = (row: IconGlyphAssetVO) => {
   bindTarget = row
   bindVisible.value = true
-  bindPageNum.value = 1
-  fetchBindList()
 }
-
-const fetchBindList = async () => {
-  if (!bindTarget) return
-  const iconId = bindTarget.icon?.id
-  if (!iconId) {
-    ElMessage.warning('缺少 Icon 信息，无法查询素材')
-    return
-  }
-  bindLoading.value = true
-  try {
-    const resp = await pageIconAsset({
-      pageNum: bindPageNum.value,
-      pageSize: bindPageSize.value,
-      iconId: iconId,
-      keyword: bindKeyword.value,
-      orderBy: 'id:desc'
-    } as any)
-    const data = (resp as any)?.data
-    bindRows.value = data?.list || []
-    bindTotal.value = data?.total || 0
-  } catch (e) {
-    ElMessage.error('获取素材列表失败')
-  } finally {
-    bindLoading.value = false
-  }
-}
-
-const onBindSizeChange = (val: number) => { bindPageSize.value = val; fetchBindList() }
-const onBindPageChange = (val: number) => { bindPageNum.value = val; fetchBindList() }
 
 const confirmBind = async (asset: IconAssetVO) => {
   if (!glyphId || !asset?.id) return
-  bindLoading.value = true
   try {
-    const resp = await bindAssetsToGlyph(glyphId, [asset.id])
-    const data = (resp as any)?.data || []
-    rows.value = data
+    await bindAssetsToGlyph(glyphId, [asset.id])
+    // 成功后刷新当前分页数据
+    await fetchData()
     ElMessage.success('绑定成功')
     bindVisible.value = false
   } catch (e) {
     ElMessage.error('绑定失败')
-  } finally {
-    bindLoading.value = false
   }
 }
 
@@ -219,6 +212,56 @@ const getPreviewUrl = (url?: string) => {
   const ext = base.substring(lastDot)
   const withSize = `${prefix}_128x128${ext}`
   return query ? `${withSize}?${query}` : withSize
+}
+
+// Import from other glyph
+const importVisible = ref(false)
+const importLoading = ref(false)
+const importRows = ref<IconGlyphVO[]>([])
+const importKeyword = ref<string | undefined>(undefined)
+const importIconId = ref<number | undefined>(undefined)
+const importPageNum = ref(1)
+const importPageSize = ref(20)
+const importTotal = ref(0)
+
+const openImport = () => {
+  importPageNum.value = 1
+  fetchImportList()
+  importVisible.value = true
+}
+
+const fetchImportList = async () => {
+  importLoading.value = true
+  try {
+    const resp = await pageIconGlyph({
+      pageNum: importPageNum.value,
+      pageSize: importPageSize.value,
+      keyword: importKeyword.value,
+      iconId: importIconId.value
+    } as any)
+    const data = (resp as any)?.data
+    importRows.value = data?.list || []
+    importTotal.value = data?.total || 0
+  } catch (e) {
+    ElMessage.error('获取字体列表失败')
+  } finally {
+    importLoading.value = false
+  }
+}
+
+const onImportSizeChange = (val: number) => { importPageSize.value = val; fetchImportList() }
+const onImportPageChange = (val: number) => { importPageNum.value = val; fetchImportList() }
+
+const selectImport = async (row: IconGlyphVO) => {
+  if (!row?.id || !glyphId) return
+  try {
+    await importToGlyph(row.id, glyphId)
+    ElMessage.success('导入成功')
+    importVisible.value = false
+    fetchData()
+  } catch (e) {
+    ElMessage.error('导入失败')
+  }
 }
 
 onMounted(() => {
