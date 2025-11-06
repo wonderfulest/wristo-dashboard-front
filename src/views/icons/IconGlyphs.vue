@@ -146,11 +146,13 @@ const downloadGlyphAssets = async (row: IconGlyphVO) => {
     const entries: { name: string; content: string }[] = []
     const nameCount: Record<string, number> = {}
     for (const it of list) {
+      console.log(it)
       const asset: IconAsset = it.asset || {}
       const icon: IconLibrary = it.icon || {}
       const svg: string = asset.svgContent || ''
       const unicodeRaw: string = icon.iconUnicode || ''
       const baseCode: string = unicodeRaw && unicodeRaw.trim() ? unicodeRaw.trim() : icon.symbolCode || ''
+      console.log(baseCode, svg)
       if (svg && baseCode) {
         console.log(baseCode)
         let base = `${baseCode}.svg`

@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
-import { uploadIconSvgWithProgress } from '@/api/icon-asset'
+import { uploadIconSvg } from '@/api/icon-asset'
 import { listIconLibrary } from '@/api/icon-library'
 
 interface Props {
@@ -118,7 +118,21 @@ const doUpload = async (options: { file: File }) => {
   if (!beforeUpload(file)) return
   startLoading(`正在上传 ${file.name} ...`)
   try {
-    await uploadIconSvgWithProgress(file, selectedSymbolCode.value, (evt: any) => {
+    // Determine unicode: prefer selected icon; otherwise infer from file name by matching symbolCode
+    const baseName = file.name.replace(/\.svg$/i, '')
+    let unicode = ''
+    if (selectedSymbolCode.value) {
+      const found = iconList.value.find(it => it.symbolCode === selectedSymbolCode.value)
+      unicode = found?.iconUnicode || ''
+    } else {
+      const foundByName = iconList.value.find(it => it.symbolCode === baseName)
+      unicode = foundByName?.iconUnicode || ''
+    }
+    if (!unicode) {
+      throw new Error('未能确定上传图标的 unicode，请在上方选择图标类型，或确保文件名与 Symbol Code 一致')
+    }
+
+    await uploadIconSvg(file, unicode, (evt: any) => {
       const total = evt?.total || 0
       if (total && loadingInstance) {
         const percent = Math.min(100, Math.round((evt.loaded / total) * 100))

@@ -56,3 +56,14 @@ export function updateGarminDeviceForm(params: {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
+
+// Backend endpoint: GET /api/admin/products/garmin-devices/getById/{id}
+// Our axios instance likely prefixes /api, so we append only the path under BASE
+export function getGarminDeviceById(id: number) {
+  return instance.get<ApiResponse<GarminDeviceVO>>(`${BASE}/getById/${id}?populate=*`)
+}
+
+// Backend endpoint: GET /api/admin/products/garmin-devices/getByDeviceId/{deviceId}
+export function getGarminDeviceByDeviceId(deviceId: string) {
+  return instance.get<ApiResponse<GarminDeviceVO>>(`${BASE}/getByDeviceId/${encodeURIComponent(deviceId)}?populate=*`)
+}

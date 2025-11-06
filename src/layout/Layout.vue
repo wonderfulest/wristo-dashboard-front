@@ -1,71 +1,8 @@
 <template>
   <div class="global-layout">
-    <!-- 顶部导航栏 -->
-    <header class="header">
-      <div class="header-inner">
-        <div class="logo">
-          <span class="logo-icon">W</span>
-          <span class="logo-text">risto</span>
-        </div>
-        <nav class="nav-list">
-          <router-link
-            v-for="group in topMenus"
-            :key="group.key"
-            :to="group.children[0]?.path || '/'"
-            class="nav-item"
-            :class="{ active: isTopActive(group) }"
-          >
-            {{ group.title }}
-          </router-link>
-        </nav>
-        <div class="header-right">
-          <div class="user-profile-dropdown">
-            <div class="user-profile-name" @click="toggleDropdown">
-              {{ userStore.userInfo?.username }}
-              <span class="dropdown-arrow">▼</span>
-            </div>
-            <div class="dropdown-content" v-if="isDropdownOpen">
-              <a href="/account/profile">编辑资料</a>
-              <a href="/account/password">修改密码</a>
-              <a href="#" @click.prevent="handleLogout">退出登录</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+    <HeaderBar />
     <div class="side-main-wrapper">
-      <!-- Side Menu -->
-      <aside class="side-menu">
-        <nav class="menu-list">
-          <template v-for="item in activeChildren" :key="item.key">
-            <template v-if="item.children && item.children.length">
-              <div class="menu-group collapsible" @click="toggleGroup(item.key)">
-                <span class="arrow" :class="{ open: isGroupOpen(item.key) }">▸</span>
-                <span>{{ item.title }}</span>
-              </div>
-              <div v-show="isGroupOpen(item.key)">
-                <router-link
-                  v-for="sub in item.children"
-                  :key="sub.key"
-                  :to="sub.path as string"
-                  class="menu-item"
-                  active-class="active"
-                >
-                  {{ sub.title }}
-                </router-link>
-              </div>
-            </template>
-            <router-link
-              v-else
-              :to="item.path as string"
-              class="menu-item"
-              active-class="active"
-            >
-              {{ item.title }}
-            </router-link>
-          </template>
-        </nav>
-      </aside>
+      <SideMenu />
       <!-- Main Content -->
       <main class="main-content">
         <Breadcrumb />
@@ -76,74 +13,15 @@
         </div>
       </main>
     </div>
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-inner">
-        <div class="footer-left">
-          <span class="footer-icon">🐦</span>
-          <span>© Wristo 2025</span>
-        </div>
-        <div class="footer-links">
-          <a href="#">Terms of Use</a>
-          <a href="#">Privacy Policy</a>
-          <a href="mailto:support@wristo.io">support@wristo.io</a>
-        </div>
-        <div class="footer-right">
-          <span>Wristo</span>
-        </div>
-      </div>
-    </footer>
+    <AppFooter />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@/store/user'
-import { ref, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import Breadcrumb from '@/components/Breadcrumb.vue'
-import { topMenus } from '@/config/menu'
-const userStore = useUserStore()
-const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
-const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
-const handleLogout = async () => {
-  await userStore.logout()
-  window.location.href = `${ssoBaseUrl}?client=dashboard&redirect_uri=${encodeURIComponent(redirectUri)}`
-}
-
-// 下拉菜单控制
-const isDropdownOpen = ref(false)
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
-
-// 动态菜单：根据当前路由选择顶部分组与侧边二级菜单
-const route = useRoute()
-const isTopActive = (group: any) => group.basePaths?.some((p: string) => route.path.startsWith(p))
-const activeTop = computed(() => topMenus.find((g) => isTopActive(g)) || topMenus[0])
-const activeChildren = computed(() => activeTop.value?.children || [])
-
-// Collapsible side group state
-const openGroups = ref<Record<string, boolean>>({})
-const isGroupOpen = (key: string) => openGroups.value[key] !== false
-const toggleGroup = (key: string) => {
-  openGroups.value[key] = !isGroupOpen(key)
-}
-
-// Initialize group open states when menu changes; keep the group that contains the current route open
-watch(
-  () => ({ route: route.path, items: activeChildren.value }),
-  () => {
-    const next: Record<string, boolean> = {}
-    for (const item of activeChildren.value as any[]) {
-      if (item?.children?.length) {
-        const hasActive = item.children.some((sub: any) => sub.path && route.path.startsWith(sub.path))
-        next[item.key] = hasActive || (openGroups.value[item.key] ?? true)
-      }
-    }
-    openGroups.value = next
-  },
-  { immediate: true, deep: true }
-)
+import HeaderBar from '@/layout/components/HeaderBar.vue'
+import SideMenu from '@/layout/components/SideMenu.vue'
+import AppFooter from '@/layout/components/AppFooter.vue'
 </script>
 
 <style lang="scss" scoped>

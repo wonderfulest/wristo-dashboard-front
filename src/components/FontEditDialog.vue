@@ -20,7 +20,15 @@
         <el-input v-model="form.language" />
       </el-form-item>
       <el-form-item label="类型">
-        <el-input v-model="form.type" />
+        <el-select
+          v-model="form.type"
+          placeholder="选择字体类型"
+          filterable
+          :loading="typeLoading"
+          style="width: 240px;"
+        >
+          <el-option v-for="t in typeOptions" :key="t" :label="t" :value="t" />
+        </el-select>
       </el-form-item>
       <el-form-item label="字重">
         <el-input v-model="form.weight" />
@@ -67,7 +75,7 @@
 <script setup lang="ts">
 import { ref, watch, defineProps, defineEmits } from 'vue'
 import type { DesignFontVO } from '@/types/font'
-import { updateFont } from '@/api/fonts'
+import { updateFont, listPublicFontTypes } from '@/api/fonts'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps<{ modelValue: boolean, font?: DesignFontVO | null }>()
@@ -79,7 +87,24 @@ const font = ref<DesignFontVO | null>(null)
 
 const form = ref<Partial<DesignFontVO>>({})
 
+// font type options
+const typeOptions = ref<string[]>([])
+const typeLoading = ref(false)
+const loadFontTypes = async () => {
+  if (typeOptions.value.length || typeLoading.value) return
+  typeLoading.value = true
+  try {
+    const resp = await listPublicFontTypes()
+    const list = (resp as any)?.data
+    if (Array.isArray(list)) typeOptions.value = list
+  } catch {}
+  finally {
+    typeLoading.value = false
+  }
+}
+
 watch(() => props.modelValue, v => visible.value = v)
+watch(visible, (v) => { if (v) loadFontTypes() })
 watch(() => props.font, (v) => {
   font.value = v || null
   if (v) {

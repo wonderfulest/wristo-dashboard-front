@@ -46,6 +46,7 @@
       </el-table-column>
       <el-table-column label="操作" width="200" align="center">
         <template #default="{ row }">
+          <el-button link type="primary" @click="handleDetail(row)">详情</el-button>
           <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
           <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
@@ -78,6 +79,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { GarminDeviceVO } from '@/types/garmin-device'
 import { pageGarminDevices, deleteGarminDevice } from '@/api/garmin-device'
@@ -96,6 +98,7 @@ const loading = ref(false)
 const createVisible = ref(false)
 const editVisible = ref(false)
 const editingDevice = ref<GarminDeviceVO | null>(null)
+const router = useRouter()
 
 async function loadData() {
   loading.value = true
@@ -126,6 +129,10 @@ function handleAdd() {
 function handleEdit(row: GarminDeviceVO) {
   editingDevice.value = { ...row }
   editVisible.value = true
+}
+
+function handleDetail(row: GarminDeviceVO) {
+  router.push({ name: 'GarminDeviceDetail', params: { deviceId: row.deviceId } })
 }
 
 function onDialogSuccess() {

@@ -146,6 +146,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/products/garmin-devices/:deviceId',
+      name: 'GarminDeviceDetail',
+      component: () => import('@/views/products/GarminDeviceDetail.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products/device-un-support',
       name: 'ProductsDeviceUnSupport',
       component: () => import('@/views/products/DeviceUnSupport.vue'),

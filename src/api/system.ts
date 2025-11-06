@@ -9,3 +9,8 @@ const SYS_PUBLIC_BASE = '/public/system'
 export function fetchSystemLanguages(): Promise<ApiResponse<string[]>> {
   return instance.get(`${SYS_PUBLIC_BASE}/languages`)
 }
+
+// Generate slug from a given name/title
+export function slugifyPublic(name: string): Promise<ApiResponse<string>> {
+  return instance.get(`${SYS_PUBLIC_BASE}/slugify`, { params: { name } })
+}

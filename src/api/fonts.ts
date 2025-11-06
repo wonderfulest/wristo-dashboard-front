@@ -48,3 +48,8 @@ export function updateFont(id: number, payload: Partial<DesignFontVO>) {
 export function toggleFontSystem(id: number, enable: boolean) {
   return instance.post<ApiResponse<DesignFontVO>>(`/admin/fonts/system/${id}`, null, { params: { enable } })
 }
+
+// Public: list font type codes
+export function listPublicFontTypes() {
+  return instance.get<ApiResponse<string[]>>('/public/fonts/types')
+}

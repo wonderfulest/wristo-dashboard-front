@@ -84,7 +84,11 @@
     <el-card class="card">
       <el-form label-width="40px">
         <el-form-item label="Slug">
-          <el-input v-model="trans.slug" placeholder="文章短链（必填）" />
+          <el-input v-model="trans.slug" placeholder="文章短链（必填）">
+            <template #append>
+              <el-button :loading="slugLoading" :icon="RefreshRight" @click="generateSlug" title="根据标题生成Slug" />
+            </template>
+          </el-input>
         </el-form-item>
         <el-form-item label="标题">
           <el-input v-model="trans.title" placeholder="标题（必填）" />
@@ -113,7 +117,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import type { BlogPostCreateDTO, BlogPostTranslationCreateDTO, BlogPostTranslationUpdateDTO, BlogCategoryVO, BlogPostUpdateDTO, BlogUpdateDTO, BlogTagVO } from '@/types/blog'
 import { fetchCategoryList, fetchBlogPostDetail, updateBlogCombined, deletePostTranslation, fetchPublicAllTags } from '@/api/blog'
-import { fetchSystemLanguages } from '@/api/system'
+import { fetchSystemLanguages, slugifyPublic } from '@/api/system'
+import { RefreshRight } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import ContentEditor from '@/components/ContentEditor.vue'
 
@@ -166,6 +171,30 @@ const addLangSelect = ref<string | undefined>(undefined)
 const addableLangs = computed(() => languages.value.filter(l => !availableLangs.value.includes(l)))
 const showMeta = ref(false)
 const switchingLang = ref(false)
+const slugLoading = ref(false)
+
+// 根据标题生成 slug
+const generateSlug = async () => {
+  try {
+    const name = (trans.value.title || '').trim()
+    if (!name) {
+      ElMessage.warning('请先填写标题')
+      return
+    }
+    slugLoading.value = true
+    const res = await slugifyPublic(name)
+    const s = (res as any)?.data
+    if (typeof s === 'string') {
+      trans.value.slug = s
+    } else {
+      ElMessage.error('生成失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.message || '生成失败')
+  } finally {
+    slugLoading.value = false
+  }
+}
 
 onMounted(async () => {
   try {

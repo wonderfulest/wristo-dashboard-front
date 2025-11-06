@@ -32,6 +32,15 @@ export const topMenus: TopMenuGroup[] = [
         ],
       },
       { key: 'fonts', title: '字体管理', path: '/fonts' },
+      {
+        key: 'icons',
+        title: '图标',
+        children: [
+          { key: 'icon-library', title: '图标字典', path: '/icon-library' },
+          { key: 'icon-assets', title: '图标素材', path: '/icon-assets' },
+          { key: 'icon-glyphs', title: '图标字体管理', path: '/icon-glyphs' },
+        ],
+      },
       { key: 'images', title: '图片素材', path: '/images' },
       { key: 'data-type-options', title: '数据项配置', path: '/data-type-options' },
       { key: 'color-type-options', title: '颜色配置', path: '/color-type-options' },
@@ -43,16 +52,10 @@ export const topMenus: TopMenuGroup[] = [
           { key: 'packaging-logs', title: '打包记录', path: '/packaging/packaging-logs' },
         ],
       },
-      {
-        key: 'icons',
-        title: '图标',
-        children: [
-          { key: 'icon-library', title: '图标字典', path: '/icon-library' },
-          { key: 'icon-assets', title: '图标素材', path: '/icon-assets' },
-          { key: 'icon-glyphs', title: '图标字体管理', path: '/icon-glyphs' },
-        ],
-      },
-      { key: 'garmin-devices', title: '佳明设备', path: '/products/garmin-devices' },
+      { key: 'garmin-devices', title: '佳明设备', children: [
+        { key: 'garmin-devices', title: '设备列表', path: '/products/garmin-devices' },
+        { key: 'garmin-device-detail', title: '设备详情', path: '/products/garmin-devices/:id' },
+      ] },
       { key: 'email-records', title: '邮件发送历史', path: '/email-records' },
     ],
   },
