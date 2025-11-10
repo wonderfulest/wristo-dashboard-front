@@ -23,17 +23,19 @@
 
     <div v-if="enabledLocal && rulesLocal.type === 'enum'" class="block">
       <div class="inputs">
-        <el-input v-model="iconPairKey" placeholder="key" style="width: 160px" />
-        <IconSearchSelect v-model="iconPairVal" placeholder="icon" :width="260" />
+        <el-input v-model="iconPairKey" placeholder="key" style="width: 300px" />
+        <IconSearchSelect v-model="iconPairVal" placeholder="icon" :width="200" />
         <el-button size="small" @click="addIconPair">Add</el-button>
       </div>
-      <el-tag
-        v-for="(v,k) in rulesLocal.icons"
-        :key="k"
-        closable
-        class="tag"
-        @close="removeIconPair(k)"
-      >{{ k }}: {{ v }}</el-tag>
+      <div
+        class="inputs"
+        v-for="(value, key) in rulesLocal.icons"
+        :key="key"
+      >
+        <el-input :model-value="key" @update:modelValue="(nv?: string) => renameIconKey(key, nv || '')" placeholder="key" style="width: 300px" />
+        <IconSearchSelect :model-value="value" @update:modelValue="(nv?: string) => updateIconValue(key, nv)" placeholder="icon" :width="200" />
+        <el-button size="small" type="danger" @click="removeIconPair(key)">Del</el-button>
+      </div>
     </div>
 
     <div v-if="enabledLocal && rulesLocal.type === 'numeric'" class="block">
@@ -90,6 +92,10 @@ watch(
       Object.assign(rulesLocal, { type: 'boolean', icons: {}, ranges: [] })
     } else {
       Object.assign(rulesLocal, { type: v.type, icons: v.icons || {}, ranges: v.ranges || [] })
+      if (!enabledLocal.value) {
+        enabledLocal.value = true
+        emit('update:enabled', true)
+      }
     }
   },
   { immediate: true }
@@ -103,6 +109,9 @@ watch(
       if (!rulesLocal.icons) rulesLocal.icons = {}
       if (rulesLocal.icons['true'] === undefined) rulesLocal.icons['true'] = ''
       if (rulesLocal.icons['false'] === undefined) rulesLocal.icons['false'] = ''
+      emitRules()
+    } else if (t === 'enum') {
+      if (!rulesLocal.icons) rulesLocal.icons = {}
       emitRules()
     }
   },
@@ -159,6 +168,36 @@ function removeIconPair(k: string) {
     emitRules()
   }
 }
+
+function renameIconKey(oldKey: string, newKey: string) {
+  const from = (oldKey || '').trim()
+  const to = (newKey || '').trim()
+  if (!from) return
+  if (to === from) return
+  if (!rulesLocal.icons) rulesLocal.icons = {}
+  const val = rulesLocal.icons[from]
+  delete rulesLocal.icons[from]
+  if (to) {
+    rulesLocal.icons[to] = val
+  }
+  emitRules()
+}
+
+function updateIconValue(key: string, nv?: string) {
+  const k = (key || '').trim()
+  if (!k) return
+  if (!rulesLocal.icons) rulesLocal.icons = {}
+  rulesLocal.icons[k] = (nv || '').trim()
+  emitRules()
+}
+
+watch(
+  () => rulesLocal.icons,
+  () => {
+    emitRules()
+  },
+  { deep: true }
+)
 
 const rangeMin = ref<number | undefined>(undefined)
 const rangeMax = ref<number | undefined>(undefined)
