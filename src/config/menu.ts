@@ -31,6 +31,7 @@ export const topMenus: TopMenuGroup[] = [
           { key: 'device-un-support', title: '未支持应用', path: '/products/device-un-support' },
         ],
       },
+      { key: 'data-type-options', title: '数据项', path: '/data-type-options' },
       { key: 'fonts', title: '字体管理', path: '/fonts' },
       {
         key: 'icons',
@@ -42,7 +43,7 @@ export const topMenus: TopMenuGroup[] = [
         ],
       },
       { key: 'images', title: '图片素材', path: '/images' },
-      { key: 'data-type-options', title: '数据项配置', path: '/data-type-options' },
+    
       { key: 'color-type-options', title: '颜色配置', path: '/color-type-options' },
       {
         key: 'packaging',

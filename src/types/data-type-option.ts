@@ -6,6 +6,20 @@ export interface LabelI18nItem {
   medium?: string
 }
 
+export type IconRuleType = 'boolean' | 'numeric' | 'enum'
+
+export interface IconRange {
+  min?: number
+  max?: number
+  icon: string
+}
+
+export interface IconRules {
+  type: IconRuleType
+  icons?: Record<string, string>
+  ranges?: IconRange[]
+}
+
 export interface DataTypeOptionVO {
   id: number
   metricSymbol: string
@@ -19,6 +33,7 @@ export interface DataTypeOptionVO {
   isActive: number
   sortOrder: number
   description: string
+  iconRules?: IconRules
 }
 
 export interface DataTypeOptionCreateDTO {
@@ -33,6 +48,7 @@ export interface DataTypeOptionCreateDTO {
   isActive: number
   sortOrder: number
   description: string
+  iconRules?: IconRules
 }
 
 export interface DataTypeOptionUpdateDTO extends DataTypeOptionCreateDTO {

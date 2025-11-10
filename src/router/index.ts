@@ -254,7 +254,7 @@ const router = createRouter({
     {
       path: '/data-type-options',
       name: 'DataTypeOptions',
-      component: () => import('@/views/DataTypeOptions.vue'),
+      component: () => import('@/views/dashboard/data-options/DataTypeOptionsPage.vue'),
       meta: { requiresAuth: true }
     },
     {
