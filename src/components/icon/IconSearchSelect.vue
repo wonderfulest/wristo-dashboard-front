@@ -18,8 +18,8 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
 import type { PropType } from 'vue'
-import { listIconLibrary } from '@/api/icon-library'
 import type { IconLibraryVO } from '@/types/icon-library'
+import { useIconStore } from '@/store/icon'
 
 const props = defineProps({
   modelValue: { type: String as PropType<string | undefined>, default: undefined },
@@ -34,19 +34,12 @@ const innerValue = ref<string | undefined>(props.modelValue)
 watch(() => props.modelValue, v => innerValue.value = v)
 watch(innerValue, v => emit('update:modelValue', v))
 
-const options = ref<IconLibraryVO[]>([])
+const iconStore = useIconStore()
+const options = computed<IconLibraryVO[]>(() => iconStore.byCategory(props.category))
 
-async function loadAll() {
-  const res: any = await listIconLibrary(props.category)
-  const list: IconLibraryVO[] = res?.data?.data || res?.data || []
-  options.value = list
-}
-
-onMounted(() => {
-  loadAll()
+onMounted(async () => {
+  await iconStore.ensureLoaded()
 })
-
-watch(() => props.category, () => loadAll())
 
 const selectStyle = computed(() => ({ width: typeof props.width === 'number' ? `${props.width}px` : props.width }))
 </script>

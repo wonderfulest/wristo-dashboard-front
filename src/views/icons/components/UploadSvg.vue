@@ -57,7 +57,7 @@
 import { ref, watch } from 'vue'
 import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
 import { uploadIconSvg } from '@/api/icon-asset'
-import { listIconLibrary } from '@/api/icon-library'
+import { useIconStore } from '@/store/icon'
 
 interface Props {
   symbolCode?: string
@@ -90,14 +90,16 @@ watch(
   }
 )
 
+const iconStore = useIconStore()
 watch(dialogVisible, async (v) => {
   if (v && iconList.value.length === 0) {
     try {
-      const resp = (await listIconLibrary()) as any
-      const arr = (resp?.data || [])
-        .map((it: any) => ({ symbolCode: it?.symbolCode, label: it?.label, iconUnicode: it?.iconUnicode }))
-        .filter((it: any) => !!it.symbolCode)
-      iconList.value = arr
+      await iconStore.ensureLoaded()
+      iconList.value = (iconStore.icons || []).map((it: any) => ({
+        symbolCode: it?.symbolCode,
+        label: it?.label,
+        iconUnicode: it?.iconUnicode
+      })).filter((it: any) => !!it.symbolCode)
     } catch {
       // silent
     }

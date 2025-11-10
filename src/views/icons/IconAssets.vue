@@ -39,8 +39,8 @@
         </div>
         <div class="overlay">
           <el-button size="small" text type="primary" @click="openUrl(row.imageUrl || row.previewUrl)" :disabled="!(row.imageUrl || row.previewUrl)">打开</el-button>
-          <el-button size="small" text type="primary" @click="copyUrl(row.imageUrl || row.previewUrl)" :disabled="!(row.imageUrl || row.previewUrl)">复制链接</el-button>
-          <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
+          <el-button size="small" text type="primary" @click="openEditMeta(row)">编辑</el-button>
+          <el-button size="small" text type="primary" @click="openEdit(row)">编辑 SVG</el-button>
           <el-button size="small" text type="danger" @click="confirmRemove(row.id)">删除</el-button>
         </div>
       </div>
@@ -60,16 +60,18 @@
     </div>
     
     <SvgEditor v-model="editVisible" :asset-id="editingId" @saved="onEdited" />
+    <IconAssetEditDialog v-model="editMetaVisible" :asset-id="editingMetaId" @saved="onEdited" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { IconAssetVO } from '@/types/icon-asset'
 import { pageIconAsset, removeIconAsset } from '@/api/icon-asset'
-import { listIconLibrary } from '@/api/icon-library'
+import { useIconStore } from '@/store/icon'
+import IconAssetEditDialog from '@/views/icons/components/IconAssetEditDialog.vue'
 import SvgEditor from '@/views/icons/components/SvgEditor.vue'
 import UploadSvg from '@/views/icons/components/UploadSvg.vue'
 
@@ -78,7 +80,8 @@ const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(100)
 const total = ref(0)
-const iconLabelMap = ref<Record<number, string>>({})
+const iconStore = useIconStore()
+const iconLabelMap = computed<Record<number, string>>(() => iconStore.idLabelMap)
 
 const iconId = ref<number | undefined>(undefined)
 const active = ref<number | undefined>(undefined)
@@ -87,6 +90,8 @@ const sortOrder = ref('created_at:desc')
 const symbolCode = ref<string | undefined>(undefined)
 const editVisible = ref(false)
 const editingId = ref<number | null>(null)
+const editMetaVisible = ref(false)
+const editingMetaId = ref<number | null>(null)
 
 
 
@@ -127,15 +132,7 @@ const openUrl = (url?: string) => {
   if (!url) return
   window.open(url, '_blank')
 }
-const copyUrl = async (url?: string) => {
-  if (!url) return
-  try {
-    await navigator.clipboard.writeText(url)
-    ElMessage.success('已复制链接')
-  } catch (e) {
-    ElMessage.error('复制失败')
-  }
-}
+// removed copyUrl; button now opens edit dialog
 
 const getPreviewUrl = (url?: string) => {
   if (!url) return ''
@@ -152,26 +149,10 @@ const getPreviewUrl = (url?: string) => {
   return query ? `${withSize}?${query}` : withSize
 }
 
-onMounted(() => {
+onMounted(async () => {
   fetchPage()
-  loadIconLabels()
+  await iconStore.ensureLoaded()
 })
-
-const loadIconLabels = async () => {
-  try {
-    const resp = await listIconLibrary()
-    const list = (resp as any)?.data || []
-    const map: Record<number, string> = {}
-    list.forEach((it: any) => {
-      if (typeof it?.id === 'number' && typeof it?.label === 'string') {
-        map[it.id] = it.label
-      }
-    })
-    iconLabelMap.value = map
-  } catch (e) {
-    // silent
-  }
-}
 
 const confirmRemove = async (id: number) => {
   try {
@@ -195,6 +176,11 @@ const confirmRemove = async (id: number) => {
 const openEdit = (row: IconAssetVO) => {
   editingId.value = row.id
   editVisible.value = true
+}
+
+const openEditMeta = (row: IconAssetVO) => {
+  editingMetaId.value = row.id
+  editMetaVisible.value = true
 }
 
 

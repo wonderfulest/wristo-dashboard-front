@@ -6,6 +6,7 @@ export interface IconAssetVO {
   assetCode: string
   sourceType: string
   format: string
+  displayType?: string
   imageUrl?: string
   previewUrl?: string
   author?: string
@@ -20,6 +21,7 @@ export interface IconAssetCreateDTO {
   assetCode: string
   sourceType: string
   format: string
+  displayType?: string
   svgContent?: string
   imageUrl?: string
   previewUrl?: string
