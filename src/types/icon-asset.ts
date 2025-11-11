@@ -38,6 +38,8 @@ export interface IconAssetUpdateDTO extends Partial<IconAssetCreateDTO> {
 
 export interface IconAssetPageQueryDTO extends PageQueryDTO {
   iconId?: number
+  iconUnicode?: string
+  displayType?: string
   active?: number
   keyword?: string
 }

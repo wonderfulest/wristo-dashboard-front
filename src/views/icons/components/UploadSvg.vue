@@ -19,6 +19,14 @@
         </div>
         <template #tip>
           <div class="el-upload__tip">
+            <div class="inputs" style="margin-bottom: 8px; display:flex; align-items:center; gap:8px;">
+              <span style="width:auto; color:#666"><span style="color:#f56c6c">*</span> 显示类型（必选）</span>
+              <el-radio-group v-model="displayType">
+                <el-radio v-for="opt in displayTypeOptions" :key="opt.value" :label="opt.value">
+                  {{ opt.name || opt.value }}
+                </el-radio>
+              </el-radio-group>
+            </div>
             <div class="symbol-quick">
               <div class="label">Symbol Code 速查表</div>
               <div class="symbol-selected">
@@ -58,14 +66,17 @@ import { ref, watch } from 'vue'
 import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
 import { uploadIconSvg } from '@/api/icon-asset'
 import { useIconStore } from '@/store/icon'
+import { listEnumOptions } from '@/api/common'
 
 interface Props {
   symbolCode?: string
+  iconUnicode?: string
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update:symbolCode', v: string | undefined): void
+  (e: 'update:iconUnicode', v: string | undefined): void
   (e: 'uploaded'): void
 }>()
 
@@ -75,6 +86,10 @@ let loadingInstance: ReturnType<typeof ElLoading.service> | null = null
 const dialogVisible = ref(false)
 const iconList = ref<{ symbolCode: string; label: string; iconUnicode: string }[]>([])
 const selectedSymbolCode = ref<string | undefined>(props.symbolCode)
+const pendingIconUnicode = ref<string | undefined>(props.iconUnicode)
+const displayType = ref<string | undefined>(undefined)
+const displayTypeOptions = ref<{ name: string; value: string; description?: string }[]>([])
+const loadingEnums = ref(false)
 
 watch(
   () => props.symbolCode,
@@ -84,9 +99,25 @@ watch(
 )
 
 watch(
+  () => props.iconUnicode,
+  (u) => {
+    // If icon list is loaded, map unicode->symbol; otherwise defer
+    if (iconList.value.length > 0 && u) {
+      const found = iconList.value.find(it => it.iconUnicode === u)
+      selectedSymbolCode.value = found?.symbolCode
+    } else {
+      pendingIconUnicode.value = u
+    }
+  }
+)
+
+watch(
   () => selectedSymbolCode.value,
   (v) => {
     emit('update:symbolCode', v)
+    // sync iconUnicode for parent when selection changes
+    const found = iconList.value.find(it => it.symbolCode === (v || ''))
+    emit('update:iconUnicode', found?.iconUnicode)
   }
 )
 
@@ -100,6 +131,22 @@ watch(dialogVisible, async (v) => {
         label: it?.label,
         iconUnicode: it?.iconUnicode
       })).filter((it: any) => !!it.symbolCode)
+      if (displayTypeOptions.value.length === 0) {
+        loadingEnums.value = true
+        try {
+          const resp = await listEnumOptions('DisplayType')
+          const list = (resp as any)?.data || []
+          displayTypeOptions.value = Array.isArray(list) ? list : []
+        } finally {
+          loadingEnums.value = false
+        }
+      }
+      // apply pending iconUnicode preselection
+      if (pendingIconUnicode.value) {
+        const found = iconList.value.find(it => it.iconUnicode === pendingIconUnicode.value)
+        if (found?.symbolCode) selectedSymbolCode.value = found.symbolCode
+        pendingIconUnicode.value = undefined
+      }
     } catch {
       // silent
     }
@@ -118,6 +165,10 @@ const beforeUpload = (file: File) => {
 const doUpload = async (options: { file: File }) => {
   const file = options.file
   if (!beforeUpload(file)) return
+  if (!displayType.value) {
+    ElMessage.error('请选择显示类型')
+    return
+  }
   startLoading(`正在上传 ${file.name} ...`)
   try {
     // Determine unicode: prefer selected icon; otherwise infer from file name by matching symbolCode
@@ -127,6 +178,11 @@ const doUpload = async (options: { file: File }) => {
       const found = iconList.value.find(it => it.symbolCode === selectedSymbolCode.value)
       unicode = found?.iconUnicode || ''
     } else {
+      // if parent passed iconUnicode but no selected symbol yet, try that first
+      if (props.iconUnicode) {
+        unicode = props.iconUnicode
+      }
+      // fallback to infer by filename
       const foundByName = iconList.value.find(it => it.symbolCode === baseName)
       unicode = foundByName?.iconUnicode || ''
     }
@@ -140,7 +196,7 @@ const doUpload = async (options: { file: File }) => {
         const percent = Math.min(100, Math.round((evt.loaded / total) * 100))
         loadingInstance.setText(`正在上传 ${file.name} ... ${percent}%`)
       }
-    })
+    }, displayType.value)
     stopLoading()
     ElMessage.success(`${file.name} 上传成功`)
     emit('uploaded')

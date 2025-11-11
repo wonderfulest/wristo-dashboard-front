@@ -27,6 +27,11 @@ export function pageIconAsset(dto: IconAssetPageQueryDTO) {
   return instance.post('/admin/icon-asset/page', dto)
 }
 
+// DSN paging endpoint
+export function pageIconAssetDsn(dto: Partial<IconAssetPageQueryDTO> & { orderBy?: string }) {
+  return instance.post('/dsn/icon-asset/page', dto)
+}
+
 export function getIconAssetDetail(id: number, params?: Record<string, any>) {
   return instance.get<ApiResponse<IconAssetVO>>(`/admin/icon-asset/get/${id}`, { params })
 }
@@ -38,11 +43,13 @@ export function cropIconSvg(dto: { id: number; svgContent: string }) {
 export function uploadIconSvg(
   file: File,
   unicode: string,
-  onUploadProgress?: (evt: any) => void
+  onUploadProgress?: (evt: any) => void,
+  displayType?: string
 ) {
   const form = new FormData()
   form.append('file', file)
   form.append('unicode', unicode)
+  if (displayType) form.append('displayType', displayType)
   return instance.post<ApiResponse<IconAssetVO>>('/admin/icon-asset/upload-svg', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
     onUploadProgress

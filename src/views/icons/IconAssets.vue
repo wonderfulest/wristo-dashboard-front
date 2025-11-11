@@ -3,21 +3,22 @@
     <div class="header">
       <h2>Icon 素材</h2>
       <div class="tools">
-        <el-input v-model="keyword" placeholder="关键词 (assetCode/作者/标签)" clearable style="width: 240px" @keyup.enter.native="handleSearch" />
         <el-select v-model="active" placeholder="状态" clearable style="width: 140px" @change="handleSearch">
           <el-option label="全部" :value="undefined" />
           <el-option label="启用" :value="1" />
           <el-option label="禁用" :value="0" />
         </el-select>
-        <el-input-number v-model="iconId" :min="1" placeholder="IconID" controls-position="right" @change="handleSearch" />
+        <IconSearchSelect v-model="iconUnicode" placeholder="按 Icon 选择" :width="260" @update:modelValue="handleSearch" />
         <el-select v-model="sortOrder" placeholder="排序" style="width: 200px" @change="handleSearch">
           <el-option label="创建时间倒序" value="created_at desc" />
           <el-option label="创建时间升序" value="created_at asc" />
           <el-option label="ID倒序" value="id desc" />
           <el-option label="ID升序" value="id asc" />
         </el-select>
-        <el-input v-model="symbolCode" placeholder="symbolCode(可选)" clearable style="width: 200px" />
-        <UploadSvg :symbol-code="symbolCode" @uploaded="fetchPage" />
+        <el-select v-model="displayType" placeholder="显示类型" clearable style="width: 160px" @change="handleSearch" :loading="loadingEnums">
+          <el-option v-for="opt in displayTypeOptions" :key="opt.value" :label="opt.name || opt.value" :value="opt.value" />
+        </el-select>
+        <UploadSvg :icon-unicode="iconUnicode" @uploaded="fetchPage" />
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="fetchPage">刷新</el-button>
       </div>
@@ -69,8 +70,10 @@ import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { IconAssetVO } from '@/types/icon-asset'
-import { pageIconAsset, removeIconAsset } from '@/api/icon-asset'
+import { pageIconAssetDsn, removeIconAsset } from '@/api/icon-asset'
 import { useIconStore } from '@/store/icon'
+import IconSearchSelect from '@/components/icon/IconSearchSelect.vue'
+import { listEnumOptions } from '@/api/common'
 import IconAssetEditDialog from '@/views/icons/components/IconAssetEditDialog.vue'
 import SvgEditor from '@/views/icons/components/SvgEditor.vue'
 import UploadSvg from '@/views/icons/components/UploadSvg.vue'
@@ -83,11 +86,12 @@ const total = ref(0)
 const iconStore = useIconStore()
 const iconLabelMap = computed<Record<number, string>>(() => iconStore.idLabelMap)
 
-const iconId = ref<number | undefined>(undefined)
+const iconUnicode = ref<string | undefined>(undefined)
 const active = ref<number | undefined>(undefined)
-const keyword = ref<string | undefined>(undefined)
 const sortOrder = ref('created_at:desc')
-const symbolCode = ref<string | undefined>(undefined)
+const displayType = ref<string | undefined>(undefined)
+const displayTypeOptions = ref<{ name: string; value: string; description?: string }[]>([])
+const loadingEnums = ref(false)
 const editVisible = ref(false)
 const editingId = ref<number | null>(null)
 const editMetaVisible = ref(false)
@@ -98,13 +102,13 @@ const editingMetaId = ref<number | null>(null)
 const fetchPage = async () => {
   loading.value = true
   try {
-    const resp = (await pageIconAsset({
+    const resp = (await pageIconAssetDsn({
       pageNum: currentPage.value,
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
-      iconId: iconId.value,
-      active: active.value,
-      keyword: keyword.value
+      iconUnicode: iconUnicode.value,
+      displayType: displayType.value,
+      active: active.value
     })) as unknown as ApiResponse<PageResponse<IconAssetVO>>
     assets.value = resp.data?.list || []
     total.value = resp.data?.total || 0
@@ -152,6 +156,17 @@ const getPreviewUrl = (url?: string) => {
 onMounted(async () => {
   fetchPage()
   await iconStore.ensureLoaded()
+  // load enum options for displayType
+  try {
+    loadingEnums.value = true
+    const resp = await listEnumOptions('DisplayType')
+    const list = (resp as any)?.data || []
+    displayTypeOptions.value = Array.isArray(list) ? list : []
+  } catch {
+    // silent
+  } finally {
+    loadingEnums.value = false
+  }
 })
 
 const confirmRemove = async (id: number) => {

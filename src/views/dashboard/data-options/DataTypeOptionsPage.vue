@@ -41,8 +41,9 @@ import { pageDataTypeOptions, removeDataTypeOption } from '@/api/data-type-optio
 import DataTypeOptionDialog from './DataTypeOptionDialog.vue'
 import DataTypeOptionsSearch from './DataTypeOptionsSearch.vue'
 import DataTypeOptionsList from './DataTypeOptionsList.vue'
+import { listEnumOptions } from '@/api/common'
 
-const categories = ['field', 'goal', 'chart', 'indicator', 'date']
+const categories = ref<string[]>([])
 
 // Supported language codes (aligned with backend LanguageCode enum)
 const supportedLangs = [
@@ -169,7 +170,20 @@ function handleDelete(row: DataTypeOptionVO) {
     })
 }
 
-onMounted(loadData)
+async function loadCategories() {
+  try {
+    const resp = await listEnumOptions('DataTypeCategory')
+    const list = (resp as any)?.data || []
+    categories.value = Array.isArray(list) ? list.map((it: any) => it?.value).filter((v: any) => typeof v === 'string') : []
+  } catch {
+    categories.value = []
+  }
+}
+
+onMounted(async () => {
+  await loadCategories()
+  loadData()
+})
 </script>
 
 <style scoped>
