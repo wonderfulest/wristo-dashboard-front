@@ -26,10 +26,16 @@
           <el-tag :type="row.isActive === 1 ? 'success' : 'info'">{{ row.isActive === 1 ? 'Yes' : 'No' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Action" width="180" fixed="right">
+      <el-table-column label="Action" width="260" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleEdit(row)">Edit</el-button>
           <el-button type="danger" link @click="handleDelete(row)">Delete</el-button>
+          <el-button
+            v-if="row.isActive === 0"
+            type="primary"
+            link
+            @click="handleTransfer(row)"
+          >转移素材</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -73,14 +79,37 @@
         <el-button type="primary" @click="handleSave">Save</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="transferDialogVisible" title="转移素材" width="520px">
+      <div v-if="transferSource">
+        <p>源 Icon：{{ transferSource.symbolCode }} — {{ transferSource.iconUnicode }}</p>
+        <p>当前绑定素材数量：{{ transferCount ?? '-' }}</p>
+        <el-form label-width="120px" style="margin-top: 12px">
+          <el-form-item label="目标 Icon">
+            <IconSearchSelect
+              v-model="transferTargetUnicode"
+              :category="transferSource.category"
+              placeholder="选择目标 Icon"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="transferDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="transferLoading" @click="handleConfirmTransfer">确认转移</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { IconLibraryVO, IconLibraryCreateDTO, IconLibraryUpdateDTO, IconLibraryPageQueryDTO } from '@/types/icon-library'
 import { pageIconLibrary, createIconLibrary, updateIconLibrary, removeIconLibrary } from '@/api/icon-library'
+import { countIconAssets, transferIconAssets } from '@/api/icon-asset'
+import IconSearchSelect from '@/components/icon/IconSearchSelect.vue'
+import { useIconStore } from '@/store/icon'
 
 const categories = ['general', 'health', 'sports', 'weather']
 
@@ -115,6 +144,23 @@ const rules = {
   category: [{ required: true, message: 'Category required', trigger: 'change' }],
   label: [{ required: true, message: 'Label required', trigger: 'blur' }]
 }
+
+const transferDialogVisible = ref(false)
+const transferSource = ref<IconLibraryVO | null>(null)
+const transferCount = ref<number | null>(null)
+const transferTargetUnicode = ref<string | undefined>(undefined)
+const transferLoading = ref(false)
+
+const iconStore = useIconStore()
+const unicodeIdMap = computed<Record<string, number>>(() => {
+  const map: Record<string, number> = {}
+  for (const it of iconStore.icons) {
+    if (it && typeof it.id === 'number' && typeof it.iconUnicode === 'string') {
+      map[it.iconUnicode] = it.id
+    }
+  }
+  return map
+})
 
 function loadData() {
   loading.value = true
@@ -209,7 +255,48 @@ function handleDelete(row: IconLibraryVO) {
     })
 }
 
-onMounted(loadData)
+onMounted(async () => {
+  loadData()
+  await iconStore.ensureLoaded()
+})
+
+async function handleTransfer(row: IconLibraryVO) {
+  transferSource.value = row
+  transferTargetUnicode.value = undefined
+  transferDialogVisible.value = true
+  transferCount.value = null
+  try {
+    const resp = await countIconAssets(row.id)
+    transferCount.value = (resp as any)?.data ?? null
+  } catch {
+    transferCount.value = null
+  }
+}
+
+async function handleConfirmTransfer() {
+  if (!transferSource.value) return
+  const targetUnicode = transferTargetUnicode.value
+  if (!targetUnicode) {
+    ElMessage.warning('请选择目标 icon')
+    return
+  }
+  const targetId = unicodeIdMap.value[targetUnicode]
+  if (!targetId) {
+    ElMessage.error('未找到目标 icon')
+    return
+  }
+  transferLoading.value = true
+  try {
+    await transferIconAssets(transferSource.value.id, targetId)
+    ElMessage.success('转移成功')
+    transferDialogVisible.value = false
+    loadData()
+  } catch {
+    ElMessage.error('转移失败')
+  } finally {
+    transferLoading.value = false
+  }
+}
 </script>
 
 <style scoped>

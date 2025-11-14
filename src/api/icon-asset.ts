@@ -55,3 +55,15 @@ export function uploadIconSvg(
     onUploadProgress
   })
 }
+
+export function countIconAssets(iconId: number) {
+  return instance.post<ApiResponse<number>>('/admin/icon-asset/icons/count', undefined, {
+    params: { iconId }
+  })
+}
+
+export function transferIconAssets(sourceIconId: number, targetIconId: number) {
+  return instance.post<ApiResponse<boolean>>('/admin/icon-asset/transfer-icon-assets', undefined, {
+    params: { sourceIconId, targetIconId }
+  })
+}
