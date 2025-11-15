@@ -1,15 +1,34 @@
 <template>
   <div class="page">
     <div class="header">
+      <h2>Icon Library</h2>
       <div class="filters">
-        <el-select v-model="query.category" placeholder="Category" clearable style="width: 160px">
-          <el-option v-for="c in categories" :key="c" :label="c" :value="c" />
+        <el-select
+          v-model="query.category"
+          placeholder="Category"
+          clearable
+          style="width: 160px"
+          @change="handleSearch"
+        >
+          <el-option v-for="c in categories" :key="c.value" :label="c.name" :value="c.value" />
         </el-select>
-        <el-select v-model="query.active" placeholder="Active" clearable style="width: 120px">
+        <el-select
+          v-model="query.active"
+          placeholder="Active"
+          clearable
+          style="width: 120px"
+          @change="handleSearch"
+        >
           <el-option :value="1" label="Active" />
           <el-option :value="0" label="Inactive" />
         </el-select>
-        <el-input v-model="query.keyword" placeholder="Keyword (label/symbol)" clearable style="width: 220px" />
+        <el-input
+          v-model="query.keyword"
+          placeholder="Keyword (label/symbol)"
+          clearable
+          style="width: 220px"
+          @change="handleSearch"
+        />
         <el-button type="primary" @click="handleSearch">Search</el-button>
         <el-button type="primary" @click="handleAdd">Add</el-button>
       </div>
@@ -63,7 +82,7 @@
           </el-form-item>
           <el-form-item label="Category" prop="category">
             <el-select v-model="form.category" placeholder="Category">
-              <el-option v-for="c in categories" :key="c" :label="c" :value="c" />
+              <el-option v-for="c in categories" :key="c.value" :label="c.name" :value="c.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="Label" prop="label">
@@ -110,8 +129,10 @@ import { pageIconLibrary, createIconLibrary, updateIconLibrary, removeIconLibrar
 import { countIconAssets, transferIconAssets } from '@/api/icon-asset'
 import IconSearchSelect from '@/components/icon/IconSearchSelect.vue'
 import { useIconStore } from '@/store/icon'
+import type { EnumOption } from '@/api/common'
+import { listEnumOptions } from '@/api/common'
 
-const categories = ['general', 'health', 'sports', 'weather']
+const categories = ref<EnumOption[]>([])
 
 const list = ref<IconLibraryVO[]>([])
 const loading = ref(false)
@@ -119,7 +140,7 @@ const total = ref(0)
 const pageNum = ref(1)
 const pageSize = ref(100)
 
-const query = reactive<Partial<IconLibraryPageQueryDTO>>({ category: '', active: undefined, keyword: '' })
+const query = reactive<Partial<IconLibraryPageQueryDTO>>({ category: '', active: 1, keyword: '' })
 
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
@@ -168,7 +189,7 @@ function loadData() {
     pageNum: pageNum.value,
     pageSize: pageSize.value,
     category: query.category || undefined,
-    active: typeof query.active === 'number' ? query.active : undefined,
+    active: typeof query.active === 'number' ? query.active : 1,
     keyword: query.keyword || undefined,
     orderBy: query.orderBy
   }
@@ -258,6 +279,12 @@ function handleDelete(row: IconLibraryVO) {
 onMounted(async () => {
   loadData()
   await iconStore.ensureLoaded()
+  try {
+    const resp = await listEnumOptions('IconCategory')
+    categories.value = (resp as any).data ?? []
+  } catch {
+    categories.value = []
+  }
 })
 
 async function handleTransfer(row: IconLibraryVO) {
