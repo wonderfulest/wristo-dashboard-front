@@ -4,7 +4,7 @@ import type { IconGlyphAssetVO, IconGlyphAssetPageQueryDTO, IconGlyphAssetPageRe
 
 export function getGlyphAssets(glyphId: number): Promise<ApiResponse<IconGlyphAssetVO[]>> {
   return instance.get<ApiResponse<IconGlyphAssetVO[]>, ApiResponse<IconGlyphAssetVO[]>>(
-    `/admin/icon-glyph-asset/glyph-assets/${glyphId}?populate=icon,asset,svg_content`
+    `/admin/icon-glyph-asset/glyph-assets/${glyphId}?populate=icon,asset,svg_content&displayType=mip`
   )
 }
 

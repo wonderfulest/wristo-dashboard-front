@@ -1,5 +1,6 @@
 <template>
   <div class="fonts-container">
+    <input ref="ttfInputRef" type="file" accept=".ttf" style="display: none" @change="onTtfFileChange" />
     <div class="header">
       <h2>字体管理</h2>
       <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
@@ -75,10 +76,11 @@
           <el-tag :type="tagType(row.status)">{{ row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="320" fixed="right">
+      <el-table-column label="操作" width="400" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <el-button size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button size="small" @click="handleUpdateTtf(row)">更新 TTF</el-button>
             <el-button type="success" size="small" @click="handleReview(row, 'approved')">通过</el-button>
             <!-- <el-button type="warning" size="small" @click="handleReview(row, 'pending')">待定</el-button> -->
             <el-button type="danger" size="small" @click="handleReview(row, 'rejected')">拒绝</el-button>
@@ -113,7 +115,7 @@ import { ElMessage } from 'element-plus'
 import type { TableInstance } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO } from '@/types/font'
-import { pageFonts, reviewFont, reviewFontsBatch, removeFont, toggleFontSystem } from '@/api/fonts'
+import { pageFonts, reviewFont, reviewFontsBatch, removeFont, toggleFontSystem, updateFontTtf } from '@/api/fonts'
 import FontEditDialog from '@/components/FontEditDialog.vue'
 import FontPreview from '@/components/FontPreview.vue'
 
@@ -127,6 +129,9 @@ const total = ref(0)
 const tableRef = ref<TableInstance>()
 const selectedIds = ref<number[]>([])
 const batchStatus = ref<string | undefined>(undefined)
+
+const ttfInputRef = ref<HTMLInputElement | null>(null)
+const uploadingFontId = ref<number | null>(null)
 
 const searchName = ref('')
 const searchSlug = ref('')
@@ -251,6 +256,36 @@ const handleRemove = async (row: DesignFontVO) => {
     }
   } catch (e) {
     ElMessage.error('删除失败')
+  }
+}
+
+const handleUpdateTtf = (row: DesignFontVO) => {
+  uploadingFontId.value = row.id
+  ttfInputRef.value?.click()
+}
+
+const onTtfFileChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file || uploadingFontId.value == null) {
+    if (target) target.value = ''
+    return
+  }
+  try {
+    loading.value = true
+    const resp = await updateFontTtf(uploadingFontId.value, file) as unknown as ApiResponse<DesignFontVO>
+    if (resp.code === 0) {
+      ElMessage.success('TTF 更新成功')
+      fetchPage()
+    } else {
+      ElMessage.error('TTF 更新失败')
+    }
+  } catch (e) {
+    ElMessage.error('TTF 更新失败')
+  } finally {
+    loading.value = false
+    uploadingFontId.value = null
+    if (target) target.value = ''
   }
 }
 

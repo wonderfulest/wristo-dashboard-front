@@ -49,6 +49,15 @@ export function toggleFontSystem(id: number, enable: boolean) {
   return instance.post<ApiResponse<DesignFontVO>>(`/admin/fonts/system/${id}`, null, { params: { enable } })
 }
 
+// 更新 TTF 文件
+export function updateFontTtf(id: number, file: File) {
+  const formData = new FormData()
+  formData.append('ttf', file)
+  return instance.post<ApiResponse<DesignFontVO>>(`/admin/fonts/update-ttf/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
 // Public: list font type codes
 export function listPublicFontTypes() {
   return instance.get<ApiResponse<string[]>>('/public/fonts/types')
