@@ -172,7 +172,7 @@ const downloadGlyphAssets = async (row: IconGlyphVO) => {
       zip.file(f.name, f.content)
     }
     const blob: Blob = await zip.generateAsync({ type: 'blob' })
-    const zipName = `${row.glyphCode || 'glyph'}-${row.id}.zip`
+    const zipName = `${row.glyphCode || 'glyph'}.zip`
     saveBlob(zipName, blob)
     ElMessage.success('打包下载已开始')
   } catch (e) {
