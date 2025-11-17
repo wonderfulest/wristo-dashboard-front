@@ -187,7 +187,7 @@ const openBind = (row: IconGlyphAssetVO) => {
 const confirmBind = async (asset: IconAssetVO) => {
   if (!glyphId || !asset?.id) return
   try {
-    await bindAssetsToGlyph(glyphId, [asset.id])
+    await bindAssetsToGlyph(glyphId, asset.id)
     // 成功后刷新当前分页数据
     await fetchData()
     ElMessage.success('绑定成功')

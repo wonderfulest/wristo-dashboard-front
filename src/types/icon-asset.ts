@@ -41,7 +41,6 @@ export interface IconAssetPageQueryDTO extends PageQueryDTO {
   iconUnicode?: string
   displayType?: string
   active?: number
-  keyword?: string
 }
 
 export type IconAssetPageResp = ApiResponse<PageResponse<IconAssetVO>>

@@ -8,12 +8,12 @@ export function getGlyphAssets(glyphId: number): Promise<ApiResponse<IconGlyphAs
   )
 }
 
-export function bindAssetsToGlyph(glyphId: number, assetIds: number[]): Promise<ApiResponse<IconGlyphAssetVO[]>> {
+export function bindAssetsToGlyph(glyphId: number, assetId: number): Promise<ApiResponse<IconGlyphAssetVO[]>> {
   return instance.post<
     ApiResponse<IconGlyphAssetVO[]>,
     ApiResponse<IconGlyphAssetVO[]>,
-    number[]
-  >(`/admin/icon-glyph-asset/bind-to-glyph/${glyphId}`, assetIds)
+    { assetId: number }
+  >(`/admin/icon-glyph-asset/bind-to-glyph/${glyphId}?assetId=${assetId}`)
 }
 
 export function pageIconGlyphAsset(dto: IconGlyphAssetPageQueryDTO) {

@@ -96,7 +96,7 @@ const fetchList = async () => {
       pageNum: pageNum.value,
       pageSize: pageSize.value,
       iconId: props.iconId,
-      keyword: keyword.value,
+      displayType: 'mip',
       orderBy: 'id:desc'
     } as any)
     const data = (resp as any)?.data
