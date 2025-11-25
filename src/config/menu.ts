@@ -25,7 +25,7 @@ export const topMenus: TopMenuGroup[] = [
         key: 'products',
         title: '应用管理',
         children: [
-          { key: 'products', title: '应用上线', path: '/products' },
+          { key: 'products', title: '应用列表', path: '/products' },
           { key: 'categories', title: '应用分类', path: '/products/categories' },
           { key: 'app-daily-config', title: '每日一图配置', path: '/products/app-daily/config' },
           { key: 'device-un-support', title: '未支持应用', path: '/products/device-un-support' },

@@ -110,7 +110,7 @@
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px;">
             <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
@@ -121,6 +121,13 @@
               :loading="statusLoadingMap.get(row.appId)"
             >
               {{ row.status === 1 ? '下线' : '上线' }}
+            </el-button>
+            <el-button 
+              type="primary" 
+              link 
+              @click="handleCreateTicket(row)"
+            >
+              创建工单
             </el-button>
           </div>
         </template>
@@ -138,6 +145,35 @@
         @current-change="handleCurrentChange"
       />
     </div>
+    <!-- 创建工单对话框 -->
+    <el-dialog
+      v-model="ticketDialogVisible"
+      title="创建工单"
+      width="500px"
+    >
+      <el-form :model="ticketForm" label-width="100px">
+        <el-form-item label="标题">
+          <el-input v-model="ticketForm.title" />
+        </el-form-item>
+        <el-form-item label="优先级">
+          <el-select v-model="ticketForm.priority" placeholder="选择优先级" style="width: 180px">
+            <el-option label="Low" value="low" />
+            <el-option label="Medium" value="medium" />
+            <el-option label="High" value="high" />
+            <el-option label="Urgent" value="urgent" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="ticketForm.description" type="textarea" rows="4" placeholder="请填写工单描述" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="ticketDialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="ticketSubmitting" @click="submitCreateTicket">创建</el-button>
+        </span>
+      </template>
+    </el-dialog>
     <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
@@ -289,8 +325,11 @@ import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
 import type { Category } from '@/types/category'
+import { createTicket } from '@/api/ticket'
+import { useUserStore } from '@/store/user'
 
 // 表格数据
+const userStore = useUserStore()
 const products = ref<Product[]>([])
 const loading = ref(false)
 const currentPage = ref(1)
@@ -327,6 +366,28 @@ const rules: FormRules = {
   ],
 }
 
+type TicketFormModel = {
+  title: string
+  description?: string
+  priority?: string
+  assigneeId?: number | null
+  creatorId?: number | null
+  dueDate?: string | null
+  productId?: number | null
+}
+
+const ticketDialogVisible = ref(false)
+const ticketSubmitting = ref(false)
+const ticketForm = ref<TicketFormModel>({
+  title: '',
+  description: '',
+  priority: 'medium',
+  assigneeId: null,
+  creatorId: null,
+  dueDate: null,
+  productId: null,
+})
+
 // 搜索和排序相关
 const searchName = ref('')
 const sortOrder = ref('created_at:desc')
@@ -361,6 +422,59 @@ const fetchProducts = async () => {
     ElMessage.error('获取商品列表失败')
   } finally {
     loading.value = false
+  }
+}
+
+const handleCreateTicket = async (row: Product) => {
+  if (!userStore.userInfo?.id) {
+    ElMessage.error('未获取到当前登录用户信息')
+    return
+  }
+
+  const assigneeId = (row as any)?.user?.id ?? userStore.userInfo.id
+
+  ticketForm.value = {
+    title: `针对作品的支持工单 - ${row.name}`,
+    description: `针对作品（appId: ${row.appId}）创建支持工单。`,
+    priority: 'medium',
+    assigneeId,
+    creatorId: userStore.userInfo.id,
+    dueDate: null,
+    productId: row.appId,
+  }
+
+  ticketDialogVisible.value = true
+}
+
+const submitCreateTicket = async () => {
+  if (!userStore.userInfo?.id) {
+    ElMessage.error('未获取到当前登录用户信息')
+    return
+  }
+
+  try {
+    ticketSubmitting.value = true
+    const payload = {
+      title: ticketForm.value.title,
+      description: ticketForm.value.description,
+      priority: ticketForm.value.priority,
+      assigneeId: ticketForm.value.assigneeId ?? userStore.userInfo.id,
+      creatorId: userStore.userInfo.id,
+      dueDate: ticketForm.value.dueDate,
+      productId: ticketForm.value.productId ?? null,
+    }
+
+    const res = await createTicket(payload as any)
+    if (res.code === 0) {
+      ElMessage.success('工单已创建')
+      ticketDialogVisible.value = false
+    } else {
+      ElMessage.error(res.msg || '创建工单失败')
+    }
+  } catch (error) {
+    ElMessage.error('创建工单失败')
+  } finally {
+    ticketSubmitting.value = false
   }
 }
 
