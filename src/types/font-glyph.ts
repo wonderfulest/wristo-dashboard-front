@@ -1,3 +1,5 @@
+import type { UserBase } from './user'
+
 export interface FileVO {
   id: number
   name: string
@@ -15,8 +17,10 @@ export interface FontGlyphVO {
   version?: number
   isActive?: number
   fontType?: string
+  userId?: number
   fontFileId?: number
   fontFile?: FileVO
+  user?: UserBase
 }
 
 export interface FontGlyphPageQueryDTO {

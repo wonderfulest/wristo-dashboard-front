@@ -22,9 +22,17 @@
           <el-option label="创建时间升序" value="created_at:asc" />
         </el-select>
         <el-button @click="fetchDesigns">刷新</el-button>
+        <el-button type="success" @click="handleBatchApprove" :disabled="!multipleSelection.length">批量通过</el-button>
       </div>
     </div>
-    <el-table :data="designs" style="width: 90%" v-loading="loading">
+    <el-table
+      :data="designs"
+      style="width: 90%"
+      v-loading="loading"
+      @selection-change="handleSelectionChange"
+      row-key="designUid"
+    >
+      <el-table-column type="selection" width="55" />
       <el-table-column label="产品信息" min-width="320">
         <template #default="{ row }">
           <div class="product-info">
@@ -113,12 +121,13 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils/date'
-import { fetchDesignReviewPage, approveDesign, rejectDesignWithComment } from '@/api/design-review'
+import { fetchDesignReviewPage, approveDesign, approveDesignBatch, rejectDesignWithComment } from '@/api/design-review'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { Design } from '@/types/design'
 import { Edit } from '@element-plus/icons-vue'
 
 const designs = ref<any[]>([])
+const multipleSelection = ref<any[]>([])
 const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -148,6 +157,42 @@ const fetchDesigns = async () => {
   }
 }
 
+const handleBatchApprove = async () => {
+  if (!multipleSelection.value.length) {
+    ElMessage.warning('请先选择要通过的设计')
+    return
+  }
+  const designUids = multipleSelection.value
+    .map((item) => item.designUid)
+    .filter((id: string) => !!id)
+
+  if (!designUids.length) {
+    ElMessage.warning('选中的记录中没有有效的设计ID')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm('确认将选中的设计全部通过审核？', '批量通过', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    const resp: ApiResponse<boolean> = await approveDesignBatch(designUids) as unknown as ApiResponse<boolean>
+    if (resp.code === 0 && resp.data) {
+      ElMessage.success('批量审核通过')
+      multipleSelection.value = []
+      fetchDesigns()
+    } else {
+      ElMessage.error(resp.msg || '操作失败')
+    }
+  } catch (error: any) {
+    if (error?.action !== 'cancel') {
+      ElMessage.error('操作失败')
+    }
+  }
+}
+
 const handleSearch = () => {
   currentPage.value = 1
   fetchDesigns()
@@ -163,6 +208,10 @@ const handleSizeChange = (val: number) => {
 const handleCurrentChange = (val: number) => {
   currentPage.value = val
   fetchDesigns()
+}
+
+const handleSelectionChange = (val: any[]) => {
+  multipleSelection.value = val
 }
 
 const handleApprove = async (row: any) => {

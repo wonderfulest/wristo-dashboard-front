@@ -12,6 +12,11 @@ export function approveDesign(designUid: string): Promise<ApiResponse<boolean>> 
   return instance.post(`/admin/design/approve/${designUid}`)
 }
 
+// 批量审核通过
+export function approveDesignBatch(designUids: string[]): Promise<ApiResponse<boolean>> {
+  return instance.post('/admin/design/approveBatch', designUids)
+}
+
 // 审核不通过（带审核意见）
 export interface DesignRejectDTO {
   designUid: string

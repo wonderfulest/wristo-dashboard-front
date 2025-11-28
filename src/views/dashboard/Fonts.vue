@@ -36,9 +36,14 @@
     <el-table ref="tableRef" :data="fonts" style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="ID" width="80" />
-      <!-- <el-table-column prop="fullName" label="名称" min-width="140" /> -->
       <el-table-column prop="postscriptName" label="PS 名称" min-width="160" />
       <el-table-column prop="slug" label="Slug" min-width="140" />
+      <el-table-column prop="user.username" label="创建者" min-width="140">
+        <template #default="{ row }">
+          {{ row.user?.nickname || row.user?.username || '-' }}
+        </template>
+      </el-table-column>
+       <!-- <el-table-column prop="fullName" label="名称" min-width="140" /> -->
       <!-- <el-table-column prop="family" label="字族" width="140" /> -->
       <el-table-column prop="language" label="语言" width="100" />
       <el-table-column prop="type" label="类型" width="120" />
@@ -65,6 +70,7 @@
           />
         </template>
       </el-table-column>
+
       <el-table-column prop="status" label="状态" width="120">
         <template #default="{ row }">
           <el-tag :type="tagType(row.status)">{{ row.status }}</el-tag>
@@ -208,7 +214,7 @@ const fetchPage = async () => {
       name: searchName.value || undefined,
       slug: searchSlug.value || undefined,
       status: searchStatus.value || undefined,
-      populate: 'ttf'
+      populate: 'ttf,user'
     }) as unknown as ApiResponse<PageResponse<DesignFontVO>>
     fonts.value = resp.data?.list || []
     total.value = resp.data?.total || 0

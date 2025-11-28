@@ -3,7 +3,7 @@ import type { ApiResponse, PageResponse } from '@/types/api'
 import type { FontGlyphVO, FontGlyphPageQueryDTO } from '@/types/font-glyph'
 
 export function pageFontGlyph(dto: FontGlyphPageQueryDTO) {
-  return instance.post<ApiResponse<PageResponse<FontGlyphVO>>>('/admin/font-glyph/page?populate=*', dto)
+  return instance.post<ApiResponse<PageResponse<FontGlyphVO>>>('/admin/font-glyph/page?populate=ttf,user', dto)
 }
 
 export function getFontGlyph(id: number) {

@@ -33,7 +33,11 @@
     <el-table :data="rows" v-loading="loading" border style="width: 100%">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="glyphCode" label="glyphCode" min-width="180" />
-      <el-table-column prop="style" label="样式" min-width="140" />
+      <el-table-column prop="user.username" label="作者" min-width="140">
+        <template #default="{ row }">
+          {{ row.user?.nickname || row.user?.username || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column prop="fontType" label="字体类型" width="120" />
       <el-table-column prop="version" label="版本" width="100" />
       <el-table-column prop="isDefault" label="默认" width="100">

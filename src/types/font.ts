@@ -1,3 +1,5 @@
+import type { UserBase } from './user'
+
 export interface DesignFontVO {
   id: number
   fullName: string
@@ -25,6 +27,8 @@ export interface DesignFontVO {
     size?: number
     ext?: string
   } | null
+  userId?: number
+  user?: UserBase
 }
 
 export interface DesignFontPageQueryDTO {
