@@ -36,10 +36,10 @@
     <el-table ref="tableRef" :data="fonts" style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="fullName" label="名称" min-width="140" />
-      <!-- <el-table-column prop="postscriptName" label="PS 名称" min-width="160" /> -->
+      <!-- <el-table-column prop="fullName" label="名称" min-width="140" /> -->
+      <el-table-column prop="postscriptName" label="PS 名称" min-width="160" />
       <el-table-column prop="slug" label="Slug" min-width="140" />
-      <el-table-column prop="family" label="字族" width="140" />
+      <!-- <el-table-column prop="family" label="字族" width="140" /> -->
       <el-table-column prop="language" label="语言" width="100" />
       <el-table-column prop="type" label="类型" width="120" />
       <el-table-column prop="weight" label="字重" width="100" />
@@ -65,24 +65,25 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="TTF" width="120">
-        <template #default="{ row }">
-          <a v-if="row.ttfFile?.url" :href="row.ttfFile.url" target="_blank">下载</a>
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
       <el-table-column prop="status" label="状态" width="120">
         <template #default="{ row }">
           <el-tag :type="tagType(row.status)">{{ row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="400" fixed="right">
+      <el-table-column label="操作" width="460" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <el-button
+              v-if="row.ttfFile?.url"
+              type="primary"
+              size="small"
+              @click="handleDownload(row)"
+            >
+              下载
+            </el-button>
             <el-button size="small" @click="openEdit(row)">编辑</el-button>
             <el-button size="small" @click="handleUpdateTtf(row)">更新 TTF</el-button>
             <el-button type="success" size="small" @click="handleReview(row, 'approved')">通过</el-button>
-            <!-- <el-button type="warning" size="small" @click="handleReview(row, 'pending')">待定</el-button> -->
             <el-button type="danger" size="small" @click="handleReview(row, 'rejected')">拒绝</el-button>
             <el-popconfirm title="确认删除该字体？" confirm-button-text="删除" cancel-button-text="取消" @confirm="() => handleRemove(row)">
               <template #reference>
@@ -262,6 +263,24 @@ const handleRemove = async (row: DesignFontVO) => {
 const handleUpdateTtf = (row: DesignFontVO) => {
   uploadingFontId.value = row.id
   ttfInputRef.value?.click()
+}
+
+const handleDownload = async (row: DesignFontVO) => {
+  if (!row.ttfFile?.url) return
+  try {
+    const response = await fetch(row.ttfFile.url)
+    const blob = await response.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = `${row.slug}.ttf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(blobUrl)
+  } catch (e) {
+    ElMessage.error('下载失败')
+  }
 }
 
 const onTtfFileChange = async (event: Event) => {

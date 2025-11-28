@@ -32,7 +32,14 @@ export const topMenus: TopMenuGroup[] = [
         ],
       },
       { key: 'data-type-options', title: '数据项', path: '/data-type-options' },
-      { key: 'fonts', title: '字体管理', path: '/fonts' },
+      {
+        key: 'fonts',
+        title: '字体',
+        children: [
+          { key: 'fonts-manage', title: '字体管理', path: '/fonts' },
+          { key: 'fonts-glyph-review', title: '字体资源审核', path: '/font-glyphs' },
+        ],
+      },
       {
         key: 'icons',
         title: '图标',

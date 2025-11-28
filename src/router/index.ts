@@ -188,6 +188,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/font-glyphs',
+      name: 'FontGlyphReview',
+      component: () => import('@/views/dashboard/FontGlyphReview.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/marketing/campaigns',
       name: 'Campaigns',
       component: () => import('@/views/marketing/Campaigns.vue'),
