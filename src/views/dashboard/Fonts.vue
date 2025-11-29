@@ -13,6 +13,8 @@
           <el-option label="Rejected" value="rejected" />
         </el-select>
         <el-select v-model="sortOrder" placeholder="排序方式" style="width: 180px" @change="handleSort">
+          <el-option label="更新时间倒序" value="updated_at desc" />
+          <el-option label="更新时间升序" value="updated_at asc" />
           <el-option label="创建时间倒序" value="created_at desc" />
           <el-option label="创建时间升序" value="created_at asc" />
           <el-option label="字形数倒序" value="glyph_count desc" />
@@ -20,6 +22,7 @@
         </el-select>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="fetchPage">刷新</el-button>
+        <el-button type="primary" plain @click="showUploadTtf = true">上传 TTF 字体</el-button>
         <span style="margin-left: 8px; color: #999;">|</span>
         <el-select v-model="batchStatus" placeholder="批量审核状态" clearable style="width: 180px">
           <el-option label="Submitted" value="submitted" />
@@ -113,6 +116,10 @@
       />
     </div>
     <FontEditDialog v-model="showEdit" :font="currentFont" @saved="onSaved" />
+    <FontTtfUploadDialog
+      v-model:visible="showUploadTtf"
+      @success="onUploadTtfSuccess"
+    />
   </div>
 </template>
 
@@ -125,6 +132,7 @@ import type { DesignFontVO } from '@/types/font'
 import { pageFonts, reviewFont, reviewFontsBatch, removeFont, toggleFontSystem, updateFontTtf } from '@/api/fonts'
 import FontEditDialog from '@/components/FontEditDialog.vue'
 import FontPreview from '@/components/FontPreview.vue'
+import FontTtfUploadDialog from '@/components/FontTtfUploadDialog.vue'
 
 const fonts = ref<DesignFontVO[]>([])
 const loading = ref(false)
@@ -143,7 +151,9 @@ const uploadingFontId = ref<number | null>(null)
 const searchName = ref('')
 const searchSlug = ref('')
 const searchStatus = ref<string | undefined>(undefined)
-const sortOrder = ref('created_at desc')
+const sortOrder = ref('updated_at desc')
+
+const showUploadTtf = ref(false)
 
 const tagType = (status: string) => {
   if (!status) return 'info'
@@ -239,6 +249,10 @@ const handleSizeChange = (val: number) => {
 }
 const handleCurrentChange = (val: number) => {
   currentPage.value = val
+  fetchPage()
+}
+
+const onUploadTtfSuccess = () => {
   fetchPage()
 }
 

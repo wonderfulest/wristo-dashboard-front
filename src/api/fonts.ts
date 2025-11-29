@@ -62,3 +62,13 @@ export function updateFontTtf(id: number, file: File) {
 export function listPublicFontTypes() {
   return instance.get<ApiResponse<string[]>>('/public/fonts/types')
 }
+
+// 管理员上传自定义字体，仅上传 TTF 文件
+export function uploadOnlyTtf(file: File, type: string) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('type', type)
+  return instance.post<ApiResponse<DesignFontVO>>('/admin/fonts/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
