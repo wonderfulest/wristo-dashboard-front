@@ -2,9 +2,9 @@ import instance from '@/config/axios'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO, DesignFontPageQueryDTO } from '@/types/font'
 
-// 审核接口：提交状态为 Pending / Approved / Rejected
-export function reviewFont(id: number, status: string) {
-  return instance.post<ApiResponse<DesignFontVO>>(`/admin/fonts/${id}/review`, null, { params: { status } })
+// 审核接口：提交状态为 Pending / Approved / Rejected，通过 slug 修改状态
+export function reviewFont(slug: string, status: string) {
+  return instance.post<ApiResponse<DesignFontVO>>('/admin/fonts/review', null, { params: { slug, status } })
 }
 
 // 批量审核接口：提交状态为 Pending / Approved / Rejected

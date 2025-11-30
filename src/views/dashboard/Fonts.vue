@@ -92,6 +92,7 @@
             </el-button>
             <el-button size="small" @click="openEdit(row)">编辑</el-button>
             <el-button size="small" @click="handleUpdateTtf(row)">更新 TTF</el-button>
+            <el-button type="info" size="small" @click="handleReview(row, 'submitted')">提交</el-button>
             <el-button type="success" size="small" @click="handleReview(row, 'approved')">通过</el-button>
             <el-button type="danger" size="small" @click="handleReview(row, 'rejected')">拒绝</el-button>
             <el-popconfirm title="确认删除该字体？" confirm-button-text="删除" cancel-button-text="取消" @confirm="() => handleRemove(row)">
@@ -257,15 +258,15 @@ const onUploadTtfSuccess = () => {
 }
 
 const handleReview = async (row: DesignFontVO, status: string) => {
-  try {
-    const resp = await reviewFont(row.id, status) as unknown as ApiResponse<DesignFontVO>
-    if (resp.code === 0) {
-      ElMessage.success('操作成功')
-      fetchPage()
-    }
-  } catch (e) {
-    ElMessage.error('操作失败')
-  }
+	try {
+		const resp = await reviewFont(row.slug, status) as unknown as ApiResponse<DesignFontVO>
+		if (resp.code === 0) {
+			ElMessage.success('操作成功')
+			fetchPage()
+		}
+	} catch (e) {
+		ElMessage.error('操作失败')
+	}
 }
 
 const handleRemove = async (row: DesignFontVO) => {
