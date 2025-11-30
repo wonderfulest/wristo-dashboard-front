@@ -40,5 +40,7 @@ export interface DesignFontPageQueryDTO {
   slug?: string
   name?: string
   userId?: number
+  isSystem?: number
+  type?: string
   populate?: string
 }

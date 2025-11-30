@@ -3,36 +3,52 @@
     <input ref="ttfInputRef" type="file" accept=".ttf" style="display: none" @change="onTtfFileChange" />
     <div class="header">
       <h2>字体管理</h2>
-      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <el-input v-model="searchName" placeholder="按名称搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
-        <el-input v-model="searchSlug" placeholder="按 slug 搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
-        <el-select v-model="searchStatus" placeholder="状态" clearable style="width: 160px">
-          <el-option label="Submitted" value="submitted" />
-          <el-option label="Pending" value="pending" />
-          <el-option label="Approved" value="approved" />
-          <el-option label="Rejected" value="rejected" />
-        </el-select>
-        <el-select v-model="sortOrder" placeholder="排序方式" style="width: 180px" @change="handleSort">
-          <el-option label="更新时间倒序" value="updated_at desc" />
-          <el-option label="更新时间升序" value="updated_at asc" />
-          <el-option label="创建时间倒序" value="created_at desc" />
-          <el-option label="创建时间升序" value="created_at asc" />
-          <el-option label="字形数倒序" value="glyph_count desc" />
-          <el-option label="字形数升序" value="glyph_count asc" />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="fetchPage">刷新</el-button>
-        <el-button type="primary" plain @click="showUploadTtf = true">上传 TTF 字体</el-button>
-        <span style="margin-left: 8px; color: #999;">|</span>
-        <el-select v-model="batchStatus" placeholder="批量审核状态" clearable style="width: 180px">
-          <el-option label="Submitted" value="submitted" />
-          <el-option label="Pending" value="pending" />
-          <el-option label="Approved" value="approved" />
-          <el-option label="Rejected" value="rejected" />
-        </el-select>
-        <el-button type="success" :disabled="!selectedIds.length || !batchStatus" @click="handleBatchReview">
-          批量审核<span v-if="selectedIds.length">（{{ selectedIds.length }}）</span>
-        </el-button>
+      <div class="header-toolbar">
+          <div class="header-row header-row-actions">
+          <el-button type="primary" plain @click="showUploadTtf = true">上传 TTF 字体</el-button>
+          <span style="margin-left: 8px; color: #999;">|</span>
+          <el-select v-model="batchStatus" placeholder="批量审核状态" clearable style="width: 180px">
+            <el-option label="Submitted" value="submitted" />
+            <el-option label="Pending" value="pending" />
+            <el-option label="Approved" value="approved" />
+            <el-option label="Rejected" value="rejected" />
+          </el-select>
+          <el-button type="success" :disabled="!selectedIds.length || !batchStatus" @click="handleBatchReview">
+            批量审核<span v-if="selectedIds.length">（{{ selectedIds.length }}）</span>
+          </el-button>
+        </div>
+        <div class="header-row header-row-filters">
+          <el-input v-model="searchName" placeholder="按名称搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
+          <el-input v-model="searchSlug" placeholder="按 slug 搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
+          <el-select v-model="searchStatus" placeholder="状态" clearable style="width: 160px">
+            <el-option label="Submitted" value="submitted" />
+            <el-option label="Pending" value="pending" />
+            <el-option label="Approved" value="approved" />
+            <el-option label="Rejected" value="rejected" />
+          </el-select>
+          <el-select v-model="searchType" placeholder="字体类型" clearable style="width: 180px">
+            <el-option
+              v-for="opt in fontTypeOptions"
+              :key="opt.value"
+              :label="opt.name"
+              :value="opt.value"
+            />
+          </el-select>
+          <el-select v-model="searchIsSystem" placeholder="是否系统字体" clearable style="width: 160px">
+            <el-option label="系统字体" :value="1" />
+            <el-option label="普通字体" :value="0" />
+          </el-select>
+          <el-select v-model="sortOrder" placeholder="排序方式" style="width: 180px" @change="handleSort">
+            <el-option label="更新时间倒序" value="updated_at desc" />
+            <el-option label="更新时间升序" value="updated_at asc" />
+            <el-option label="创建时间倒序" value="created_at desc" />
+            <el-option label="创建时间升序" value="created_at asc" />
+            <el-option label="字形数倒序" value="glyph_count desc" />
+            <el-option label="字形数升序" value="glyph_count asc" />
+          </el-select>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+        </div>
+      
       </div>
     </div>
 
@@ -57,9 +73,16 @@
         <template #default="{ row }">
           <el-tooltip placement="top" effect="light" :show-after="150" :enterable="true" :append-to-body="true">
             <template #content>
-              <FontPreview :id="row.id" :name="row.fullName" :url="row.ttfFile?.url || null" :full="true" />
+              <FontPreview
+                :id="row.id"
+                :name="row.fullName"
+                :url="row.ttfFile?.url || null"
+                :type="row.type"
+                :full="true"
+                :size="32"
+              />
             </template>
-            <FontPreview :id="row.id" :name="row.fullName" :url="row.ttfFile?.url || null" />
+            <FontPreview :id="row.id" :name="row.fullName" :url="row.ttfFile?.url || null" :type="row.type" />
           </el-tooltip>
         </template>
       </el-table-column>
@@ -116,7 +139,12 @@
         @current-change="handleCurrentChange"
       />
     </div>
-    <FontEditDialog v-model="showEdit" :font="currentFont" @saved="onSaved" />
+    <FontEditDialog
+      v-model="showEdit"
+      :font="currentFont"
+      :key="currentFont?.id || 'font-edit'"
+      @saved="onSaved"
+    />
     <FontTtfUploadDialog
       v-model:visible="showUploadTtf"
       @success="onUploadTtfSuccess"
@@ -125,12 +153,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableInstance } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO } from '@/types/font'
-import { pageFonts, reviewFont, reviewFontsBatch, removeFont, toggleFontSystem, updateFontTtf } from '@/api/fonts'
+import { pageFonts, reviewFont, reviewFontsBatch, removeFont, toggleFontSystem, updateFontTtf, getFontBySlug } from '@/api/fonts'
+import type { EnumOption } from '@/api/common'
+import { listEnumOptions } from '@/api/common'
 import FontEditDialog from '@/components/FontEditDialog.vue'
 import FontPreview from '@/components/FontPreview.vue'
 import FontTtfUploadDialog from '@/components/FontTtfUploadDialog.vue'
@@ -152,7 +182,10 @@ const uploadingFontId = ref<number | null>(null)
 const searchName = ref('')
 const searchSlug = ref('')
 const searchStatus = ref<string | undefined>(undefined)
+const searchType = ref<string | undefined>(undefined)
+const searchIsSystem = ref<number | undefined>(undefined)
 const sortOrder = ref('updated_at desc')
+const fontTypeOptions = ref<EnumOption[]>([])
 
 const showUploadTtf = ref(false)
 
@@ -185,9 +218,30 @@ const handleToggleSystem = async (row: DesignFontVO, val: number) => {
 // 编辑弹窗
 const showEdit = ref(false)
 const currentFont = ref<DesignFontVO | null>(null)
-const openEdit = (row: DesignFontVO) => {
+watch(showEdit, (v) => {
+  console.log('[Fonts] showEdit changed:', v, 'currentFont id:', currentFont.value?.id, 'slug:', currentFont.value?.slug)
+  if (!v) currentFont.value = null
+})
+const openEdit = async (row: DesignFontVO) => {
+  console.log('[Fonts] openEdit click, row id:', row.id, 'slug:', row.slug)
+  // 先用列表里的数据打开弹窗，避免因为接口失败导致弹窗不出现
   currentFont.value = row
+  console.log('[Fonts] openEdit set currentFont from row, id:', currentFont.value?.id, 'slug:', currentFont.value?.slug)
   showEdit.value = true
+
+  if (!row?.slug) {
+    return
+  }
+
+  try {
+    const resp = await getFontBySlug(row.slug) as unknown as ApiResponse<DesignFontVO>
+    if (resp.code === 0 && resp.data) {
+      currentFont.value = resp.data
+      console.log('[Fonts] openEdit loaded latest font detail, id:', currentFont.value?.id, 'slug:', currentFont.value?.slug)
+    }
+  } catch (e) {
+    console.warn('[Fonts] openEdit getFontBySlug error, keep row data:', e)
+  }
 }
 const onSaved = () => {
   fetchPage()
@@ -225,6 +279,8 @@ const fetchPage = async () => {
       name: searchName.value || undefined,
       slug: searchSlug.value || undefined,
       status: searchStatus.value || undefined,
+      isSystem: searchIsSystem.value,
+      type: searchType.value || undefined,
       populate: 'ttf,user'
     }) as unknown as ApiResponse<PageResponse<DesignFontVO>>
     fonts.value = resp.data?.list || []
@@ -329,7 +385,17 @@ const onTtfFileChange = async (event: Event) => {
   }
 }
 
+const loadFontTypeOptions = async () => {
+  try {
+    const resp = await listEnumOptions('DesignFontType') as unknown as ApiResponse<EnumOption[]>
+    fontTypeOptions.value = resp.data || []
+  } catch (e) {
+    // ignore load error, keep options empty
+  }
+}
+
 onMounted(() => {
+  loadFontTypeOptions()
   fetchPage()
 })
 </script>
@@ -338,4 +404,16 @@ onMounted(() => {
 .fonts-container { padding: 20px; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .pagination { margin-top: 20px; display: flex; justify-content: flex-end; }
+.header-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
 </style>

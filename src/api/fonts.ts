@@ -19,7 +19,7 @@ export function getFont(id: number, populate?: string) {
 
 // 按 slug 获取
 export function getFontBySlug(slug: string) {
-  return instance.get<ApiResponse<DesignFontVO>>(`/admin/fonts/get-by-slug/${slug}`)
+  return instance.get<ApiResponse<DesignFontVO>>(`/admin/fonts/get-by-slug/${slug}?populate=ttf,user`)
 }
 
 // 列表（全部）
