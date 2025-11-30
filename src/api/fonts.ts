@@ -72,3 +72,7 @@ export function uploadOnlyTtf(file: File, type: string) {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
+
+export function autoIconFontBuild(glyphCode: string) {
+  return instance.post<ApiResponse<DesignFontVO>>(`/admin/fonts/auto-icon-font-build/${glyphCode}`)
+}

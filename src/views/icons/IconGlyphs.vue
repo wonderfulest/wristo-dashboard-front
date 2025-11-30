@@ -26,11 +26,12 @@
         </template>
       </el-table-column>
       <el-table-column prop="createdAt" label="创建时间" min-width="180" />
-      <el-table-column label="操作" width="280">
+      <el-table-column label="操作" width="360">
         <template #default="{ row }">
           <el-button size="small" text type="primary" @click="openGlyph(row)">查看</el-button>
           <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
           <el-button size="small" text type="success" @click="downloadGlyphAssets(row)">下载</el-button>
+          <el-button size="small" text type="warning" @click="handleUpdateTtf(row)">更新字体ttf</el-button>
           <el-button size="small" text type="danger" @click="confirmRemove(row.id)">删除</el-button>
         </template>
       </el-table-column>
@@ -59,6 +60,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { IconAsset, IconGlyphVO, IconLibrary } from '@/types/icon-glyph'
 import { pageIconGlyph, removeIconGlyph } from '@/api/icon-glyph'
+import { autoIconFontBuild } from '@/api/fonts'
 import { getGlyphAssets } from '@/api/icon-glyph-asset'
 import type { IconGlyphAssetVO } from '@/types/icon-glyph-asset'
 import GlyphCreateDialog from './components/GlyphCreateDialog.vue'
@@ -177,6 +179,19 @@ const downloadGlyphAssets = async (row: IconGlyphVO) => {
     ElMessage.success('打包下载已开始')
   } catch (e) {
     ElMessage.error('下载失败')
+  }
+}
+
+const handleUpdateTtf = async (row: IconGlyphVO) => {
+  if (!row?.glyphCode) {
+    ElMessage.error('缺少 glyphCode')
+    return
+  }
+  try {
+    await autoIconFontBuild(row.glyphCode)
+    ElMessage.success('自动构建字体成功')
+  } catch (e) {
+    ElMessage.error('自动构建字体失败')
   }
 }
 
