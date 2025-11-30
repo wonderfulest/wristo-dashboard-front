@@ -58,11 +58,6 @@ export function updateFontTtf(id: number, file: File) {
   })
 }
 
-// Public: list font type codes
-export function listPublicFontTypes() {
-  return instance.get<ApiResponse<string[]>>('/public/fonts/types')
-}
-
 // 管理员上传自定义字体，仅上传 TTF 文件
 export function uploadOnlyTtf(file: File, type: string) {
   const formData = new FormData()

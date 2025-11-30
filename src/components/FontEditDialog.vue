@@ -32,7 +32,12 @@
               :loading="typeLoading"
               style="width: 240px;"
             >
-              <el-option v-for="t in typeOptions" :key="t" :label="t" :value="t" />
+              <el-option
+                v-for="t in typeOptions"
+                :key="t.value"
+                :label="t.name"
+                :value="t.value"
+              />
             </el-select>
           </el-form-item>
         </el-col>
@@ -84,7 +89,9 @@
 <script setup lang="ts">
 import { ref, watch, computed, defineProps, defineEmits } from 'vue'
 import type { DesignFontVO } from '@/types/font'
-import { updateFont, listPublicFontTypes } from '@/api/fonts'
+import { updateFont } from '@/api/fonts'
+import type { EnumOption } from '@/api/common'
+import { listEnumOptions } from '@/api/common'
 import { ElMessage } from 'element-plus'
 import FontPreview from '@/components/FontPreview.vue'
 
@@ -97,16 +104,17 @@ const font = ref<DesignFontVO | null>(null)
 const form = ref<Partial<DesignFontVO>>({})
 
 // font type options
-const typeOptions = ref<string[]>([])
+const typeOptions = ref<EnumOption[]>([])
 const typeLoading = ref(false)
 const loadFontTypes = async () => {
   if (typeOptions.value.length || typeLoading.value) return
   typeLoading.value = true
   try {
-    const resp = await listPublicFontTypes()
-    const list = (resp as any)?.data
+    const resp = await listEnumOptions('DesignFontType')
+    const list = (resp as any)?.data as EnumOption[] | undefined
     if (Array.isArray(list)) typeOptions.value = list
-  } catch {}
+  } catch (e) {
+  }
   finally {
     typeLoading.value = false
   }
@@ -119,7 +127,7 @@ const visible = computed({
 
 watch(visible, (v) => {
   if (v) loadFontTypes()
-})
+}, { immediate: true })
 watch(() => props.font, (v) => {
   font.value = v || null
   if (v) {

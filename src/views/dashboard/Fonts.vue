@@ -219,14 +219,11 @@ const handleToggleSystem = async (row: DesignFontVO, val: number) => {
 const showEdit = ref(false)
 const currentFont = ref<DesignFontVO | null>(null)
 watch(showEdit, (v) => {
-  console.log('[Fonts] showEdit changed:', v, 'currentFont id:', currentFont.value?.id, 'slug:', currentFont.value?.slug)
   if (!v) currentFont.value = null
 })
 const openEdit = async (row: DesignFontVO) => {
-  console.log('[Fonts] openEdit click, row id:', row.id, 'slug:', row.slug)
   // 先用列表里的数据打开弹窗，避免因为接口失败导致弹窗不出现
   currentFont.value = row
-  console.log('[Fonts] openEdit set currentFont from row, id:', currentFont.value?.id, 'slug:', currentFont.value?.slug)
   showEdit.value = true
 
   if (!row?.slug) {
@@ -237,10 +234,9 @@ const openEdit = async (row: DesignFontVO) => {
     const resp = await getFontBySlug(row.slug) as unknown as ApiResponse<DesignFontVO>
     if (resp.code === 0 && resp.data) {
       currentFont.value = resp.data
-      console.log('[Fonts] openEdit loaded latest font detail, id:', currentFont.value?.id, 'slug:', currentFont.value?.slug)
     }
   } catch (e) {
-    console.warn('[Fonts] openEdit getFontBySlug error, keep row data:', e)
+    // 保留列表中的数据作为编辑内容
   }
 }
 const onSaved = () => {
