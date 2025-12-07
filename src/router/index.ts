@@ -234,6 +234,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/analog-assets',
+      name: 'AnalogAssets',
+      component: () => import('@/views/design/AnalogAssets.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/icon-library',
       name: 'IconLibrary',
       component: () => import('@/views/icons/IconLibrary.vue'),

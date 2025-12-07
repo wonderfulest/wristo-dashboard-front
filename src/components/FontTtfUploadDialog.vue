@@ -34,12 +34,12 @@
 
         <div class="preview-section">
           <div class="preview-label">Preview:</div>
-          <div class="font-preview" :style="{ fontFamily: previewFontFamily }">
-            <div class="preview-text">
-              <span class="preview-numbers">0123456789,:°F Sunny</span>
-              <span class="preview-letters">AaBbCcDdEe</span>
-            </div>
-          </div>
+          <FontPreview
+            :url="objectUrl"
+            :name="parsedInfo?.fullName || selectedFile?.name || ''"
+            full
+            size="20px"
+          />
         </div>
 
         <div class="preview-section">
@@ -92,13 +92,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { Upload } from '@element-plus/icons-vue'
 import type { DesignFontVO } from '@/types/font'
 import { uploadOnlyTtf } from '@/api/fonts'
 import { ElMessage } from 'element-plus'
 import opentype from 'opentype.js'
 import { listEnumOptions, type EnumOption } from '@/api/common'
+import FontPreview from './FontPreview.vue'
 
 interface ParsedFontInfo {
   fullName?: string
@@ -145,11 +146,8 @@ const parsedInfo = ref<ParsedFontInfo | null>(null)
 const fontTypeOptions = ref<EnumOption[]>([])
 const loadingFontTypes = ref(false)
 const selectedFontType = ref<string>('')
-
-const previewFontFamily = computed(() => {
-  if (!selectedFile.value) return 'inherit'
-  return (selectedFile.value.name || '').replace(/\.ttf$/i, '')
-})
+// Blob URL for local preview via FontPreview component
+const objectUrl = ref<string>('')
 
 onMounted(async () => {
   try {
@@ -180,6 +178,11 @@ const handleFileChange = (file: any) => {
     return
   }
   selectedFile.value = raw
+  // manage object URL
+  if (objectUrl.value) {
+    try { URL.revokeObjectURL(objectUrl.value) } catch {}
+  }
+  objectUrl.value = URL.createObjectURL(raw)
 
   // 解析字体信息
   const reader = new FileReader()
@@ -243,12 +246,20 @@ const handleFileChange = (file: any) => {
 const removeFile = () => {
   selectedFile.value = null
   parsedInfo.value = null
+  if (objectUrl.value) {
+    try { URL.revokeObjectURL(objectUrl.value) } catch {}
+    objectUrl.value = ''
+  }
 }
 
 const resetState = () => {
   selectedFile.value = null
   uploading.value = false
   parsedInfo.value = null
+  if (objectUrl.value) {
+    try { URL.revokeObjectURL(objectUrl.value) } catch {}
+    objectUrl.value = ''
+  }
 }
 
 const handleCancel = () => {
@@ -284,6 +295,13 @@ const handleConfirm = async () => {
     uploading.value = false
   }
 }
+
+onUnmounted(() => {
+  if (objectUrl.value) {
+    try { URL.revokeObjectURL(objectUrl.value) } catch {}
+    objectUrl.value = ''
+  }
+})
 </script>
 
 <style scoped>

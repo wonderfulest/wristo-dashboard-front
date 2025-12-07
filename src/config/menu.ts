@@ -16,7 +16,7 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/data-type-options', '/tickets', '/icon-assets', '/icon-glyphs'],
+    basePaths: ['/dashboard', '/products', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/analog-assets', '/data-type-options', '/tickets', '/icon-assets', '/icon-glyphs'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'tickets', title: '工单管理', path: '/tickets' },
@@ -50,6 +50,7 @@ export const topMenus: TopMenuGroup[] = [
         ],
       },
       { key: 'images', title: '图片素材', path: '/images' },
+      { key: 'analog-assets', title: '指针素材', path: '/analog-assets' },
     
       { key: 'color-type-options', title: '颜色配置', path: '/color-type-options' },
       {

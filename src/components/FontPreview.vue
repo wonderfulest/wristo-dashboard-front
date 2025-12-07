@@ -44,7 +44,7 @@ const sampleText = computed(() => {
 
   const t = props.type?.toLowerCase() || ''
   if (t.includes('number')) {
-    return '0123456789'
+    return '0123456789:'
   }
   return '12:34 AM 72°F & Sunny 0123456789'
 })

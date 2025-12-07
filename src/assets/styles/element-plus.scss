@@ -5,6 +5,13 @@
 .el-table {
   // 表格整体样式
   font-size: $table-font-size;
+
+  // 修复在超宽屏下表头与表体错位：强制固定布局并占满宽度
+  .el-table__header,
+  .el-table__body {
+    width: 100% !important;
+    table-layout: fixed;
+  }
   
   // 表头样式
   .el-table__header-wrapper {
