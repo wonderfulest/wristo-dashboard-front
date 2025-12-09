@@ -109,3 +109,15 @@ export function uploadAnalogAsset(
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
+
+/**
+ * 设置是否为系统素材
+ */
+export function setAnalogAssetSystem(
+  id: number,
+  isSystem: boolean
+): Promise<ApiResponse<AnalogAssetVO>> {
+  return instance.post(`${BASE_URL}/set-system`, null, {
+    params: { id, isSystem }
+  })
+}

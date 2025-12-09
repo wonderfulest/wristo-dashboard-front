@@ -48,15 +48,11 @@
       </el-table-column>
       <el-table-column label="系统素材" width="100">
         <template #default="{ row }">
-          <el-tag :type="row.isSystem ? 'success' : 'info'" size="small">
-            {{ row.isSystem ? '是' : '否' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="删除" width="80">
-        <template #default="{ row }">
-          <el-tag v-if="row.isDeleted" type="danger" size="small">已删除</el-tag>
-          <span v-else>-</span>
+          <el-switch
+            v-model="row.isSystem"
+            :loading="row._sysSwitching"
+            @change="(val: boolean) => handleToggleSystem(row, val)"
+          />
         </template>
       </el-table-column>
       <el-table-column label="启用" width="80">
@@ -68,7 +64,6 @@
           />
         </template>
       </el-table-column>
-      <el-table-column prop="version" label="版本" width="80" />
       <el-table-column fixed="right" label="操作" width="200">
         <template #default="{ row }">
           <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
@@ -109,7 +104,8 @@ import { ElMessage } from 'element-plus'
 import {
   pageAnalogAsset,
   updateAnalogAsset,
-  removeAnalogAsset
+  removeAnalogAsset,
+  setAnalogAssetSystem
 } from '@/api/analog-asset'
 import type { AnalogAssetVO, AnalogAssetType } from '@/types/analog-asset'
 import { AnalogAssetTypeOptions } from '@/types/analog-asset'
@@ -117,7 +113,7 @@ import AnalogAssetEditDialog from './components/AnalogAssetEditDialog.vue'
 
 // List state
 const loading = ref(false)
-const list = ref<(AnalogAssetVO & { _switching?: boolean })[]>([])
+const list = ref<(AnalogAssetVO & { _switching?: boolean; _sysSwitching?: boolean })[]>([])
 const pageNum = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
@@ -157,6 +153,27 @@ const fetchPage = async () => {
     ElMessage.error('获取素材列表失败')
   } finally {
     loading.value = false
+  }
+}
+
+// Toggle isSystem
+const handleToggleSystem = async (
+  row: AnalogAssetVO & { _sysSwitching?: boolean },
+  val: boolean
+) => {
+  row._sysSwitching = true
+  try {
+    const res = await setAnalogAssetSystem(row.id, val)
+    if (res.code === 0) {
+      ElMessage.success(val ? '已设为系统素材' : '已设为用户素材')
+    } else {
+      row.isSystem = !val
+    }
+  } catch {
+    row.isSystem = !val
+    ElMessage.error('操作失败')
+  } finally {
+    row._sysSwitching = false
   }
 }
 

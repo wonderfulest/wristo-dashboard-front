@@ -37,7 +37,6 @@ export const topMenus: TopMenuGroup[] = [
         title: '字体',
         children: [
           { key: 'fonts-manage', title: '字体管理', path: '/fonts' },
-          { key: 'fonts-glyph-review', title: '字体资源审核', path: '/font-glyphs' },
         ],
       },
       {
@@ -50,7 +49,7 @@ export const topMenus: TopMenuGroup[] = [
         ],
       },
       { key: 'images', title: '图片素材', path: '/images' },
-      { key: 'analog-assets', title: '指针素材', path: '/analog-assets' },
+      { key: 'analog-assets', title: '指针表盘素材', path: '/analog-assets' },
     
       { key: 'color-type-options', title: '颜色配置', path: '/color-type-options' },
       {
