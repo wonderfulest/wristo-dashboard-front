@@ -1,5 +1,6 @@
 <template>
     <div class="header">
+      <h2>打包记录</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-input
           v-model="searchProductId"
@@ -7,6 +8,12 @@
           clearable
           style="width: 200px"
           @keyup.enter.native="handleSearch"
+        />
+        <CreatorSelect
+          v-model="searchUserId"
+          :role-authorities="['ROLE_DESIGNER']"
+          placeholder="按设计师搜索"
+          @change="handleSearch"
         />
         <el-select v-model="searchStatus" placeholder="选择打包状态（可多选）" style="width: 200px" multiple clearable collapse-tags>
           <el-option 
@@ -63,6 +70,11 @@
               </div>
             </div>
           </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="设计师" width="140">
+        <template #default="{ row }">
+          {{ row.product.user?.username || '-' }}
         </template>
       </el-table-column>
       <el-table-column label="打包状态" width="120">
@@ -190,6 +202,7 @@ import { formatDateTime } from '@/utils/date'
 import StatusTag from '@/components/StatusTag.vue'
 import { rejectDesignWithComment } from '@/api/design-review'
 import { Edit } from '@element-plus/icons-vue'
+import CreatorSelect from '@/components/users/CreatorSelect.vue'
 
 // 响应式数据
 const loading = ref(false)
@@ -200,6 +213,7 @@ const total = ref(0)
 
 // 搜索条件
 const searchProductId = ref('')
+const searchUserId = ref<number | undefined>(undefined)
 const searchStatus = ref<string[]>([
   PACKAGING_STATUS.INIT,
   PACKAGING_STATUS.PENDING,
@@ -224,6 +238,7 @@ const fetchPackagingLogs = async () => {
       pageNum: currentPage.value,
       pageSize: pageSize.value,
       productId: searchProductId.value ? parseInt(searchProductId.value) : null,
+      userId: typeof searchUserId.value === 'number' ? searchUserId.value : null,
       packagingStatus: searchStatus.value.length > 0 ? formatPackagingStatusArray(searchStatus.value) : null
     }
     
@@ -251,6 +266,7 @@ const handleSearch = () => {
 // 重置
 const handleReset = () => {
   searchProductId.value = ''
+  searchUserId.value = undefined
   searchStatus.value = []
   currentPage.value = 1
   fetchPackagingLogs()

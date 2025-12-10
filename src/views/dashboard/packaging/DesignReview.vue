@@ -1,6 +1,7 @@
 <template>
   <div class="design-review-container">
     <div class="header">
+      <h2>设计审核</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-input
           v-model="searchName"
@@ -9,12 +10,11 @@
           style="width: 200px"
           @keyup.enter.native="handleSearch"
         />
-        <el-input
+        <CreatorSelect
           v-model="searchUserId"
-          placeholder="按用户ID搜索"
-          clearable
-          style="width: 160px"
-          @keyup.enter.native="handleSearch"
+          :role-authorities="['ROLE_DESIGNER']"
+          placeholder="按用户搜索"
+          @change="handleSearch"
         />
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-select v-model="sortOrder" placeholder="排序方式" style="width: 150px" @change="handleSort">
@@ -125,6 +125,7 @@ import { fetchDesignReviewPage, approveDesign, approveDesignBatch, rejectDesignW
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { Design } from '@/types/design'
 import { Edit } from '@element-plus/icons-vue'
+import CreatorSelect from '@/components/users/CreatorSelect.vue'
 
 const designs = ref<any[]>([])
 const multipleSelection = ref<any[]>([])
@@ -133,7 +134,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const searchName = ref('')
-const searchUserId = ref<string | number>('')
+const searchUserId = ref<number | undefined>(undefined)
 const sortOrder = ref('created_at:desc')
 
 const fetchDesigns = async () => {
@@ -144,7 +145,7 @@ const fetchDesigns = async () => {
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
       name: searchName.value ? searchName.value : undefined,
-      userId: searchUserId.value ? Number(searchUserId.value) : undefined,
+      userId: typeof searchUserId.value === 'number' ? searchUserId.value : undefined,
       designStatus: 'submitted',
       populate: 'cover,product,payment,user'
     }) as unknown as ApiResponse<PageResponse<Design>>

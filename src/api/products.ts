@@ -22,7 +22,7 @@ export const fetchProductPage = (params: ProductPageQuery): Promise<ApiResponse<
 
 // 分页查询打包日志
 export const getProductPackagingLogsPage = (params: ProductPackagingLogQuery): Promise<ApiResponse<PageResponse<ProductPackagingLogVO>>> => {
-  return instance.post('/admin/products/packaging-log/page', params)
+  return instance.post('/admin/products/packaging-log/page?populate=*', params)
 } 
 
 // 查询单个产品

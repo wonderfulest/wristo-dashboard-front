@@ -49,6 +49,9 @@ export interface ProductPageQuery {
   orderBy?: string
   name?: string
   populate?: string
+  categoryId?: number
+  userId?: number
+  designUid?: string
 }
 
 export interface CreateProductDto {
@@ -62,15 +65,7 @@ export interface CreateProductDto {
 
 // 依赖类型
 import type { Category } from '@/types/category'
-
-export interface ProductBase {
-  appId: number
-  name: string
-  designId: string
-  price: number
-  garminImageUrl: string
-  garminStoreUrl: string
-}
+import type { UserBase } from '@/types/user'
 
 export interface ProductPackagingLogVO {
   id: number
@@ -81,13 +76,14 @@ export interface ProductPackagingLogVO {
   version: number
   isDeleted: number
   isActive: number
-  product: ProductBase
+  product: ProductBase & { user?: UserBase | null }
 }
 
 export interface ProductPackagingLogQuery {
   pageNum: number
   pageSize: number
   productId?: number | null
+  userId?: number | null
   packagingStatus?: string | null // 支持逗号分隔的多个状态，如 "init,pending,complete"
 }
 

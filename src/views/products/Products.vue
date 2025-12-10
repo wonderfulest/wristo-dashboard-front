@@ -10,13 +10,37 @@
           style="width: 200px"
           @keyup.enter.native="handleSearch"
         />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
+      
         <el-select v-model="sortOrder" placeholder="排序方式" style="width: 150px" @change="handleSort">
+          <el-option label="创建时间升序" value="created_at:asc" />
           <el-option label="创建时间倒序" value="created_at:desc" />
+          <el-option label="更新时间升序" value="updated_at:asc" />
+          <el-option label="更新时间倒序" value="updated_at:desc" />
           <el-option label="下载量倒序" value="download:desc" />
           <el-option label="下载量升序" value="download:asc" />
         </el-select>
-        <el-button type="primary" @click="handleAdd">新增商品</el-button>
+        <el-select
+          v-model="selectedCategoryId"
+          placeholder="按分类筛选"
+          clearable
+          filterable
+          style="width: 200px"
+          @change="handleFilterChange"
+        >
+          <el-option
+            v-for="cat in allCategories"
+            :key="cat.id"
+            :label="cat.name"
+            :value="cat.id"
+          />
+        </el-select>
+        <CreatorSelect
+          v-model="selectedCreatorId"
+          :role-authorities="['ROLE_DESIGNER']"
+          placeholder="按创作者筛选"
+          @change="handleFilterChange"
+        />
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
       </div>
     </div>
 
@@ -177,7 +201,7 @@
     <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="dialogType === 'add' ? '新增商品' : '编辑商品'"
+      title="编辑商品"
       width="500px"
     >
       <el-form
@@ -327,6 +351,7 @@ import type { Product } from '@/types/product'
 import type { Category } from '@/types/category'
 import { createTicket } from '@/api/ticket'
 import { useUserStore } from '@/store/user'
+import CreatorSelect from '@/components/users/CreatorSelect.vue'
 
 // 表格数据
 const userStore = useUserStore()
@@ -339,7 +364,6 @@ const allCategories = ref<Category[]>([])
 
 // 表单相关
 const dialogVisible = ref(false)
-const dialogType = ref<'add' | 'edit'>('add')
 const formRef = ref<FormInstance>()
 const form = ref({
   appId: 0,
@@ -391,12 +415,19 @@ const ticketForm = ref<TicketFormModel>({
 // 搜索和排序相关
 const searchName = ref('')
 const sortOrder = ref('created_at:desc')
+const selectedCategoryId = ref<number | undefined>(undefined)
+const selectedCreatorId = ref<number | undefined>(undefined)
 
 const handleSearch = () => {
   currentPage.value = 1
   fetchProducts()
 }
 const handleSort = () => {
+  currentPage.value = 1
+  fetchProducts()
+}
+
+const handleFilterChange = () => {
   currentPage.value = 1
   fetchProducts()
 }
@@ -410,7 +441,9 @@ const fetchProducts = async () => {
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
       name: searchName.value ? searchName.value : undefined,
-      populate: '*'
+      populate: '*',
+      categoryId: selectedCategoryId.value || undefined,
+      userId: selectedCreatorId.value || undefined,
     })
     if (res.code === 0) {
       products.value = res.data?.list || []
@@ -486,29 +519,11 @@ const fetchCategories = async () => {
   }
 }
 
-// 新增商品
-const handleAdd = () => {
-  dialogType.value = 'add'
-  form.value = {
-    appId: 0,
-    designId: '',
-    name: '',
-    description: '',
-    price: 0,
-    garminImageUrl: '',
-    garminStoreUrl: '',
-    garminAppUuid: '',
-    trialLasts: 0,
-    status: 1,
-    download: 0,
-    categories: []
-  }
-  dialogVisible.value = true
-}
+
+// 新增商品（已移除）
 
 // 编辑商品
 const handleEdit = (row: Product) => {
-  dialogType.value = 'edit'
   form.value = { ...row, categories: row.categories || [] } as any
   dialogVisible.value = true
 }
