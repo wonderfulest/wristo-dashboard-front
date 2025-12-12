@@ -5,7 +5,12 @@
       <div class="tools">
         <el-select v-model="queryType" placeholder="素材类型" clearable style="width: 140px" @change="handleSearch">
           <el-option label="全部" value="" />
-          <el-option v-for="opt in AnalogAssetTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+          <el-option
+            v-for="opt in analogAssetTypeOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
         </el-select>
         <el-select v-model="queryIsSystem" placeholder="是否系统" clearable style="width: 140px" @change="handleSearch">
           <el-option label="全部" value="" />
@@ -18,8 +23,10 @@
           <el-option label="禁用" value="false" />
         </el-select>
         <el-select v-model="sortOrder" placeholder="排序" style="width: 180px" @change="handleSearch">
-          <el-option label="ID倒序" value="id desc" />
-          <el-option label="ID升序" value="id asc" />
+          <el-option label="创建时间倒序" value="createdAt:desc" />
+          <el-option label="创建时间升序" value="createdAt:asc" />
+          <el-option label="更新时间倒序" value="updatedAt:desc" />
+          <el-option label="更新时间升序" value="updatedAt:asc" />
         </el-select>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
@@ -31,13 +38,32 @@
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="预览" width="120">
         <template #default="{ row }">
-          <el-image
+          <el-popover
             v-if="row.file?.url"
-            :src="row.file?.url"
-            fit="contain"
-            style="width: 80px; height: 80px; background: #f5f7fa; border-radius: 8px;"
-            :preview-src-list="[row.file?.url]"
-          />
+            placement="right"
+            trigger="hover"
+            :width="260"
+            popper-class="preview-popover"
+          >
+            <template #reference>
+              <div class="preview-box">
+                <el-image
+                  :src="row.file?.url"
+                  fit="contain"
+                  :preview-src-list="[row.file?.url]"
+                  class="preview-image"
+                />
+              </div>
+            </template>
+            <div class="preview-box-large">
+              <el-image
+                :src="row.file?.url"
+                fit="contain"
+                :preview-src-list="[row.file?.url]"
+                class="preview-image-large"
+              />
+            </div>
+          </el-popover>
           <span v-else class="no-preview">-</span>
         </template>
       </el-table-column>
@@ -99,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   pageAnalogAsset,
@@ -107,8 +133,8 @@ import {
   removeAnalogAsset,
   setAnalogAssetSystem
 } from '@/api/analog-asset'
+import { useEnumStore, ANALOG_ASSET_TYPE_ENUM_NAME } from '@/store/common'
 import type { AnalogAssetVO, AnalogAssetType } from '@/types/analog-asset'
-import { AnalogAssetTypeOptions } from '@/types/analog-asset'
 import AnalogAssetEditDialog from './components/AnalogAssetEditDialog.vue'
 
 // List state
@@ -118,11 +144,21 @@ const pageNum = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
 
+// 枚举选项（来自通用枚举 store）
+const enumStore = useEnumStore()
+const analogAssetTypeOptions = computed<{ value: AnalogAssetType; label: string }[]>(() => {
+  const list = enumStore.getOptions(ANALOG_ASSET_TYPE_ENUM_NAME)
+  return list.map(item => ({
+    value: item.value as AnalogAssetType,
+    label: item.name
+  }))
+})
+
 // Query filters
 const queryType = ref<AnalogAssetType | ''>('')
 const queryIsSystem = ref<'true' | 'false' | ''>('')
 const queryIsActive = ref<'true' | 'false' | ''>('')
-const sortOrder = ref('id desc')
+const sortOrder = ref('updatedAt:desc')
 
 // Dialog state
 const dialogVisible = ref(false)
@@ -130,10 +166,10 @@ const editingAsset = ref<AnalogAssetVO | null>(null)
 
 // Helpers
 const getTypeLabel = (type: AnalogAssetType) => {
-  return AnalogAssetTypeOptions.find(o => o.value === type)?.label || type
+  return analogAssetTypeOptions.value.find(o => o.value === type)?.label || type
 }
 
-// Fetch
+// Fetch list
 const fetchPage = async () => {
   loading.value = true
   try {
@@ -186,7 +222,7 @@ const handleReset = () => {
   queryType.value = ''
   queryIsSystem.value = ''
   queryIsActive.value = ''
-  sortOrder.value = 'id desc'
+  sortOrder.value = 'id:desc'
   pageNum.value = 1
   fetchPage()
 }
@@ -257,7 +293,10 @@ const onSaved = () => {
   fetchPage()
 }
 
-onMounted(fetchPage)
+onMounted(() => {
+  enumStore.ensureOptions(ANALOG_ASSET_TYPE_ENUM_NAME)
+  fetchPage()
+})
 </script>
 
 <style scoped>
@@ -304,6 +343,61 @@ onMounted(fetchPage)
 
 .analog-table {
   width: 100%;
+}
+
+.preview-box {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e3e6ed;
+  background-image:
+    linear-gradient(45deg, #b8bcc7 25%, transparent 25%, transparent 75%, #b8bcc7 75%, #b8bcc7),
+    linear-gradient(45deg, #b8bcc7 25%, transparent 25%, transparent 75%, #b8bcc7 75%, #b8bcc7);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+}
+
+.preview-image :deep(img) {
+  transition: transform 0.2s ease-out, filter 0.2s ease-out;
+  /* 强化白色内容的边缘对比度 */
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+.preview-box:hover :deep(img) {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
+}
+
+.preview-popover {
+  padding: 8px !important;
+}
+
+.preview-box-large {
+  width: 240px;
+  height: 240px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #dde1eb;
+  background-image:
+    linear-gradient(45deg, #aeb3c0 25%, transparent 25%, transparent 75%, #aeb3c0 75%, #aeb3c0),
+    linear-gradient(45deg, #aeb3c0 25%, transparent 25%, transparent 75%, #aeb3c0 75%, #aeb3c0);
+  background-size: 10px 10px;
+  background-position: 0 0, 5px 5px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.preview-image-large :deep(img) {
+  max-width: 100%;
+  max-height: 100%;
+  /* 大图同样增强白色边缘对比度 */
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
 }
 
 </style>

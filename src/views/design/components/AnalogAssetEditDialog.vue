@@ -10,7 +10,7 @@
       <el-form-item label="素材类型" prop="analogAssetType">
         <el-select v-model="form.analogAssetType" placeholder="请选择" style="width: 100%">
           <el-option
-            v-for="opt in AnalogAssetTypeOptions"
+            v-for="opt in analogAssetTypeOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
@@ -49,7 +49,7 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { updateAnalogAsset, uploadAnalogAsset } from '@/api/analog-asset'
 import type { AnalogAssetVO, AnalogAssetType } from '@/types/analog-asset'
-import { AnalogAssetTypeOptions } from '@/types/analog-asset'
+import { useEnumStore } from '@/store/common'
 import SvgUpload from './SvgUpload.vue'
 
 interface Props {
@@ -80,6 +80,16 @@ const svgUploadRef = ref<InstanceType<typeof SvgUpload>>()
 const submitting = ref(false)
 const fileUrl = ref('')
 const selectedFile = ref<File | null>(null)
+
+// 枚举选项（来自通用枚举 store）
+const enumStore = useEnumStore()
+const analogAssetTypeOptions = computed<{ value: AnalogAssetType; label: string }[]>(() => {
+  const list = enumStore.getOptions('AnalogAssetType')
+  return list.map(item => ({
+    value: item.value as AnalogAssetType,
+    label: item.name
+  }))
+})
 
 interface FormState {
   analogAssetType: AnalogAssetType | ''

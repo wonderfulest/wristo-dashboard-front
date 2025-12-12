@@ -1,6 +1,7 @@
 <template>
   <div class="categories-container">
     <div class="header">
+      <h2>应用分类</h2>
       <el-button type="primary" @click="handleAdd">新增分类</el-button>
     </div>
     <el-table :data="categories" style="width: 100%" v-loading="loading">
@@ -84,12 +85,11 @@
         <el-form-item label="图片" prop="image">
           <el-upload
             class="avatar-uploader"
-            action="/api/files/upload"
+            :http-request="handleUploadRequest"
             :show-file-list="false"
-            :on-success="handleUploadSuccess"
             :before-upload="beforeUpload"
           >
-            <img v-if="form.image" :src="form.image" class="avatar" />
+            <img v-if="imagePreviewUrl" :src="imagePreviewUrl" class="avatar" />
             <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
           </el-upload>
         </el-form-item>
@@ -107,10 +107,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules, UploadRequestOptions } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { fetchCategoryPage, createCategory, updateCategory, deleteCategory, updateCategoryStatus } from '@/api/category'
 import type { Category } from '@/types/category'
+import { uploadAdminFile } from '@/api/files'
 
 // 表格数据
 const categories = ref<Category[]>([])
@@ -131,6 +132,8 @@ const form = ref({
   sort: 0,
   isActive: 1
 })
+// 图片预览地址，仅用于前端展示，不参与提交
+const imagePreviewUrl = ref('')
 
 const rules: FormRules = {
   name: [
@@ -179,6 +182,7 @@ const handleAdd = () => {
     sort: 0,
     isActive: 1
   }
+  imagePreviewUrl.value = ''
   dialogVisible.value = true
 }
 
@@ -186,6 +190,8 @@ const handleAdd = () => {
 const handleEdit = (row: Category) => {
   dialogType.value = 'edit'
   form.value = { ...row, image: row.image || '', sort: row.sort ?? 0 }
+  // 列表返回的 image 目前是图片 URL，用于预览
+  imagePreviewUrl.value = row.image || ''
   dialogVisible.value = true
 }
 
@@ -214,12 +220,22 @@ const handleDelete = (row: Category) => {
   })
 }
 
-// 上传图片相关
-const handleUploadSuccess = (response: any) => {
-  if (response.code === 0) {
-    form.value.image = response.data.url
-  } else {
-    ElMessage.error('上传失败')
+// 上传图片相关（通过自定义请求，走带鉴权的 axios 实例）
+const handleUploadRequest = async (options: UploadRequestOptions) => {
+  const file = options.file as File
+  try {
+    const res = await uploadAdminFile(file, 'categories')
+    if (res.code === 0) {
+      // 提交和预览都使用返回的图片 URL
+      const url = res.data?.url ?? ''
+      form.value.image = url
+      imagePreviewUrl.value = url
+      ElMessage.success('上传成功')
+    } else {
+      ElMessage.error(res.msg || '上传失败')
+    }
+  } catch (error: any) {
+    ElMessage.error(error?.message || '上传失败')
   }
 }
 
