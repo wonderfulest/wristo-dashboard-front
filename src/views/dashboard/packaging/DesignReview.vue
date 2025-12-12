@@ -10,7 +10,7 @@
           style="width: 200px"
           @keyup.enter.native="handleSearch"
         />
-        <CreatorSelect
+        <UserSelect
           v-model="searchUserId"
           :role-authorities="['ROLE_DESIGNER']"
           placeholder="按用户搜索"
@@ -125,7 +125,7 @@ import { fetchDesignReviewPage, approveDesign, approveDesignBatch, rejectDesignW
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { Design } from '@/types/design'
 import { Edit } from '@element-plus/icons-vue'
-import CreatorSelect from '@/components/users/CreatorSelect.vue'
+import UserSelect from '@/components/users/UserSelect.vue'
 
 const designs = ref<any[]>([])
 const multipleSelection = ref<any[]>([])

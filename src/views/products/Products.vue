@@ -34,7 +34,7 @@
             :value="cat.id"
           />
         </el-select>
-        <CreatorSelect
+        <UserSelect
           v-model="selectedCreatorId"
           :role-authorities="['ROLE_DESIGNER']"
           placeholder="按创作者筛选"
@@ -351,7 +351,7 @@ import type { Product } from '@/types/product'
 import type { Category } from '@/types/category'
 import { createTicket } from '@/api/ticket'
 import { useUserStore } from '@/store/user'
-import CreatorSelect from '@/components/users/CreatorSelect.vue'
+import UserSelect from '@/components/users/UserSelect.vue'
 
 // 表格数据
 const userStore = useUserStore()

@@ -1,6 +1,7 @@
 import instance from '@/config/axios'
 import type { ApiResponse, UserInfo, PageResponse } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
+import type { ChangeUserEmailDTO } from '@/types/user'
 import type { PageQueryDTO } from '@/types/api'
 
 export const getUserInfo = (): Promise<ApiResponse<UserInfo>> => {
@@ -69,6 +70,18 @@ export const pageMerchantUsers = (
   })
 }
 
+export const searchUsers = (
+  keyword: string,
+  limit?: number
+): Promise<ApiResponse<UserInfo[]>> => {
+  return instance.get('/admin/users/search', {
+    params: {
+      keyword,
+      limit,
+    },
+  })
+}
+
 // 同步 Paddle Customers
 export interface SyncPaddleCustomersResult {
   after?: string
@@ -85,4 +98,8 @@ export const syncPaddleCustomers = (
   const q = search.toString()
   const url = q ? `/admin/users/sync/paddle/customers?${q}` : '/admin/users/sync/paddle/customers'
   return instance.post(url)
+}
+
+export const changeUserEmail = (dto: ChangeUserEmailDTO): Promise<ApiResponse<UserInfo>> => {
+  return instance.post('/admin/users/change/email', dto)
 }

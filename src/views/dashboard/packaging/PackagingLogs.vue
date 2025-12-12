@@ -9,7 +9,7 @@
           style="width: 200px"
           @keyup.enter.native="handleSearch"
         />
-        <CreatorSelect
+        <UserSelect
           v-model="searchUserId"
           :role-authorities="['ROLE_DESIGNER']"
           placeholder="按设计师搜索"
@@ -202,7 +202,7 @@ import { formatDateTime } from '@/utils/date'
 import StatusTag from '@/components/StatusTag.vue'
 import { rejectDesignWithComment } from '@/api/design-review'
 import { Edit } from '@element-plus/icons-vue'
-import CreatorSelect from '@/components/users/CreatorSelect.vue'
+import UserSelect from '@/components/users/UserSelect.vue'
 
 // 响应式数据
 const loading = ref(false)

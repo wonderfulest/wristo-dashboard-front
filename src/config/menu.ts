@@ -115,12 +115,13 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'users',
     title: '用户管理',
-    basePaths: ['/user-management', '/role-management', '/dict', '/profile'],
+    basePaths: ['/users'],
     children: [
-      { key: 'user-management', title: '用户管理', path: '/user-management' },
-      { key: 'role-management', title: '角色管理', path: '/role-management' },
-      { key: 'dict', title: '字典管理', path: '/dict' },
-      { key: 'profile', title: '个人资料', path: '/profile' },
+      { key: 'user-management', title: '用户管理', path: '/users/user-management' },
+      { key: 'change-user-email', title: '变更用户邮箱', path: '/users/user-management/change-email' },
+      { key: 'role-management', title: '角色管理', path: '/users/role-management' },
+      { key: 'dict', title: '字典管理', path: '/users/dict' },
+      { key: 'profile', title: '个人资料', path: '/users/profile' },
     ],
   },
   {

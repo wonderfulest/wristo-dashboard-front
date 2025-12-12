@@ -98,19 +98,25 @@ const router = createRouter({
       redirect: '/orders/subscription-plans'
     },
     {
-      path: '/user-management',
+      path: '/users/user-management',
       name: 'UserManagement',
       component: () => import('@/views/UserManagement.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/role-management',
+      path: '/users/user-management/change-email',
+      name: 'ChangeUserEmail',
+      component: () => import('@/views/ChangeUserEmail.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/users/role-management',
       name: 'RoleManagement',
       component: () => import('@/views/RoleManagement.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/dict',
+      path: '/users/dict',
       name: 'Dict',
       component: () => import('@/views/Dict.vue'),
       meta: { requiresAuth: true }
@@ -276,10 +282,30 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/profile',
+      path: '/users/profile',
       name: 'Profile',
       component: () => import('@/views/Profile.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/user-management',
+      redirect: '/users/user-management'
+    },
+    {
+      path: '/user-management/change-email',
+      redirect: '/users/user-management/change-email'
+    },
+    {
+      path: '/role-management',
+      redirect: '/users/role-management'
+    },
+    {
+      path: '/dict',
+      redirect: '/users/dict'
+    },
+    {
+      path: '/profile',
+      redirect: '/users/profile'
     },
     {
       path: '/system/template-variables',

@@ -13,6 +13,12 @@ export interface UserUpdateDTO {
   status?: number
   roles?: string[]
 }
+
+ export interface ChangeUserEmailDTO {
+   userId: number
+   oldEmail: string
+   newEmail: string
+ }
 export interface UserInfo {
   id: number
   username: string

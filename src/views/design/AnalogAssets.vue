@@ -12,7 +12,7 @@
             :value="opt.value"
           />
         </el-select>
-        <CreatorSelect v-model="queryUserId" @change="handleSearch" :role-authorities="['ROLE_DESIGNER']"/>
+        <UserSelect v-model="queryUserId" @change="handleSearch" :role-authorities="['ROLE_DESIGNER']"/>
         <el-select v-model="queryIsSystem" placeholder="是否系统" clearable style="width: 140px" @change="handleSearch">
           <el-option label="全部" value="" />
           <el-option label="系统素材" value="true" />
@@ -143,7 +143,7 @@ import {
 import { useEnumStore, ANALOG_ASSET_TYPE_ENUM_NAME } from '@/store/common'
 import type { AnalogAssetVO, AnalogAssetType } from '@/types/analog-asset'
 import AnalogAssetEditDialog from './components/AnalogAssetEditDialog.vue'
-import CreatorSelect from '@/components/users/CreatorSelect.vue'
+import UserSelect from '@/components/users/UserSelect.vue'
 
 // List state
 const loading = ref(false)
