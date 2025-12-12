@@ -1,4 +1,5 @@
 import { PageQueryDTO } from './common'
+import type { UserBase } from './user'
 
 /**
  * 指针素材类型枚举
@@ -32,6 +33,7 @@ export interface AnalogAssetVO {
   isActive: boolean
   /** 可选填充的文件信息 */
   file?: FileVO
+  author?: UserBase
 }
 
 /**

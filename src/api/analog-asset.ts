@@ -57,7 +57,7 @@ export function getAnalogAssetBySlug(slug: string): Promise<ApiResponse<AnalogAs
 export function pageAnalogAsset(
   data: AnalogAssetPageQueryDTO
 ): Promise<ApiResponse<PageResponse<AnalogAssetVO>>> {
-  return instance.post(`${BASE_URL}/page?populate=asset`, data)
+  return instance.post(`${BASE_URL}/page?populate=asset,author`, data)
 }
 
 /**

@@ -12,6 +12,7 @@
             :value="opt.value"
           />
         </el-select>
+        <CreatorSelect v-model="queryUserId" @change="handleSearch" :role-authorities="['ROLE_DESIGNER']"/>
         <el-select v-model="queryIsSystem" placeholder="是否系统" clearable style="width: 140px" @change="handleSearch">
           <el-option label="全部" value="" />
           <el-option label="系统素材" value="true" />
@@ -70,6 +71,12 @@
       <el-table-column label="素材类型" width="120">
         <template #default="{ row }">
           <el-tag size="small">{{ getTypeLabel(row.analogAssetType) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="创作者" width="160">
+        <template #default="{ row }">
+          <span v-if="row.author">{{ row.author.nickname || row.author.username || row.author.id }}</span>
+          <span v-else class="no-preview">-</span>
         </template>
       </el-table-column>
       <el-table-column label="系统素材" width="100">
@@ -136,6 +143,7 @@ import {
 import { useEnumStore, ANALOG_ASSET_TYPE_ENUM_NAME } from '@/store/common'
 import type { AnalogAssetVO, AnalogAssetType } from '@/types/analog-asset'
 import AnalogAssetEditDialog from './components/AnalogAssetEditDialog.vue'
+import CreatorSelect from '@/components/users/CreatorSelect.vue'
 
 // List state
 const loading = ref(false)
@@ -156,6 +164,7 @@ const analogAssetTypeOptions = computed<{ value: AnalogAssetType; label: string 
 
 // Query filters
 const queryType = ref<AnalogAssetType | ''>('')
+const queryUserId = ref<number | undefined>(undefined)
 const queryIsSystem = ref<'true' | 'false' | ''>('')
 const queryIsActive = ref<'true' | 'false' | ''>('')
 const sortOrder = ref('updatedAt:desc')
@@ -177,6 +186,7 @@ const fetchPage = async () => {
       pageNum: pageNum.value,
       pageSize: pageSize.value,
       analogAssetType: queryType.value || undefined,
+      userId: queryUserId.value,
       isSystem: queryIsSystem.value === '' ? undefined : queryIsSystem.value === 'true',
       isActive: queryIsActive.value === '' ? undefined : queryIsActive.value === 'true',
       orderBy: sortOrder.value
@@ -220,6 +230,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   queryType.value = ''
+  queryUserId.value = undefined
   queryIsSystem.value = ''
   queryIsActive.value = ''
   sortOrder.value = 'id:desc'
