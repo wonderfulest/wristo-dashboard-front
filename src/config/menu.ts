@@ -16,11 +16,18 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/fonts', '/images', '/analog-assets', '/data-type-options', '/tickets', '/icon-assets', '/icon-glyphs'],
+    basePaths: ['/dashboard', '/products', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/data-type-options', '/tickets'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'tickets', title: '工单管理', path: '/tickets' },
-      { key: 'template-variables', title: '模板变量', path: '/system/template-variables' },
+       {
+        key: 'packaging',
+        title: '打包',
+        children: [
+          { key: 'design-review', title: '设计审核', path: '/packaging/design-review' },
+          { key: 'packaging-logs', title: '打包记录', path: '/packaging/packaging-logs' },
+        ],
+      },
       {
         key: 'products',
         title: '应用管理',
@@ -32,39 +39,39 @@ export const topMenus: TopMenuGroup[] = [
         ],
       },
       { key: 'data-type-options', title: '数据项', path: '/data-type-options' },
+      { key: 'color-type-options', title: '颜色配置', path: '/color-type-options' },
+      { key: 'garmin-devices', title: '佳明设备', children: [
+        { key: 'garmin-devices', title: '设备列表', path: '/products/garmin-devices' },
+        { key: 'garmin-device-detail', title: '设备详情', path: '/products/garmin-devices/:id' },
+      ] },
+       { key: 'template-variables', title: '模板变量', path: '/system/template-variables' },
+      { key: 'email-records', title: '邮件发送历史', path: '/email-records' },
+    ],
+  },
+  {
+    key: 'design',
+    title: '设计',
+    basePaths: ['/design'],
+    children: [
+      { key: 'inspirations', title: '设计灵感', path: '/design/inspirations' },
       {
         key: 'fonts',
         title: '字体',
         children: [
-          { key: 'fonts-manage', title: '字体管理', path: '/fonts' },
+          { key: 'fonts-manage', title: '字体管理', path: '/design/fonts' },
         ],
       },
       {
         key: 'icons',
         title: '图标',
         children: [
-          { key: 'icon-library', title: '图标字典', path: '/icon-library' },
-          { key: 'icon-assets', title: '图标素材', path: '/icon-assets' },
-          { key: 'icon-glyphs', title: '图标字体管理', path: '/icon-glyphs' },
+          { key: 'icon-library', title: '图标字典', path: '/design/icon-library' },
+          { key: 'icon-assets', title: '图标素材', path: '/design/icon-assets' },
+          { key: 'icon-glyphs', title: '图标字体管理', path: '/design/icon-glyphs' },
         ],
       },
-      { key: 'images', title: '图片素材', path: '/images' },
-      { key: 'analog-assets', title: '指针表盘素材', path: '/analog-assets' },
-    
-      { key: 'color-type-options', title: '颜色配置', path: '/color-type-options' },
-      {
-        key: 'packaging',
-        title: '打包',
-        children: [
-          { key: 'design-review', title: '设计审核', path: '/packaging/design-review' },
-          { key: 'packaging-logs', title: '打包记录', path: '/packaging/packaging-logs' },
-        ],
-      },
-      { key: 'garmin-devices', title: '佳明设备', children: [
-        { key: 'garmin-devices', title: '设备列表', path: '/products/garmin-devices' },
-        { key: 'garmin-device-detail', title: '设备详情', path: '/products/garmin-devices/:id' },
-      ] },
-      { key: 'email-records', title: '邮件发送历史', path: '/email-records' },
+      { key: 'images', title: '图片素材', path: '/design/images' },
+      { key: 'analog-assets', title: '指针表盘素材', path: '/design/analog-assets' },
     ],
   },
   {

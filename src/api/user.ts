@@ -72,12 +72,14 @@ export const pageMerchantUsers = (
 
 export const searchUsers = (
   keyword: string,
-  limit?: number
+  limit?: number,
+  roleId?: number
 ): Promise<ApiResponse<UserInfo[]>> => {
   return instance.get('/admin/users/search', {
     params: {
       keyword,
       limit,
+      roleId,
     },
   })
 }

@@ -1,178 +1,196 @@
 <template>
   <div class="dict-container">
     <div class="header">
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <el-input v-model="search.dictType" placeholder="Dict Type" clearable style="width: 160px" />
-        <el-input v-model="search.dictCode" placeholder="Dict Code" clearable style="width: 160px" />
-        <el-input v-model="search.dictLabel" placeholder="Dict Label" clearable style="width: 160px" />
-        <el-button type="primary" @click="handleSearch">Search</el-button>
-        <el-button type="primary" @click="handleAdd">Add</el-button>
+      <h2>字典管理</h2>
+      <div class="tools">
+        <el-input v-model="enumKeyword" placeholder="搜索枚举名称/类名" clearable style="width: 240px" />
+        <el-input v-model="optionKeyword" placeholder="搜索枚举项 name/value" clearable style="width: 240px" @keyup.enter.native="reloadOptions" />
+        <el-button type="primary" @click="reloadOptions" :disabled="!selectedEnumClassName">刷新枚举项</el-button>
       </div>
     </div>
-    <el-table :data="dictList" style="width: 100%" v-loading="loading">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="dictType" label="Type" />
-      <el-table-column prop="dictCode" label="Code" />
-      <el-table-column prop="dictLabel" label="Label" />
-      <el-table-column prop="dictValue" label="Value" />
-      <el-table-column prop="sort" label="Sort" width="80" />
-      <el-table-column prop="lang" label="Lang" width="80" />
-      <el-table-column label="Action" width="180" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="handleEdit(row)">Edit</el-button>
-          <el-button type="danger" link @click="handleDelete(row)">Delete</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <div class="pagination">
-      <el-pagination
-        v-model:current-page="pageNum"
-        v-model:page-size="pageSize"
-        :total="total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
+
+    <div class="content">
+      <div class="left">
+        <el-skeleton :loading="loadingEnums" animated>
+          <el-collapse v-model="activeCategory" accordion class="category-collapse">
+            <el-collapse-item
+              v-for="group in groupedEnumNames"
+              :key="group.category"
+              :name="group.category"
+            >
+              <template #title>
+                <div class="category-title">
+                  <span class="category-name">{{ group.category }}</span>
+                  <el-tag size="small" type="info">{{ group.items.length }}</el-tag>
+                </div>
+              </template>
+              <el-table
+                :data="group.items"
+                border
+                highlight-current-row
+                style="width: 100%"
+                @current-change="handleEnumSelect"
+              >
+                <el-table-column prop="name" label="枚举名" min-width="160" />
+                <el-table-column prop="value" label="枚举类名" min-width="260" />
+              </el-table>
+            </el-collapse-item>
+          </el-collapse>
+        </el-skeleton>
+      </div>
+
+      <div class="right">
+        <div class="right-header">
+          <div class="selected">
+            <span class="label">当前枚举</span>
+            <span class="value">{{ selectedEnumName || '-' }}</span>
+          </div>
+          <div class="selected">
+            <span class="label">类名</span>
+            <span class="value">{{ selectedEnumClassName || '-' }}</span>
+          </div>
+          <el-button @click="copyText(selectedEnumClassName)" :disabled="!selectedEnumClassName">复制类名</el-button>
+        </div>
+
+        <el-table :data="filteredOptions" v-loading="loadingOptions" border style="width: 100%">
+          <el-table-column prop="name" label="name" min-width="220" />
+          <el-table-column prop="value" label="value" min-width="200" />
+          <el-table-column prop="description" label="description" min-width="240" />
+          <el-table-column label="操作" width="180" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" text type="primary" @click="copyText(row.name)">复制name</el-button>
+              <el-button size="small" text type="primary" @click="copyText(row.value)">复制value</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </div>
-    <el-dialog v-model="dialogVisible" :title="dialogType === 'add' ? 'Add Dictionary' : 'Edit Dictionary'" width="500px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="Type" prop="dictType">
-          <el-input v-model="form.dictType" placeholder="Type" />
-        </el-form-item>
-        <el-form-item label="Code" prop="dictCode">
-          <el-input v-model="form.dictCode" placeholder="Code" />
-        </el-form-item>
-        <el-form-item label="Label" prop="dictLabel">
-          <el-input v-model="form.dictLabel" placeholder="Label" />
-        </el-form-item>
-        <el-form-item label="Value" prop="dictValue">
-          <el-input v-model="form.dictValue" placeholder="Value" />
-        </el-form-item>
-        <el-form-item label="Sort" prop="sort">
-          <el-input-number v-model="form.sort" :min="0" />
-        </el-form-item>
-        <el-form-item label="Lang" prop="lang">
-          <el-input v-model="form.lang" placeholder="Lang" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="handleSave">Save</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { fetchDictPage, createDictItem, updateDictItem, deleteDictItem } from '@/api/dict';
-import type { DictItem } from '../types/dict';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { computed, onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { ApiResponse } from '@/types/api'
+import { listEnumNames, listEnumOptions } from '@/api/common'
+import type { EnumOption } from '@/api/common'
 
-const dictList = ref<DictItem[]>([]);
-const loading = ref(false);
-const total = ref(0);
-const pageNum = ref(1);
-const pageSize = ref(10);
-const dialogVisible = ref(false);
-const dialogType = ref<'add' | 'edit'>('add');
-const formRef = ref();
-const form = reactive<Partial<DictItem>>({
-  dictType: '',
-  dictCode: '',
-  dictLabel: '',
-  dictValue: '',
-  sort: 1,
-  lang: 'zh',
-});
-const rules = {
-  dictType: [{ required: true, message: 'Type is required', trigger: 'blur' }],
-  dictCode: [{ required: true, message: 'Code is required', trigger: 'blur' }],
-  dictLabel: [{ required: true, message: 'Label is required', trigger: 'blur' }],
-  dictValue: [{ required: true, message: 'Value is required', trigger: 'blur' }],
-};
-const search = reactive({ dictType: '', dictCode: '', dictLabel: '' });
+const loadingEnums = ref(false)
+const loadingOptions = ref(false)
 
-function loadData() {
-  loading.value = true;
-  fetchDictPage({
-    pageNum: pageNum.value,
-    pageSize: pageSize.value,
-    ...search,
-  }).then(res => {
-    dictList.value = res.data.list;
-    total.value = res.data.total;
-  }).finally(() => {
-    loading.value = false;
-  });
-}
+const enumNames = ref<EnumOption[]>([])
+const enumKeyword = ref('')
 
-function handleSearch() {
-  pageNum.value = 1;
-  loadData();
-}
+const activeCategory = ref<string>('')
 
-function handleSizeChange(size: number) {
-  pageSize.value = size;
-  loadData();
-}
+const selectedEnumName = ref<string>('')
+const selectedEnumClassName = ref<string>('')
 
-function handleCurrentChange(page: number) {
-  pageNum.value = page;
-  loadData();
-}
+const options = ref<EnumOption[]>([])
+const optionKeyword = ref('')
 
-function handleAdd() {
-  dialogType.value = 'add';
-  Object.assign(form, { dictType: '', dictCode: '', dictLabel: '', dictValue: '', sort: 1, lang: 'zh' });
-  dialogVisible.value = true;
-}
+const filteredEnumNames = computed(() => {
+  const kw = (enumKeyword.value || '').trim().toLowerCase()
+  if (!kw) return enumNames.value
+  return (enumNames.value || []).filter((it) => {
+    const n = (it?.name || '').toLowerCase()
+    const v = (it?.value || '').toLowerCase()
+    return n.includes(kw) || v.includes(kw)
+  })
+})
 
-function handleEdit(row: DictItem) {
-  dialogType.value = 'edit';
-  Object.assign(form, row);
-  dialogVisible.value = true;
-}
+const groupedEnumNames = computed(() => {
+  const list = filteredEnumNames.value || []
+  const map: Record<string, EnumOption[]> = {}
+  for (const it of list) {
+    const cat = it?.category || 'Default'
+    if (!map[cat]) map[cat] = []
+    map[cat].push(it)
+  }
+  const categories = Object.keys(map).sort((a, b) => a.localeCompare(b))
+  return categories.map((c) => ({ category: c, items: map[c] }))
+})
 
-function handleSave() {
-  formRef.value.validate(async (valid: boolean) => {
-    if (!valid) return;
-    if (dialogType.value === 'add') {
-      // 保证 sort 字段为 number 类型且有默认值
-      const payload = {
-        dictType: form.dictType || '',
-        dictCode: form.dictCode || '',
-        dictLabel: form.dictLabel || '',
-        dictValue: form.dictValue || '',
-        sort: typeof form.sort === 'number' ? form.sort : 1,
-        lang: form.lang || 'zh',
-      };
-      await createDictItem(payload);
-      ElMessage.success('Added successfully');
-    } else {
-      await updateDictItem(form as DictItem);
-      ElMessage.success('Updated successfully');
+const filteredOptions = computed(() => {
+  const kw = (optionKeyword.value || '').trim().toLowerCase()
+  if (!kw) return options.value
+  return (options.value || []).filter((it) => {
+    const n = (it?.name || '').toLowerCase()
+    const v = (it?.value || '').toLowerCase()
+    const d = (it?.description || '').toLowerCase()
+    return n.includes(kw) || v.includes(kw) || d.includes(kw)
+  })
+})
+
+const fetchEnumNames = async () => {
+  loadingEnums.value = true
+  try {
+    const resp = (await listEnumNames()) as unknown as ApiResponse<EnumOption[]>
+    enumNames.value = resp.data || []
+    if (!activeCategory.value) {
+      const cats = Array.from(new Set((enumNames.value || []).map((x) => x.category || 'Default')))
+      activeCategory.value = cats[0] || 'Default'
     }
-    dialogVisible.value = false;
-    loadData();
-  });
+  } catch {
+    ElMessage.error('获取枚举名称列表失败')
+  } finally {
+    loadingEnums.value = false
+  }
 }
 
-function handleDelete(row: DictItem) {
-  ElMessageBox.confirm('Are you sure to delete this item?', 'Warning', { type: 'warning' })
-    .then(async () => {
-      await deleteDictItem(row.id);
-      ElMessage.success('Deleted successfully');
-      loadData();
-    });
+const fetchOptions = async (enumClassName: string) => {
+  if (!enumClassName) return
+  loadingOptions.value = true
+  try {
+    const resp = (await listEnumOptions(enumClassName)) as unknown as ApiResponse<EnumOption[]>
+    options.value = resp.data || []
+  } catch {
+    ElMessage.error('获取枚举项失败')
+  } finally {
+    loadingOptions.value = false
+  }
 }
 
-onMounted(loadData);
+const handleEnumSelect = async (row: EnumOption | null) => {
+  if (!row?.value) return
+  selectedEnumName.value = row.name
+  selectedEnumClassName.value = row.value
+  optionKeyword.value = ''
+  await fetchOptions(row.value)
+}
+
+const reloadOptions = async () => {
+  if (!selectedEnumClassName.value) return
+  await fetchOptions(selectedEnumClassName.value)
+}
+
+const copyText = async (text?: string) => {
+  if (!text) return
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('已复制')
+  } catch {
+    ElMessage.error('复制失败')
+  }
+}
+
+onMounted(async () => {
+  await fetchEnumNames()
+})
 </script>
 
 <style scoped>
 .dict-container { padding: 24px; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.pagination { margin-top: 16px; text-align: right; }
-</style> 
+.tools { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.content { display: grid; grid-template-columns: 520px 1fr; gap: 16px; }
+.left { width: 100%; }
+.right { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.right-header { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.selected { display: flex; gap: 8px; align-items: center; max-width: 100%; }
+.label { color: #909399; font-size: 12px; white-space: nowrap; }
+.value { color: #303133; font-size: 13px; word-break: break-all; }
+.category-collapse { width: 100%; }
+.category-title { display: flex; align-items: center; gap: 10px; }
+.category-name { font-weight: 600; }
+</style>

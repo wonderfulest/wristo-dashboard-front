@@ -9,7 +9,7 @@
         <router-link
           v-for="group in topMenus"
           :key="group.key"
-          :to="group.children[0]?.path || '/'"
+          :to="getGroupDefaultPath(group)"
           class="nav-item"
           :class="{ active: isTopActive(group) }"
         >
@@ -56,6 +56,17 @@ const toggleDropdown = () => {
 // 顶部菜单激活态
 const route = useRoute()
 const isTopActive = (group: any) => group.basePaths?.some((p: string) => route.path.startsWith(p))
+
+const findFirstPath = (items: any[] | undefined): string | undefined => {
+  if (!items?.length) return
+  for (const item of items) {
+    if (item?.path) return item.path
+    const nested = findFirstPath(item?.children)
+    if (nested) return nested
+  }
+}
+
+const getGroupDefaultPath = (group: any) => findFirstPath(group?.children) || '/'
 </script>
 
 <style lang="scss" scoped>

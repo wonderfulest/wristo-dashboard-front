@@ -189,6 +189,10 @@ const router = createRouter({
     },
     {
       path: '/fonts',
+      redirect: '/design/fonts'
+    },
+    {
+      path: '/design/fonts',
       name: 'Fonts',
       component: () => import('@/views/dashboard/Fonts.vue'),
       meta: { requiresAuth: true }
@@ -229,39 +233,73 @@ const router = createRouter({
     },
     {
       path: '/images',
+      redirect: '/design/images'
+    },
+    {
+      path: '/design/images',
       name: 'Images',
       component: () => import('@/views/dashboard/ImageAssets.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/analog-assets',
+      redirect: '/design/analog-assets'
+    },
+    {
+      path: '/design/analog-assets',
       name: 'AnalogAssets',
       component: () => import('@/views/design/AnalogAssets.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/icon-library',
+      redirect: '/design/icon-library'
+    },
+    {
+      path: '/design/icon-library',
       name: 'IconLibrary',
       component: () => import('@/views/icons/IconLibrary.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/icon-assets',
+      redirect: '/design/icon-assets'
+    },
+    {
+      path: '/design/icon-assets',
       name: 'IconAssets',
       component: () => import('@/views/icons/IconAssets.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/icon-glyphs',
+      redirect: '/design/icon-glyphs'
+    },
+    {
+      path: '/design/icon-glyphs',
       name: 'IconGlyphs',
       component: () => import('@/views/icons/IconGlyphs.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/icon-glyphs/:glyphId/assets',
+      redirect: (to) => `/design/icon-glyphs/${to.params.glyphId}/assets`
+    },
+    {
+      path: '/design/icon-glyphs/:glyphId/assets',
       name: 'IconGlyphAssets',
       component: () => import('@/views/icons/IconGlyphAssets.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/design/inspirations',
+      name: 'DesignInspirations',
+      component: () => import('@/views/design/InspirationAdmin.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/design',
+      redirect: '/design/inspirations'
     },
     {
       path: '/data-type-options',

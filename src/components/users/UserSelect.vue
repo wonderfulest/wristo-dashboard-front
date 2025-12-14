@@ -93,19 +93,25 @@ const fetchUsers = async (keyword: string) => {
 
   loading.value = true
   try {
-    const res = await searchUsers(q, 20)
+    const res = await searchUsers(q, 20, resolvedRoleId.value)
     if (res.code === 0 && res.data) {
       let list = (res.data as UserInfo[]) || []
 
       // 若解析出 roleId，则基于用户 roles 在前端过滤（search 接口不支持 roleId 参数）
       if (typeof resolvedRoleId.value === 'number') {
-        list = list.filter((u: any) => Array.isArray(u.roles) && u.roles.some((r: any) => r?.id === resolvedRoleId.value))
+        const hasRoles = list.some((u: any) => Array.isArray(u?.roles))
+        if (hasRoles) {
+          list = list.filter((u: any) => Array.isArray(u.roles) && u.roles.some((r: any) => r?.id === resolvedRoleId.value))
+        }
       }
 
       // 若传入 roleAuthorities，则基于 roleCode 在前端过滤
       if (props.roleAuthorities && props.roleAuthorities.length > 0) {
         const set = new Set(props.roleAuthorities)
-        list = list.filter((u: any) => Array.isArray(u.roles) && u.roles.some((r: any) => r?.roleCode && set.has(r.roleCode)))
+        const hasRoles = list.some((u: any) => Array.isArray(u?.roles))
+        if (hasRoles) {
+          list = list.filter((u: any) => Array.isArray(u.roles) && u.roles.some((r: any) => r?.roleCode && set.has(r.roleCode)))
+        }
       }
 
       options.value = list
