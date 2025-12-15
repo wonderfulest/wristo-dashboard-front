@@ -9,16 +9,7 @@
       @submit.prevent
     >
       <el-form-item label="头像">
-        <el-upload
-          class="avatar-uploader"
-          :show-file-list="false"
-          :before-upload="beforeAvatarUpload"
-          :on-change="handleAvatarChange"
-          :auto-upload="false"
-        >
-          <img v-if="form.avatar" :src="form.avatar" class="avatar" />
-          <el-icon v-else class="avatar-uploader-icon"><i class="el-icon-plus" /></el-icon>
-        </el-upload>
+        <AvatarUpload v-model="form.avatar" />
       </el-form-item>
       <el-form-item label="用户名">
         <el-input v-model="form.username" placeholder="请输入用户名" />
@@ -45,9 +36,10 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { getUserInfo, updateUserInfo, uploadAvatar } from '@/api/user'
+import { getUserInfo, updateUserInfo } from '@/api/user'
 import type { UserInfo, ApiResponse } from '@/types/api'
 import { ElMessage } from 'element-plus'
+import AvatarUpload from '@/components/common/AvatarUpload.vue'
 
 const userInfo = ref<UserInfo | null>(null)
 const loading = ref(true)
@@ -79,34 +71,6 @@ async function fetchUserInfo() {
     ElMessage.error('获取用户信息失败')
   } finally {
     loading.value = false
-  }
-}
-
-function beforeAvatarUpload(file: File) {
-  const isImage = file.type.startsWith('image/')
-  if (!isImage) {
-    ElMessage.error('只能上传图片文件')
-  }
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 2MB!')
-  }
-  return isImage && isLt2M
-}
-
-async function handleAvatarChange(fileObj: any) {
-  const file = fileObj.raw
-  if (!beforeAvatarUpload(file)) return
-  try {
-    const res: ApiResponse<string> = await uploadAvatar(file)
-    if (res.code === 0) {
-      form.avatar = res.data || ''
-      ElMessage.success('头像上传成功')
-    } else {
-      ElMessage.error(res.msg || '头像上传失败')
-    }
-  } catch (e) {
-    ElMessage.error('头像上传失败')
   }
 }
 

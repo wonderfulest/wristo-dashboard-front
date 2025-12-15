@@ -24,11 +24,13 @@
     <el-table :data="users" style="width: 100%" :loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="username" label="用户名" width="180" />
-      <el-table-column prop="nickname" label="昵称" width="180" />
       <el-table-column prop="email" label="邮箱" width="260" />
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
+      <el-table-column prop="appCount" label="App数" width="90" />
+      <el-table-column prop="totalDownloads" label="总下载" width="120" />
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
+          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
           <el-button type="primary" link @click="openDesignerConfig(row)">查看默认配置</el-button>
         </template>
       </el-table-column>
@@ -65,18 +67,87 @@
         <el-button @click="configDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 商家资料编辑对话框 -->
+    <el-dialog v-model="editDialogVisible" title="编辑商家资料" width="720px">
+      <div v-if="editLoading" style="padding: 12px;">加载中...</div>
+      <el-form
+        v-else
+        ref="editFormRef"
+        :model="editForm"
+        :rules="editRules"
+        label-width="110px"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="editForm.username" placeholder="用户名" />
+        </el-form-item>
+        <el-form-item label="昵称" prop="nickname">
+          <el-input v-model="editForm.nickname" placeholder="昵称" />
+        </el-form-item>
+
+        <el-form-item label="Banner" prop="bannerImageId">
+          <ImageUpload
+            v-model="editForm.bannerImageId"
+            :preview-url="bannerPreviewUrl"
+            aspect-code="banner"
+            :max-size-mb="4"
+            @uploaded="handleBannerUploaded"
+          />
+        </el-form-item>
+
+        <el-form-item label="Slogan" prop="slogan">
+          <el-input v-model="editForm.slogan" placeholder="Slogan" />
+        </el-form-item>
+
+        <el-form-item label="支付方式" prop="payoutMethod">
+          <el-input v-model="editForm.payoutMethod" placeholder="例如: PayPal / Bank" />
+        </el-form-item>
+        <el-form-item label="支付账户" prop="payoutAccount">
+          <el-input v-model="editForm.payoutAccount" placeholder="账户信息" />
+        </el-form-item>
+
+        <el-form-item label="Facebook" prop="facebookUrl">
+          <el-input v-model="editForm.facebookUrl" placeholder="https://..." />
+        </el-form-item>
+        <el-form-item label="Instagram" prop="instagramUrl">
+          <el-input v-model="editForm.instagramUrl" placeholder="https://..." />
+        </el-form-item>
+        <el-form-item label="X" prop="xUrl">
+          <el-input v-model="editForm.xUrl" placeholder="https://..." />
+        </el-form-item>
+
+        <el-form-item label="App数" prop="appCount">
+          <el-input-number v-model="editForm.appCount" :min="0" :max="999999" controls-position="right" />
+        </el-form-item>
+        <el-form-item label="总下载" prop="totalDownloads">
+          <el-input-number v-model="editForm.totalDownloads" :min="0" :max="999999999" controls-position="right" />
+        </el-form-item>
+
+        <el-form-item label="状态" prop="status">
+          <el-switch v-model="editForm.status" :active-value="1" :inactive-value="0" active-text="启用" inactive-text="禁用" />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="editSaving" @click="handleEditSubmit">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { pageMerchantUsers, type MerchantUserPageQueryDTO } from '@/api/user'
-import type { UserInfo } from '@/types/api'
+import type { FormInstance, FormRules } from 'element-plus'
+import { getMerchantById, pageMerchantUsers, type MerchantUserPageQueryDTO, updateMerchantById } from '@/api/user'
+import type { ImageVO } from '@/types/image'
+import type { MchUserVO, UserMchUpdateDTO } from '@/types/user'
+import ImageUpload from '@/components/common/ImageUpload.vue'
 import { getDesignerDefaultConfigByUser } from '@/api/designer-default-config'
 import type { DesignerDefaultConfigVO } from '@/types/designer-default-config'
 
-const users = ref<UserInfo[]>([])
+const users = ref<MchUserVO[]>([])
 const loading = ref(false)
 const total = ref(0)
 
@@ -96,6 +167,119 @@ const roleFormatter = (row: any) => {
     return row.roles.join(', ')
   }
   return ''
+}
+
+// 编辑商家资料
+const editDialogVisible = ref(false)
+const editLoading = ref(false)
+const editSaving = ref(false)
+const editFormRef = ref<FormInstance>()
+const editForm = ref({
+  id: 0,
+  username: '',
+  nickname: '',
+  status: 1,
+  payoutMethod: '',
+  payoutAccount: '',
+  bannerImageId: undefined as number | undefined,
+  slogan: '',
+  facebookUrl: '',
+  instagramUrl: '',
+  xUrl: '',
+  appCount: 0,
+  totalDownloads: 0,
+})
+
+const bannerPreviewUrl = ref('')
+
+watch(
+  () => editForm.value.bannerImageId,
+  (v) => {
+    if (v === undefined) bannerPreviewUrl.value = ''
+  }
+)
+
+const getImageUrl = (img?: any): string => {
+  if (!img) return ''
+  return img.url || img.previewUrl || img.formats?.thumbnail?.url || ''
+}
+
+const handleBannerUploaded = (img: ImageVO) => {
+  bannerPreviewUrl.value = (img as any)?.previewUrl || (img as any)?.formats?.thumbnail?.url || (img as any)?.url || ''
+}
+
+const editRules: FormRules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+}
+
+const openEdit = async (row: any) => {
+  if (!row?.id) return
+  editDialogVisible.value = true
+  editLoading.value = true
+  try {
+    const res = await getMerchantById(Number(row.id))
+    const r = (res as any)?.data as MchUserVO | undefined
+    if (!r) {
+      ElMessage.error('未获取到商家信息')
+      return
+    }
+    editForm.value = {
+      id: Number(r.id),
+      username: r.username || '',
+      nickname: (r.nickname || '') as any,
+      status: (r.status ?? 1) as any,
+      payoutMethod: (r.payoutMethod || '') as any,
+      payoutAccount: (r.payoutAccount || '') as any,
+      bannerImageId: (r.bannerImageId ?? undefined) as any,
+      slogan: (r.slogan || '') as any,
+      facebookUrl: (r.facebookUrl || '') as any,
+      instagramUrl: (r.instagramUrl || '') as any,
+      xUrl: (r.xUrl || '') as any,
+      appCount: (r.appCount ?? 0) as any,
+      totalDownloads: (r.totalDownloads ?? 0) as any,
+    }
+    bannerPreviewUrl.value = getImageUrl((r as any)?.bannerImage)
+  } catch {
+    ElMessage.error('获取商家详情失败')
+  } finally {
+    editLoading.value = false
+  }
+}
+
+const handleEditSubmit = async () => {
+  if (!editFormRef.value) return
+  await editFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    editSaving.value = true
+    try {
+      const dto: UserMchUpdateDTO = {
+        username: editForm.value.username,
+        nickname: editForm.value.nickname,
+        status: editForm.value.status,
+        payoutMethod: editForm.value.payoutMethod,
+        payoutAccount: editForm.value.payoutAccount,
+        bannerImageId: editForm.value.bannerImageId,
+        slogan: editForm.value.slogan,
+        facebookUrl: editForm.value.facebookUrl,
+        instagramUrl: editForm.value.instagramUrl,
+        xUrl: editForm.value.xUrl,
+        appCount: editForm.value.appCount,
+        totalDownloads: editForm.value.totalDownloads,
+      }
+      const res = await updateMerchantById(editForm.value.id, dto)
+      if (res.code === 0) {
+        ElMessage.success('保存成功')
+        editDialogVisible.value = false
+        fetchUsers()
+      } else {
+        ElMessage.error(res.msg || '保存失败')
+      }
+    } catch {
+      ElMessage.error('保存失败')
+    } finally {
+      editSaving.value = false
+    }
+  })
 }
 
 const fetchUsers = async () => {

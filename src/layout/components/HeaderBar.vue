@@ -23,7 +23,7 @@
             <span class="dropdown-arrow">▼</span>
           </div>
           <div class="dropdown-content" v-if="isDropdownOpen">
-            <a href="/account/profile">编辑资料</a>
+            <a href="/profile">编辑资料</a>
             <a href="/account/password">修改密码</a>
             <a href="#" @click.prevent="handleLogout">退出登录</a>
           </div>

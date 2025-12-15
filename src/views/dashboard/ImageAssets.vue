@@ -72,7 +72,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import type { ImageVO } from '@/types/app-daily'
+import type { ImageVO } from '@/types/image'
 import { pageImages } from '@/api/image'
 
 const images = ref<ImageVO[]>([])

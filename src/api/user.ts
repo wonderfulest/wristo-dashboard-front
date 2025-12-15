@@ -3,6 +3,7 @@ import type { ApiResponse, UserInfo, PageResponse } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
 import type { ChangeUserEmailDTO } from '@/types/user'
 import type { PageQueryDTO } from '@/types/api'
+import type { MchUserVO, UserMchUpdateDTO } from '@/types/user'
 
 export const getUserInfo = (): Promise<ApiResponse<UserInfo>> => {
   return instance.get('/users/info?populate=roles')
@@ -54,8 +55,6 @@ export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageRespon
 }
 
 // 商家用户分页（固定按商家角色筛选）
-export const MERCHANT_ROLE_ID = 3
-
 export interface MerchantUserPageQueryDTO extends PageQueryDTO {
   username?: string
   email?: string
@@ -63,11 +62,16 @@ export interface MerchantUserPageQueryDTO extends PageQueryDTO {
 
 export const pageMerchantUsers = (
   dto: MerchantUserPageQueryDTO
-): Promise<ApiResponse<PageResponse<UserInfo>>> => {
-  return instance.post('/admin/users/page?populate=roles', {
-    ...dto,
-    roleId: MERCHANT_ROLE_ID,
-  })
+): Promise<ApiResponse<PageResponse<MchUserVO>>> => {
+  return instance.post('/admin/merchants/page', dto)
+}
+
+export const getMerchantById = (id: number): Promise<ApiResponse<MchUserVO>> => {
+  return instance.get(`/admin/merchants/get/${id}`)
+}
+
+export const updateMerchantById = (id: number, dto: UserMchUpdateDTO): Promise<ApiResponse<MchUserVO>> => {
+  return instance.post(`/admin/merchants/update/${id}`, dto)
 }
 
 export const searchUsers = (

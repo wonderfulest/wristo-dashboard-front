@@ -17,7 +17,7 @@ wristo-dashboard/
 │
 ├──-------------------- 产品 --------------------
 ├── /products                             → 产品列表
-├── /products/categories                  → 产品分类
+├── /website/categories                  → 产品分类
 ├── /products/garmin-devices              → Garmin 设备
 ├── /products/device-un-support           → 设备不支持
 ├── /products/app-daily/config            → App Daily 配置列表

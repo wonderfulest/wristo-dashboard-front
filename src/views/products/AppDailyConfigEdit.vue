@@ -130,7 +130,8 @@ import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
 import { getAppDailyConfigDetail, pageAppDailyRelations, setRelationActive } from '@/api/app-daily'
 import RelationCreateDialog from '@/components/appDaily/RelationCreateDialog.vue'
-import type { AppDailyImageConfig, AppDailyImageRelation, ImageVO } from '@/types/app-daily'
+import type { AppDailyImageConfig, AppDailyImageRelation } from '@/types/app-daily'
+import type { ImageVO } from '@/types/image'
 
 const route = useRoute()
 const router = useRouter()

@@ -16,7 +16,7 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/data-type-options', '/tickets'],
+    basePaths: ['/dashboard', '/products', '/website', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/data-type-options', '/tickets'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'tickets', title: '工单管理', path: '/tickets' },
@@ -33,9 +33,17 @@ export const topMenus: TopMenuGroup[] = [
         title: '应用管理',
         children: [
           { key: 'products', title: '应用列表', path: '/products' },
-          { key: 'categories', title: '应用分类', path: '/products/categories' },
+          { key: 'categories', title: '应用分类', path: '/website/categories' },
           { key: 'app-daily-config', title: '每日一图配置', path: '/products/app-daily/config' },
           { key: 'device-un-support', title: '未支持应用', path: '/products/device-un-support' },
+        ],
+      },
+      {
+        key: 'website',
+        title: '官网',
+        children: [
+          { key: 'website-home-banners', title: '首页 Banner', path: '/website/home-banners' },
+          { key: 'website-categories', title: '应用分类', path: '/website/categories' },
         ],
       },
       { key: 'data-type-options', title: '数据项', path: '/data-type-options' },
@@ -128,7 +136,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'change-user-email', title: '变更用户邮箱', path: '/users/user-management/change-email' },
       { key: 'role-management', title: '角色管理', path: '/users/role-management' },
       { key: 'dict', title: '字典管理', path: '/users/dict' },
-      { key: 'profile', title: '个人资料', path: '/users/profile' },
+      { key: 'profile', title: '个人资料', path: '/profile' },
     ],
   },
   {

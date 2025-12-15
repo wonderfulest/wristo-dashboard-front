@@ -320,7 +320,7 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/users/profile',
+      path: '/profile',
       name: 'Profile',
       component: () => import('@/views/Profile.vue'),
       meta: { requiresAuth: true }
@@ -342,19 +342,21 @@ const router = createRouter({
       redirect: '/users/dict'
     },
     {
-      path: '/profile',
-      redirect: '/users/profile'
-    },
-    {
       path: '/system/template-variables',
       name: 'TemplateVariables',
       component: () => import('@/views/dashboard/system/TemplateVariables.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/products/categories',
-      name: 'Categories',
-      component: () => import('@/views/products/Categories.vue'),
+      path: '/website/categories',
+      name: 'WebsiteCategories',
+      component: () => import('@/views/website/Categories.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/website/home-banners',
+      name: 'WebsiteHomeBanners',
+      component: () => import('@/views/website/HomeBanners.vue'),
       meta: { requiresAuth: true }
     },
     {

@@ -10,7 +10,7 @@ export interface FetchDesignReviewPageParams {
 }
 
 import type { UserBase } from './user'
-import type { Image } from './image'
+import type { ImageVO } from './image'
 import type { ProductPayment, ProductRelease } from './product'
 
 export interface Design {
@@ -26,8 +26,8 @@ export interface Design {
   updatedAt: number
   version: number
   user: UserBase
-  coverImage: Image | null
-  backgroundImage: Image | null
+  coverImage: ImageVO | null
+  backgroundImage: ImageVO | null
   payment: ProductPayment | null
   release: ProductRelease | null
 }
