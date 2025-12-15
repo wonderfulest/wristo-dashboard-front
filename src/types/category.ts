@@ -1,8 +1,13 @@
+import type { ImageVO } from '@/types/image'
+
 export interface Category {
   id: number
   name: string
   slug: string
-  image: string | null
+  bannerId?: number | null
+  banner?: ImageVO | null
+  heroId?: number | null
+  hero?: ImageVO | null
   sort: number
   isActive: number
 }
@@ -24,6 +29,6 @@ export interface CategoryPageData {
 export interface CreateCategoryDto {
   name: string
   slug: string
-  image?: string
-  sort?: number
-} 
+  heroId?: number | null
+  bannerId?: number | null
+}

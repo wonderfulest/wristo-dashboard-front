@@ -19,16 +19,14 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="图片" width="100">
+      <el-table-column label="Banner" width="100">
         <template #default="{ row }">
-          <el-image
-            v-if="row.image"
-            :src="row.image"
-            :preview-src-list="[row.image]"
-            fit="cover"
-            style="width: 50px; height: 50px"
-          />
-          <span v-else>无图片</span>
+          <ImagePreview :image="row.banner" :height="50" />
+        </template>
+      </el-table-column>
+      <el-table-column label="Hero" width="100">
+        <template #default="{ row }">
+          <ImagePreview :image="row.hero" :height="50" />
         </template>
       </el-table-column>
       <el-table-column label="操作" width="200" fixed="right">
@@ -82,16 +80,23 @@
             inactive-text="禁用"
           />
         </el-form-item>
-        <el-form-item label="图片" prop="image">
-          <el-upload
-            class="avatar-uploader"
-            :http-request="handleUploadRequest"
-            :show-file-list="false"
-            :before-upload="beforeUpload"
-          >
-            <img v-if="imagePreviewUrl" :src="imagePreviewUrl" class="avatar" />
-            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-          </el-upload>
+        <el-form-item label="Banner" prop="bannerId">
+          <ImageUpload
+            v-model="form.bannerId"
+            :preview-url="bannerPreviewUrl"
+            aspect-code="banner"
+            :max-size-mb="2"
+            @uploaded="handleBannerUploaded"
+          />
+        </el-form-item>
+        <el-form-item label="Hero" prop="heroId">
+          <ImageUpload
+            v-model="form.heroId"
+            :preview-url="heroPreviewUrl"
+            aspect-code="hero"
+            :max-size-mb="2"
+            @uploaded="handleHeroUploaded"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -105,13 +110,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules, UploadRequestOptions } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
-import { fetchCategoryPage, createCategory, updateCategory, deleteCategory, updateCategoryStatus } from '@/api/category'
+import type { FormInstance, FormRules } from 'element-plus'
+import { createCategory, deleteCategory, fetchCategoryPage, getCategory, updateCategory, updateCategoryStatus } from '@/api/category'
 import type { Category } from '@/types/category'
-import { uploadAdminFile } from '@/api/files'
+import ImageUpload from '@/components/common/ImageUpload.vue'
+import ImagePreview from '@/components/common/ImagePreview.vue'
+import type { ImageVO } from '@/types/image'
 
 // 表格数据
 const categories = ref<Category[]>([])
@@ -128,12 +134,36 @@ const form = ref({
   id: 0,
   name: '',
   slug: '',
-  image: '',
+  bannerId: undefined as number | undefined,
+  heroId: undefined as number | undefined,
   sort: 0,
   isActive: 1
 })
-// 图片预览地址，仅用于前端展示，不参与提交
-const imagePreviewUrl = ref('')
+const bannerPreviewUrl = ref('')
+const heroPreviewUrl = ref('')
+
+watch(
+  () => form.value.bannerId,
+  (v) => {
+    if (v === undefined) {
+      bannerPreviewUrl.value = ''
+    }
+  }
+)
+
+watch(
+  () => form.value.heroId,
+  (v) => {
+    if (v === undefined) {
+      heroPreviewUrl.value = ''
+    }
+  }
+)
+
+const getImageUrl = (img?: any): string => {
+  if (!img) return ''
+  return img.url || img.previewUrl || img.formats?.thumbnail?.url || ''
+}
 
 const rules: FormRules = {
   name: [
@@ -178,21 +208,41 @@ const handleAdd = () => {
     id: 0,
     name: '',
     slug: '',
-    image: '',
+    bannerId: undefined,
+    heroId: undefined,
     sort: 0,
     isActive: 1
   }
-  imagePreviewUrl.value = ''
+  bannerPreviewUrl.value = ''
+  heroPreviewUrl.value = ''
   dialogVisible.value = true
 }
 
 // 编辑分类
-const handleEdit = (row: Category) => {
+const handleEdit = async (row: Category) => {
   dialogType.value = 'edit'
-  form.value = { ...row, image: row.image || '', sort: row.sort ?? 0 }
-  // 列表返回的 image 目前是图片 URL，用于预览
-  imagePreviewUrl.value = row.image || ''
-  dialogVisible.value = true
+  loading.value = true
+  try {
+    const resp = await getCategory(row.id)
+    const detail = (resp as any)?.data as Category | undefined
+    const r = detail || row
+    form.value = {
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      bannerId: (r.bannerId ?? r.banner?.id) ?? undefined,
+      heroId: (r.heroId ?? r.hero?.id) ?? undefined,
+      sort: r.sort ?? 0,
+      isActive: r.isActive
+    }
+    bannerPreviewUrl.value = getImageUrl(r.banner)
+    heroPreviewUrl.value = getImageUrl(r.hero)
+    dialogVisible.value = true
+  } catch {
+    ElMessage.error('获取分类详情失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 删除分类
@@ -220,38 +270,12 @@ const handleDelete = (row: Category) => {
   })
 }
 
-// 上传图片相关（通过自定义请求，走带鉴权的 axios 实例）
-const handleUploadRequest = async (options: UploadRequestOptions) => {
-  const file = options.file as File
-  try {
-    const res = await uploadAdminFile(file, 'categories')
-    if (res.code === 0) {
-      // 提交和预览都使用返回的图片 URL
-      const url = res.data?.url ?? ''
-      form.value.image = url
-      imagePreviewUrl.value = url
-      ElMessage.success('上传成功')
-    } else {
-      ElMessage.error(res.msg || '上传失败')
-    }
-  } catch (error: any) {
-    ElMessage.error(error?.message || '上传失败')
-  }
+const handleBannerUploaded = (img: ImageVO) => {
+  bannerPreviewUrl.value = (img as any)?.previewUrl || (img as any)?.formats?.thumbnail?.url || (img as any)?.url || ''
 }
 
-const beforeUpload = (file: File) => {
-  const isImage = file.type.startsWith('image/')
-  const isLt2M = file.size / 1024 / 1024 < 2
-
-  if (!isImage) {
-    ElMessage.error('只能上传图片文件！')
-    return false
-  }
-  if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 2MB！')
-    return false
-  }
-  return true
+const handleHeroUploaded = (img: ImageVO) => {
+  heroPreviewUrl.value = (img as any)?.previewUrl || (img as any)?.formats?.thumbnail?.url || (img as any)?.url || ''
 }
 
 // 提交表单
@@ -264,8 +288,8 @@ const handleSubmit = async () => {
           const res = await createCategory({
             name: form.value.name,
             slug: form.value.slug,
-            image: form.value.image,
-            sort: form.value.sort
+            heroId: form.value.heroId,
+            bannerId: form.value.bannerId
           })
           if (res.code === 0) {
             ElMessage.success('新增成功')
@@ -278,7 +302,8 @@ const handleSubmit = async () => {
           const res = await updateCategory(form.value.id, {
             name: form.value.name,
             slug: form.value.slug,
-            image: form.value.image,
+            heroId: form.value.heroId,
+            bannerId: form.value.bannerId,
             sort: form.value.sort,
             isActive: form.value.isActive
           })

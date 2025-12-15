@@ -1,5 +1,6 @@
 import type { PageQueryDTO } from './common'
 import type { ProductBase } from '@/types/product'
+import type { ImageVO } from '@/types/image'
 
 export interface AppDailyImageConfig {
   id: number
@@ -23,32 +24,6 @@ export interface AppDailyImageConfig {
 
 export interface AppDailyConfigPageParams extends PageQueryDTO {
   appId?: number
-}
-
-// 对应后端 ImageVO 返回结构的必要字段
-export interface ImageVO {
-  id: number
-  documentId?: string
-  name?: string
-  alternativeText?: string
-  caption?: string
-  width?: number
-  height?: number
-  formats?: Record<string, any>
-  hash?: string
-  ext?: string
-  mime?: string
-  size?: number
-  url?: string
-  previewUrl?: string
-  provider?: string
-  providerMetadata?: Record<string, any>
-  folderPath?: string
-  usageType?: string
-  createdAt?: string
-  updatedAt?: string
-  publishedAt?: string
-  locale?: string
 }
 
 export interface AppDailyImageRelation {

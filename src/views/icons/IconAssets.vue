@@ -72,8 +72,8 @@ import type { ApiResponse, PageResponse } from '@/types/api'
 import type { IconAssetVO } from '@/types/icon-asset'
 import { pageIconAssetDsn, removeIconAsset } from '@/api/icon-asset'
 import { useIconStore } from '@/store/icon'
+import { DISPLAY_TYPE_ENUM_NAME, useEnumStore } from '@/store/common'
 import IconSearchSelect from '@/components/icon/IconSearchSelect.vue'
-import { listEnumOptions } from '@/api/common'
 import IconAssetEditDialog from '@/views/icons/components/IconAssetEditDialog.vue'
 import SvgEditor from '@/views/icons/components/SvgEditor.vue'
 import UploadSvg from '@/views/icons/components/UploadSvg.vue'
@@ -84,6 +84,7 @@ const currentPage = ref(1)
 const pageSize = ref(100)
 const total = ref(0)
 const iconStore = useIconStore()
+const enumStore = useEnumStore()
 const iconLabelMap = computed<Record<number, string>>(() => iconStore.idLabelMap)
 
 const iconUnicode = ref<string | undefined>(undefined)
@@ -155,12 +156,9 @@ const getPreviewUrl = (url?: string) => {
 onMounted(async () => {
   fetchPage()
   await iconStore.ensureLoaded()
-  // load enum options for displayType
   try {
     loadingEnums.value = true
-    const resp = await listEnumOptions('DisplayType')
-    const list = (resp as any)?.data || []
-    displayTypeOptions.value = Array.isArray(list) ? list : []
+    displayTypeOptions.value = await enumStore.getEnumOptions(DISPLAY_TYPE_ENUM_NAME)
   } catch {
     // silent
   } finally {

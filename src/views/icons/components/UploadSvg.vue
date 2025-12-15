@@ -66,7 +66,7 @@ import { ref, watch } from 'vue'
 import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
 import { uploadIconSvg } from '@/api/icon-asset'
 import { useIconStore } from '@/store/icon'
-import { listEnumOptions } from '@/api/common'
+import { DISPLAY_TYPE_ENUM_NAME, useEnumStore } from '@/store/common'
 
 interface Props {
   symbolCode?: string
@@ -122,6 +122,7 @@ watch(
 )
 
 const iconStore = useIconStore()
+const enumStore = useEnumStore()
 watch(dialogVisible, async (v) => {
   if (v && iconList.value.length === 0) {
     try {
@@ -134,9 +135,7 @@ watch(dialogVisible, async (v) => {
       if (displayTypeOptions.value.length === 0) {
         loadingEnums.value = true
         try {
-          const resp = await listEnumOptions('DisplayType')
-          const list = (resp as any)?.data || []
-          displayTypeOptions.value = Array.isArray(list) ? list : []
+          displayTypeOptions.value = await enumStore.getEnumOptions(DISPLAY_TYPE_ENUM_NAME)
         } finally {
           loadingEnums.value = false
         }

@@ -32,12 +32,12 @@ export interface InspirationVO {
 export interface InspirationCreateDTO {
   title: string
   previewImageId: number
-  assetZipId: number
+  assetZipId?: number
   sourcePageUrl?: string
   rating?: number
   designerNote?: string
 
-  userId: number
+  userId?: number
   isActive: number
 }
 

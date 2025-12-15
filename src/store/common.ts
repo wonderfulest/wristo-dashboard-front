@@ -10,6 +10,11 @@ interface EnumState {
 
 // ===== Typed helpers for specific enums =====
 export const ANALOG_ASSET_TYPE_ENUM_NAME = 'AnalogAssetType'
+export const IMAGE_ASPECT_ENUM_NAME = 'ImageAspectEnum'
+export const DESIGN_FONT_TYPE_ENUM_NAME = 'DesignFontType'
+export const DISPLAY_TYPE_ENUM_NAME = 'DisplayType'
+export const ICON_CATEGORY_ENUM_NAME = 'IconCategory'
+export const DATA_TYPE_CATEGORY_ENUM_NAME = 'DataTypeCategory'
 
 // ===== Store =====
 export const useEnumStore = defineStore('enum', {
@@ -25,6 +30,10 @@ export const useEnumStore = defineStore('enum', {
     }
   },
   actions: {
+    async getEnumOptions(name: string): Promise<EnumOption[]> {
+      await this.ensureOptions(name)
+      return this.getOptions(name)
+    },
     async ensureOptions(name: string) {
       if (this.loaded[name] || this.loading[name]) return
       this.loading[name] = true
@@ -40,5 +49,10 @@ export const useEnumStore = defineStore('enum', {
         this.loading[name] = false
       }
     }
+  },
+  persist: {
+    key: 'wristo-enums',
+    storage: sessionStorage,
+    pick: ['options', 'loaded']
   }
 })

@@ -44,12 +44,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { updateAnalogAsset, uploadAnalogAsset } from '@/api/analog-asset'
 import type { AnalogAssetVO, AnalogAssetType } from '@/types/analog-asset'
-import { useEnumStore } from '@/store/common'
+import { useEnumStore, ANALOG_ASSET_TYPE_ENUM_NAME } from '@/store/common'
 import SvgUpload from './SvgUpload.vue'
 
 interface Props {
@@ -83,12 +83,25 @@ const selectedFile = ref<File | null>(null)
 
 // 枚举选项（来自通用枚举 store）
 const enumStore = useEnumStore()
+const enumAssetTypeOptions = ref<{ name: string; value: string }[]>([])
 const analogAssetTypeOptions = computed<{ value: AnalogAssetType; label: string }[]>(() => {
-  const list = enumStore.getOptions('AnalogAssetType')
-  return list.map(item => ({
-    value: item.value as AnalogAssetType,
-    label: item.name
+  return (enumAssetTypeOptions.value || []).map((it: any) => ({
+    value: it.value as AnalogAssetType,
+    label: it.name || it.value
   }))
+})
+
+const loadAnalogAssetTypeOptions = async () => {
+  if (enumAssetTypeOptions.value.length) return
+  try {
+    enumAssetTypeOptions.value = await enumStore.getEnumOptions(ANALOG_ASSET_TYPE_ENUM_NAME)
+  } catch {
+    enumAssetTypeOptions.value = []
+  }
+}
+
+onMounted(async () => {
+  await loadAnalogAssetTypeOptions()
 })
 
 interface FormState {
@@ -145,6 +158,9 @@ watch(
 watch(visible, (val) => {
   if (val && !props.asset) {
     resetForm()
+  }
+  if (val) {
+    loadAnalogAssetTypeOptions()
   }
 })
 

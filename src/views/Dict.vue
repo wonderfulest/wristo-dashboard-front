@@ -72,8 +72,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types/api'
-import { listEnumNames, listEnumOptions } from '@/api/common'
+import { listEnumNames } from '@/api/common'
 import type { EnumOption } from '@/api/common'
+import { useEnumStore } from '@/store/common'
 
 const loadingEnums = ref(false)
 const loadingOptions = ref(false)
@@ -88,6 +89,8 @@ const selectedEnumClassName = ref<string>('')
 
 const options = ref<EnumOption[]>([])
 const optionKeyword = ref('')
+
+const enumStore = useEnumStore()
 
 const filteredEnumNames = computed(() => {
   const kw = (enumKeyword.value || '').trim().toLowerCase()
@@ -142,8 +145,8 @@ const fetchOptions = async (enumClassName: string) => {
   if (!enumClassName) return
   loadingOptions.value = true
   try {
-    const resp = (await listEnumOptions(enumClassName)) as unknown as ApiResponse<EnumOption[]>
-    options.value = resp.data || []
+    await enumStore.ensureOptions(enumClassName)
+    options.value = enumStore.getOptions(enumClassName)
   } catch {
     ElMessage.error('获取枚举项失败')
   } finally {

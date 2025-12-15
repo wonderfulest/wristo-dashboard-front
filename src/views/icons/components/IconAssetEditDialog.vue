@@ -26,7 +26,8 @@
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getIconAsset, updateIconAsset } from '@/api/icon-asset'
-import { listEnumOptions, type EnumOption } from '@/api/common'
+import type { EnumOption } from '@/api/common'
+import { DISPLAY_TYPE_ENUM_NAME, useEnumStore } from '@/store/common'
 
 interface Props {
   modelValue: boolean
@@ -43,6 +44,8 @@ const loadingEnums = ref(false)
 const form = ref<{ sourceType?: string; format?: string; displayType?: string }>({})
 const displayTypeOptions = ref<EnumOption[]>([])
 
+const enumStore = useEnumStore()
+
 watch(() => props.modelValue, v => { visibleInner.value = v })
 watch(visibleInner, v => emit('update:modelValue', v))
 
@@ -50,9 +53,7 @@ async function loadEnums() {
   if (displayTypeOptions.value.length > 0) return
   loadingEnums.value = true
   try {
-    const resp = await listEnumOptions('DisplayType')
-    const list = (resp as any)?.data || []
-    displayTypeOptions.value = Array.isArray(list) ? list : []
+    displayTypeOptions.value = await enumStore.getEnumOptions(DISPLAY_TYPE_ENUM_NAME)
   } catch {
     // silent
   } finally {

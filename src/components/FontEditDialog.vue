@@ -91,7 +91,7 @@ import { ref, watch, computed, defineProps, defineEmits } from 'vue'
 import type { DesignFontVO } from '@/types/font'
 import { updateFont } from '@/api/fonts'
 import type { EnumOption } from '@/api/common'
-import { listEnumOptions } from '@/api/common'
+import { DESIGN_FONT_TYPE_ENUM_NAME, useEnumStore } from '@/store/common'
 import { ElMessage } from 'element-plus'
 import FontPreview from '@/components/FontPreview.vue'
 
@@ -103,6 +103,8 @@ const font = ref<DesignFontVO | null>(null)
 
 const form = ref<Partial<DesignFontVO>>({})
 
+const enumStore = useEnumStore()
+
 // font type options
 const typeOptions = ref<EnumOption[]>([])
 const typeLoading = ref(false)
@@ -110,9 +112,7 @@ const loadFontTypes = async () => {
   if (typeOptions.value.length || typeLoading.value) return
   typeLoading.value = true
   try {
-    const resp = await listEnumOptions('DesignFontType')
-    const list = (resp as any)?.data as EnumOption[] | undefined
-    if (Array.isArray(list)) typeOptions.value = list
+    typeOptions.value = await enumStore.getEnumOptions(DESIGN_FONT_TYPE_ENUM_NAME)
   } catch (e) {
   }
   finally {

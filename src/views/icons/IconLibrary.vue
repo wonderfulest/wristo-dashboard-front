@@ -130,7 +130,7 @@ import { countIconAssets, transferIconAssets } from '@/api/icon-asset'
 import IconSearchSelect from '@/components/icon/IconSearchSelect.vue'
 import { useIconStore } from '@/store/icon'
 import type { EnumOption } from '@/api/common'
-import { listEnumOptions } from '@/api/common'
+import { ICON_CATEGORY_ENUM_NAME, useEnumStore } from '@/store/common'
 
 const categories = ref<EnumOption[]>([])
 
@@ -173,6 +173,7 @@ const transferTargetUnicode = ref<string | undefined>(undefined)
 const transferLoading = ref(false)
 
 const iconStore = useIconStore()
+const enumStore = useEnumStore()
 const unicodeIdMap = computed<Record<string, number>>(() => {
   const map: Record<string, number> = {}
   for (const it of iconStore.icons) {
@@ -280,8 +281,7 @@ onMounted(async () => {
   loadData()
   await iconStore.ensureLoaded()
   try {
-    const resp = await listEnumOptions('IconCategory')
-    categories.value = (resp as any).data ?? []
+    categories.value = await enumStore.getEnumOptions(ICON_CATEGORY_ENUM_NAME)
   } catch {
     categories.value = []
   }

@@ -94,7 +94,7 @@
           <el-input v-model="createForm.title" />
         </el-form-item>
         <el-form-item label="预览图" prop="previewImageId">
-          <ImageUpload v-model="createForm.previewImageId" usage-type="inspiration" />
+          <ImageUpload v-model="createForm.previewImageId" aspect-code="hero" />
         </el-form-item>
         <el-form-item label="素材ZIP" prop="assetZipId">
           <FileUpload v-model="createForm.assetZipId" usage-type="inspiration" accept=".zip" />
@@ -107,9 +107,6 @@
         </el-form-item>
         <el-form-item label="设计师备注">
           <el-input v-model="createForm.designerNote" type="textarea" :rows="4" />
-        </el-form-item>
-        <el-form-item label="作者UserId" prop="userId">
-          <el-input-number v-model="createForm.userId" :min="1" controls-position="right" style="width: 100%" />
         </el-form-item>
         <el-form-item label="启用" prop="isActive">
           <el-switch v-model="createForm.isActive" :active-value="1" :inactive-value="0" />
@@ -127,7 +124,7 @@
           <el-input v-model="editForm.title" />
         </el-form-item>
         <el-form-item label="预览图" prop="previewImageId">
-          <ImageUpload v-model="editForm.previewImageId" :preview-url="editPreviewUrl" usage-type="inspiration" />
+          <ImageUpload v-model="editForm.previewImageId" :preview-url="editPreviewUrl" aspect-code="inspiration" />
         </el-form-item>
         <el-form-item label="素材ZIP" prop="assetZipId">
           <FileUpload v-model="editForm.assetZipId" usage-type="inspiration" accept=".zip" />
@@ -140,9 +137,6 @@
         </el-form-item>
         <el-form-item label="设计师备注">
           <el-input v-model="editForm.designerNote" type="textarea" :rows="4" />
-        </el-form-item>
-        <el-form-item label="作者UserId" prop="userId">
-          <el-input-number v-model="editForm.userId" :min="1" controls-position="right" style="width: 100%" />
         </el-form-item>
         <el-form-item label="启用" prop="isActive">
           <el-switch v-model="editForm.isActive" :active-value="1" :inactive-value="0" />
@@ -187,11 +181,10 @@ const editFormRef = ref()
 const createForm = ref<InspirationCreateDTO>({
   title: '',
   previewImageId: 0 as any,
-  assetZipId: 0 as any,
+  assetZipId: undefined,
   sourcePageUrl: undefined,
   rating: undefined,
   designerNote: undefined,
-  userId: 0 as any,
   isActive: 1
 })
 
@@ -199,19 +192,16 @@ const editForm = ref<InspirationUpdateDTO>({
   id: 0,
   title: '',
   previewImageId: 0,
-  assetZipId: 0,
+  assetZipId: undefined,
   sourcePageUrl: undefined,
   rating: undefined,
   designerNote: undefined,
-  userId: undefined,
   isActive: 1
 })
 
 const rules = {
   title: [{ required: true, message: '请填写标题', trigger: 'blur' }],
   previewImageId: [{ required: true, message: '请填写预览图ID', trigger: 'change' }],
-  assetZipId: [{ required: true, message: '请填写素材ZIP ID', trigger: 'change' }],
-  userId: [{ required: true, message: '请填写作者UserId', trigger: 'change' }],
   isActive: [{ required: true, message: '请选择是否启用', trigger: 'change' }]
 }
 
@@ -271,11 +261,10 @@ watch(
       createForm.value = {
         title: '',
         previewImageId: 0 as any,
-        assetZipId: 0 as any,
+        assetZipId: undefined,
         sourcePageUrl: undefined,
         rating: undefined,
         designerNote: undefined,
-        userId: 0 as any,
         isActive: 1
       }
     }
@@ -309,11 +298,10 @@ const openEdit = async (row: InspirationVO) => {
     id: row.id,
     title: row.title,
     previewImageId: row.previewImageId,
-    assetZipId: row.assetZipId,
+    assetZipId: row.assetZipId || undefined,
     sourcePageUrl: row.sourcePageUrl,
     rating: row.rating,
     designerNote: row.designerNote,
-    userId: row.userId,
     isActive: row.isActive
   }
 
@@ -325,11 +313,10 @@ const openEdit = async (row: InspirationVO) => {
         id: resp.data.id,
         title: resp.data.title,
         previewImageId: resp.data.previewImageId,
-        assetZipId: resp.data.assetZipId,
+        assetZipId: resp.data.assetZipId || undefined,
         sourcePageUrl: resp.data.sourcePageUrl,
         rating: resp.data.rating,
         designerNote: resp.data.designerNote,
-        userId: resp.data.userId,
         isActive: resp.data.isActive
       }
     }
@@ -354,7 +341,6 @@ const submitEdit = async () => {
       sourcePageUrl: editForm.value.sourcePageUrl,
       rating: editForm.value.rating,
       designerNote: editForm.value.designerNote,
-      userId: editForm.value.userId,
       isActive: editForm.value.isActive
     } as any)
     ElMessage.success('保存成功')

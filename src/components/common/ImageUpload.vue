@@ -21,6 +21,8 @@
         </div>
         <div v-else class="placeholder">+</div>
 
+        <div v-if="ratioTip" class="ratio-tip" :title="ratioTip">{{ ratioTip }}</div>
+
         <div v-if="uploading" class="mask">上传中...</div>
         <button v-if="modelValue" type="button" class="clear" :disabled="uploading" @click.stop="clear">×</button>
       </div>
@@ -29,17 +31,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { uploadImage } from '@/api/image'
-import type { ImageVO } from '@/types/app-daily'
+import { IMAGE_ASPECT_ENUM_NAME, useEnumStore } from '@/store/common'
+import type { ImageVO } from '@/types/image'
+
+const extractRatio = (it: any): string => {
+  const candidates = [it?.props?.ratio, it?.ratio, it?.category, it?.description, it?.name, it?.value]
+    .filter((x) => typeof x === 'string')
+    .join(' ')
+  const m = candidates.match(/(\d+)\s*:\s*(\d+)/)
+  if (!m) return ''
+  return `${m[1]}:${m[2]}`
+}
 
 const props = withDefaults(
   defineProps<{
     modelValue?: number
     maxSizeMB?: number
     previewUrl?: string
-    usageType?: string
+    aspectCode?: string
   }>(),
   {
     maxSizeMB: 10
@@ -57,6 +69,81 @@ const dragOver = ref(false)
 
 const previewUrl = computed(() => preview.value)
 
+const aspectRatioMap = ref<Record<string, string>>({})
+const aspectEnumCodes = ref<string[]>([])
+
+const enumStore = useEnumStore()
+
+const validAspectCodes = computed(() => aspectEnumCodes.value)
+
+const ensureAspectCodeValid = async () => {
+  await initAspectRatioMap()
+  const code = props.aspectCode
+  if (!code) return false
+
+  const ok = validAspectCodes.value.includes(code)
+  if (!ok) {
+    console.warn('[ImageUpload] Invalid aspectCode', {
+      aspectCode: code,
+      validAspectCodes: validAspectCodes.value,
+      ratioMap: aspectRatioMap.value
+    })
+    ElMessage.error(`图片尺寸类型不合法：${code}`)
+  }
+  return ok
+}
+
+const initAspectRatioMap = async () => {
+  if (Object.keys(aspectRatioMap.value).length > 0) return
+  const list = await enumStore.getEnumOptions(IMAGE_ASPECT_ENUM_NAME)
+  const map: Record<string, string> = {}
+  const codes: string[] = []
+  for (const it of list || []) {
+    const code = (it as any)?.value
+    if (!code || typeof code !== 'string') continue
+    codes.push(code)
+    const ratio = extractRatio(it)
+    map[code] = ratio || '1:1'
+  }
+  aspectRatioMap.value = map
+  aspectEnumCodes.value = codes
+
+  console.debug('[ImageUpload] Loaded ImageAspectEnum', {
+    enumName: IMAGE_ASPECT_ENUM_NAME,
+    optionsCount: Array.isArray(list) ? list.length : 0,
+    optionsSample: Array.isArray(list) ? list.slice(0, 10) : list,
+    ratioMapKeys: Object.keys(map)
+  })
+}
+
+const aspectRatioCss = computed(() => {
+  const ratio = props.aspectCode ? aspectRatioMap.value[props.aspectCode] : undefined
+  const r = ratio || '1:1'
+  const [w, h] = r.split(':').map((x) => Number(x))
+  if (!w || !h) return '1 / 1'
+  return `${w} / ${h}`
+})
+
+const ratioTip = computed(() => {
+  if (!props.aspectCode) return ''
+  const ratio = aspectRatioMap.value[props.aspectCode] || '1:1'
+  return `${ratio}`
+})
+
+onMounted(async () => {
+  await initAspectRatioMap()
+})
+
+watch(
+  () => props.aspectCode,
+  async (v) => {
+    if (v) {
+      await initAspectRatioMap()
+    }
+  },
+  { immediate: true }
+)
+
 watch(
   () => props.modelValue,
   (v) => {
@@ -73,10 +160,15 @@ watch(
 watch(
   () => props.previewUrl,
   (u) => {
-    if (u && !preview.value) {
+    if (u) {
       preview.value = u
+      return
     }
-  }
+    if (!props.modelValue) {
+      preview.value = ''
+    }
+  },
+  { immediate: true }
 )
 
 const beforeUpload = (file: File) => {
@@ -97,9 +189,12 @@ const beforeUpload = (file: File) => {
 const uploadRawFile = async (raw: File) => {
   if (!beforeUpload(raw)) return
 
+  const ok = await ensureAspectCodeValid()
+  if (!ok) return
+
   uploading.value = true
   try {
-    const res = await uploadImage(raw, props.usageType)
+    const res = await uploadImage(raw, props.aspectCode)
     const img = (res as any)?.data as ImageVO | undefined
     if (!img?.id) {
       throw new Error('上传失败')
@@ -151,8 +246,9 @@ const clear = () => {
 .image-upload { display: inline-flex; }
 .upload { display: inline-flex; }
 .box {
-  width: 120px;
+  width: auto;
   height: 120px;
+  aspect-ratio: v-bind(aspectRatioCss);
   border: 1px dashed #dcdfe6;
   border-radius: 8px;
   background: #fafafa;
@@ -185,6 +281,19 @@ const clear = () => {
   justify-content: center;
   font-size: 12px;
 }
+.ratio-tip {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 12px;
+  line-height: 16px;
+  z-index: 2;
+  pointer-events: none;
+}
 .clear {
   position: absolute;
   top: 6px;
@@ -195,7 +304,10 @@ const clear = () => {
   border: 0;
   background: rgba(0, 0, 0, 0.45);
   color: #fff;
-  line-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   text-align: center;
   cursor: pointer;
 }

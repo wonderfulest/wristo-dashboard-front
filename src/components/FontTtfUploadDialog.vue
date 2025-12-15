@@ -98,7 +98,8 @@ import type { DesignFontVO } from '@/types/font'
 import { uploadOnlyTtf } from '@/api/fonts'
 import { ElMessage } from 'element-plus'
 import opentype from 'opentype.js'
-import { listEnumOptions, type EnumOption } from '@/api/common'
+import type { EnumOption } from '@/api/common'
+import { DESIGN_FONT_TYPE_ENUM_NAME, useEnumStore } from '@/store/common'
 import FontPreview from './FontPreview.vue'
 
 interface ParsedFontInfo {
@@ -149,11 +150,12 @@ const selectedFontType = ref<string>('')
 // Blob URL for local preview via FontPreview component
 const objectUrl = ref<string>('')
 
+const enumStore = useEnumStore()
+
 onMounted(async () => {
   try {
     loadingFontTypes.value = true
-    const res: any = await listEnumOptions('DesignFontType')
-    const list: EnumOption[] = res?.data ?? res ?? []
+    const list: EnumOption[] = await enumStore.getEnumOptions(DESIGN_FONT_TYPE_ENUM_NAME)
     fontTypeOptions.value = Array.isArray(list) && list.length
       ? list
       : [{ name: 'ratio', value: 'ratio' }]

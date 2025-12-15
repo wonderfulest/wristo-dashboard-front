@@ -3,7 +3,7 @@ import type { ApiResponse } from '@/types/api'
 import type { Category, CategoryPageQuery, CategoryPageData, CreateCategoryDto } from '@/types/category'
 
 export const fetchCategoryPage = (params: CategoryPageQuery): Promise<ApiResponse<CategoryPageData>> => {
-  return instance.get('/admin/categories/page', { params })
+  return instance.get('/admin/categories/page?populate=image', { params })
 }
 
 export const createCategory = (data: CreateCategoryDto): Promise<ApiResponse<Category>> => {
@@ -11,7 +11,7 @@ export const createCategory = (data: CreateCategoryDto): Promise<ApiResponse<Cat
 }
 
 export const getCategory = (id: number): Promise<ApiResponse<Category>> => {
-  return instance.get(`/admin/categories/${id}`)
+  return instance.get(`/admin/categories/${id}?populate=image`)
 }
 
 export const updateCategory = (id: number, data: Partial<Category>): Promise<ApiResponse<Category>> => {

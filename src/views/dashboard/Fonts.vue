@@ -160,7 +160,7 @@ import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO } from '@/types/font'
 import { pageFonts, reviewFont, reviewFontsBatch, removeFont, toggleFontSystem, updateFontTtf, getFontBySlug } from '@/api/fonts'
 import type { EnumOption } from '@/api/common'
-import { listEnumOptions } from '@/api/common'
+import { DESIGN_FONT_TYPE_ENUM_NAME, useEnumStore } from '@/store/common'
 import FontEditDialog from '@/components/FontEditDialog.vue'
 import FontPreview from '@/components/FontPreview.vue'
 import FontTtfUploadDialog from '@/components/FontTtfUploadDialog.vue'
@@ -186,6 +186,8 @@ const searchType = ref<string | undefined>(undefined)
 const searchIsSystem = ref<number | undefined>(undefined)
 const sortOrder = ref('updated_at desc')
 const fontTypeOptions = ref<EnumOption[]>([])
+
+const enumStore = useEnumStore()
 
 const showUploadTtf = ref(false)
 
@@ -383,8 +385,7 @@ const onTtfFileChange = async (event: Event) => {
 
 const loadFontTypeOptions = async () => {
   try {
-    const resp = await listEnumOptions('DesignFontType') as unknown as ApiResponse<EnumOption[]>
-    fontTypeOptions.value = resp.data || []
+    fontTypeOptions.value = await enumStore.getEnumOptions(DESIGN_FONT_TYPE_ENUM_NAME)
   } catch (e) {
     // ignore load error, keep options empty
   }
