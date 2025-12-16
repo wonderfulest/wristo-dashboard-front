@@ -74,6 +74,15 @@ export const updateMerchantById = (id: number, dto: UserMchUpdateDTO): Promise<A
   return instance.post(`/admin/merchants/update/${id}`, dto)
 }
 
+export const setMerchantActive = (id: number, isActive: number): Promise<ApiResponse<MchUserVO>> => {
+  return instance.post('/admin/merchants/active', null, {
+    params: {
+      id,
+      isActive,
+    },
+  })
+}
+
 export const searchUsers = (
   keyword: string,
   limit?: number,

@@ -61,8 +61,14 @@
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
       <el-table-column prop="appCount" label="App数" width="90" />
       <el-table-column prop="totalDownloads" label="总下载" width="120" />
-      <el-table-column label="操作" width="160" fixed="right">
+      <el-table-column label="操作" width="340" fixed="right" >
         <template #default="{ row }">
+          <el-switch
+            :model-value="(row?.isActive ?? 0) === 1"
+            :loading="activeLoadingIds.has(Number(row?.id))"
+            @change="(val: any) => handleToggleActive(row, val)"
+            style="margin-right: 10px;"
+          />
           <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
           <el-button type="primary" link @click="openDesignerConfig(row)">查看默认配置</el-button>
         </template>
@@ -173,7 +179,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { getMerchantById, pageMerchantUsers, type MerchantUserPageQueryDTO, updateMerchantById } from '@/api/user'
+import { getMerchantById, pageMerchantUsers, setMerchantActive, type MerchantUserPageQueryDTO, updateMerchantById } from '@/api/user'
 import type { ImageVO } from '@/types/image'
 import type { MchUserVO, UserMchUpdateDTO } from '@/types/user'
 import ImageUpload from '@/components/common/ImageUpload.vue'
@@ -200,6 +206,34 @@ const roleFormatter = (row: any) => {
     return row.roles.join(', ')
   }
   return ''
+}
+
+const activeLoadingIds = ref(new Set<number>())
+
+const handleToggleActive = async (row: MchUserVO, val: boolean) => {
+  const id = Number((row as any)?.id)
+  if (!id) return
+
+  const next = val ? 1 : 0
+  const prev = (row as any)?.isActive
+
+  ;(row as any).isActive = next
+  activeLoadingIds.value.add(id)
+  try {
+    const res = await setMerchantActive(id, next)
+    if (res.code === 0) {
+      ElMessage.success('更新成功')
+      fetchUsers()
+    } else {
+      ;(row as any).isActive = prev
+      ElMessage.error(res.msg || '更新失败')
+    }
+  } catch {
+    ;(row as any).isActive = prev
+    ElMessage.error('更新失败')
+  } finally {
+    activeLoadingIds.value.delete(id)
+  }
 }
 
 // 编辑商家资料

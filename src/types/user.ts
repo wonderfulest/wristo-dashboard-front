@@ -78,4 +78,5 @@ export interface MchUserVO extends UserInfo {
   xUrl?: string | null
   appCount?: number | null
   totalDownloads?: number | null
+  isActive?: number | null
 }
