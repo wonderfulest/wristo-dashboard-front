@@ -23,8 +23,41 @@
 
     <el-table :data="users" style="width: 100%" :loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="username" label="用户名" width="180" />
-      <el-table-column prop="email" label="邮箱" width="260" />
+      <el-table-column prop="username" label="用户名" width="100" />
+      <el-table-column label="头像" width="80">
+        <template #default="{ row }">
+          <el-image
+            v-if="row?.avatar"
+            :src="row.avatar"
+            style="width: 40px; height: 40px; border-radius: 50%;"
+            fit="cover"
+            :preview-src-list="[row.avatar]"
+            preview-teleported
+          />
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="email" label="邮箱" width="160" />
+      <el-table-column label="Banner" width="120">
+        <template #default="{ row }">
+          <el-image
+            v-if="getImageUrl(row?.bannerImage)"
+            :src="getImageUrl(row?.bannerImage)"
+            style="width: 88px; height: 32px; border-radius: 4px;"
+            fit="cover"
+            :preview-src-list="[getImageUrl(row?.bannerImage)]"
+            preview-teleported
+          />
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Slogan" min-width="220">
+        <template #default="{ row }">
+          <div style="white-space: pre-wrap; word-break: break-word; line-height: 1.4; padding: 6px 0;">
+            {{ row?.slogan || '-' }}
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
       <el-table-column prop="appCount" label="App数" width="90" />
       <el-table-column prop="totalDownloads" label="总下载" width="120" />

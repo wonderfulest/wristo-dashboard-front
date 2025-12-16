@@ -63,11 +63,11 @@ export interface MerchantUserPageQueryDTO extends PageQueryDTO {
 export const pageMerchantUsers = (
   dto: MerchantUserPageQueryDTO
 ): Promise<ApiResponse<PageResponse<MchUserVO>>> => {
-  return instance.post('/admin/merchants/page', dto)
+  return instance.post('/admin/merchants/page?populate=*', dto)
 }
 
 export const getMerchantById = (id: number): Promise<ApiResponse<MchUserVO>> => {
-  return instance.get(`/admin/merchants/get/${id}`)
+  return instance.get(`/admin/merchants/get/${id}?populate=*`)
 }
 
 export const updateMerchantById = (id: number, dto: UserMchUpdateDTO): Promise<ApiResponse<MchUserVO>> => {
