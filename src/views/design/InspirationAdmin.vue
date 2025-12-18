@@ -216,7 +216,8 @@ const fetchPage = async () => {
       keyword: keyword.value,
       userId: userId.value,
       rating: rating.value,
-      isActive: isActive.value
+      isActive: isActive.value,
+      orderBy: 'id:desc'
     } as any)) as unknown as ApiResponse<PageResponse<InspirationVO>>
 
     rows.value = resp.data?.list || []
