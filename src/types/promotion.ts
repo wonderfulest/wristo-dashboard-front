@@ -1,6 +1,8 @@
 import type { PageQueryDTO } from './common'
 
-export interface PromotionCampaignVO {
+export type MarketingCampaignStatus = 'DRAFT' | 'RUNNING' | 'COMPLETED' | 'SCHEDULED' | 'CANCELLED'
+
+export interface CampaignVO {
   id: number
   name: string
   startTime?: string
@@ -10,14 +12,14 @@ export interface PromotionCampaignVO {
   segmentId?: number
   emailTemplateId?: number
   variables?: string
-  status?: string // 0草稿 1进行中 2结束
+  status?: MarketingCampaignStatus
   isActive?: number
   createdAt?: string
   updatedAt?: string
   version?: number
 }
 
-export interface PromotionCampaignCreateDTO {
+export interface CampaignCreateDTO {
   name: string
   startTime?: string
   endTime?: string
@@ -26,10 +28,10 @@ export interface PromotionCampaignCreateDTO {
   segmentId?: number
   emailTemplateId?: number
   variables?: string
-  status?: string
+  status?: MarketingCampaignStatus
 }
 
-export interface PromotionCampaignUpdateDTO {
+export interface CampaignUpdateDTO {
   name?: string
   startTime?: string
   endTime?: string
@@ -38,15 +40,15 @@ export interface PromotionCampaignUpdateDTO {
   segmentId?: number
   emailTemplateId?: number
   variables?: string
-  status?: string
+  status?: MarketingCampaignStatus
   isActive?: number
   isDeleted?: number
   version?: number
 }
 
-export interface PromotionCampaignPageQuery extends PageQueryDTO {
+export interface CampaignPageQuery extends PageQueryDTO {
   name?: string
-  status?: string
+  status?: MarketingCampaignStatus
   isActive?: number
 }
 

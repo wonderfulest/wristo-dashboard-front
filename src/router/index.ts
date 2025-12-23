@@ -110,6 +110,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/users/email-preferences',
+      name: 'EmailPreferences',
+      component: () => import('@/views/EmailPreferences.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/users/paddle-sync',
+      name: 'PaddleSync',
+      component: () => import('@/views/PaddleSync.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/users/role-management',
       name: 'RoleManagement',
       component: () => import('@/views/RoleManagement.vue'),

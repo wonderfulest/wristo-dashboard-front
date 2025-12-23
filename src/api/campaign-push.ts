@@ -39,3 +39,7 @@ export const deleteCampaignPushByCampaignId = (campaignId: number): Promise<ApiR
 export const triggerCampaignPushOne = (pushId: number): Promise<ApiResponse<void>> => {
   return instance.post(`${BASE}/trigger/one`, null, { params: { pushId } })
 }
+
+export const triggerCampaignPushAll = (campaignId: number, limit: number = -1): Promise<ApiResponse<void>> => {
+  return instance.post(`${BASE}/trigger/all`, null, { params: { campaignId, limit } })
+}

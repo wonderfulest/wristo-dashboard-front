@@ -99,6 +99,10 @@ export const searchUsers = (
   })
 }
 
+export const getSyncPaddleCustomersAfter = (): Promise<ApiResponse<string>> => {
+  return instance.get('/admin/users/sync/paddle/customers/after')
+}
+
 // 同步 Paddle Customers
 export interface SyncPaddleCustomersResult {
   after?: string

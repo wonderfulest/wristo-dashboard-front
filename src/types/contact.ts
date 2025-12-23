@@ -17,3 +17,76 @@ export interface EmailSendRecord {
 export interface EmailSendRecordPageParams extends PageQueryDTO {
   toEmail?: string
 }
+
+export interface EmailPreferencesVO {
+  id: number
+  email: string
+
+  systemNotifications?: number
+  purchaseReceipts?: number
+  licenseUpdates?: number
+
+  weeklyNewsletter?: number
+  exclusivePromotions?: number
+  bundleOffers?: number
+  creatorSpotlight?: number
+  personalizedRecommendations?: number
+
+  designUpdates?: number
+  platformAnnouncements?: number
+  surveysFeedback?: number
+
+  isUnsubscribed?: number
+  lastUpdatedBy?: string
+
+  createdAt?: string
+  updatedAt?: string
+  version?: number
+}
+
+export interface EmailPreferencesCreateDTO {
+  email: string
+
+  systemNotifications?: number
+  purchaseReceipts?: number
+  licenseUpdates?: number
+
+  weeklyNewsletter?: number
+  exclusivePromotions?: number
+  bundleOffers?: number
+  creatorSpotlight?: number
+  personalizedRecommendations?: number
+
+  designUpdates?: number
+  platformAnnouncements?: number
+  surveysFeedback?: number
+
+  isUnsubscribed?: number
+  lastUpdatedBy?: string
+}
+
+export interface EmailPreferencesUpdateDTO {
+  id?: number
+  email?: string
+
+  systemNotifications?: number
+  purchaseReceipts?: number
+  licenseUpdates?: number
+
+  weeklyNewsletter?: number
+  exclusivePromotions?: number
+  bundleOffers?: number
+  creatorSpotlight?: number
+  personalizedRecommendations?: number
+
+  designUpdates?: number
+  platformAnnouncements?: number
+  surveysFeedback?: number
+
+  isUnsubscribed?: number
+  lastUpdatedBy?: string
+}
+
+export interface EmailPreferencesPageQueryDTO extends PageQueryDTO {
+  email?: string
+}

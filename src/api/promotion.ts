@@ -1,19 +1,19 @@
 import instance from '@/config/axios'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import type { PromotionCampaignVO, PromotionCampaignCreateDTO, PromotionCampaignUpdateDTO, PromotionCampaignPageQuery } from '@/types/promotion'
+import type { CampaignVO, CampaignCreateDTO, CampaignUpdateDTO, CampaignPageQuery } from '@/types/promotion'
 
 // Align to AdminCampaignController
 const BASE = '/admin/campaign'
 
-export const createCampaign = (data: PromotionCampaignCreateDTO): Promise<ApiResponse<PromotionCampaignVO>> => {
+export const createCampaign = (data: CampaignCreateDTO): Promise<ApiResponse<CampaignVO>> => {
   return instance.post(`${BASE}/create`, data)
 }
 
-export const updateCampaign = (id: number, data: PromotionCampaignUpdateDTO): Promise<ApiResponse<PromotionCampaignVO>> => {
+export const updateCampaign = (id: number, data: CampaignUpdateDTO): Promise<ApiResponse<CampaignVO>> => {
   return instance.post(`${BASE}/update/${id}`, data)
 }
 
-export const getCampaign = (id: number): Promise<ApiResponse<PromotionCampaignVO>> => {
+export const getCampaign = (id: number): Promise<ApiResponse<CampaignVO>> => {
   return instance.get(`${BASE}/${id}`)
 }
 
@@ -21,11 +21,11 @@ export const deleteCampaign = (id: number): Promise<ApiResponse<void>> => {
   return instance.post(`${BASE}/delete/${id}`)
 }
 
-export const getCampaignPage = (params: PromotionCampaignPageQuery): Promise<ApiResponse<PageResponse<PromotionCampaignVO>>> => {
+export const getCampaignPage = (params: CampaignPageQuery): Promise<ApiResponse<PageResponse<CampaignVO>>> => {
   return instance.post(`${BASE}/page`, params)
 }
 
-export const getCampaignList = (): Promise<ApiResponse<PromotionCampaignVO[]>> => {
+export const getCampaignList = (): Promise<ApiResponse<CampaignVO[]>> => {
   return instance.get(`${BASE}/list`)
 }
 

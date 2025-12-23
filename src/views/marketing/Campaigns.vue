@@ -11,9 +11,7 @@
     <div class="search-filters">
       <el-input v-model="filters.name" placeholder="活动名称" clearable style="width: 200px; margin-right: 12px;" />
       <el-select v-model="filters.status" clearable placeholder="活动状态" style="width: 160px; margin-right: 12px;">
-        <el-option label="草稿" :value="0" />
-        <el-option label="进行中" :value="1" />
-        <el-option label="已结束" :value="2" />
+        <el-option v-for="it in campaignStatusOptions" :key="it.value" :label="it.label" :value="it.value" />
       </el-select>
       <el-select v-model="filters.isActive" clearable placeholder="启用状态" style="width: 160px; margin-right: 12px;">
         <el-option label="已启用" :value="1" />
@@ -51,11 +49,12 @@
       </el-table-column>
       <el-table-column label="操作" width="360" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
-          <el-button type="danger" link @click="confirmDelete(row)">删除</el-button>
-          <el-button type="primary" link @click="openItems(row)">配置应用</el-button>
-          <el-button type="success" link @click="handleGeneratePush(row)">生成推送记录</el-button>
+          <el-button v-if="row.status === 'DRAFT' || row.status === 'RUNNING'" type="primary" link @click="openEdit(row)">编辑</el-button>
+          <el-button v-if="row.status === 'DRAFT'" type="danger" link @click="confirmDelete(row)">删除</el-button>
+          <el-button v-if="row.status === 'DRAFT'" type="primary" link @click="openItems(row)">配置应用</el-button>
+          <el-button v-if="row.status === 'DRAFT'" type="success" link @click="handleGeneratePush(row)">生成推送记录</el-button>
           <el-button v-if="row.status === 'DRAFT'" type="warning" link @click="handleDeleteDraftPush(row)">删除草稿推送记录</el-button>
+          <el-button v-if="row.status === 'RUNNING'" type="warning" link @click="handleTriggerAll(row)">全部推送</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -141,10 +140,12 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getCampaignPage, createCampaign, updateCampaign, deleteCampaign, generatePush } from '@/api/promotion'
-import type { PromotionCampaignVO, PromotionCampaignCreateDTO, PromotionCampaignUpdateDTO, PromotionCampaignPageQuery } from '@/types/promotion'
+import type { CampaignVO, CampaignCreateDTO, CampaignUpdateDTO, CampaignPageQuery, MarketingCampaignStatus } from '@/types/promotion'
 import type { PromotionItemDTO, PromotionItemVO } from '@/types/promotion'
 import { listCampaignItems, replaceCampaignItems } from '@/api/promotion-item'
-import { deleteCampaignPushByCampaignId } from '@/api/campaign-push'
+import { deleteCampaignPushByCampaignId, triggerCampaignPushAll } from '@/api/campaign-push'
+import { listEnumOptions } from '@/api/common'
+import type { EnumOption } from '@/api/common'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import type { Product } from '@/types/product'
 import CampaignCreateDialog from '@/views/marketing/components/CampaignCreateDialog.vue'
@@ -152,43 +153,76 @@ import CampaignEditDialog from '@/views/marketing/components/CampaignEditDialog.
 
 const loading = ref(false)
 const total = ref(0)
-const list = ref<PromotionCampaignVO[]>([])
+const list = ref<CampaignVO[]>([])
 
-const query = reactive<PromotionCampaignPageQuery>({
+const query = reactive<CampaignPageQuery>({
   pageNum: 1,
   pageSize: 10,
   orderBy: 'createdAt desc'
 })
 
-const filters = reactive<{ name?: string; status?: number; isActive?: number }>({})
+const filters = reactive<{ name?: string; status?: MarketingCampaignStatus; isActive?: number }>({})
 
-const dialog = reactive<{ current?: PromotionCampaignVO | null }>({ current: null })
+const campaignStatusOptions = ref<Array<{ label: string; value: MarketingCampaignStatus }>>([])
+const campaignStatusTextMap = ref<Record<string, string>>({})
+
+const loadCampaignStatusOptions = async () => {
+  try {
+    const res = await listEnumOptions('com.wukong.face.modules.campaign.enums.MarketingCampaignStatus')
+    const list: any[] = (res as any)?.data?.data || (res as any)?.data || []
+    const opts: Array<{ label: string; value: MarketingCampaignStatus }> = []
+    const map: Record<string, string> = {}
+    for (const it of list || []) {
+      const name = String((it as any)?.name ?? '')
+      const label = String((it as any)?.props?.displayName ?? (it as EnumOption)?.description ?? name)
+
+      // 后端新版本应直接返回 name=DRAFT/RUNNING...
+      if (name) {
+        opts.push({ label: label || name, value: name as MarketingCampaignStatus })
+        map[name] = label || name
+        continue
+      }
+
+      // 兼容历史：value=0..4
+      const code = Number((it as any)?.props?.code ?? (it as EnumOption)?.value)
+      if (Number.isNaN(code)) continue
+      const fallback =
+        code === 0 ? 'DRAFT' : code === 1 ? 'RUNNING' : code === 2 ? 'COMPLETED' : code === 3 ? 'SCHEDULED' : code === 4 ? 'CANCELLED' : undefined
+      if (!fallback) continue
+      opts.push({ label: label || fallback, value: fallback })
+      map[fallback] = label || fallback
+    }
+    campaignStatusOptions.value = opts
+    campaignStatusTextMap.value = map
+  } catch {
+    campaignStatusOptions.value = []
+    campaignStatusTextMap.value = {}
+  }
+}
+
+const dialog = reactive<{ current?: CampaignVO | null }>({ current: null })
 const createVisible = ref(false)
 const editVisible = ref(false)
 
 // create/edit dialogs are handled by child components
 
-const statusType = (status?: number) => {
+const statusType = (status?: MarketingCampaignStatus) => {
   switch (status) {
-    case 1:
+    case 'RUNNING':
       return 'success'
-    case 2:
+    case 'COMPLETED':
       return 'info'
+    case 'SCHEDULED':
+      return 'primary'
+    case 'CANCELLED':
+      return 'danger'
     default:
       return 'warning'
   }
 }
-const statusText = (status?: number) => {
-  switch (status) {
-    case 0:
-      return '草稿'
-    case 1:
-      return '进行中'
-    case 2:
-      return '已结束'
-    default:
-      return '-'
-  }
+const statusText = (status?: MarketingCampaignStatus) => {
+  if (!status) return '-'
+  return campaignStatusTextMap.value[status] || status
 }
 
 const formatDateTime = (v?: string) => (v ? new Date(v).toLocaleString('zh-CN') : '-')
@@ -196,7 +230,7 @@ const formatDateTime = (v?: string) => (v ? new Date(v).toLocaleString('zh-CN') 
 const fetchPage = async () => {
   loading.value = true
   try {
-    const params: PromotionCampaignPageQuery = {
+    const params: CampaignPageQuery = {
       ...query,
       name: filters.name || undefined,
       status: filters.status,
@@ -239,12 +273,12 @@ const openCreate = () => {
   createVisible.value = true
 }
 
-const openEdit = (row: PromotionCampaignVO) => {
+const openEdit = (row: CampaignVO) => {
   dialog.current = row
   editVisible.value = true
 }
 
-const onCreateSubmit = async (payload: PromotionCampaignCreateDTO) => {
+const onCreateSubmit = async (payload: CampaignCreateDTO) => {
   try {
     await createCampaign(payload)
     ElMessage.success('创建成功')
@@ -254,7 +288,7 @@ const onCreateSubmit = async (payload: PromotionCampaignCreateDTO) => {
   }
 }
 
-const onEditSubmit = async (payload: PromotionCampaignUpdateDTO) => {
+const onEditSubmit = async (payload: CampaignUpdateDTO) => {
   if (!dialog.current) return
   try {
     await updateCampaign(dialog.current.id as number, payload)
@@ -265,7 +299,7 @@ const onEditSubmit = async (payload: PromotionCampaignUpdateDTO) => {
   }
 }
 
-const confirmDelete = async (row: PromotionCampaignVO) => {
+const confirmDelete = async (row: CampaignVO) => {
   try {
     await ElMessageBox.confirm(`确认删除活动「${row.name}」吗？`, '删除确认', { type: 'warning' })
   } catch {
@@ -280,7 +314,7 @@ const confirmDelete = async (row: PromotionCampaignVO) => {
   }
 }
 
-const toggleActive = async (row: PromotionCampaignVO, val: boolean) => {
+const toggleActive = async (row: CampaignVO, val: boolean) => {
   try {
     await updateCampaign(row.id as number, { isActive: val ? 1 : 0 })
     ElMessage.success('状态已更新')
@@ -290,12 +324,13 @@ const toggleActive = async (row: PromotionCampaignVO, val: boolean) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await loadCampaignStatusOptions()
   fetchPage()
 })
 
 // 活动应用配置逻辑
-const itemsDialog = reactive<{ visible: boolean; campaign: PromotionCampaignVO | null; items: PromotionItemDTO[]; loading: boolean; saving: boolean }>({
+const itemsDialog = reactive<{ visible: boolean; campaign: CampaignVO | null; items: PromotionItemDTO[]; loading: boolean; saving: boolean }>({
   visible: false,
   campaign: null,
   items: [],
@@ -303,7 +338,7 @@ const itemsDialog = reactive<{ visible: boolean; campaign: PromotionCampaignVO |
   saving: false
 })
 
-const openItems = async (row: PromotionCampaignVO) => {
+const openItems = async (row: CampaignVO) => {
   itemsDialog.campaign = row
   itemsDialog.visible = true
   await loadItems()
@@ -366,7 +401,7 @@ const onProductSelected = (row: PromotionItemDTO, p: Product) => {
   row.clickUrl = p.garminStoreUrl
 }
 
-const handleGeneratePush = async (row: PromotionCampaignVO) => {
+const handleGeneratePush = async (row: CampaignVO) => {
   try {
     await ElMessageBox.confirm(`确认为活动「${row.name}」生成推送记录吗？`, '生成确认', { type: 'info' })
   } catch {
@@ -380,8 +415,8 @@ const handleGeneratePush = async (row: PromotionCampaignVO) => {
   }
 }
 
-const handleDeleteDraftPush = async (row: PromotionCampaignVO) => {
-  if (row.status != 'DRAFT') {
+const handleDeleteDraftPush = async (row: CampaignVO) => {
+  if (row.status !== 'DRAFT') {
     ElMessage.warning('仅允许删除草稿状态的营销活动推送记录')
     return
   }
@@ -399,6 +434,43 @@ const handleDeleteDraftPush = async (row: PromotionCampaignVO) => {
     ElMessage.success('草稿推送记录已删除')
   } catch (e: any) {
     ElMessage.error(e?.msg || '删除草稿推送记录失败')
+  }
+}
+
+const handleTriggerAll = async (row: CampaignVO) => {
+  if (row.status !== 'RUNNING') {
+    ElMessage.warning('仅允许在进行中状态触发全部推送')
+    return
+  }
+  let limit = -1
+  try {
+    const { value } = await ElMessageBox.prompt(
+      '请输入推送数量限制，-1 表示不限制',
+      '全部推送',
+      {
+        type: 'warning',
+        confirmButtonText: '确认触发',
+        cancelButtonText: '取消',
+        inputValue: String(limit),
+        inputPattern: /^-?\d+$/,
+        inputErrorMessage: '请输入整数（-1 表示不限制）'
+      }
+    )
+    limit = Number(value)
+  } catch {
+    return
+  }
+
+  if (!Number.isInteger(limit)) {
+    ElMessage.error('请输入整数（-1 表示不限制）')
+    return
+  }
+
+  try {
+    await triggerCampaignPushAll(row.id as number, limit)
+    ElMessage.success('已触发全部推送')
+  } catch (e: any) {
+    ElMessage.error(e?.msg || '触发全部推送失败')
   }
 }
 </script>

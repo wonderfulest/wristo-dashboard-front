@@ -33,9 +33,7 @@
       </el-form-item>
       <el-form-item label="状态">
         <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%">
-          <el-option label="草稿" :value="0" />
-          <el-option label="进行中" :value="1" />
-          <el-option label="已结束" :value="2" />
+          <el-option v-for="it in campaignStatusOptions" :key="it.value" :label="it.label" :value="it.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="模板参数">
@@ -54,22 +52,52 @@
 <script setup lang="ts">
 import { ref, watch, reactive } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
-import type { PromotionCampaignCreateDTO } from '@/types/promotion'
+import type { CampaignCreateDTO, MarketingCampaignStatus } from '@/types/promotion'
 import { listSegments, type SegmentVO } from '@/api/segment'
 import { fetchEmailTemplatePage } from '@/api/email-template'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import JsonEditor from '@/components/common/JsonEditor.vue'
+import { listEnumOptions } from '@/api/common'
+import type { EnumOption } from '@/api/common'
 
 const props = defineProps<{ visible: boolean }>()
-const emit = defineEmits<{ (e: 'update:visible', v: boolean): void; (e: 'submit', v: PromotionCampaignCreateDTO): void; (e: 'closed'): void }>()
+const emit = defineEmits<{ (e: 'update:visible', v: boolean): void; (e: 'submit', v: CampaignCreateDTO): void; (e: 'closed'): void }>()
 
 const visibleInner = ref(false)
 watch(() => props.visible, v => (visibleInner.value = v), { immediate: true })
 watch(visibleInner, v => emit('update:visible', v))
 
 const formRef = ref<FormInstance>()
-const form = reactive<PromotionCampaignCreateDTO>({ name: '', startTime: undefined, endTime: undefined, description: '', creator: '', status: 0, segmentId: undefined, emailTemplateId: undefined, variables: undefined })
+const form = reactive<CampaignCreateDTO>({ name: '', startTime: undefined, endTime: undefined, description: '', creator: '', status: 'DRAFT', segmentId: undefined, emailTemplateId: undefined, variables: undefined })
 const rules: FormRules = { name: [{ required: true, message: '请输入活动名称', trigger: 'blur' }, { min: 2, message: '至少2个字符', trigger: 'blur' }] }
+
+const campaignStatusOptions = ref<Array<{ label: string; value: MarketingCampaignStatus }>>([])
+const loadCampaignStatusOptions = async () => {
+  try {
+    const res = await listEnumOptions('com.wukong.face.modules.campaign.enums.MarketingCampaignStatus')
+    const list: any[] = (res as any)?.data?.data || (res as any)?.data || []
+    const opts: Array<{ label: string; value: MarketingCampaignStatus }> = []
+    for (const it of list || []) {
+      const name = String((it as any)?.name ?? '')
+      const label = String((it as any)?.props?.displayName ?? (it as EnumOption)?.description ?? name)
+
+      if (name) {
+        opts.push({ label: label || name, value: name as MarketingCampaignStatus })
+        continue
+      }
+
+      const code = Number((it as any)?.props?.code ?? (it as EnumOption)?.value)
+      if (Number.isNaN(code)) continue
+      const fallback =
+        code === 0 ? 'DRAFT' : code === 1 ? 'RUNNING' : code === 2 ? 'COMPLETED' : code === 3 ? 'SCHEDULED' : code === 4 ? 'CANCELLED' : undefined
+      if (!fallback) continue
+      opts.push({ label: label || fallback, value: fallback })
+    }
+    campaignStatusOptions.value = opts
+  } catch {
+    campaignStatusOptions.value = []
+  }
+}
 
 const dateRange = ref<[string, string] | undefined>()
 watch(dateRange, (val) => {
@@ -117,4 +145,5 @@ const submit = async () => {
 
 loadSegments()
 loadEmailTemplates()
+loadCampaignStatusOptions()
 </script>
