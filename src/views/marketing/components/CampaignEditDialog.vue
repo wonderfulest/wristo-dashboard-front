@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visibleInner" title="编辑活动" width="640px" @closed="$emit('closed')">
+  <el-dialog v-model="visibleInner" title="编辑活动" width="960px" @closed="$emit('closed')">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="活动名称" prop="name">
         <el-input v-model="form.name" placeholder="请输入活动名称" />
@@ -38,6 +38,9 @@
           <el-option label="已结束" :value="2" />
         </el-select>
       </el-form-item>
+      <el-form-item label="模板参数">
+        <JsonEditor v-model="form.variables" label="模板参数 (JSON)" placeholder='请输入 JSON 格式参数，如: {"userName": "张三"}' :rows="16" />
+      </el-form-item>
     </el-form>
     <template #footer>
       <span class="dialog-footer">
@@ -55,6 +58,7 @@ import type { PromotionCampaignUpdateDTO, PromotionCampaignVO } from '@/types/pr
 import { listSegments, type SegmentVO } from '@/api/segment'
 import { fetchEmailTemplatePage } from '@/api/email-template'
 import type { ApiResponse, PageResponse } from '@/types/api'
+import JsonEditor from '@/components/common/JsonEditor.vue'
 
 const props = defineProps<{ visible: boolean; initial?: PromotionCampaignVO | null }>()
 const emit = defineEmits<{ (e: 'update:visible', v: boolean): void; (e: 'submit', v: PromotionCampaignUpdateDTO): void; (e: 'closed'): void }>()
@@ -64,7 +68,7 @@ watch(() => props.visible, v => (visibleInner.value = v), { immediate: true })
 watch(visibleInner, v => emit('update:visible', v))
 
 const formRef = ref<FormInstance>()
-const form = reactive<PromotionCampaignUpdateDTO>({ name: '', startTime: undefined, endTime: undefined, description: '', creator: '', status: 0, segmentId: undefined, emailTemplateId: undefined })
+const form = reactive<PromotionCampaignUpdateDTO>({ name: '', startTime: undefined, endTime: undefined, description: '', creator: '', status: 0, segmentId: undefined, emailTemplateId: undefined, variables: undefined })
 const rules: FormRules = { name: [{ required: true, message: '请输入活动名称', trigger: 'blur' }, { min: 2, message: '至少2个字符', trigger: 'blur' }] }
 
 const dateRange = ref<[string, string] | undefined>()
@@ -86,6 +90,7 @@ watch(() => props.initial, (it) => {
   form.status = it.status
   form.segmentId = (it as any).segmentId
   form.emailTemplateId = (it as any).emailTemplateId
+  form.variables = it.variables
   if (it.startTime && it.endTime) {
     dateRange.value = [it.startTime as unknown as string, it.endTime as unknown as string]
   } else {

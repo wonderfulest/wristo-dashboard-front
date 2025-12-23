@@ -228,6 +228,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/marketing/push-records',
+      name: 'CampaignPushRecords',
+      component: () => import('@/views/marketing/CampaignPushRecords.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/marketing',
       redirect: '/marketing/campaigns'
     },

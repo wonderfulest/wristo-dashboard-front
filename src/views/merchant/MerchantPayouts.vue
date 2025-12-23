@@ -8,12 +8,7 @@
     </div>
 
     <div class="filters">
-      <el-input
-        v-model="query.username"
-        clearable
-        placeholder="按用户名搜索"
-        style="width: 220px; margin-right: 12px;"
-      />
+      <UserSelect v-model="searchUserId" placeholder="按用户搜索" @change="handleUserChange" />
       <el-select v-model="sortField" placeholder="排序字段" style="width: 200px; margin-right: 12px;">
         <el-option label="累计收入($)" value="total_income_to_date" />
         <el-option label="当前可提现($)" value="current_balance" />
@@ -111,6 +106,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { pagePayouts, handlePayoutPaid, type PayoutPageQueryDTO } from '@/api/payout'
 import type { PayoutVO } from '@/types/payout'
+import UserSelect from '@/components/users/UserSelect.vue'
 
 const loading = ref(false)
 const rows = ref<PayoutVO[]>([])
@@ -120,7 +116,16 @@ const query = ref<PayoutPageQueryDTO>({
   pageNum: 1,
   pageSize: 20,
   orderBy: 'total_income_to_date desc',
+  userId: undefined,
 })
+
+const searchUserId = ref<number | undefined>(undefined)
+
+const handleUserChange = (val?: number) => {
+  query.value.userId = val
+  query.value.pageNum = 1
+  handleSearch()
+}
 
 const sortField = ref<'total_income_to_date' | 'current_balance'>('total_income_to_date')
 const sortOrder = ref<'asc' | 'desc'>('desc')
@@ -192,10 +197,12 @@ const handleSearch = () => {
 const handleReset = () => {
   sortField.value = 'total_income_to_date'
   sortOrder.value = 'desc'
+  searchUserId.value = undefined
   query.value = {
     pageNum: 1,
     pageSize: query.value.pageSize,
     orderBy: 'total_income_to_date desc',
+    userId: undefined,
     username: undefined,
   }
   fetchData()

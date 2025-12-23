@@ -104,6 +104,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'segments', title: '用户分群', path: '/marketing/segments' },
       { key: 'email-templates', title: '邮件模板', path: '/marketing/email-templates' },
       { key: 'promotion-campaigns', title: '营销活动', path: '/marketing/campaigns' },
+      { key: 'push-records', title: '推送记录', path: '/marketing/push-records' },
     ],
   },
   {

@@ -28,3 +28,7 @@ export const getCampaignPage = (params: PromotionCampaignPageQuery): Promise<Api
 export const getCampaignList = (): Promise<ApiResponse<PromotionCampaignVO[]>> => {
   return instance.get(`${BASE}/list`)
 }
+
+export const generatePush = (id: number): Promise<ApiResponse<void>> => {
+  return instance.post(`${BASE}/generate-push`, null, { params: { id } })
+}

@@ -5,8 +5,7 @@
       <el-button type="success" @click="handleAdd">新增用户</el-button>
     </div>
     <div class="filters">
-      <el-input v-model="query.username" placeholder="按用户名搜索" clearable style="width: 220px; margin-right: 12px;" />
-      <el-input v-model="query.email" placeholder="按邮箱搜索" clearable style="width: 260px; margin-right: 12px;" />
+      <UserSelect v-model="searchUserId" placeholder="按用户搜索" @change="handleUserChange" />
       <el-select v-model="query.roleId" clearable filterable placeholder="按角色筛选" style="width: 220px; margin-right: 12px;">
         <el-option v-for="role in roleOptions" :key="role.id" :label="role.roleName" :value="role.id" />
       </el-select>
@@ -77,6 +76,7 @@ import { getRoleList } from '@/api/role'
 import type { UserInfo, RoleInfo } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
 import type { UserPageQueryDTO } from '@/api/user'
+import UserSelect from '@/components/users/UserSelect.vue'
 
 const users = ref<UserInfo[]>([])
 const loading = ref(false)
@@ -92,11 +92,20 @@ const defaultSort = ref<{ prop: string; order: 'ascending' | 'descending' }>({ p
 const query = ref<UserPageQueryDTO>({
   pageNum: 1,
   pageSize: 10,
+  userId: undefined,
   username: undefined,
   roleId: undefined,
   email: undefined,
   orderBy: 'id desc',
 })
+
+const searchUserId = ref<number | undefined>(undefined)
+
+const handleUserChange = (val?: number) => {
+  query.value.userId = val
+  query.value.pageNum = 1
+  fetchUsers()
+}
 
 const roleFormatter = (row: any) => {
   if (Array.isArray(row.roles)) {
@@ -142,7 +151,8 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  query.value = { pageNum: 1, pageSize: query.value.pageSize, username: undefined, roleId: undefined, email: undefined }
+  searchUserId.value = undefined
+  query.value = { pageNum: 1, pageSize: query.value.pageSize, userId: undefined, username: undefined, roleId: undefined, email: undefined }
   fetchUsers()
 }
 

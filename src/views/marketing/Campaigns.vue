@@ -49,11 +49,13 @@
           <el-switch :model-value="row.isActive === 1" @change="(val:any)=>toggleActive(row, val)" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="220" fixed="right">
+      <el-table-column label="操作" width="360" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
           <el-button type="danger" link @click="confirmDelete(row)">删除</el-button>
           <el-button type="primary" link @click="openItems(row)">配置应用</el-button>
+          <el-button type="success" link @click="handleGeneratePush(row)">生成推送记录</el-button>
+          <el-button v-if="row.status === 'DRAFT'" type="warning" link @click="handleDeleteDraftPush(row)">删除草稿推送记录</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -75,7 +77,7 @@
     <CampaignEditDialog v-model:visible="editVisible" :initial="dialog.current || null" @submit="onEditSubmit" />
 
     <!-- 活动应用配置弹窗 -->
-    <el-dialog v-model="itemsDialog.visible" :title="`活动应用配置 - #${itemsDialog.campaign?.id} ${itemsDialog.campaign?.name || ''}`" width="900px">
+    <el-dialog v-model="itemsDialog.visible" :title="`活动应用配置 - #${itemsDialog.campaign?.id} ${itemsDialog.campaign?.name || ''}`" width="1200px">
       <div style="margin-bottom: 12px; display: flex; gap: 8px;">
         <el-button type="primary" @click="addItem">新增一行</el-button>
         <el-button @click="reloadItems" :loading="itemsDialog.loading">刷新</el-button>
@@ -138,10 +140,11 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getCampaignPage, createCampaign, updateCampaign, deleteCampaign } from '@/api/promotion'
+import { getCampaignPage, createCampaign, updateCampaign, deleteCampaign, generatePush } from '@/api/promotion'
 import type { PromotionCampaignVO, PromotionCampaignCreateDTO, PromotionCampaignUpdateDTO, PromotionCampaignPageQuery } from '@/types/promotion'
 import type { PromotionItemDTO, PromotionItemVO } from '@/types/promotion'
 import { listCampaignItems, replaceCampaignItems } from '@/api/promotion-item'
+import { deleteCampaignPushByCampaignId } from '@/api/campaign-push'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import type { Product } from '@/types/product'
 import CampaignCreateDialog from '@/views/marketing/components/CampaignCreateDialog.vue'
@@ -361,6 +364,42 @@ const onProductSelected = (row: PromotionItemDTO, p: Product) => {
   row.title = p.name
   row.imageUrl = p.garminImageUrl
   row.clickUrl = p.garminStoreUrl
+}
+
+const handleGeneratePush = async (row: PromotionCampaignVO) => {
+  try {
+    await ElMessageBox.confirm(`确认为活动「${row.name}」生成推送记录吗？`, '生成确认', { type: 'info' })
+  } catch {
+    return
+  }
+  try {
+    await generatePush(row.id as number)
+    ElMessage.success('推送记录生成成功')
+  } catch (e: any) {
+    ElMessage.error(e?.msg || '生成推送记录失败')
+  }
+}
+
+const handleDeleteDraftPush = async (row: PromotionCampaignVO) => {
+  if (row.status != 'DRAFT') {
+    ElMessage.warning('仅允许删除草稿状态的营销活动推送记录')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确认【物理删除】活动「${row.name}」的草稿推送记录吗？该操作不可恢复。`,
+      '删除草稿推送记录',
+      { type: 'warning', confirmButtonText: '确认删除', cancelButtonText: '取消' }
+    )
+  } catch {
+    return
+  }
+  try {
+    await deleteCampaignPushByCampaignId(row.id as number)
+    ElMessage.success('草稿推送记录已删除')
+  } catch (e: any) {
+    ElMessage.error(e?.msg || '删除草稿推送记录失败')
+  }
 }
 </script>
 

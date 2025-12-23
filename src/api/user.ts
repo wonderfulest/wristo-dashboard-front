@@ -45,6 +45,7 @@ export const deleteUser = (id: number): Promise<ApiResponse<null>> => {
 
 // 分页查询用户
 export interface UserPageQueryDTO extends PageQueryDTO {
+  userId?: number
   username?: string
   roleId?: number
   email?: string
@@ -56,6 +57,7 @@ export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageRespon
 
 // 商家用户分页（固定按商家角色筛选）
 export interface MerchantUserPageQueryDTO extends PageQueryDTO {
+  userId?: number
   username?: string
   email?: string
 }

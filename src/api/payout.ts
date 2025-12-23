@@ -12,6 +12,7 @@ export interface PayoutPageQueryDTO {
   pageNum: number
   pageSize: number
   orderBy?: string
+  userId?: number
   // 支持用户名搜索（后端可按需扩展）
   username?: string
 }

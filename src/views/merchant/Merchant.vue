@@ -5,18 +5,7 @@
     </div>
 
     <div class="filters">
-      <el-input
-        v-model="query.username"
-        placeholder="按用户名搜索"
-        clearable
-        style="width: 220px; margin-right: 12px;"
-      />
-      <el-input
-        v-model="query.email"
-        placeholder="按邮箱搜索"
-        clearable
-        style="width: 260px; margin-right: 12px;"
-      />
+      <UserSelect v-model="searchUserId" placeholder="按商家用户搜索" @change="handleUserChange" />
       <el-button type="primary" @click="handleSearch">查询</el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
@@ -185,6 +174,7 @@ import type { MchUserVO, UserMchUpdateDTO } from '@/types/user'
 import ImageUpload from '@/components/common/ImageUpload.vue'
 import { getDesignerDefaultConfigByUser } from '@/api/designer-default-config'
 import type { DesignerDefaultConfigVO } from '@/types/designer-default-config'
+import UserSelect from '@/components/users/UserSelect.vue'
 
 const users = ref<MchUserVO[]>([])
 const loading = ref(false)
@@ -194,9 +184,18 @@ const query = ref<MerchantUserPageQueryDTO>({
   pageNum: 1,
   pageSize: 20,
   orderBy: 'id desc',
+  userId: undefined,
   username: undefined,
   email: undefined,
 })
+
+const searchUserId = ref<number | undefined>(undefined)
+
+const handleUserChange = (val?: number) => {
+  query.value.userId = val
+  query.value.pageNum = 1
+  fetchUsers()
+}
 
 const roleFormatter = (row: any) => {
   if (Array.isArray(row.roles)) {
@@ -372,7 +371,8 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  query.value = { pageNum: 1, pageSize: query.value.pageSize, orderBy: 'id desc', username: undefined, email: undefined }
+  searchUserId.value = undefined
+  query.value = { pageNum: 1, pageSize: query.value.pageSize, orderBy: 'id desc', userId: undefined, username: undefined, email: undefined }
   fetchUsers()
 }
 
