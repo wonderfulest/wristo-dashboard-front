@@ -4,6 +4,7 @@
       v-if="src"
       :src="src"
       :preview-src-list="[src]"
+      :preview-teleported="true"
       fit="cover"
       :style="imgStyle"
     />
@@ -57,6 +58,7 @@ const imgStyle = computed(() => ({
 .image-preview {
   display: inline-flex;
 }
+
 .empty {
   display: inline-flex;
   align-items: center;

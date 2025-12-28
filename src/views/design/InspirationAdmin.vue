@@ -37,15 +37,9 @@
 
     <el-table :data="rows" v-loading="loading" border style="width: 100%">
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column label="预览" width="120">
+      <el-table-column label="预览" width="140">
         <template #default="{ row }">
-          <el-image
-            v-if="row.previewImage?.url"
-            :src="row.previewImage.url"
-            fit="cover"
-            style="width: 80px; height: 80px"
-          />
-          <span v-else>-</span>
+          <ImagePreview :image="row.previewImage" :height="80" />
         </template>
       </el-table-column>
       <el-table-column prop="title" label="标题" min-width="220" />
@@ -158,6 +152,7 @@ import type { InspirationVO, InspirationCreateDTO, InspirationUpdateDTO } from '
 import { pageInspirations, createInspiration, updateInspiration, removeInspiration, getInspiration } from '@/api/inspiration'
 import ImageUpload from '@/components/common/ImageUpload.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
+import ImagePreview from '@/components/common/ImagePreview.vue'
 
 const rows = ref<InspirationVO[]>([])
 const loading = ref(false)
