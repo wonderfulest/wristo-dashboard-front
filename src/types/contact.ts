@@ -90,3 +90,32 @@ export interface EmailPreferencesUpdateDTO {
 export interface EmailPreferencesPageQueryDTO extends PageQueryDTO {
   email?: string
 }
+
+export interface ContactUsQueryDTO extends PageQueryDTO {
+  status?: number
+  email?: string
+}
+
+export interface ContactUsVO {
+  id: number
+  uuid: string
+  rootId: number | null
+  fatherId: number | null
+  userId: number | null
+  name: string | null
+  email: string
+  phone: string | null
+  subject: string
+  content: string
+  status: number | null
+  isDeleted: number | null
+  createdAt: string
+  updatedAt: string | null
+  version: number | null
+  children?: ContactUsVO[]
+}
+
+export interface ContactUsReplyDTO {
+  subject: string
+  content: string
+}

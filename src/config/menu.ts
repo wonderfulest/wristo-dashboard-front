@@ -16,10 +16,11 @@ export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/website', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/data-type-options', '/tickets'],
+    basePaths: ['/dashboard', '/products', '/website', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/data-type-options', '/tickets', '/contact-us'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'tickets', title: '工单管理', path: '/tickets' },
+      { key: 'contact-us', title: '用户反馈', path: '/contact-us' },
        {
         key: 'packaging',
         title: '打包',

@@ -4,6 +4,14 @@ import { useUserStore } from '@/store/user'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+
+    // Contact Us
+    {
+      path: '/contact-us',
+      name: 'ContactUs',
+      component: () => import('@/views/contact/ContactUs.vue'),
+      meta: { requiresAuth: true }
+    },
     // Blog module
     {
       path: '/blog/posts',
