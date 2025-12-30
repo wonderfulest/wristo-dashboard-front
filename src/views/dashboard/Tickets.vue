@@ -63,45 +63,7 @@
 
         <el-table-column label="Product" min-width="320">
           <template #default="{ row }">
-            <div class="product-info">
-              <el-image
-                v-if="row.product?.garminImageUrl || row.product?.heroImages?.[0]?.url"
-                :src="row.product?.garminImageUrl || row.product?.heroImages?.[0]?.url"
-                :preview-src-list="[row.product?.garminImageUrl || row.product?.heroImages?.[0]?.url].filter(Boolean) as string[]"
-                :z-index="5000"
-                :preview-teleported="true"
-                fit="cover"
-                class="product-thumb"
-                style="width: 44px; height: 44px"
-              />
-              <div class="product-meta">
-                <div class="product-name">
-                  <a
-                    v-if="row.product?.garminStoreUrl"
-                    :href="row.product?.garminStoreUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >{{ row.product?.name }}</a>
-                  <span v-else>{{ row.product?.name || '-' }}</span>
-                  <el-tooltip content="Edit Product" placement="top">
-                    <el-button
-                      class="edit-icon-btn"
-                      :disabled="!row.product?.designId"
-                      link
-                      circle
-                      size="small"
-                      @click.stop="navigateToDesign(row)"
-                    >
-                      <el-icon><Edit /></el-icon>
-                    </el-button>
-                  </el-tooltip>
-                </div>
-                <div class="product-details">
-                  <span>appId: {{ row.product?.appId ?? '-' }}</span>
-                  <span>Design ID: {{ row.product?.designId ?? '-' }}</span>
-                </div>
-              </div>
-            </div>
+            <AppProductInfo :product="row.product as any" :thumb-size="44" />
           </template>
         </el-table-column>
         <el-table-column label="优先级" width="120">
@@ -255,8 +217,8 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { fetchTicketPage, getTicketDetail, fetchTicketComments, fetchTicketHistory, closeTicket, updateTicketStatus, addTicketComment } from '@/api/ticket'
 import { useUserStore } from '@/store/user'
-import { Edit } from '@element-plus/icons-vue'
 import type { TicketVO, TicketQueryDTO, PageResponse, TicketComment, TicketHistory } from '@/types/api'
+import AppProductInfo from '@/components/common/AppProductInfo.vue'
 
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -343,16 +305,6 @@ const parseTags = (tags?: string | null): string[] => {
     // ignore JSON parse error
   }
   return s.split(',').map(t => t.trim()).filter(Boolean)
-}
-
-// navigate to product design edit by designId
-const navigateToDesign = (row: TicketVO) => {
-  const did = (row?.product as any)?.designId
-  if (!did) {
-    ElMessage.info('无可编辑的 Design ID')
-    return
-  }
-  window.open(`http://studio.wristo.io/design?id=${encodeURIComponent(String(did))}`,'_blank')
 }
 
 const search = async (pageNum = 1) => {

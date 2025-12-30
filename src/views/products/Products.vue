@@ -48,33 +48,7 @@
       <el-table-column prop="appId" label="ID" width="80" />
       <el-table-column label="商品信息" min-width="320">
         <template #default="{ row }">
-          <div class="product-info">
-            <el-image
-              v-if="row.garminImageUrl || row.heroFile?.url"
-              :src="row.garminImageUrl || row.heroFile?.url"
-              :preview-src-list="[row.garminImageUrl || row.heroFile?.url]"
-              :z-index="5000"
-              :preview-teleported="true"
-              fit="cover"
-              class="product-thumb"
-              style="width: 56px; height: 56px"
-            />
-            <div class="product-meta">
-              <div class="product-name">
-                <a
-                  v-if="row.garminStoreUrl"
-                  :href="row.garminStoreUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >{{ row.name }}</a>
-                <span v-else>{{ row.name }}</span>
-              </div>
-              <div class="product-details">
-                <span>appId: {{ row.appId }}</span>
-                <span>设计ID: {{ row.designId }}</span>
-              </div>
-            </div>
-          </div>
+          <AppProductInfo :product="row" :thumb-size="56" />
         </template>
       </el-table-column>
       <el-table-column label="作者" width="80">
@@ -342,7 +316,8 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Plus, Edit } from '@element-plus/icons-vue'
+import { Edit } from '@element-plus/icons-vue'
+import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import { formatDate } from '@/utils/date'
 import { fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'

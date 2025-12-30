@@ -12,6 +12,18 @@ const router = createRouter({
       component: () => import('@/views/contact/ContactUs.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/themes/rules',
+      name: 'ThemeRules',
+      component: () => import('@/views/themes/ThemeRules.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/themes/configs',
+      name: 'ThemeConfigs',
+      component: () => import('@/views/themes/ThemeConfigs.vue'),
+      meta: { requiresAuth: true }
+    },
     // Blog module
     {
       path: '/blog/posts',

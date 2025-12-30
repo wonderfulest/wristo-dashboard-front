@@ -39,39 +39,7 @@
       <el-table-column prop="appId" label="ID" width="80" />
       <el-table-column label="应用" min-width="300">
         <template #default="{ row }">
-          <div class="product-info">
-            <el-image
-              v-if="row.garminImageUrl || row.heroFile?.url"
-              :src="row.garminImageUrl || row.heroFile?.url"
-              :z-index="5000"
-              :preview-src-list="[row.garminImageUrl || row.heroFile?.url]"
-              :preview-teleported="true"
-              fit="cover"
-              class="product-thumb"
-              style="width: 48px; height: 48px"
-            />
-            <div class="product-meta">
-              <div class="product-name">
-                <a v-if="row.garminStoreUrl" :href="row.garminStoreUrl" target="_blank" rel="noopener noreferrer">{{ row.name }}</a>
-                <span v-else>{{ row.name }}</span>
-                <a
-                  v-if="row.designId"
-                  :href="'https://studio.wristo.io/design?id=' + row.designId"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style="margin-left: 8px"
-                >
-                  <el-button link type="primary" size="small">
-                    <el-icon><EditPen /></el-icon>
-                  </el-button>
-                </a>
-              </div>
-              <div class="product-details">
-                <span>appId: {{ row.appId }}</span>
-                <span>设计ID: {{ row.designId }}</span>
-              </div>
-            </div>
-          </div>
+          <AppProductInfo :product="row" :thumb-size="48" />
         </template>
       </el-table-column>
       <el-table-column label="作者" width="120">
@@ -169,7 +137,7 @@ import { getUserDetail } from '@/api/user'
 import { useUserStore } from '@/store/user'
 import type { UserInfo } from '@/types/api'
 import type { TicketCreateDTO } from '@/types/api'
-import { EditPen } from '@element-plus/icons-vue'
+import AppProductInfo from '@/components/common/AppProductInfo.vue'
  
 
 const userStore = useUserStore()

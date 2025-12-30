@@ -32,44 +32,7 @@
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="产品信息" min-width="320">
         <template #default="{ row }">
-          <div class="product-info">
-            <el-image
-              v-if="row.product.garminImageUrl"
-              :src="row.product.garminImageUrl"
-              :preview-src-list="[row.product.garminImageUrl]"
-              :z-index="5000"
-              :preview-teleported="true"
-              fit="cover"
-              class="product-thumb"
-              style="width: 56px; height: 56px"
-            />
-            <div class="product-meta">
-              <div class="product-name">
-                <a
-                  v-if="row.product.garminStoreUrl"
-                  :href="row.product.garminStoreUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >{{ row.product.name }}</a>
-                <span v-else>{{ row.product.name }}</span>
-                <a
-                  v-if="row.product?.designId"
-                  :href="`http://studio.wristo.io/design?id=${row.product.designId}`"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style="margin-left: 8px"
-                >
-                  <el-button link type="primary" size="small">
-                    <el-icon><Edit /></el-icon>
-                  </el-button>
-                </a>
-              </div>
-              <div class="product-details">
-                <span>appId: {{ row.product.appId }}</span>
-                <span>设计ID: {{ row.product.designId }}</span>
-              </div>
-            </div>
-          </div>
+          <AppProductInfo :product="row.product" :thumb-size="56" />
         </template>
       </el-table-column>
       <el-table-column label="设计师" width="140">
@@ -201,8 +164,8 @@ import { PACKAGING_STATUS } from '@/types/product'
 import { formatDateTime } from '@/utils/date'
 import StatusTag from '@/components/StatusTag.vue'
 import { rejectDesignWithComment } from '@/api/design-review'
-import { Edit } from '@element-plus/icons-vue'
 import UserSelect from '@/components/users/UserSelect.vue'
+import AppProductInfo from '@/components/common/AppProductInfo.vue'
 
 // 响应式数据
 const loading = ref(false)

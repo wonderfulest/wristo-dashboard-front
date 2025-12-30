@@ -35,44 +35,15 @@
       <el-table-column type="selection" width="55" />
       <el-table-column label="产品信息" min-width="320">
         <template #default="{ row }">
-          <div class="product-info">
-            <el-image
-              v-if="row.cover?.url || row.product?.garminImageUrl"
-              :src="row.cover?.url || row.product?.garminImageUrl"
-              :preview-src-list="[row.cover?.url || row.product?.garminImageUrl]"
-              :z-index="5000"
-              :preview-teleported="true"
-              fit="cover"
-              class="product-thumb"
-              style="width: 56px; height: 56px"
-            />
-            <div class="product-meta">
-              <div class="product-name">
-                <a
-                  v-if="row.product?.garminStoreUrl"
-                  :href="row.product.garminStoreUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >{{ row.name }}</a>
-                <span v-else>{{ row.name }}</span>
-                <a
-                  v-if="row.designUid"
-                  :href="`http://studio.wristo.io/design?id=${row.designUid}`"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style="margin-left: 8px"
-                >
-                  <el-button link type="primary" size="small">
-                    <el-icon><Edit /></el-icon>
-                  </el-button>
-                </a>
-              </div>
-              <div class="product-details">
-                <span>appId: {{ row.product?.appId || '-' }}</span>
-                <span>设计ID: {{ row.designUid }}</span>
-              </div>
-            </div>
-          </div>
+          <AppProductInfo
+            :product="row.product"
+            :app-id="row.product?.appId"
+            :thumb-size="56"
+            :title="row.name"
+            :design-id="row.designUid"
+            :image-url="row.cover?.url || row.product?.garminImageUrl"
+            :store-url="row.product?.garminStoreUrl"
+          />
         </template>
       </el-table-column>
       <el-table-column prop="designStatus" label="状态" width="100" />
@@ -124,8 +95,8 @@ import { formatDate } from '@/utils/date'
 import { fetchDesignReviewPage, approveDesign, approveDesignBatch, rejectDesignWithComment } from '@/api/design-review'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { Design } from '@/types/design'
-import { Edit } from '@element-plus/icons-vue'
 import UserSelect from '@/components/users/UserSelect.vue'
+import AppProductInfo from '@/components/common/AppProductInfo.vue'
 
 const designs = ref<any[]>([])
 const multipleSelection = ref<any[]>([])
