@@ -108,7 +108,7 @@
           <el-input v-else v-model="editForm.value" placeholder="2025-12-29/winter/rainy/morning" />
         </el-form-item>
         <el-form-item label="imageId" prop="imageId">
-          <ImageUpload v-model="editForm.imageId" :preview-url="editPreviewUrl" />
+          <ImageUpload v-model="editForm.imageId" :preview-url="editPreviewUrl" aspect-code="background" />
         </el-form-item>
         <el-form-item label="colorJson">
           <el-input v-model="editForm.colorJson" type="textarea" :rows="6" placeholder='{"primary":"#1E90FF","text":"#FFFFFF"}' />

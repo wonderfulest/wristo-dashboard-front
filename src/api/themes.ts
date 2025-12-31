@@ -34,7 +34,7 @@ export function getThemeRuleTypeConfigByCode(ruleType: string): Promise<ApiRespo
 }
 
 export function pageThemeConfigs(req: ThemeConfigPageRequest): Promise<ApiResponse<PageResponse<ThemeConfigVO>>> {
-  return instance.post('/admin/themes/configs/page?populate=product', req)
+  return instance.post('/admin/themes/configs/page?populate=product,image', req)
 }
 
 export function getThemeConfigDetail(id: number): Promise<ApiResponse<ThemeConfigVO>> {
