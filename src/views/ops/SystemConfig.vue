@@ -13,27 +13,7 @@
       </div>
     </div>
 
-    <!-- 审核时间快捷区域 -->
-    <el-card class="quick-review" shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span>审核时间（audit.review_time）快捷设置</span>
-        </div>
-      </template>
-      <div class="quick-body">
-        <div class="current">
-          <div class="label">当前审核时间：</div>
-          <div class="value mono">{{ reviewTime || '-' }}</div>
-        </div>
-        <div class="ops">
-          <el-button type="primary" :loading="reviewRefreshing" @click="refreshReview">刷新为当前时间</el-button>
-          <el-date-picker v-model="reviewInput" type="datetime" placeholder="YYYY-MM-DD HH:mm:ss"
-            format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" style="width: 240px" />
-          <el-button type="success" :loading="reviewSaving" @click="saveReviewManual">保存</el-button>
-        </div>
-      </div>
-    </el-card>
-
+    
     <el-table :data="filteredList" v-loading="loading" style="width:100%">
       <el-table-column prop="category" label="分类" width="120">
         <template #default="{ row }">
@@ -56,13 +36,44 @@
       <el-table-column prop="updatedAt" label="更新时间" width="180">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="160" fixed="right">
+      <el-table-column label="操作" width="220" fixed="right">
         <template #default="{ row }">
           <el-button size="small" type="primary" link @click="openEdit(row)">编辑</el-button>
           <el-button size="small" link @click="openHistory(row)">历史</el-button>
+          <el-button
+            size="small"
+            :type="row.isActive ? 'success' : 'danger'"
+            link
+            :loading="activatingKey === row.configKey"
+            @click="toggleActive(row)"
+          >
+            {{ row.isActive ? '禁用' : '激活' }}
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
+
+
+    <!-- 审核时间快捷区域 -->
+    <el-card class="quick-review" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span>审核时间（audit.review_time）快捷设置</span>
+        </div>
+      </template>
+      <div class="quick-body">
+        <div class="current">
+          <div class="label">当前审核时间：</div>
+          <div class="value mono">{{ reviewTime || '-' }}</div>
+        </div>
+        <div class="ops">
+          <el-button type="primary" :loading="reviewRefreshing" @click="refreshReview">刷新为当前时间</el-button>
+          <el-date-picker v-model="reviewInput" type="datetime" placeholder="YYYY-MM-DD HH:mm:ss"
+            format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" style="width: 240px" />
+          <el-button type="success" :loading="reviewSaving" @click="saveReviewManual">保存</el-button>
+        </div>
+      </div>
+    </el-card>
 
     <el-dialog v-model="editVisible" :title="isCreate ? '新增配置' : '编辑配置'" width="640px">
       <el-form :model="editForm" label-width="110px">
@@ -111,7 +122,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { listConfigs, upsertConfig, getConfigHistory, getReviewTime, setReviewTime, refreshReviewTime } from '@/api/config'
+import { listConfigs, upsertConfig, getConfigHistory, getReviewTime, setReviewTime, refreshReviewTime, activateConfig } from '@/api/config'
 import type { GlobalConfig, GlobalConfigHistory, GlobalConfigCategoryCode } from '@/types/ops'
 import { formatDateTime } from '@/utils/date'
 
@@ -128,6 +139,8 @@ const catLabel = (c?: string) => categoryOptions.find(i => i.value === c)?.label
 const query = ref<{ category?: GlobalConfigCategoryCode | ''; keyword: string }>({ category: '', keyword: '' })
 const loading = ref(false)
 const list = ref<GlobalConfig[]>([])
+
+const activatingKey = ref<string | null>(null)
 
 const filteredList = computed(() => {
   const kw = query.value.keyword?.trim().toLowerCase()
@@ -149,6 +162,21 @@ const fetchList = async () => {
 const resetFilters = () => {
   query.value = { category: '', keyword: '' }
   fetchList()
+}
+
+const toggleActive = async (row: GlobalConfig) => {
+  if (!row?.configKey) return
+  const target = !row.isActive
+  activatingKey.value = row.configKey
+  try {
+    await activateConfig(row.configKey, target)
+    row.isActive = target
+    ElMessage.success(target ? '已激活' : '已禁用')
+  } catch (e) {
+    // 错误提示由拦截器统一处理
+  } finally {
+    activatingKey.value = null
+  }
 }
 
 // edit
@@ -290,7 +318,7 @@ onMounted(async () => {
 .config-page { padding: 16px; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .filters { display: flex; gap: 12px; align-items: center; }
-.quick-review { margin-bottom: 16px; }
+.quick-review { margin-top: 96px; margin-bottom: 16px; }
 .quick-body { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .current { display: flex; align-items: center; gap: 8px; }
 .value-cell { display: flex; gap: 8px; align-items: center; }

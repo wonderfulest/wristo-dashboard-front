@@ -303,10 +303,8 @@ const openCreate = () => {
   editForm.priority = 0
   editForm.active = 1
   editPreviewUrl.value = ''
-
   autoOutputKey.value = ''
   valueOptions.value = []
-
   editVisible.value = true
   initializingCreate.value = false
 }

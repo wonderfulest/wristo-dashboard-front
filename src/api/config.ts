@@ -31,6 +31,16 @@ export const getConfigHistory = (
   return instance.get(`/admin/config/${encodeURIComponent(configKey)}/history`, { params: { category } })
 }
 
+// POST /admin/config/{configKey}/activate?isActive=true|false
+export const activateConfig = (
+  configKey: string,
+  isActive: boolean
+): Promise<ApiResponse<boolean>> => {
+  return instance.post(`/admin/config/activate/toggle`, null, {
+    params: { configKey, isActive }
+  })
+}
+
 // ---------------- Review Time helpers ----------------
 // GET /admin/config/review_time
 export const getReviewTime = (): Promise<ApiResponse<GlobalConfig>> => {
