@@ -220,6 +220,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/orders/trials',
+      name: 'OrdersTrials',
+      component: () => import('@/views/orders/OrdersTrials.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/orders/paddle-refunds',
       name: 'OrdersPaddleRefunds',
       component: () => import('@/views/orders/OrdersPaddleRefunds.vue'),

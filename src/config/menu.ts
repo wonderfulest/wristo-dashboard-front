@@ -132,6 +132,7 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/orders'],
     children: [
       { key: 'history', title: '订单记录', path: '/orders/history' },
+      { key: 'trial-records', title: '试用记录', path: '/orders/trials' },
       { key: 'refund', title: '订单退款', path: '/orders/refund' },
       { key: 'paddle-refunds', title: 'Paddle 退款查询', path: '/orders/paddle-refunds' },
       { key: 'discounts', title: '优惠管理', path: '/orders/discounts' },
