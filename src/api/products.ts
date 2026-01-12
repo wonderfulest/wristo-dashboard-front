@@ -35,6 +35,32 @@ export const requeueProductPackagingLog = (
   })
 }
 
+// 获取打包任务队列列表
+export const getProductPackagingQueue = (
+  populate: string = '*'
+): Promise<ApiResponse<ProductPackagingLogVO[]>> => {
+  return instance.get('/admin/product-packaging-logs/queue', {
+    params: { populate }
+  })
+}
+
+// 从打包任务队列中移除任务
+export const removeProductPackagingQueueItem = (
+  id: number
+): Promise<ApiResponse<void>> => {
+  return instance.delete(`/admin/product-packaging-logs/queue/${id}`)
+}
+
+// 更新打包任务优先级
+export const updateProductPackagingQueuePriority = (
+  id: number,
+  priority: number
+): Promise<ApiResponse<void>> => {
+  return instance.post(`/admin/product-packaging-logs/queue/${id}/priority`, null, {
+    params: { priority }
+  })
+}
+
 // 查询单个产品
 export const getProduct = (appId: number): Promise<ApiResponse<Product>> => {
   return instance.get(`/admin/products/${appId}`)

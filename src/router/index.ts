@@ -172,6 +172,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/packaging/packaging-queue',
+      name: 'PackagingQueue',
+      component: () => import('@/views/dashboard/packaging/PackagingQueue.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products',
       name: 'Products',
       component: () => import('@/views/products/Products.vue'),
