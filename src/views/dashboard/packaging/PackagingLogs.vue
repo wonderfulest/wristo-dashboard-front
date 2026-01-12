@@ -68,11 +68,12 @@
           {{ row.version }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column label="操作" width="320" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px;">
             <el-button type="primary" link @click="handleViewDetails(row)">查看详情</el-button>
             <el-button type="danger" link @click="openRejectDialog(row)">拒绝</el-button>
+            <el-button type="primary" link @click="openRequeueDialog(row)">重新提交打包任务</el-button>
           </div>
         </template>
       </el-table-column>
@@ -151,12 +152,44 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 重新提交打包任务对话框 -->
+    <el-dialog
+      v-model="requeueDialogVisible"
+      title="重新提交打包任务"
+      width="520px"
+    >
+      <div v-if="requeueTargetRow">
+        <div style="margin-bottom: 12px; color: #606266;">
+          将重新提交产品：<b>{{ requeueTargetRow.product.name }}</b>
+          （设计ID：{{ requeueTargetRow.product.designId }}，打包记录ID：{{ requeueTargetRow.id }}）
+        </div>
+        <el-form label-position="top">
+          <el-form-item label="优先级（0-9，0 为最高优先级）" required>
+            <el-input
+              v-model.number="requeuePriority"
+              type="number"
+              min="0"
+              max="9"
+              placeholder="请输入 0-9 的整数，默认 5"
+              style="width: 200px;"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="requeueDialogVisible = false" :disabled="submittingRequeue">取消</el-button>
+          <el-button type="primary" @click="submitRequeue" :loading="submittingRequeue">确认重新提交</el-button>
+        </span>
+      </template>
+    </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getProductPackagingLogsPage } from '@/api/products'
+import { getProductPackagingLogsPage, requeueProductPackagingLog } from '@/api/products'
 import type { ProductPackagingLogVO } from '@/types/product'
 
 import { getPackagingStatusOptions, formatPackagingStatusArray } from '@/utils/status'
@@ -192,6 +225,12 @@ const rejectDialogVisible = ref(false)
 const rejectReason = ref('')
 const submittingReject = ref(false)
 const rejectTargetRow = ref<ProductPackagingLogVO | null>(null)
+
+// 重新提交打包任务对话框状态
+const requeueDialogVisible = ref(false)
+const requeueTargetRow = ref<ProductPackagingLogVO | null>(null)
+const requeuePriority = ref<number | null>(5)
+const submittingRequeue = ref(false)
 
 // 获取打包记录列表
 const fetchPackagingLogs = async () => {
@@ -285,6 +324,40 @@ const submitReject = async () => {
     // 错误消息在 axios 拦截器里已处理
   } finally {
     submittingReject.value = false
+  }
+}
+
+// 打开重新提交打包任务对话框
+const openRequeueDialog = (row: ProductPackagingLogVO) => {
+  requeueTargetRow.value = row
+  requeuePriority.value = 5
+  requeueDialogVisible.value = true
+}
+
+// 提交重新打包任务
+const submitRequeue = async () => {
+  if (!requeueTargetRow.value) return
+
+  // 校验优先级 0-9 整数
+  let priority = typeof requeuePriority.value === 'number' ? requeuePriority.value : 5
+  if (!Number.isInteger(priority) || priority < 0 || priority > 9) {
+    ElMessage.error('优先级必须是 0-9 的整数，例如 5；0 为最高优先级，9 为最低优先级')
+    return
+  }
+
+  try {
+    submittingRequeue.value = true
+    const res = await requeueProductPackagingLog(requeueTargetRow.value.id, priority)
+    if (res.code === 0) {
+      ElMessage.success('已重新提交打包任务到队列')
+      requeueDialogVisible.value = false
+      // 可以选择刷新列表，确保最新状态
+      fetchPackagingLogs()
+    }
+  } catch (e) {
+    // 错误提示由 axios 拦截器统一处理
+  } finally {
+    submittingRequeue.value = false
   }
 }
 

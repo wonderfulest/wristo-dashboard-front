@@ -25,6 +25,16 @@ export const getProductPackagingLogsPage = (params: ProductPackagingLogQuery): P
   return instance.post('/admin/products/packaging-log/page?populate=*', params)
 } 
 
+// 重新提交打包任务到队列
+export const requeueProductPackagingLog = (
+  id: number,
+  priority: number
+): Promise<ApiResponse<void>> => {
+  return instance.post(`/admin/product-packaging-logs/${id}/requeue`, null, {
+    params: { priority }
+  })
+}
+
 // 查询单个产品
 export const getProduct = (appId: number): Promise<ApiResponse<Product>> => {
   return instance.get(`/admin/products/${appId}`)
