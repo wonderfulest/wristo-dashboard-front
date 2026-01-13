@@ -30,6 +30,16 @@
 
     <el-table :data="packagingLogs" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column label="打包类型" width="100">
+        <template #default="{ row }">
+          {{ row.type || '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="设备 ID" width="140">
+        <template #default="{ row }">
+          {{ row.deviceId || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column label="产品信息" min-width="320">
         <template #default="{ row }">
           <AppProductInfo :product="row.product" :thumb-size="56" />
@@ -68,6 +78,12 @@
           {{ row.version }}
         </template>
       </el-table-column>
+      <el-table-column label="队列优先级" width="120">
+        <template #default="{ row }">
+          <span v-if="row.priority !== null && row.priority !== undefined">{{ row.priority }}</span>
+          <span v-else class="no-error">未在队列中</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="320" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px;">
@@ -104,6 +120,8 @@
           <el-descriptions-item label="打包状态">
             <StatusTag :status="selectedLog.packagingStatus" />
           </el-descriptions-item>
+          <el-descriptions-item label="打包类型">{{ selectedLog.type || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="设备 ID">{{ selectedLog.deviceId || '-' }}</el-descriptions-item>
           <el-descriptions-item label="产品名称">{{ selectedLog.product.name }}</el-descriptions-item>
           <el-descriptions-item label="产品ID">{{ selectedLog.product.appId }}</el-descriptions-item>
           <el-descriptions-item label="设计ID">{{ selectedLog.product.designId }}</el-descriptions-item>
@@ -113,6 +131,10 @@
           <el-descriptions-item label="版本">{{ selectedLog.version }}</el-descriptions-item>
           <el-descriptions-item label="是否删除">{{ selectedLog.isDeleted === 1 ? '是' : '否' }}</el-descriptions-item>
           <el-descriptions-item label="是否激活">{{ selectedLog.isActive === 1 ? '是' : '否' }}</el-descriptions-item>
+          <el-descriptions-item label="队列优先级" :span="2">
+            <span v-if="selectedLog.priority !== null && selectedLog.priority !== undefined">{{ selectedLog.priority }}</span>
+            <span v-else class="no-error">未在队列中</span>
+          </el-descriptions-item>
           <el-descriptions-item label="错误信息" :span="2">
             <span v-if="selectedLog.errorMessage" class="error-message">{{ selectedLog.errorMessage }}</span>
             <span v-else class="no-error">无错误信息</span>

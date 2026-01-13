@@ -76,6 +76,12 @@ export interface ProductPackagingLogVO {
   version: number
   isDeleted: number
   isActive: number
+  // 打包类型：iq 或 prg
+  type: string
+  // 设备 ID
+  deviceId: string
+  // 队列优先级，0 为最高，数字越大优先级越低；如果不在队列中则为 null
+  priority: number | null
   product: ProductBase & { user?: UserBase | null }
 }
 

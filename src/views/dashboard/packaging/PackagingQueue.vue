@@ -1,7 +1,7 @@
 <template>
   <div class="packaging-queue-container">
     <div class="header">
-      <h2>打包队列</h2>
+      <h2>打包任务队列</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-button type="primary" @click="fetchQueue" :loading="loading">刷新</el-button>
       </div>
@@ -9,6 +9,16 @@
 
     <el-table :data="queue" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column label="打包类型" width="100">
+        <template #default="{ row }">
+          {{ row.type || '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="设备 ID" width="140">
+        <template #default="{ row }">
+          {{ row.deviceId || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column label="产品信息" min-width="320">
         <template #default="{ row }">
           <AppProductInfo :product="row.product" :thumb-size="56" />
@@ -40,6 +50,12 @@
       <el-table-column label="更新时间" width="180">
         <template #default="{ row }">
           {{ formatDateTime(row.updatedAt) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="队列优先级" width="120">
+        <template #default="{ row }">
+          <span v-if="row.priority !== null && row.priority !== undefined">{{ row.priority }}</span>
+          <span v-else class="no-error">未在队列中</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="260" fixed="right">
@@ -131,7 +147,7 @@ const fetchQueue = async () => {
 
 const openPriorityDialog = (row: ProductPackagingLogVO) => {
   priorityTargetRow.value = row
-  priorityValue.value = 5
+  priorityValue.value = (row.priority ?? 5) as number
   priorityDialogVisible.value = true
 }
 

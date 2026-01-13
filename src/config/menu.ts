@@ -35,7 +35,7 @@ export const topMenus: TopMenuGroup[] = [
         children: [
           { key: 'design-review', title: '设计审核', path: '/packaging/design-review' },
           { key: 'packaging-logs', title: '打包记录', path: '/packaging/packaging-logs' },
-          { key: 'packaging-queue', title: '打包队列', path: '/packaging/packaging-queue' },
+          { key: 'packaging-queue', title: '打包任务队列', path: '/packaging/packaging-queue' },
         ],
       },
       {
