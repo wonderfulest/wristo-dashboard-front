@@ -35,11 +35,32 @@ export const requeueProductPackagingLog = (
   })
 }
 
+// 手动清理打包任务队列锁
+export const clearProductPackagingQueueLock = (): Promise<ApiResponse<void>> => {
+  return instance.delete('/admin/product-packaging-logs/queue/lock')
+}
+
+// 设置打包任务队列暂停开关
+export const setProductPackagingQueuePause = (paused: boolean): Promise<ApiResponse<void>> => {
+  return instance.post('/admin/product-packaging-logs/queue/pause', null, {
+    params: { paused }
+  })
+}
+
 // 获取打包任务队列列表
 export const getProductPackagingQueue = (
   populate: string = '*'
 ): Promise<ApiResponse<ProductPackagingLogVO[]>> => {
   return instance.get('/admin/product-packaging-logs/queue', {
+    params: { populate }
+  })
+}
+
+// 获取当前正在打包中的任务（基于队列锁标记）
+export const getLockedProductPackagingTask = (
+  populate: string = '*'
+): Promise<ApiResponse<ProductPackagingLogVO | null>> => {
+  return instance.get('/admin/product-packaging-logs/queue/locked', {
     params: { populate }
   })
 }
