@@ -184,6 +184,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/products/delete-from-garmin',
+      name: 'DeleteFromGarmin',
+      component: () => import('@/views/products/DeleteFromGarmin.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products/garmin-devices',
       name: 'GarminDevices',
       component: () => import('@/views/products/GarminDevices.vue'),

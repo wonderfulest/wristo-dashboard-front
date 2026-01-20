@@ -15,7 +15,11 @@ export interface Product {
   price: number
   garminImageUrl: string
   garminStoreUrl: string
+  // Garmin 应用 UUID（可选）
+  garminAppUuid?: string
   trialLasts: number
+   // 设计 ID（在多个页面中会用到）
+  designId: string
   createdAt?: string
   updatedAt?: string
   isDeleted?: number
