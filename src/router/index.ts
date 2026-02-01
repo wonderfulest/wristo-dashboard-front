@@ -259,6 +259,18 @@ const router = createRouter({
       component: () => import('@/views/dashboard/Fonts.vue'),
       meta: { requiresAuth: true }
     },
+     {
+      path: '/ga/short-links',
+      name: 'GaShortLinks',
+      component: () => import('@/views/ga/GaShortLinks.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ga/click-events',
+      name: 'GaClickEvents',
+      component: () => import('@/views/ga/GaClickEvents.vue'),
+      meta: { requiresAuth: true }
+    },
     {
       path: '/marketing/campaigns',
       name: 'Campaigns',
