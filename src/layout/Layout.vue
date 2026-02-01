@@ -2,7 +2,7 @@
   <div class="global-layout">
     <HeaderBar />
     <div class="side-main-wrapper">
-      <SideMenu />
+      <SideMenu :collapsed="isSideMenuCollapsed" @toggle-collapse="toggleSideMenu" />
       <!-- Main Content -->
       <main class="main-content">
         <Breadcrumb />
@@ -18,10 +18,16 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import HeaderBar from '@/layout/components/HeaderBar.vue'
 import SideMenu from '@/layout/components/SideMenu.vue'
 import AppFooter from '@/layout/components/AppFooter.vue'
+
+const isSideMenuCollapsed = ref(false)
+const toggleSideMenu = () => {
+  isSideMenuCollapsed.value = !isSideMenuCollapsed.value
+}
 </script>
 
 <style lang="scss" scoped>
@@ -319,4 +325,38 @@ import AppFooter from '@/layout/components/AppFooter.vue'
   border-left-width: 3px;
 }
 /* 移除重复的 .user-profile-dropdown 定义，避免覆盖上方布局样式 */
-</style> 
+
+@media (max-width: 1024px) {
+  .side-main-wrapper {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .main-content {
+    min-height: auto;
+  }
+
+  .content-wrapper {
+    height: auto;
+  }
+
+  .page-content {
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .global-layout {
+    overflow-x: hidden;
+  }
+
+  .main-content {
+    overflow: visible;
+  }
+
+  .page-content {
+    padding: 12px;
+  }
+}
+</style>

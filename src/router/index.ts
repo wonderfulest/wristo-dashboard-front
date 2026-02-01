@@ -190,6 +190,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/products/search-records',
+      name: 'SearchRecords',
+      component: () => import('@/views/products/SearchRecords.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products/garmin-devices',
       name: 'GarminDevices',
       component: () => import('@/views/products/GarminDevices.vue'),

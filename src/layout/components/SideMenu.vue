@@ -1,6 +1,9 @@
 <template>
-  <aside class="side-menu">
-    <nav class="menu-list">
+  <aside class="side-menu" :class="{ 'is-collapsed': props.collapsed }">
+    <div class="side-menu-toggle" @click="emit('toggle-collapse')">
+      {{ props.collapsed ? '展开菜单' : '收起菜单' }}
+    </div>
+    <nav class="menu-list" v-show="!props.collapsed">
       <template v-for="item in activeChildren" :key="item.key">
         <template v-if="item.children && item.children.length">
           <div class="menu-group collapsible" @click="toggleGroup(item.key)">
@@ -36,6 +39,14 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { topMenus } from '@/config/menu'
+
+const props = defineProps<{
+  collapsed: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'toggle-collapse'): void
+}>()
 
 // 动态菜单：根据当前路由选择顶部分组与侧边二级菜单
 const route = useRoute()
@@ -80,6 +91,23 @@ watch(
   align-items: flex-start;
   min-height: 100%;
   box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+}
+.side-menu.is-collapsed {
+  width: 40px;
+  min-width: 40px;
+}
+.side-menu-toggle {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #606266;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+  background: #f9fafb;
+}
+.side-menu-toggle:hover {
+  background: #f0f2f5;
 }
 .menu-list {
   display: flex;
