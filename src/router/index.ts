@@ -226,6 +226,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/products/watchface-search-admin',
+      name: 'WatchfaceSearchAdmin',
+      component: () => import('@/views/products/WatchfaceSearchAdmin.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products/garmin-devices',
       name: 'GarminDevices',
       component: () => import('@/views/products/GarminDevices.vue'),

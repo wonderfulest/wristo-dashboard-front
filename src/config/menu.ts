@@ -53,6 +53,7 @@ export const topMenus: TopMenuGroup[] = [
         key: 'search-records',
         title: '用户搜索记录',
         children: [
+          { key: 'watchface-search-admin', title: '搜索引擎管理', path: '/products/watchface-search-admin' },
           { key: 'search-records-list', title: '搜索记录', path: '/products/search-records' },
           { key: 'final-search-keywords', title: '结果词', path: '/products/final-search-keywords' },
           { key: 'product-keyword-candidates', title: '产品候选关键词', path: '/products/product-keyword-candidates' },
