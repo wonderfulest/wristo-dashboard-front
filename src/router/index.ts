@@ -196,6 +196,36 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/products/final-search-keywords',
+      name: 'FinalSearchKeywords',
+      component: () => import('@/views/products/FinalSearchKeywords.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/products/product-keyword-candidates',
+      name: 'ProductKeywordCandidates',
+      component: () => import('@/views/products/ProductKeywordCandidates.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/products/product-keyword-scores',
+      name: 'ProductKeywordScores',
+      component: () => import('@/views/products/ProductKeywordScores.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/products/product-action-suggestions',
+      name: 'ProductActionSuggestions',
+      component: () => import('@/views/products/ProductActionSuggestions.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/products/search-keyword-pipeline',
+      name: 'SearchKeywordPipeline',
+      component: () => import('@/views/products/SearchKeywordPipeline.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products/garmin-devices',
       name: 'GarminDevices',
       component: () => import('@/views/products/GarminDevices.vue'),

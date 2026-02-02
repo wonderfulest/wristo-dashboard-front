@@ -47,7 +47,18 @@ export const topMenus: TopMenuGroup[] = [
           { key: 'app-daily-config', title: '每日一图配置', path: '/products/app-daily/config' },
           { key: 'device-un-support', title: '未支持应用', path: '/products/device-un-support' },
           { key: 'delete-from-garmin', title: '从佳明商城删除', path: '/products/delete-from-garmin' },
-          { key: 'search-records', title: '用户搜索记录', path: '/products/search-records' },
+        ],
+      },
+      {
+        key: 'search-records',
+        title: '用户搜索记录',
+        children: [
+          { key: 'search-records-list', title: '搜索记录', path: '/products/search-records' },
+          { key: 'final-search-keywords', title: '结果词', path: '/products/final-search-keywords' },
+          { key: 'product-keyword-candidates', title: '产品候选关键词', path: '/products/product-keyword-candidates' },
+          { key: 'product-keyword-scores', title: '评分表', path: '/products/product-keyword-scores' },
+          { key: 'product-action-suggestions', title: '动作建议', path: '/products/product-action-suggestions' },
+          { key: 'search-keyword-pipeline', title: '动作流水线任务', path: '/products/search-keyword-pipeline' },
         ],
       },
       {
