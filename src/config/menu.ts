@@ -117,13 +117,14 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'toc', title: '博客目录管理', path: '/blog/toc' },
     ],
   },
-   {
+  {
     key: 'ga',
     title: 'GA 增长分析',
     basePaths: ['/ga'],
     children: [
       { key: 'ga-short-links', title: '短链配置', path: '/ga/short-links' },
       { key: 'ga-click-events', title: '点击事件', path: '/ga/click-events' },
+      { key: 'ga-promoter-coupons', title: '口令管理', path: '/ga/promoter-coupons' },
       // 预留：数据归因分析等页面
       // { key: 'ga-attribution', title: '数据归因分析', path: '/ga/attribution' },
     ],

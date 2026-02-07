@@ -308,6 +308,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/ga/promoter-coupons',
+      name: 'PromoterCoupons',
+      component: () => import('@/views/ga/PromoterCoupons.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/marketing/campaigns',
       name: 'Campaigns',
       component: () => import('@/views/marketing/Campaigns.vue'),

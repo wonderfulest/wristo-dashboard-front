@@ -8,7 +8,6 @@
     remote
     :remote-method="remoteSearch"
     :loading="loading"
-    style="width: 220px"
   >
     <el-option
       v-for="u in options"
@@ -96,6 +95,9 @@ const fetchUsers = async (keyword: string) => {
     const res = await searchUsers(q, 20, resolvedRoleId.value)
     if (res.code === 0 && res.data) {
       let list = (res.data as UserInfo[]) || []
+
+      // 过滤掉没有有效 id 的用户，避免 ElOption value 为 undefined/null
+      list = list.filter((u: any) => typeof u?.id === 'number')
 
       // 若解析出 roleId，则基于用户 roles 在前端过滤（search 接口不支持 roleId 参数）
       if (typeof resolvedRoleId.value === 'number') {
