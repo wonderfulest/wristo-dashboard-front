@@ -226,11 +226,21 @@ const handleSave = async () => {
   let res
   if (isEdit.value && currentUser.value.id) {
     // 使用强制的 UserUpdateDTO 类型
+    const rawStatus = (currentUser.value as any).status
+    let mappedStatus: number | undefined
+    if (rawStatus === 'ENABLED' || rawStatus === 1 || rawStatus === true) {
+      mappedStatus = 1
+    } else if (rawStatus === 'DISABLED' || rawStatus === 0 || rawStatus === false) {
+      mappedStatus = 0
+    } else {
+      mappedStatus = undefined
+    }
+
     const updatePayload: UserUpdateDTO = {
       username: currentUser.value.username,
       nickname: currentUser.value.nickname || undefined,
       avatar: currentUser.value.avatar || undefined,
-      status: currentUser.value.status ?? undefined,
+      status: mappedStatus,
       roles: rolesInput.value
     }
     res = await updateUser(currentUser.value.id, updatePayload)
