@@ -32,6 +32,11 @@
           <span class="username">{{ row.user?.username || '-' }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="邮箱" min-width="160">
+        <template #default="{ row }">
+          {{ row.user?.email || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column label="累计收入($)" min-width="120" header-align="right" align="right">
         <template #default="{ row }">
           {{ formatMoney(row.totalIncomeToDate) }}

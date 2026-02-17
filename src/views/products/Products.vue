@@ -108,7 +108,7 @@
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="260" fixed="right">
+      <el-table-column label="操作" width="360" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px;">
             <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
@@ -119,6 +119,13 @@
               :loading="statusLoadingMap.get(row.appId)"
             >
               {{ row.status === 1 ? '下线' : '上线' }}
+            </el-button>
+            <el-button 
+              type="primary" 
+              link 
+              @click="openTransferDialog(row)"
+            >
+              转移应用
             </el-button>
             <el-button 
               type="primary" 
@@ -169,6 +176,43 @@
         <span class="dialog-footer">
           <el-button @click="ticketDialogVisible = false">取消</el-button>
           <el-button type="primary" :loading="ticketSubmitting" @click="submitCreateTicket">创建</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 转移应用对话框 -->
+    <el-dialog
+      v-model="transferDialogVisible"
+      title="转移应用所属设计师"
+      width="480px"
+    >
+      <div v-if="productForTransfer">
+        <p style="margin-bottom: 8px;">
+          当前应用：<strong>{{ productForTransfer.name }}</strong>（ID：{{ productForTransfer.appId }}）
+        </p>
+        <p style="margin-bottom: 16px;">
+          当前作者：{{ (productForTransfer as any)?.user?.username || '-' }}
+        </p>
+      </div>
+      <div>
+        <span style="display: inline-block; margin-bottom: 8px;">选择新的设计师：</span>
+        <UserSelect
+          v-model="transferTargetUserId"
+          :role-authorities="['ROLE_DESIGNER']"
+          placeholder="搜索并选择新设计师"
+          style="width: 100%;"
+        />
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="transferDialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            :loading="transferLoading"
+            @click="confirmTransferOwner"
+          >
+            确认转移
+          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -319,7 +363,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import { formatDate } from '@/utils/date'
-import { fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus } from '@/api/products'
+import { fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -386,6 +430,12 @@ const ticketForm = ref<TicketFormModel>({
   dueDate: null,
   productId: null,
 })
+
+// 转移应用对话框
+const transferDialogVisible = ref(false)
+const transferLoading = ref(false)
+const transferTargetUserId = ref<number | undefined>(undefined)
+const productForTransfer = ref<Product | null>(null)
 
 // 搜索和排序相关
 const searchName = ref('')
@@ -454,6 +504,14 @@ const handleCreateTicket = async (row: Product) => {
   ticketDialogVisible.value = true
 }
 
+// 打开转移应用对话框
+const openTransferDialog = (row: Product) => {
+  productForTransfer.value = row
+  // 默认不选中；如果你希望默认选当前作者，可以改成 row.user?.id
+  transferTargetUserId.value = undefined
+  transferDialogVisible.value = true
+}
+
 const submitCreateTicket = async () => {
   if (!userStore.userInfo?.id) {
     ElMessage.error('未获取到当前登录用户信息')
@@ -483,6 +541,38 @@ const submitCreateTicket = async () => {
     ElMessage.error('创建工单失败')
   } finally {
     ticketSubmitting.value = false
+  }
+}
+
+// 确认转移应用所属用户
+const confirmTransferOwner = async () => {
+  if (!productForTransfer.value) {
+    ElMessage.error('未选择要转移的应用')
+    return
+  }
+  if (!transferTargetUserId.value) {
+    ElMessage.error('请选择新的设计师')
+    return
+  }
+
+  try {
+    transferLoading.value = true
+    const res = await transferProductOwner(productForTransfer.value.appId, transferTargetUserId.value)
+    if (res.code === 0) {
+      ElMessage.success('应用所属用户已转移')
+      transferDialogVisible.value = false
+      // 重置状态
+      productForTransfer.value = null
+      transferTargetUserId.value = undefined
+      // 刷新列表
+      fetchProducts()
+    } else {
+      ElMessage.error(res.msg || '转移应用失败')
+    }
+  } catch (error) {
+    ElMessage.error('转移应用失败')
+  } finally {
+    transferLoading.value = false
   }
 }
 

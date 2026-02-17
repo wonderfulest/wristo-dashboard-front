@@ -133,3 +133,8 @@ export const downAllProductsByUser = (userId: number): Promise<ApiResponse<boole
 export const upAllProductsByUser = (userId: number): Promise<ApiResponse<boolean>> => {
   return instance.post(`/admin/products/up/${userId}`)
 }
+
+// 转移应用所属用户（管理员接口）
+export const transferProductOwner = (appId: number, newUserId: number): Promise<ApiResponse<boolean>> => {
+  return instance.post(`/admin/products/transfer-owner/${appId}/${newUserId}`)
+}
