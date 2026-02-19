@@ -29,10 +29,11 @@ export const topMenus: TopMenuGroup[] = [
           { key: 'theme-configs', title: '主题配置', path: '/themes/configs' },
         ],
       },
-       {
+      {
         key: 'packaging',
-        title: '打包',
+        title: '设计打包',
         children: [
+          { key: 'designs', title: '设计列表', path: '/products/designs' },
           { key: 'design-review', title: '设计审核', path: '/packaging/design-review' },
           { key: 'packaging-logs', title: '打包记录', path: '/packaging/packaging-logs' },
           { key: 'packaging-queue', title: '打包任务队列', path: '/packaging/packaging-queue' },
