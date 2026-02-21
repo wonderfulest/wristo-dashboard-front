@@ -21,66 +21,66 @@
 
     <!-- Purchase Records Table -->
     <div v-else class="table-container">
-      <table class="purchase-table">
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>User Email</th>
-            <th>App Image</th>
-            <th>Product</th>
-            <th>Status</th>
-            <th>Payment Type</th>
-            <th>Tax</th>
-            <th>Wristo Share</th>
-            <th>Merchant Name</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="record in purchaseRecords" :key="record.id">
-            <td>{{ formatTimestamp(record.createdAt) }}</td>
-            <td>{{ record.email }}</td>
-            <td>
-              <img 
-                v-if="getProductImage(record)" 
-                :src="getProductImage(record)" 
-                :alt="formatProduct(record)"
-                class="product-image"
-                @error="handleImageError"
-              />
-              <div v-else class="no-image-placeholder">No Image</div>
-            </td>
-            <td>
-              <a 
-                v-if="getProductUrl(record)" 
-                :href="getProductUrl(record)" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                class="product-link"
-              >
-                {{ formatProduct(record) }}
-              </a>
-              <span v-else class="product-name">{{ formatProduct(record) }}</span>
-            </td>
-            <td>
-              <span :class="['status-badge', getStatusClass(record.status)]">
-                {{ record.statusDesc }}
-              </span>
-            </td>
-            <td>
-              <span class="pay-tag" :style="paymentTagStyle(record.paymentMethod)">
-                {{ paymentLabel(record.paymentMethod) }}
-              </span>
-            </td>
-            <td>{{ record.tax > 0 ? formatCurrency(record.tax / 100) : 'N/A' }}</td>
-            <td>${{ formatCurrency(record.earnings / 100) }}</td>
-            <td>{{ record.user?.username }}</td>
-            <td>
-              <el-button size="small" @click="openDetail(record)">Details</el-button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <el-table :data="purchaseRecords" style="width: 100%">
+        <el-table-column prop="createdAt" label="Timestamp" width="160">
+          <template #default="{ row }">
+            {{ formatTimestamp(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="email" label="User Email" min-width="180" />
+        <el-table-column label="Product" min-width="320">
+          <template #default="{ row }">
+            <AppProductInfo
+              v-if="row.product"
+              :product="row.product"
+              :thumb-size="56"
+            />
+            <span v-else class="product-name">{{ formatProduct(row) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Bundle" min-width="220">
+          <template #default="{ row }">
+            <span v-if="row.bundle">
+              {{ row.bundle.bundleName }}
+            </span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Status" width="140" align="center">
+          <template #default="{ row }">
+            <span :class="['status-badge', getStatusClass(row.status)]">
+              {{ row.statusDesc }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Payment Type" width="140" align="center">
+          <template #default="{ row }">
+            <span class="pay-tag" :style="paymentTagStyle(row.paymentMethod)">
+              {{ paymentLabel(row.paymentMethod) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Tax" width="120" align="right">
+          <template #default="{ row }">
+            {{ row.tax > 0 ? '$' + formatCurrency(row.tax / 100) : 'N/A' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Wristo Share" width="140" align="right">
+          <template #default="{ row }">
+            ${{ formatCurrency(row.earnings / 100) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Merchant Name" min-width="140">
+          <template #default="{ row }">
+            {{ row.user?.username }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Actions" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" @click="openDetail(row)">Details</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
       <!-- Details Dialog -->
       <el-dialog v-model="detailVisible" title="Order Details" width="720px">
@@ -173,21 +173,14 @@
           {{ pageData.total }} results
         </div>
         <div class="pagination-controls">
-          <button 
-            @click="changePage(pageData.pageNum - 1)" 
-            :disabled="pageData.pageNum <= 1"
-            class="page-btn"
-          >
-            Previous
-          </button>
-          <span class="page-info">Page {{ pageData.pageNum }} of {{ pageData.pages }}</span>
-          <button 
-            @click="changePage(pageData.pageNum + 1)" 
-            :disabled="pageData.pageNum >= pageData.pages"
-            class="page-btn"
-          >
-            Next
-          </button>
+          <el-pagination
+            background
+            layout="prev, pager, next"
+            :current-page="pageData.pageNum"
+            :page-size="pageData.pageSize"
+            :total="pageData.total"
+            @current-change="changePage"
+          />
         </div>
       </div>
     </div>
@@ -197,6 +190,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
+import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import { getPurchaseRecordPageList } from '@/api/purchase'
 import type { PurchaseRecordVO, PurchaseRecordPageQueryDTO, PageResponse } from '@/types/api'
 
@@ -280,23 +274,6 @@ const paymentTagStyle = (method?: string | null) => {
 
 const formatCurrency = (amount: number): string => {
   return amount.toFixed(2)
-}
-
-const getProductImage = (record: PurchaseRecordVO): string | undefined => {
-  return record.product?.garminImageUrl
-}
-
-const getProductUrl = (record: PurchaseRecordVO): string | undefined => {
-  return record.product?.garminStoreUrl
-}
-
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement
-  img.style.display = 'none'
-  const placeholder = img.nextElementSibling as HTMLElement
-  if (placeholder) {
-    placeholder.style.display = 'block'
-  }
 }
 
 const fetchPurchaseRecords = async (pageNum: number = 1) => {

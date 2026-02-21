@@ -51,6 +51,7 @@
           <AppProductInfo :product="row" :thumb-size="56" />
         </template>
       </el-table-column>
+      
       <el-table-column label="作者" width="80">
         <template #default="{ row }">
           {{ row.user?.username || '-' }}
