@@ -138,3 +138,8 @@ export const upAllProductsByUser = (userId: number): Promise<ApiResponse<boolean
 export const transferProductOwner = (appId: number, newUserId: number): Promise<ApiResponse<boolean>> => {
   return instance.post(`/admin/products/transfer-owner/${appId}/${newUserId}`)
 }
+
+// 手动触发刷新产品的下载/购买次数（管理员）
+export const refreshProductStats = (): Promise<ApiResponse<boolean>> => {
+  return instance.post('/admin/products/stats/refresh')
+}

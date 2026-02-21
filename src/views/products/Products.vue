@@ -41,6 +41,7 @@
           @change="handleFilterChange"
         />
         <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button @click="handleRefreshStats" :loading="refreshingStats">刷新统计</el-button>
       </div>
     </div>
 
@@ -92,6 +93,11 @@
       <el-table-column prop="download" label="下载量" width="80">
         <template #default="{ row }">
           {{ row.download }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="purchase" label="购买量" width="80">
+        <template #default="{ row }">
+          {{ row.purchase ?? '-' }}
         </template>
       </el-table-column>
       <el-table-column prop="price" label="价格" width="80">
@@ -364,7 +370,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import { formatDate } from '@/utils/date'
-import { fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner } from '@/api/products'
+import { fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -377,6 +383,7 @@ import UserSelect from '@/components/users/UserSelect.vue'
 const userStore = useUserStore()
 const products = ref<Product[]>([])
 const loading = ref(false)
+const refreshingStats = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -456,6 +463,25 @@ const handleSort = () => {
 const handleFilterChange = () => {
   currentPage.value = 1
   fetchProducts()
+}
+
+// 手动刷新产品下载/购买统计
+const handleRefreshStats = async () => {
+  try {
+    refreshingStats.value = true
+    const res = await refreshProductStats()
+    if (res.code === 0 && res.data) {
+      ElMessage.success('已触发统计刷新')
+      // 刷新当前列表数据
+      fetchProducts()
+    } else {
+      ElMessage.error(res.msg || '刷新统计失败')
+    }
+  } catch (error) {
+    ElMessage.error('刷新统计失败')
+  } finally {
+    refreshingStats.value = false
+  }
 }
 
 // 获取商品列表

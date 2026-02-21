@@ -8,27 +8,76 @@ export interface ProductBase {
   heroFile: string | null
 }
 
+export interface ProductImageVO {
+  id?: number
+  imageUrl?: string
+  // 其他字段按需补充
+  [key: string]: any
+}
+
+export interface BundleVO {
+  bundleId: number
+  userId: number
+  bundleName: string
+  // 其他字段按需补充
+  [key: string]: any
+}
+
 export interface Product {
+  /** 数据库主键 ID */
+  id?: number
+  /** 应用 ID */
   appId: number
+  /** 对应 studio 平台设计 ID */
+  designId: string
+  /** 名称与描述 */
   name: string
   description: string
+  /** 价格（后端 BigDecimal，对前端为 number） */
   price: number
+  /** 原始图片 */
+  rawImageUrl?: string
+  /** Garmin 图片 / 商店 URL */
   garminImageUrl: string
   garminStoreUrl: string
-  // Garmin 应用 UUID（可选）
+  /** 产品横幅 */
+  bannerImageUrl?: string
+  /** Garmin 应用 UUID（可选） */
   garminAppUuid?: string
+  /** 试用时长（小时） */
   trialLasts: number
-   // 设计 ID（在多个页面中会用到）
-  designId: string
+  /** 下载次数 / 购买次数 */
+  download?: number
+  purchase?: number
+  /** 关联用户 */
+  user?: UserBase | null
+  /** 状态、激活与删除标记 */
+  status?: number
+  isActive?: number
+  isDeleted?: number
+  /** 创建与更新时间、最后一次上线时间（LocalDateTime → string） */
   createdAt?: string
   updatedAt?: string
-  isDeleted?: number
-  isActive?: number
+  lastGoLive?: string
+  /** 封面图文件列表 */
+  productImages?: ProductImageVO[]
+  /** 旧字段：单一 heroFile，兼容老页面 */
   heroFile?: {
     url: string
   } | null
+  /** 分类 */
   categories?: Category[]
-  status?: number
+  /** 支付信息 / 打包状态 / 发行包等（按需使用） */
+  payment?: ProductPayment | null
+  packageLog?: ProductPackagingLogVO | null
+  release?: ProductRelease | null
+  prgRelease?: ProductRelease | null
+  packagingLog?: ProductPackagingLogVO | null
+  prgPackagingLog?: ProductPackagingLogVO | null
+  /** 关联 bundle 列表 */
+  bundles?: BundleVO[]
+  /** 支持设备 */
+  devices?: import('./garmin-device').GarminDeviceVO[]
 }
 
 export interface ProductPayment {
@@ -43,7 +92,6 @@ export interface ProductPayment {
 }
 
 export interface ProductRelease {
-  // 具体字段根据后端定义补充
   [key: string]: any
 }
 
@@ -80,11 +128,8 @@ export interface ProductPackagingLogVO {
   version: number
   isDeleted: number
   isActive: number
-  // 打包类型：iq 或 prg
   type: string
-  // 设备 ID
   deviceId: string
-  // 队列优先级，0 为最高，数字越大优先级越低；如果不在队列中则为 null
   priority: number | null
   product: ProductBase & { user?: UserBase | null }
 }
@@ -94,7 +139,7 @@ export interface ProductPackagingLogQuery {
   pageSize: number
   productId?: number | null
   userId?: number | null
-  packagingStatus?: string | null // 支持逗号分隔的多个状态，如 "init,pending,complete"
+  packagingStatus?: string | null
 }
 
 // 打包状态常量
