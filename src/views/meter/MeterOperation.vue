@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getMeterConfig, toggleMeterEnabled, triggerCompute } from '@/api/meter'
+import { getMeterConfig, toggleMeterEnabled, triggerCompute, triggerComputeAll } from '@/api/meter'
 import type { MeterConfigVO } from '@/types/meter'
 
 // ---- Config ----
@@ -105,15 +105,17 @@ const computeResult = ref('')
 
 const handleCompute = async () => {
   const id = computeAppId.value.trim()
-  if (!id) {
-    ElMessage.warning('请输入 App ID')
-    return
-  }
+ 
   computeLoading.value = true
   computeResult.value = ''
   try {
-    await triggerCompute(id)
-    computeResult.value = `App ${id} 的 Lifecycle 计算已触发完成`
+    if (!id) {
+      await triggerComputeAll()
+      computeResult.value = '所有 App 的 Lifecycle 计算已触发完成'
+    } else {
+      await triggerCompute(id)
+      computeResult.value = `App ${id} 的 Lifecycle 计算已触发完成`
+    }
   } catch {
     ElMessage.error('触发计算失败')
   } finally {

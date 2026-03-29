@@ -46,9 +46,12 @@ export const getDau = (date?: string): Promise<ApiResponse<number>> => {
 }
 
 // ==================== Operation ====================
-
 export const triggerCompute = (appId: string): Promise<ApiResponse<string>> => {
   return instance.post(`${OPS}/compute/${appId}`)
+}
+
+export const triggerComputeAll = (): Promise<ApiResponse<string>> => {
+  return instance.post(`${OPS}/compute/all`)
 }
 
 export const getMeterConfig = (): Promise<ApiResponse<MeterConfigVO>> => {
