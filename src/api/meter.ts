@@ -1,0 +1,60 @@
+import instance from '@/config/axios'
+import type { ApiResponse } from '@/types/api'
+import type { AppScoreVO, DeviceOverviewVO, DeviceDetailVO, AppStatsVO, MeterConfigVO } from '@/types/meter'
+
+const SCORE = '/admin/meter/score'
+const DEVICE = '/admin/meter/device'
+const STATS = '/admin/meter/stats'
+const OPS = '/admin/meter/operation'
+
+// ==================== Score ====================
+
+export const getScoreTop = (n = 10): Promise<ApiResponse<AppScoreVO[]>> => {
+  return instance.get(`${SCORE}/top`, { params: { n } })
+}
+
+export const getScorePage = (pageNum = 1, pageSize = 10): Promise<ApiResponse<AppScoreVO[]>> => {
+  return instance.get(`${SCORE}/page`, { params: { pageNum, pageSize } })
+}
+
+// ==================== Device ====================
+
+export const getDeviceOverview = (appId: string): Promise<ApiResponse<DeviceOverviewVO>> => {
+  return instance.get(`${DEVICE}/${appId}/overview`)
+}
+
+export const getActiveDevices = (appId: string): Promise<ApiResponse<string[]>> => {
+  return instance.get(`${DEVICE}/${appId}/active`)
+}
+
+export const getTotalDeviceCount = (appId: string): Promise<ApiResponse<number>> => {
+  return instance.get(`${DEVICE}/${appId}/total`)
+}
+
+export const getDeviceDetail = (appId: string, token: string): Promise<ApiResponse<DeviceDetailVO>> => {
+  return instance.get(`${DEVICE}/${appId}/detail`, { params: { token } })
+}
+
+// ==================== Stats ====================
+
+export const getAppStats = (appId: number, date?: string): Promise<ApiResponse<AppStatsVO>> => {
+  return instance.get(`${STATS}/${appId}`, { params: { date } })
+}
+
+export const getDau = (date?: string): Promise<ApiResponse<number>> => {
+  return instance.get(`${STATS}/dau`, { params: { date } })
+}
+
+// ==================== Operation ====================
+
+export const triggerCompute = (appId: string): Promise<ApiResponse<string>> => {
+  return instance.post(`${OPS}/compute/${appId}`)
+}
+
+export const getMeterConfig = (): Promise<ApiResponse<MeterConfigVO>> => {
+  return instance.get(`${OPS}/config`)
+}
+
+export const toggleMeterEnabled = (enabled: boolean): Promise<ApiResponse<boolean>> => {
+  return instance.post(`${OPS}/config/toggle`, null, { params: { enabled } })
+}

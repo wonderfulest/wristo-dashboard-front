@@ -512,6 +512,35 @@ const router = createRouter({
       component: () => import('@/views/AuthCallback.vue'),
       meta: { requiresAuth: false }
     },
+    // Meter module
+    {
+      path: '/meter/score',
+      name: 'MeterScore',
+      component: () => import('@/views/meter/MeterScore.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/meter/device',
+      name: 'MeterDevice',
+      component: () => import('@/views/meter/MeterDevice.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/meter/stats',
+      name: 'MeterStats',
+      component: () => import('@/views/meter/MeterStats.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/meter/operation',
+      name: 'MeterOperation',
+      component: () => import('@/views/meter/MeterOperation.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/meter',
+      redirect: '/meter/score'
+    },
     {
       path: '/',
       redirect: '/dashboard'

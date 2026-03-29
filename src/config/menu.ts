@@ -145,6 +145,17 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
+    key: 'meter',
+    title: '应用监控',
+    basePaths: ['/meter'],
+    children: [
+      { key: 'meter-score', title: '健康评分排行', path: '/meter/score' },
+      { key: 'meter-device', title: '设备监控', path: '/meter/device' },
+      { key: 'meter-stats', title: '业务指标', path: '/meter/stats' },
+      { key: 'meter-operation', title: '运维操作', path: '/meter/operation' },
+    ],
+  },
+  {
     key: 'ops',
     title: '运维工具',
     basePaths: ['/ops'],
