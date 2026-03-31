@@ -11,6 +11,11 @@ export interface DeviceOverviewVO {
   avgLifecycleMinutes: number
 }
 
+export interface DeviceActiveVO {
+  token: string
+  lastOnlineTime: number
+}
+
 export interface DeviceDetailVO {
   appId: string
   token: string

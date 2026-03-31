@@ -33,6 +33,11 @@
           </div>
         </template>
       </el-table-column>
+      <el-table-column label="操作" width="120">
+        <template #default="{ row }">
+          <el-button type="primary" link @click="goDeviceDetail(row.appId)">详情</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <div v-if="mode === 'page'" class="pagination">
@@ -45,16 +50,25 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getScoreTop, getScorePage } from '@/api/meter'
 import type { AppScoreVO } from '@/types/meter'
 
+const router = useRouter()
 const mode = ref<'top' | 'page'>('top')
 const topN = ref(20)
 const pageNum = ref(1)
 const pageSize = ref(20)
 const loading = ref(false)
 const list = ref<AppScoreVO[]>([])
+
+const goDeviceDetail = (appId: string) => {
+  router.push({
+    path: '/meter/device',
+    query: { appId }
+  })
+}
 
 const scoreColor = (score: number) => {
   if (score >= 0.7) return '#67C23A'

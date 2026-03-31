@@ -1,6 +1,6 @@
 import instance from '@/config/axios'
 import type { ApiResponse } from '@/types/api'
-import type { AppScoreVO, DeviceOverviewVO, DeviceDetailVO, AppStatsVO, MeterConfigVO } from '@/types/meter'
+import type { AppScoreVO, DeviceOverviewVO, DeviceActiveVO, DeviceDetailVO, AppStatsVO, MeterConfigVO } from '@/types/meter'
 
 const SCORE = '/admin/meter/score'
 const DEVICE = '/admin/meter/device'
@@ -23,8 +23,16 @@ export const getDeviceOverview = (appId: string): Promise<ApiResponse<DeviceOver
   return instance.get(`${DEVICE}/${appId}/overview`)
 }
 
-export const getActiveDevices = (appId: string): Promise<ApiResponse<string[]>> => {
+export const getActiveDevices = (appId: string): Promise<ApiResponse<DeviceActiveVO[]>> => {
   return instance.get(`${DEVICE}/${appId}/active`)
+}
+
+export const getAllDevices = (appId: string): Promise<ApiResponse<DeviceActiveVO[]>> => {
+  return instance.get(`${DEVICE}/${appId}/all`)
+}
+
+export const getLostDevices = (appId: string): Promise<ApiResponse<DeviceActiveVO[]>> => {
+  return instance.get(`${DEVICE}/${appId}/lost`)
 }
 
 export const getTotalDeviceCount = (appId: string): Promise<ApiResponse<number>> => {
