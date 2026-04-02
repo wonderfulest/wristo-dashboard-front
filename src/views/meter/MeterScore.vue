@@ -65,7 +65,7 @@ const list = ref<AppScoreVO[]>([])
 
 const goDeviceDetail = (appId: string) => {
   router.push({
-    path: '/meter/device',
+    path: '/meter/app',
     query: { appId }
   })
 }

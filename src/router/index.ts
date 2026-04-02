@@ -521,15 +521,7 @@ const router = createRouter({
     },
     {
       path: '/meter/device',
-      name: 'MeterDevice',
-      component: () => import('@/views/meter/MeterDevice.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/meter/stats',
-      name: 'MeterStats',
-      component: () => import('@/views/meter/MeterStats.vue'),
-      meta: { requiresAuth: true }
+      redirect: '/meter/app'
     },
     {
       path: '/meter/app',

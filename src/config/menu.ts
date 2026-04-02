@@ -150,8 +150,6 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/meter'],
     children: [
       { key: 'meter-score', title: '健康评分排行', path: '/meter/score' },
-      { key: 'meter-device', title: '设备监控', path: '/meter/device' },
-      { key: 'meter-stats', title: '业务指标', path: '/meter/stats' },
       { key: 'meter-app', title: '应用详情', path: '/meter/app' },
       { key: 'meter-operation', title: '运维操作', path: '/meter/operation' },
     ],

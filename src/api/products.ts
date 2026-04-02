@@ -1,6 +1,6 @@
 import instance from '@/config/axios'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import type { Product, ProductPackagingLogQuery, ProductPackagingLogVO, ProductPageQuery } from '@/types/product'
+import type { Product, ProductBase, ProductPackagingLogQuery, ProductPackagingLogVO, ProductPageQuery } from '@/types/product'
 
 // 根据设备型号,分页查询未支持的应用列表,默认按下载量倒序
 export interface UnSupportDevicePageQueryDTO {
@@ -18,6 +18,20 @@ export const fetchUnSupportByDevicePage = (
 
 export const fetchProductPage = (params: ProductPageQuery): Promise<ApiResponse<PageResponse<Product>>> => {
   return instance.post('/admin/products/page?populate=*', params)
+}
+
+export const searchPublicProductPageV2 = (
+  keyword: string,
+  pageNum: number = 1,
+  pageSize: number = 24
+): Promise<ApiResponse<PageResponse<ProductBase>>> => {
+  return instance.get('/public/products/search/v2', {
+    params: {
+      keyword,
+      pageNum,
+      pageSize,
+    }
+  })
 }
 
 // 分页查询打包日志
@@ -84,7 +98,7 @@ export const updateProductPackagingQueuePriority = (
 
 // 查询单个产品
 export const getProduct = (appId: number): Promise<ApiResponse<Product>> => {
-  return instance.get(`/admin/products/${appId}`)
+  return instance.get(`/admin/products/get-by-appid/${appId}`)
 }
 
 // 更新产品

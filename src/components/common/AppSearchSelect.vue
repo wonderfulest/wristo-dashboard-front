@@ -24,8 +24,8 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { fetchProductPage, getProduct } from '@/api/products'
-import type { Product } from '@/types/product'
+import { getProduct, searchPublicProductPageV2 } from '@/api/products'
+import type { Product, ProductBase } from '@/types/product'
 
 const props = withDefaults(defineProps<{
   modelValue: number | null | undefined,
@@ -38,7 +38,7 @@ const props = withDefaults(defineProps<{
   disabled: false,
 })
 
-const options = ref<Product[]>([])
+const options = ref<Array<ProductBase | Product>>([])
 const loading = ref(false)
 let timer: number | undefined
 
@@ -64,14 +64,17 @@ const ensureSelectedOption = async (appId?: number | null) => {
 }
 
 const onRemote = (query: string) => {
+  if (!query) {
+    options.value = []
+    return
+  }
   if (timer) window.clearTimeout(timer)
   timer = window.setTimeout(async () => {
     loading.value = true
     try {
-      const res = await fetchProductPage({ pageNum: 1, pageSize: 20, name: query || undefined, orderBy: 'updated_at desc' })
+      const res = await searchPublicProductPageV2(query, 1, 20)
       if (res.code === 0 && res.data) {
-        const next = res.data.list || []
-        options.value = next
+        options.value = res.data.list || []
         await ensureSelectedOption(props.modelValue)
       }
     } finally {
@@ -80,11 +83,24 @@ const onRemote = (query: string) => {
   }, 300)
 }
 
-const onChange = (val: number) => {
+const onChange = async (val: number | null | undefined) => {
+  if (!val) return
   const found = options.value.find(p => p.appId === val)
-  if (found) {
-    emit('selected', found)
+  if (!found) return
+
+  loading.value = true
+  try {
+    const res = await getProduct(val)
+    if (res.code === 0 && res.data) {
+      options.value = [res.data, ...options.value.filter(p => p.appId !== val)]
+      emit('selected', res.data)
+      return
+    }
+  } finally {
+    loading.value = false
   }
+
+  emit('selected', found as unknown as Product)
 }
 
 watch(
