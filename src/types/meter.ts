@@ -41,6 +41,28 @@ export interface MeterConfigVO {
   lifecycleFixedRateMs: number
 }
 
+export interface AppMeterScoreItemVO {
+  score: number
+  weight: number
+  weightedScore: number
+}
+
+export interface AppMeterScoreVO {
+  total: number
+  weights: {
+    scale: number
+    lifecycle: number
+    activeRate: number
+    effectiveRate: number
+  }
+  breakdown: {
+    scale: AppMeterScoreItemVO
+    lifecycle: AppMeterScoreItemVO
+    activeRate: AppMeterScoreItemVO
+    effectiveRate: AppMeterScoreItemVO
+  }
+}
+
 export interface AppMeterVO {
   appId: number
   date: string
@@ -61,4 +83,5 @@ export interface AppMeterVO {
   revenue: number
   conversionRate: number
   arpu: number
+  score?: AppMeterScoreVO
 }
