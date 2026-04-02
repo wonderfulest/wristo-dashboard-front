@@ -23,11 +23,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { fetchProductPage } from '@/api/products'
+import { onMounted, ref, watch } from 'vue'
+import { fetchProductPage, getProduct } from '@/api/products'
 import type { Product } from '@/types/product'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: number | null | undefined,
   placeholder?: string,
   width?: string,
@@ -47,6 +47,22 @@ const emit = defineEmits<{
   (e: 'selected', value: Product): void
 }>()
 
+const ensureSelectedOption = async (appId?: number | null) => {
+  if (!appId) return
+  const existed = options.value.some(p => p.appId === appId)
+  if (existed) return
+
+  loading.value = true
+  try {
+    const res = await getProduct(appId)
+    if (res.code === 0 && res.data) {
+      options.value = [res.data, ...options.value]
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
 const onRemote = (query: string) => {
   if (timer) window.clearTimeout(timer)
   timer = window.setTimeout(async () => {
@@ -54,7 +70,9 @@ const onRemote = (query: string) => {
     try {
       const res = await fetchProductPage({ pageNum: 1, pageSize: 20, name: query || undefined, orderBy: 'updated_at desc' })
       if (res.code === 0 && res.data) {
-        options.value = res.data.list || []
+        const next = res.data.list || []
+        options.value = next
+        await ensureSelectedOption(props.modelValue)
       }
     } finally {
       loading.value = false
@@ -68,4 +86,15 @@ const onChange = (val: number) => {
     emit('selected', found)
   }
 }
+
+watch(
+  () => props.modelValue,
+  async (val) => {
+    await ensureSelectedOption(val)
+  }
+)
+
+onMounted(async () => {
+  await ensureSelectedOption(props.modelValue)
+})
 </script>

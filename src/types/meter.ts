@@ -40,3 +40,25 @@ export interface MeterConfigVO {
   lifecycleAppIds: string
   lifecycleFixedRateMs: number
 }
+
+export interface AppMeterVO {
+  appId: number
+  date: string
+  dau: number
+  newUsers: number
+  totalUsers: number
+  activeUsers: number
+  mau: number
+  dauMau: number
+  d1Retention: number
+  d7Retention: number
+  usageSeconds: number
+  usageMinutes: number
+  avgUsageSeconds: number
+  avgUsageMinutes: number
+  sessions: number
+  orders: number
+  revenue: number
+  conversionRate: number
+  arpu: number
+}

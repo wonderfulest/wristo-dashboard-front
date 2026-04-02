@@ -1,11 +1,12 @@
 import instance from '@/config/axios'
 import type { ApiResponse } from '@/types/api'
-import type { AppScoreVO, DeviceOverviewVO, DeviceActiveVO, DeviceDetailVO, AppStatsVO, MeterConfigVO } from '@/types/meter'
+import type { AppScoreVO, DeviceOverviewVO, DeviceActiveVO, DeviceDetailVO, AppStatsVO, MeterConfigVO, AppMeterVO } from '@/types/meter'
 
 const SCORE = '/admin/meter/score'
 const DEVICE = '/admin/meter/device'
 const STATS = '/admin/meter/stats'
 const OPS = '/admin/meter/operation'
+const APP = '/admin/meter/app'
 
 // ==================== Score ====================
 
@@ -68,4 +69,8 @@ export const getMeterConfig = (): Promise<ApiResponse<MeterConfigVO>> => {
 
 export const toggleMeterEnabled = (enabled: boolean): Promise<ApiResponse<boolean>> => {
   return instance.post(`${OPS}/config/toggle`, null, { params: { enabled } })
+}
+
+export const getAppMeter = (appId: number, date?: string): Promise<ApiResponse<AppMeterVO>> => {
+  return instance.get(`${APP}/${appId}`, { params: { date } })
 }
