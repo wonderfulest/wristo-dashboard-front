@@ -59,7 +59,7 @@
               <div class="product-main__title">
                 <div>
                   <div class="product-name">{{ productDetail.name || '-' }}</div>
-                  <div class="product-desc">{{ productDetail.description || '暂无描述' }}</div>
+                  <!-- <div class="product-desc">{{ productDetail.description || '暂无描述' }}</div> -->
                 </div>
               </div>
 
