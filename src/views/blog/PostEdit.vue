@@ -7,7 +7,7 @@
           <el-tab-pane v-for="l in availableLangs" :key="l" :name="l">
             <template #label>
               <span class="tab-label">
-                <span class="lang-code">{{ l }}</span>
+                <span class="lang-code">{{ languageLabel(l) }}</span>
                 <el-dropdown v-if="availableLangs.length > 1" trigger="hover" @command="(cmd: string) => onTabCommand(cmd, l)">
                   <span class="tab-actions" @click.stop>⋯</span>
                   <template #dropdown>
@@ -21,7 +21,7 @@
           </el-tab-pane>
         </el-tabs>
         <el-select v-if="addableLangs.length" v-model="addLangSelect" placeholder="添加语言" size="small" style="width: 140px; margin-left: 8px;" @change="addLanguage">
-          <el-option v-for="l in addableLangs" :key="l" :label="l" :value="l" />
+          <el-option v-for="l in addableLangs" :key="l" :label="languageLabel(l)" :value="l" />
         </el-select>
         <el-link type="primary" style="margin-left: 8px;" @click="showMeta = !showMeta">{{ showMeta ? '收起元数据' : '展开元数据' }}</el-link>
         <router-link class="btn" to="/blog/posts">返回列表</router-link>
@@ -172,6 +172,28 @@ const addableLangs = computed(() => languages.value.filter(l => !availableLangs.
 const showMeta = ref(false)
 const switchingLang = ref(false)
 const slugLoading = ref(false)
+const REQUIRED_LANGUAGES = ['en', 'zh']
+const languageLabels: Record<string, string> = {
+  en: 'English',
+  zh: '中文',
+  de: 'Deutsch',
+  es: 'Español',
+  fr: 'Français',
+  it: 'Italiano'
+}
+
+const languageLabel = (lang: string) => languageLabels[String(lang || '').toLowerCase()] || lang
+
+const normalizeLanguageList = (list: string[]) => {
+  const unique = new Set([...REQUIRED_LANGUAGES, ...list].map(lang => String(lang || '').toLowerCase()).filter(Boolean))
+  return Array.from(unique).sort((a, b) => {
+    if (a === 'en') return -1
+    if (b === 'en') return 1
+    if (a === 'zh') return -1
+    if (b === 'zh') return 1
+    return languageLabel(a).localeCompare(languageLabel(b))
+  })
+}
 
 // 根据标题生成 slug
 const generateSlug = async () => {
@@ -202,7 +224,7 @@ onMounted(async () => {
     try {
       const langRes = await fetchSystemLanguages()
       if ((langRes as any)?.code === 0 && Array.isArray((langRes as any)?.data)) {
-        languages.value = (langRes as any).data as string[]
+        languages.value = normalizeLanguageList((langRes as any).data as string[])
       }
     } catch {}
 

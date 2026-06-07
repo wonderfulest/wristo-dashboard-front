@@ -23,3 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 tmp/
+
+# Local test and browser automation artifacts
+.playwright-cli/
+test-results/
+playwright-report/
+playwright/.cache/

@@ -2,7 +2,7 @@
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-left">
-        <span class="footer-icon">🐦</span>
+        <img class="footer-mark" src="https://cdn.wristo.io/brands/wristo-logo/svg/wristo-mark.svg" alt="" aria-hidden="true" />
         <span>© Wristo 2025</span>
       </div>
       <div class="footer-links">
@@ -44,7 +44,7 @@
   color: $color-footer-text;
 }
 .footer-left { display: flex; align-items: center; gap: 8px; }
-.footer-icon { font-size: $font-size-sm; }
+.footer-mark { width: 18px; height: 18px; }
 .footer-links { display: flex; gap: 18px; }
 .footer-links a { color: $color-footer-text; text-decoration: none; transition: color 0.2s; }
 .footer-links a:hover { color: $color-success; }

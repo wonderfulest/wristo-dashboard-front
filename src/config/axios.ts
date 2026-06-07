@@ -3,9 +3,11 @@ import { ElMessage } from 'element-plus'
 import { BizErrorCode } from '@/constant/errorCode'
 import type { ApiResponse } from '@/types/api'
 import { useUserStore } from '@/store/user'
+import { redirectToSsoLogin } from '@/utils/ssoRedirect'
 
 const instance = axios.create({
   baseURL: '/api', // 走 vite 代理
+  withCredentials: true,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
@@ -34,16 +36,15 @@ instance.interceptors.response.use(
     }
   },
   error => {
-    if (error.response?.status === 403) {
-      console.log('403', error.response)
-      ElMessage.error('403 forbidden')
-      setTimeout(() => {
-        const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
-        const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
-        window.location.href = `${ssoBaseUrl}?client=dashboard&redirect_uri=${encodeURIComponent(redirectUri)}`  
-      }, 1000)
+    const status = error.response?.status
+    if (status === 401 || status === 403) {
+      const userStore = useUserStore()
+      userStore.token = ''
+      userStore.userInfo = null
+      ElMessage.error('登录已过期，请重新登录')
+      redirectToSsoLogin('dashboard', 1000)
     } else {
-      ElMessage.error(error.response.data.msg || 'http error')
+      ElMessage.error(error.response?.data?.msg || 'http error')
     }
     return Promise.reject(error)
   }

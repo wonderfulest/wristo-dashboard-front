@@ -1,5 +1,5 @@
 <template>
-  <div class="lang-switcher" role="navigation" aria-label="Language Switcher">
+  <div class="lang-switcher" role="navigation" aria-label="Language">
     <span class="label">Language</span>
     <div class="buttons">
       <button
@@ -10,7 +10,7 @@
         type="button"
         @click="switchLanguage(lang)"
       >
-        {{ lang.toUpperCase() }}
+        {{ getLanguageLabel(lang) }}
       </button>
     </div>
   </div>
@@ -19,6 +19,18 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { fetchSystemLanguages } from '@/api/system'
+
+const SHARED_LOCALE_KEY = 'wristo-locale'
+const DEFAULT_LOCALE = 'en'
+const REQUIRED_LANGUAGES = ['en', 'zh']
+const languageLabels: Record<string, string> = {
+  en: 'English',
+  zh: '中文',
+  de: 'Deutsch',
+  es: 'Español',
+  fr: 'Français',
+  it: 'Italiano',
+}
 
 interface Props {
   modelValue?: string
@@ -39,10 +51,52 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const availableLanguages = ref<string[]>([])
-const currentLanguage = ref<string>(props.modelValue)
+const currentLanguage = ref<string>(props.modelValue || getStoredLanguage())
+
+const getLanguageLabel = (lang: string) => languageLabels[String(lang).toLowerCase()] || lang
+
+const normalizeLanguageList = (languages: string[]) => {
+  const unique = new Set([...REQUIRED_LANGUAGES, ...languages].map(lang => String(lang || '').toLowerCase()).filter(Boolean))
+  return Array.from(unique).sort((a, b) => {
+    if (a === DEFAULT_LOCALE) return -1
+    if (b === DEFAULT_LOCALE) return 1
+    if (a === 'zh') return -1
+    if (b === 'zh') return 1
+    return getLanguageLabel(a).localeCompare(getLanguageLabel(b))
+  })
+}
+
+function getCookieLanguage() {
+  const match = document.cookie
+    .split('; ')
+    .find(row => row.startsWith(`${SHARED_LOCALE_KEY}=`))
+  return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : ''
+}
+
+function persistLanguage(lang: string) {
+  localStorage.setItem(SHARED_LOCALE_KEY, lang)
+  const maxAge = 60 * 60 * 24 * 365
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${SHARED_LOCALE_KEY}=${encodeURIComponent(lang)}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`
+}
+
+function getStoredLanguage() {
+  const local = localStorage.getItem(SHARED_LOCALE_KEY)
+  if (local) {
+    try {
+      const parsed = JSON.parse(local) as { currentLocale?: string }
+      return parsed.currentLocale || local
+    } catch {
+      return local
+    }
+  }
+  return getCookieLanguage() || DEFAULT_LOCALE
+}
 
 const switchLanguage = (lang: string) => {
   currentLanguage.value = lang
+  persistLanguage(lang)
+  document.documentElement.lang = lang
   emit('update:modelValue', lang)
   emit('change', lang)
 }
@@ -51,12 +105,14 @@ const loadSystemLanguages = async () => {
   try {
     const res = await fetchSystemLanguages()
     if (res.code === 0 && res.data) {
-      availableLanguages.value = res.data
-      emit('languages-loaded', res.data)
+      availableLanguages.value = normalizeLanguageList(res.data)
+      emit('languages-loaded', availableLanguages.value)
       
       // Auto-select first language if no current language and autoSelectFirst is true
       if (props.autoSelectFirst && !currentLanguage.value && availableLanguages.value.length > 0) {
-        switchLanguage(availableLanguages.value[0])
+        switchLanguage(getStoredLanguage())
+      } else if (currentLanguage.value && availableLanguages.value.includes(currentLanguage.value)) {
+        switchLanguage(currentLanguage.value)
       }
     }
   } catch (e) {
@@ -66,7 +122,7 @@ const loadSystemLanguages = async () => {
 
 // Watch for external changes to modelValue
 watch(() => props.modelValue, (newValue) => {
-  currentLanguage.value = newValue
+  currentLanguage.value = newValue || getStoredLanguage()
 })
 
 onMounted(() => {

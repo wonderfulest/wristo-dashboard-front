@@ -40,7 +40,7 @@
                 size="small"
                 class="translation-tag"
               >
-                {{ translation.lang }}: {{ translation.name }}
+                {{ languageLabel(translation.lang) }}: {{ translation.name }}
               </el-tag>
             </div>
             <span v-else class="no-translations">—</span>
@@ -129,7 +129,7 @@
                 <el-option 
                   v-for="lang in availableLanguages" 
                   :key="lang" 
-                  :label="lang" 
+                  :label="languageLabel(lang)" 
                   :value="lang"
                 />
               </el-select>
@@ -243,6 +243,16 @@ const editTranslationSubmitting = ref(false)
 // Language management
 const currentLang = ref<string>('')
 const availableLanguages = ref<string[]>([])
+const languageLabels: Record<string, string> = {
+  en: 'English',
+  zh: '中文',
+  de: 'Deutsch',
+  es: 'Español',
+  fr: 'Français',
+  it: 'Italiano'
+}
+
+const languageLabel = (lang: string) => languageLabels[String(lang || '').toLowerCase()] || lang
 
 const onLanguagesLoaded = (languages: string[]) => {
   availableLanguages.value = languages

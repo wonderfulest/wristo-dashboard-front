@@ -21,7 +21,6 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const clientId = 'dashboard'
-const clientSecret = 'xxx'
 const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
 
 onMounted(async () => {
@@ -36,7 +35,6 @@ onMounted(async () => {
     const res: ApiResponse<SsoTokenResponseData> = await fetchSsoToken({
       code,
       clientId,
-      clientSecret,
       redirectUri
     })
     console.log(' res', res)

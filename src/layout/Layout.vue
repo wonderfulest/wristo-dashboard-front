@@ -150,9 +150,6 @@ const toggleSideMenu = () => {
   align-items: center;
   gap: 8px;
 }
-.footer-icon {
-  font-size: $font-size-sm;
-}
 .footer-links {
   display: flex;
   gap: 18px;

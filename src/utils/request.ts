@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
+import { redirectToSsoLogin } from '@/utils/ssoRedirect'
 
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
@@ -37,7 +38,13 @@ service.interceptors.response.use(
     return res
   },
   (error) => {
-    ElMessage.error(error.message || '请求失败')
+    const status = error.response?.status
+    if (status === 401 || status === 403) {
+      ElMessage.error('登录已过期，请重新登录')
+      redirectToSsoLogin('dashboard', 1000)
+    } else {
+      ElMessage.error(error.response?.data?.msg || error.message || '请求失败')
+    }
     return Promise.reject(error)
   }
 )

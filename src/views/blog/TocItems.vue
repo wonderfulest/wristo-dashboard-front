@@ -68,7 +68,7 @@
             <el-tab-pane
               v-for="t in (form.translations || [])"
               :key="t.lang"
-              :label="t.lang || '未命名'"
+              :label="t.lang ? languageLabel(t.lang) : '未命名'"
               :name="t.lang"
             >
               <div style="display: flex; gap: 8px; align-items: center;">
@@ -84,7 +84,7 @@
                   <el-option
                     v-for="l in availableLanguages"
                     :key="l"
-                    :label="l"
+                    :label="languageLabel(l)"
                     :value="l"
                   />
                 </el-select>
@@ -158,6 +158,16 @@ const treeProps = { children: 'children', label: 'title' }
 const activeTransLang = ref<string>('')
 const currentLang = ref<string>('')
 const availableLanguages = ref<string[]>([])
+const languageLabels: Record<string, string> = {
+  en: 'English',
+  zh: '中文',
+  de: 'Deutsch',
+  es: 'Español',
+  fr: 'Français',
+  it: 'Italiano'
+}
+
+const languageLabel = (lang: string) => languageLabels[String(lang || '').toLowerCase()] || lang
 
 const onLanguagesLoaded = (languages: string[]) => {
   availableLanguages.value = languages
