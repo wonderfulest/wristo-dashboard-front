@@ -19,6 +19,7 @@
           <el-image v-if="device.imageUrl" :src="device.imageUrl" fit="cover" style="width: 160px; height: 160px; border-radius: 8px;" />
           <div v-else class="placeholder">无图片</div>
           <el-image v-if="device.devicePng" :src="device.devicePng" fit="contain" style="width: 120px; height: 120px; border-radius: 4px;" />
+          <el-image v-if="device.deviceTransparentPng" :src="device.deviceTransparentPng" fit="contain" style="width: 120px; height: 120px; border-radius: 4px; margin-left: 12px;" />
           <div v-else class="placeholder">无图片</div>
         </div>
         <div class="fields">

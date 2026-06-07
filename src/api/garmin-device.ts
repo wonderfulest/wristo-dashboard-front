@@ -30,12 +30,14 @@ export function createGarminDeviceForm(params: {
   simulatorFile?: File
   compilerFile?: File
   devicePngFile?: File
+  deviceTransparentPngFile?: File
 }) {
   const form = new FormData()
   form.append('deviceId', params.deviceId)
   if (params.simulatorFile) form.append('simulator', params.simulatorFile)
   if (params.compilerFile) form.append('compiler', params.compilerFile)
   if (params.devicePngFile) form.append('devicePngFile', params.devicePngFile)
+  if (params.deviceTransparentPngFile) form.append('deviceTransparentPngFile', params.deviceTransparentPngFile)
   return instance.post<ApiResponse<GarminDeviceVO>>(`${BASE}/create`, form, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
@@ -46,12 +48,14 @@ export function updateGarminDeviceForm(params: {
   simulatorFile?: File
   compilerFile?: File
   devicePngFile?: File
+  deviceTransparentPngFile?: File
 }) {
   const form = new FormData()
   form.append('deviceId', params.deviceId)
   if (params.simulatorFile) form.append('simulator', params.simulatorFile)
   if (params.compilerFile) form.append('compiler', params.compilerFile)
   if (params.devicePngFile) form.append('devicePngFile', params.devicePngFile)
+  if (params.deviceTransparentPngFile) form.append('deviceTransparentPngFile', params.deviceTransparentPngFile)
   return instance.post<ApiResponse<GarminDeviceVO>>(`${BASE}/update`, form, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })

@@ -13,6 +13,7 @@ export interface GarminDeviceVO {
   hardwarePartNumber: string
   imageUrl: string
   devicePng?: string
+  deviceTransparentPng?: string
   pixelFormat: string
   bitsPerPixel?: number
   resolutionHeight: number

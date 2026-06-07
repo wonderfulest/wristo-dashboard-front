@@ -50,6 +50,21 @@
             </template>
           </el-upload>
         </el-form-item>
+
+        <el-form-item label="透明 PNG 图片" class="full">
+          <el-upload
+            :auto-upload="false"
+            :show-file-list="true"
+            :limit="1"
+            accept=".png,image/png"
+            :on-change="onTransparentPngFileChange"
+          >
+            <el-button>选择去白底 PNG 文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">可选，用于画布设备外框显示，保留透明背景</div>
+            </template>
+          </el-upload>
+        </el-form-item>
       </div>
     </el-form>
     <template #footer>
@@ -84,7 +99,7 @@ watch(
 watch(visibleInner, v => emit('update:modelValue', v))
 
 const saving = ref(false)
-const form = ref<{ deviceId: string; simulatorFile?: File; compilerFile?: File; devicePngFile?: File }>({ deviceId: '' })
+const form = ref<{ deviceId: string; simulatorFile?: File; compilerFile?: File; devicePngFile?: File; deviceTransparentPngFile?: File }>({ deviceId: '' })
 
 function close() {
   visibleInner.value = false
@@ -125,6 +140,19 @@ function onPngFileChange(file: any) {
   }
 }
 
+function onTransparentPngFileChange(file: any) {
+  const raw: File | undefined = file?.raw
+  if (!raw) return
+  if (!raw.name.toLowerCase().endsWith('.png')) {
+    ElMessage.error('请上传 PNG 文件')
+    return
+  }
+  form.value.deviceTransparentPngFile = raw
+  if (!form.value.deviceId) {
+    form.value.deviceId = raw.name.replace(/\.[^.]+$/, '').replace(/-transparent$/, '')
+  }
+}
+
 async function handleSave() {
   if (!form.value.deviceId) {
     ElMessage.error('请填写 Device ID')
@@ -141,6 +169,7 @@ async function handleSave() {
       simulatorFile: form.value.simulatorFile,
       compilerFile: form.value.compilerFile,
       devicePngFile: form.value.devicePngFile,
+      deviceTransparentPngFile: form.value.deviceTransparentPngFile,
     })
     ElMessage.success('创建成功')
     emit('success')

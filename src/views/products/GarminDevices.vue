@@ -44,6 +44,12 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
+      <el-table-column label="透明PNG" width="100">
+        <template #default="{ row }">
+          <el-image v-if="row.deviceTransparentPng" :src="row.deviceTransparentPng" style="width: 48px; height: 48px" fit="contain" />
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="200" align="center">
         <template #default="{ row }">
           <el-button link type="primary" @click="handleDetail(row)">详情</el-button>

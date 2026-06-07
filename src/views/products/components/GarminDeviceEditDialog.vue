@@ -30,6 +30,21 @@
           </el-upload>
         </el-form-item>
 
+        <el-form-item label="透明 PNG 图片" class="full">
+          <el-upload
+            :auto-upload="false"
+            :show-file-list="true"
+            :limit="1"
+            accept=".png,image/png"
+            :on-change="onTransparentPngFileChange"
+          >
+            <el-button>选择去白底 PNG 文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">可选，替换画布设备外框透明 PNG</div>
+            </template>
+          </el-upload>
+        </el-form-item>
+
         <el-form-item label="Simulator JSON" class="full">
           <el-upload
             :auto-upload="false"
@@ -96,7 +111,7 @@ watch(visibleInner, v => emit('update:modelValue', v))
 
 // form must be defined before watchers that use it
 const saving = ref(false)
-const form = ref<{ deviceId: string; simulatorFile?: File; compilerFile?: File; devicePngFile?: File }>({ deviceId: '' })
+const form = ref<{ deviceId: string; simulatorFile?: File; compilerFile?: File; devicePngFile?: File; deviceTransparentPngFile?: File }>({ deviceId: '' })
 
 const device = ref<GarminDeviceVO | null>(null)
 watch(
@@ -145,12 +160,22 @@ function onPngFileChange(file: any) {
   form.value.devicePngFile = raw
 }
 
+function onTransparentPngFileChange(file: any) {
+  const raw: File | undefined = file?.raw
+  if (!raw) return
+  if (!raw.name.toLowerCase().endsWith('.png')) {
+    ElMessage.error('请上传 PNG 文件')
+    return
+  }
+  form.value.deviceTransparentPngFile = raw
+}
+
 async function handleSave() {
   if (!device.value?.id) {
     ElMessage.error('未找到设备 ID')
     return
   }
-  if (!form.value.simulatorFile && !form.value.compilerFile && !form.value.devicePngFile) {
+  if (!form.value.simulatorFile && !form.value.compilerFile && !form.value.devicePngFile && !form.value.deviceTransparentPngFile) {
     ElMessage.error('请至少修改一个配置或上传 PNG')
     return
   }
@@ -161,6 +186,7 @@ async function handleSave() {
       simulatorFile: form.value.simulatorFile,
       compilerFile: form.value.compilerFile,
       devicePngFile: form.value.devicePngFile,
+      deviceTransparentPngFile: form.value.deviceTransparentPngFile,
     })
     ElMessage.success('更新成功')
     emit('success')
