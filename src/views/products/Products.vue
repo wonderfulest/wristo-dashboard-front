@@ -141,6 +141,13 @@
             >
               创建工单
             </el-button>
+            <el-button 
+              type="primary" 
+              link 
+              @click="handleShare(row)"
+            >
+              Share
+            </el-button>
           </div>
         </template>
       </el-table-column>
@@ -360,6 +367,111 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- Social Media Share Dialog -->
+    <el-dialog
+      v-model="shareDialogVisible"
+      title="Social Media Share"
+      width="780px"
+      destroy-on-close
+    >
+      <div v-if="shareProduct" class="share-dialog-content">
+        <!-- Product Preview Card -->
+        <div class="share-product-card">
+          <el-image
+            v-if="shareProduct.garminImageUrl || shareProduct.heroFile?.url"
+            :src="shareProduct.garminImageUrl || shareProduct.heroFile?.url"
+            style="width: 80px; height: 80px; border-radius: 12px; flex-shrink: 0;"
+            fit="cover"
+          />
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: 600; font-size: 16px; color: #1d1d1f;">{{ shareProduct.name }}</div>
+            <div style="color: #86868b; font-size: 13px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              {{ shareProduct.description || 'No description' }}
+            </div>
+            <div style="margin-top: 6px; display: flex; gap: 8px; align-items: center;">
+              <el-tag size="small" type="info">${{ shareProduct.price }}</el-tag>
+              <el-tag size="small">{{ shareProduct.download ?? 0 }} downloads</el-tag>
+            </div>
+          </div>
+        </div>
+
+        <!-- Platform Selection -->
+        <div class="share-section">
+          <div class="share-section-title">Select Platforms</div>
+          <el-checkbox-group v-model="selectedPlatforms" class="share-platform-grid">
+            <el-checkbox
+              v-for="p in availablePlatforms"
+              :key="p.value"
+              :label="p.value"
+              class="share-platform-checkbox"
+            >
+              <span class="share-platform-icon">{{ p.icon }}</span>
+              <span>{{ p.label }}</span>
+            </el-checkbox>
+          </el-checkbox-group>
+        </div>
+
+        <!-- Optional Overrides -->
+        <div class="share-section">
+          <div class="share-section-title">Customize (Optional)</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <el-input v-model="shareOptions.title" placeholder="Custom title" clearable />
+            <el-input v-model="shareOptions.subtitle" placeholder="Custom subtitle" clearable />
+            <el-color-picker v-model="shareOptions.bgColor" show-alpha size="default" />
+            <el-input v-model="shareOptions.brandLogo" placeholder="Brand logo URL (optional)" clearable />
+          </div>
+        </div>
+
+        <!-- Generate Button -->
+        <div style="text-align: center; margin: 20px 0 8px;">
+          <el-button
+            type="primary"
+            size="large"
+            :loading="shareGenerating"
+            :disabled="selectedPlatforms.length === 0"
+            @click="handleGenerateShareImages"
+            style="min-width: 200px; border-radius: 10px;"
+          >
+            Generate Share Images
+          </el-button>
+        </div>
+
+        <!-- Generated Results -->
+        <div v-if="shareResult && shareResult.shareImages?.length" class="share-results">
+          <div class="share-section-title">Generated Images</div>
+          <div class="share-results-grid">
+            <div
+              v-for="img in shareResult.shareImages"
+              :key="img.platform"
+              class="share-result-card"
+            >
+              <div class="share-result-platform">{{ getPlatformLabel(img.platform) }}</div>
+              <template v-if="img.imageUrl">
+                <el-image
+                  :src="img.imageUrl"
+                  fit="cover"
+                  class="share-result-image"
+                  :preview-src-list="[img.imageUrl]"
+                  preview-teleported
+                />
+                <div class="share-result-actions">
+                  <el-button size="small" type="primary" link @click="copyToClipboard(img.imageUrl)">
+                    Copy URL
+                  </el-button>
+                  <el-button size="small" type="primary" link @click="openInNewTab(img.imageUrl)">
+                    Open
+                  </el-button>
+                </div>
+              </template>
+              <div v-else class="share-result-error">
+                {{ img.error || 'Generation failed' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -378,6 +490,8 @@ import type { Category } from '@/types/category'
 import { createTicket } from '@/api/ticket'
 import { useUserStore } from '@/store/user'
 import UserSelect from '@/components/users/UserSelect.vue'
+import { generateShareImages } from '@/api/share'
+import type { ShareProductVO } from '@/api/share'
 
 // 表格数据
 const userStore = useUserStore()
@@ -744,6 +858,81 @@ const handleToggleStatus = async (row: Product) => {
   }
 }
 
+// ========== Social Media Share ==========
+const shareDialogVisible = ref(false)
+const shareGenerating = ref(false)
+const shareProduct = ref<Product | null>(null)
+const shareResult = ref<ShareProductVO | null>(null)
+const selectedPlatforms = ref<string[]>(['facebook', 'instagram', 'x', 'pinterest'])
+const shareOptions = ref({
+  title: '',
+  subtitle: '',
+  bgColor: '',
+  brandLogo: '',
+})
+
+const availablePlatforms = [
+  { value: 'facebook', label: 'Facebook', icon: 'f' },
+  { value: 'instagram', label: 'Instagram', icon: 'ig' },
+  { value: 'x', label: 'X (Twitter)', icon: 'X' },
+  { value: 'pinterest', label: 'Pinterest', icon: 'P' },
+  { value: 'linkedin', label: 'LinkedIn', icon: 'in' },
+  { value: 'tiktok', label: 'TikTok', icon: 'Tk' },
+  { value: 'xhs', label: 'Xiaohongshu', icon: 'XH' },
+  { value: 'youtube', label: 'YouTube', icon: 'YT' },
+]
+
+const getPlatformLabel = (value: string) => {
+  return availablePlatforms.find(p => p.value === value)?.label || value
+}
+
+const handleShare = (row: Product) => {
+  shareProduct.value = row
+  shareResult.value = null
+  shareOptions.value = { title: '', subtitle: '', bgColor: '', brandLogo: '' }
+  selectedPlatforms.value = ['facebook', 'instagram', 'x', 'pinterest']
+  shareDialogVisible.value = true
+}
+
+const handleGenerateShareImages = async () => {
+  if (!shareProduct.value) return
+  try {
+    shareGenerating.value = true
+    shareResult.value = null
+    const res = await generateShareImages({
+      appId: shareProduct.value.appId,
+      platforms: selectedPlatforms.value,
+      title: shareOptions.value.title || undefined,
+      subtitle: shareOptions.value.subtitle || undefined,
+      bgColor: shareOptions.value.bgColor || undefined,
+      brandLogo: shareOptions.value.brandLogo || undefined,
+    })
+    if (res.code === 0 && res.data) {
+      shareResult.value = res.data
+      ElMessage.success('Share images generated')
+    } else {
+      ElMessage.error(res.msg || 'Failed to generate share images')
+    }
+  } catch (error) {
+    ElMessage.error('Failed to generate share images')
+  } finally {
+    shareGenerating.value = false
+  }
+}
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('Copied to clipboard')
+  } catch {
+    ElMessage.error('Failed to copy')
+  }
+}
+
+const openInNewTab = (url: string) => {
+  window.open(url, '_blank')
+}
+
 onMounted(() => {
   fetchProducts()
   fetchCategories()
@@ -830,5 +1019,130 @@ onMounted(() => {
   background: #f5f5f5;
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+/* ========== Social Media Share Dialog (Apple Design) ========== */
+.share-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.share-product-card {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  background: #f5f5f7;
+  border-radius: 14px;
+}
+
+.share-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.share-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #86868b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.share-platform-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.share-platform-checkbox {
+  margin: 0 !important;
+  padding: 10px 12px;
+  border: 1.5px solid #e5e5ea;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.share-platform-checkbox:hover {
+  border-color: #007aff;
+  background: #f0f5ff;
+}
+
+.share-platform-checkbox.is-checked {
+  border-color: #007aff;
+  background: #e8f0fe;
+}
+
+.share-platform-icon {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 11px;
+  color: #fff;
+  background: #1d1d1f;
+  border-radius: 6px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.share-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.share-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.share-result-card {
+  border: 1px solid #e5e5ea;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  transition: box-shadow 0.2s ease;
+}
+
+.share-result-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.share-result-platform {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1d1d1f;
+  background: #f5f5f7;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.share-result-image {
+  width: 100%;
+  height: 140px;
+  display: block;
+}
+
+.share-result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.share-result-error {
+  padding: 16px 12px;
+  font-size: 12px;
+  color: #ff3b30;
+  text-align: center;
 }
 </style>
