@@ -39,6 +39,11 @@ export const getProductPackagingLogsPage = (params: ProductPackagingLogQuery): P
   return instance.post('/admin/products/packaging-log/page?populate=*', params)
 } 
 
+// 删除打包日志
+export const deleteProductPackagingLog = (id: number): Promise<ApiResponse<void>> => {
+  return instance.delete(`/admin/product-packaging-logs/${id}`)
+}
+
 // 重新提交打包任务到队列
 export const requeueProductPackagingLog = (
   id: number,

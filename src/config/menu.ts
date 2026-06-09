@@ -12,44 +12,63 @@ export interface TopMenuGroup {
   children: SubMenuItem[]
 }
 
+const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/'
+
+const menuPathMatches = (menuPath: string, currentPath: string) => {
+  const normalizedMenuPath = normalizePath(menuPath)
+  const normalizedCurrentPath = normalizePath(currentPath)
+  if (normalizedMenuPath === normalizedCurrentPath) return true
+
+  if (!normalizedMenuPath.includes(':')) return false
+
+  const pattern = normalizedMenuPath
+    .split('/')
+    .map((segment) => (segment.startsWith(':') ? '[^/]+' : segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+    .join('/')
+  return new RegExp(`^${pattern}$`).test(normalizedCurrentPath)
+}
+
+export const hasMatchingChildPath = (items: SubMenuItem[], currentPath: string): boolean => {
+  return items.some((item) => {
+    if (item.path && menuPathMatches(item.path, currentPath)) return true
+    return item.children ? hasMatchingChildPath(item.children, currentPath) : false
+  })
+}
+
+const matchesBasePath = (group: TopMenuGroup, currentPath: string) => {
+  return group.basePaths.some((basePath) => {
+    const normalizedBasePath = normalizePath(basePath)
+    const normalizedCurrentPath = normalizePath(currentPath)
+    return normalizedCurrentPath === normalizedBasePath || normalizedCurrentPath.startsWith(`${normalizedBasePath}/`)
+  })
+}
+
+export const resolveActiveTopMenu = (currentPath: string) => {
+  return topMenus.find((group) => hasMatchingChildPath(group.children, currentPath))
+    || topMenus.find((group) => matchesBasePath(group, currentPath))
+    || topMenus[0]
+}
+
+export const isTopMenuActive = (group: TopMenuGroup, currentPath: string) => resolveActiveTopMenu(currentPath)?.key === group.key
+
+export const findFirstPath = (items: SubMenuItem[] | undefined): string | undefined => {
+  if (!items?.length) return
+  for (const item of items) {
+    if (item.path) return item.path
+    const nested = findFirstPath(item.children)
+    if (nested) return nested
+  }
+}
+
 export const topMenus: TopMenuGroup[] = [
   {
     key: 'official',
     title: '官网运营',
-    basePaths: ['/dashboard', '/products', '/website', '/discounts', '/history', '/design-review', '/packaging-logs', '/subscription-plans', '/data-type-options', '/tickets', '/contact-us', '/themes'],
+    basePaths: ['/dashboard', '/website', '/discounts', '/history', '/subscription-plans', '/tickets', '/contact-us'],
     children: [
       { key: 'dashboard', title: '仪表盘', path: '/dashboard' },
       { key: 'tickets', title: '工单管理', path: '/tickets' },
       { key: 'contact-us', title: '用户反馈', path: '/contact-us' },
-      {
-        key: 'themes',
-        title: '主题系统',
-        children: [
-          { key: 'theme-rules', title: '主题规则', path: '/themes/rules' },
-          { key: 'theme-configs', title: '主题配置', path: '/themes/configs' },
-        ],
-      },
-      {
-        key: 'packaging',
-        title: '设计打包',
-        children: [
-          { key: 'designs', title: '设计列表', path: '/products/designs' },
-          { key: 'design-review', title: '设计审核', path: '/packaging/design-review' },
-          { key: 'packaging-logs', title: '打包记录', path: '/packaging/packaging-logs' },
-          { key: 'packaging-queue', title: '打包任务队列', path: '/packaging/packaging-queue' },
-        ],
-      },
-      {
-        key: 'products',
-        title: '应用管理',
-        children: [
-          { key: 'products', title: '应用列表', path: '/products' },
-          { key: 'categories', title: '应用分类', path: '/website/categories' },
-          { key: 'app-daily-config', title: '每日一图配置', path: '/products/app-daily/config' },
-          { key: 'device-un-support', title: '未支持应用', path: '/products/device-un-support' },
-          { key: 'delete-from-garmin', title: '从佳明商城删除', path: '/products/delete-from-garmin' },
-        ],
-      },
       {
         key: 'search-records',
         title: '用户搜索记录',
@@ -68,11 +87,8 @@ export const topMenus: TopMenuGroup[] = [
         title: '官网',
         children: [
           { key: 'website-home-banners', title: '首页 Banner', path: '/website/home-banners' },
-          { key: 'website-categories', title: '应用分类', path: '/website/categories' },
         ],
       },
-      { key: 'data-type-options', title: '数据项', path: '/data-type-options' },
-      { key: 'color-type-options', title: '颜色配置', path: '/color-type-options' },
       { key: 'garmin-devices', title: '佳明设备', children: [
         { key: 'garmin-devices', title: '设备列表', path: '/products/garmin-devices' },
         { key: 'garmin-device-detail', title: '设备详情', path: '/products/garmin-devices/:id' },
@@ -83,10 +99,24 @@ export const topMenus: TopMenuGroup[] = [
   },
   {
     key: 'design',
-    title: '设计',
-    basePaths: ['/design'],
+    title: '设计管理',
+    basePaths: ['/design', '/packaging', '/themes', '/data-type-options', '/color-type-options'],
     children: [
+      { key: 'designs', title: '设计列表', path: '/products/designs' },
+      { key: 'design-review', title: '设计审核', path: '/packaging/design-review' },
+      { key: 'packaging-logs', title: '打包记录', path: '/packaging/packaging-logs' },
+      { key: 'packaging-queue', title: '打包任务队列', path: '/packaging/packaging-queue' },
       { key: 'inspirations', title: '设计灵感', path: '/design/inspirations' },
+      {
+        key: 'themes',
+        title: '主题系统',
+        children: [
+          { key: 'theme-rules', title: '主题规则', path: '/themes/rules' },
+          { key: 'theme-configs', title: '主题配置', path: '/themes/configs' },
+        ],
+      },
+      { key: 'data-type-options', title: '数据项', path: '/data-type-options' },
+      { key: 'color-type-options', title: '颜色配置', path: '/color-type-options' },
       {
         key: 'fonts',
         title: '字体',
@@ -108,33 +138,42 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
-    key: 'blog',
-    title: '博客',
-    basePaths: ['/blog'],
+    key: 'products',
+    title: '应用管理',
+    basePaths: ['/products', '/meter'],
     children: [
-      { key: 'post-list', title: '文章列表', path: '/blog/posts' },
-      { key: 'categories', title: '分类管理', path: '/blog/categories' },
-      { key: 'tags', title: '标签管理', path: '/blog/tags' },
-      { key: 'toc', title: '博客目录管理', path: '/blog/toc' },
-    ],
-  },
-  {
-    key: 'ga',
-    title: 'GA 增长分析',
-    basePaths: ['/ga'],
-    children: [
-      { key: 'ga-short-links', title: '短链配置', path: '/ga/short-links' },
-      { key: 'ga-click-events', title: '点击事件', path: '/ga/click-events' },
-      { key: 'ga-promoter-coupons', title: '口令管理', path: '/ga/promoter-coupons' },
-      // 预留：数据归因分析等页面
-      // { key: 'ga-attribution', title: '数据归因分析', path: '/ga/attribution' },
+      { key: 'products', title: '应用列表', path: '/products' },
+      { key: 'categories', title: '应用分类', path: '/website/categories' },
+      { key: 'app-daily-config', title: '每日一图配置', path: '/products/app-daily/config' },
+      { key: 'device-un-support', title: '未支持应用', path: '/products/device-un-support' },
+      { key: 'delete-from-garmin', title: '从佳明商城删除', path: '/products/delete-from-garmin' },
+      {
+        key: 'meter',
+        title: '应用监控',
+        children: [
+          { key: 'meter-score', title: '健康评分排行', path: '/meter/score' },
+          { key: 'meter-app', title: '应用详情', path: '/meter/app' },
+          { key: 'meter-operation', title: '运维操作', path: '/meter/operation' },
+        ],
+      },
     ],
   },
   {
     key: 'marketing',
     title: '营销工具',
-    basePaths: ['/marketing'],
+    basePaths: ['/marketing', '/ga'],
     children: [
+      {
+        key: 'ga',
+        title: 'GA 增长分析',
+        children: [
+          { key: 'ga-short-links', title: '短链配置', path: '/ga/short-links' },
+          { key: 'ga-click-events', title: '点击事件', path: '/ga/click-events' },
+          { key: 'ga-promoter-coupons', title: '口令管理', path: '/ga/promoter-coupons' },
+          // 预留：数据归因分析等页面
+          // { key: 'ga-attribution', title: '数据归因分析', path: '/ga/attribution' },
+        ],
+      },
       // { key: 'customers', title: '客户管理', path: '/marketing/customers' },
       { key: 'user-profiles', title: '用户画像', path: '/marketing/user-profiles' },
       // { key: 'tags', title: '标签管理', path: '/marketing/tags' },
@@ -142,16 +181,6 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'email-templates', title: '邮件模板', path: '/marketing/email-templates' },
       { key: 'promotion-campaigns', title: '营销活动', path: '/marketing/campaigns' },
       { key: 'push-records', title: '推送记录', path: '/marketing/push-records' },
-    ],
-  },
-  {
-    key: 'meter',
-    title: '应用监控',
-    basePaths: ['/meter'],
-    children: [
-      { key: 'meter-score', title: '健康评分排行', path: '/meter/score' },
-      { key: 'meter-app', title: '应用详情', path: '/meter/app' },
-      { key: 'meter-operation', title: '运维操作', path: '/meter/operation' },
     ],
   },
   {

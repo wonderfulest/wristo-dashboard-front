@@ -36,7 +36,7 @@
 import { useUserStore } from '@/store/user'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { topMenus } from '@/config/menu'
+import { findFirstPath, isTopMenuActive, topMenus } from '@/config/menu'
 
 const userStore = useUserStore()
 const defaultAvatar = 'https://cdn.wristo.io/test/avatar/561aae25-41bd-47ab-974e-7231f5a850e8.png'
@@ -57,16 +57,7 @@ const toggleDropdown = () => {
 
 // 顶部菜单激活态
 const route = useRoute()
-const isTopActive = (group: any) => group.basePaths?.some((p: string) => route.path.startsWith(p))
-
-const findFirstPath = (items: any[] | undefined): string | undefined => {
-  if (!items?.length) return
-  for (const item of items) {
-    if (item?.path) return item.path
-    const nested = findFirstPath(item?.children)
-    if (nested) return nested
-  }
-}
+const isTopActive = (group: any) => isTopMenuActive(group, route.path)
 
 const getGroupDefaultPath = (group: any) => findFirstPath(group?.children) || '/'
 </script>

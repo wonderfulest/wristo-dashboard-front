@@ -47,7 +47,7 @@
       </el-table-column>
       <el-table-column label="设计师" width="140">
         <template #default="{ row }">
-          {{ row.product.user?.username || '-' }}
+          {{ row.product?.user?.username || '-' }}
         </template>
       </el-table-column>
       <el-table-column label="打包状态" width="120">
@@ -84,12 +84,22 @@
           <span v-else class="no-error">未在队列中</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="320" fixed="right">
+      <el-table-column label="操作" width="380" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px;">
             <el-button type="primary" link @click="handleViewDetails(row)">查看详情</el-button>
-            <el-button type="danger" link @click="openRejectDialog(row)">拒绝</el-button>
+            <el-button type="danger" link :disabled="!row.product?.designId" @click="openRejectDialog(row)">拒绝</el-button>
             <el-button type="primary" link @click="openRequeueDialog(row)">重新提交打包任务</el-button>
+            <el-popconfirm
+              :title="`确定删除打包记录 ${row.id} 吗？`"
+              confirm-button-text="删除"
+              cancel-button-text="取消"
+              @confirm="deletePackagingLog(row)"
+            >
+              <template #reference>
+                <el-button type="danger" link>删除记录</el-button>
+              </template>
+            </el-popconfirm>
           </div>
         </template>
       </el-table-column>
@@ -122,10 +132,10 @@
           </el-descriptions-item>
           <el-descriptions-item label="打包类型">{{ selectedLog.type || '-' }}</el-descriptions-item>
           <el-descriptions-item label="设备 ID">{{ selectedLog.deviceId || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="产品名称">{{ selectedLog.product.name }}</el-descriptions-item>
-          <el-descriptions-item label="产品ID">{{ selectedLog.product.appId }}</el-descriptions-item>
-          <el-descriptions-item label="设计ID">{{ selectedLog.product.designId }}</el-descriptions-item>
-          <el-descriptions-item label="价格">${{ selectedLog.product.price }}</el-descriptions-item>
+          <el-descriptions-item label="产品名称">{{ selectedLog.product?.name || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="产品ID">{{ selectedLog.product?.appId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="设计ID">{{ selectedLog.product?.designId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="价格">{{ selectedLog.product?.price != null ? `$${selectedLog.product.price}` : '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间" :span="2">{{ formatDateTime(selectedLog.createdAt) }}</el-descriptions-item>
           <el-descriptions-item label="更新时间" :span="2">{{ formatDateTime(selectedLog.updatedAt) }}</el-descriptions-item>
           <el-descriptions-item label="版本">{{ selectedLog.version }}</el-descriptions-item>
@@ -151,8 +161,8 @@
     >
       <div v-if="rejectTargetRow">
         <div style="margin-bottom: 12px; color: #606266;">
-          将拒绝产品：<b>{{ rejectTargetRow.product.name }}</b>
-          （设计ID：{{ rejectTargetRow.product.designId }}）
+          将拒绝产品：<b>{{ rejectTargetRow.product?.name || '-' }}</b>
+          （设计ID：{{ rejectTargetRow.product?.designId || '-' }}）
         </div>
         <el-form label-position="top">
           <el-form-item label="拒绝原因" required>
@@ -183,8 +193,8 @@
     >
       <div v-if="requeueTargetRow">
         <div style="margin-bottom: 12px; color: #606266;">
-          将重新提交产品：<b>{{ requeueTargetRow.product.name }}</b>
-          （设计ID：{{ requeueTargetRow.product.designId }}，打包记录ID：{{ requeueTargetRow.id }}）
+          将重新提交产品：<b>{{ requeueTargetRow.product?.name || '-' }}</b>
+          （设计ID：{{ requeueTargetRow.product?.designId || '-' }}，打包记录ID：{{ requeueTargetRow.id }}）
         </div>
         <el-form label-position="top">
           <el-form-item label="优先级（0-9，0 为最高优先级）" required>
@@ -211,7 +221,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getProductPackagingLogsPage, requeueProductPackagingLog } from '@/api/products'
+import { deleteProductPackagingLog, getProductPackagingLogsPage, requeueProductPackagingLog } from '@/api/products'
 import type { ProductPackagingLogVO } from '@/types/product'
 
 import { getPackagingStatusOptions, formatPackagingStatusArray } from '@/utils/status'
@@ -314,8 +324,26 @@ const handleViewDetails = (row: ProductPackagingLogVO) => {
   detailDialogVisible.value = true
 }
 
+const deletePackagingLog = async (row: ProductPackagingLogVO) => {
+  try {
+    const res = await deleteProductPackagingLog(row.id)
+    if (res.code === 0) {
+      ElMessage.success('打包记录已删除')
+      fetchPackagingLogs()
+    } else {
+      ElMessage.error(res.msg || '删除打包记录失败')
+    }
+  } catch (e) {
+    // 错误提示由 axios 拦截器统一处理
+  }
+}
+
 // 打开拒绝对话框
 const openRejectDialog = (row: ProductPackagingLogVO) => {
+  if (!row.product?.designId) {
+    ElMessage.error('该打包记录缺少产品信息，无法拒绝')
+    return
+  }
   rejectTargetRow.value = row
   rejectReason.value = ''
   rejectDialogVisible.value = true
@@ -324,6 +352,11 @@ const openRejectDialog = (row: ProductPackagingLogVO) => {
 // 提交拒绝（必须填写原因）
 const submitReject = async () => {
   if (!rejectTargetRow.value) return
+  const designUid = rejectTargetRow.value.product?.designId
+  if (!designUid) {
+    ElMessage.error('该打包记录缺少设计ID，无法拒绝')
+    return
+  }
   if (!rejectReason.value || rejectReason.value.trim().length === 0) {
     ElMessage.error('必须填写拒绝原因')
     return
@@ -331,7 +364,7 @@ const submitReject = async () => {
   try {
     submittingReject.value = true
     const dto = {
-      designUid: rejectTargetRow.value.product.designId,
+      designUid,
       reviewComment: rejectReason.value.trim()
     }
     const res = await rejectDesignWithComment(dto)

@@ -32,6 +32,30 @@ button, .el-button {
   border-radius: $border-radius;
 }
 
+// 搜索/筛选区域输入框统一宽度，保证 placeholder 和常见搜索内容可完整展示。
+:root {
+  --dashboard-search-input-width: 280px;
+}
+
+.filters,
+.search-filters,
+.search-form,
+.search-controls,
+.toolbar,
+.header-row-filters,
+.bind-toolbar,
+.page-content .header > .tools,
+.page-content .header > div {
+  > .el-input,
+  > .el-select,
+  > .el-autocomplete,
+  > .filter-input,
+  > input[type='search'],
+  > input[type='text'] {
+    min-width: var(--dashboard-search-input-width);
+  }
+}
+
 // 响应式布局
 @media (max-width: 1200px) {
   .header-inner {
@@ -82,6 +106,26 @@ button, .el-button {
   .breadcrumb-container {
     padding: 10px 16px;
     margin: 0 8px 0 8px;
+  }
+
+  .filters,
+  .search-filters,
+  .search-form,
+  .search-controls,
+  .toolbar,
+  .header-row-filters,
+  .bind-toolbar,
+  .page-content .header > .tools,
+  .page-content .header > div {
+    > .el-input,
+    > .el-select,
+    > .el-autocomplete,
+    > .filter-input,
+    > input[type='search'],
+    > input[type='text'] {
+      width: 100% !important;
+      min-width: 0;
+    }
   }
 }
 

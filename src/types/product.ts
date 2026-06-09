@@ -104,6 +104,9 @@ export interface ProductPageQuery {
   categoryId?: number
   userId?: number
   designUid?: string
+  status?: number
+  createdAtStart?: string
+  createdAtEnd?: string
 }
 
 export interface CreateProductDto {
@@ -131,7 +134,7 @@ export interface ProductPackagingLogVO {
   type: string
   deviceId: string
   priority: number | null
-  product: ProductBase & { user?: UserBase | null }
+  product: (ProductBase & { user?: UserBase | null }) | null
 }
 
 export interface ProductPackagingLogQuery {

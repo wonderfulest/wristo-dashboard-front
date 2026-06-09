@@ -24,37 +24,6 @@ const router = createRouter({
       component: () => import('@/views/themes/ThemeConfigs.vue'),
       meta: { requiresAuth: true }
     },
-    // Blog module
-    {
-      path: '/blog/posts',
-      name: 'BlogPosts',
-      component: () => import('@/views/blog/Posts.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/blog/posts/:id/edit',
-      name: 'BlogPostEdit',
-      component: () => import('@/views/blog/PostEdit.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/blog/categories',
-      name: 'BlogCategories',
-      component: () => import('@/views/blog/Categories.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/blog/tags',
-      name: 'BlogTags',
-      component: () => import('@/views/blog/Tags.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/blog/toc',
-      name: 'BlogToc',
-      component: () => import('@/views/blog/TocItems.vue'),
-      meta: { requiresAuth: true }
-    },
     // Marketing Email module (moved under /marketing)
     {
       path: '/marketing/email-templates',

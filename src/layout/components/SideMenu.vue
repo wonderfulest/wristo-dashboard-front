@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { topMenus } from '@/config/menu'
+import { isTopMenuActive, topMenus } from '@/config/menu'
 
 const props = defineProps<{
   collapsed: boolean
@@ -50,8 +50,7 @@ const emit = defineEmits<{
 
 // 动态菜单：根据当前路由选择顶部分组与侧边二级菜单
 const route = useRoute()
-const isTopActive = (group: any) => group.basePaths?.some((p: string) => route.path.startsWith(p))
-const activeTop = computed(() => topMenus.find((g) => isTopActive(g)) || topMenus[0])
+const activeTop = computed(() => topMenus.find((g) => isTopMenuActive(g, route.path)) || topMenus[0])
 const activeChildren = computed(() => activeTop.value?.children || [])
 
 // Collapsible side group state (默认收起)

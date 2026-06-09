@@ -90,7 +90,7 @@
       </el-table-column>
       <el-table-column label="设计师" width="140">
         <template #default="{ row }">
-          {{ row.product.user?.username || '-' }}
+          {{ row.product?.user?.username || '-' }}
         </template>
       </el-table-column>
       <el-table-column label="打包状态" width="120">
@@ -149,8 +149,8 @@
     >
       <div v-if="priorityTargetRow">
         <div style="margin-bottom: 12px; color: #606266;">
-          调整产品：<b>{{ priorityTargetRow.product.name }}</b>
-          （设计ID：{{ priorityTargetRow.product.designId }}，打包记录ID：{{ priorityTargetRow.id }}）
+          调整产品：<b>{{ priorityTargetRow.product?.name || '-' }}</b>
+          （设计ID：{{ priorityTargetRow.product?.designId || '-' }}，打包记录ID：{{ priorityTargetRow.id }}）
         </div>
         <el-form label-position="top">
           <el-form-item label="优先级（0-9，0 为最高优先级）" required>

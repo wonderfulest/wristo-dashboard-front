@@ -2,16 +2,16 @@
   <div class="products-container">
     <div class="header">
       <h2>作品管理</h2>
-      <div style="display: flex; gap: 12px; align-items: center;">
+      <div class="product-filter-bar">
         <el-input
           v-model="searchName"
           placeholder="按商品名称搜索"
           clearable
-          style="width: 200px"
+          class="filter-name-input"
           @keyup.enter.native="handleSearch"
         />
       
-        <el-select v-model="sortOrder" placeholder="排序方式" style="width: 150px" @change="handleSort">
+        <el-select v-model="sortOrder" placeholder="排序方式" class="filter-sort-select" @change="handleSort">
           <el-option label="创建时间升序" value="created_at:asc" />
           <el-option label="创建时间倒序" value="created_at:desc" />
           <el-option label="更新时间升序" value="updated_at:asc" />
@@ -20,11 +20,46 @@
           <el-option label="下载量升序" value="download:asc" />
         </el-select>
         <el-select
+          v-model="createdAtPreset"
+          placeholder="创建时间"
+          clearable
+          class="filter-date-preset"
+          @change="handleCreatedAtPresetChange"
+        >
+          <el-option
+            v-for="option in createdAtPresetOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
+        <el-date-picker
+          v-model="createdAtRange"
+          type="daterange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          value-format="YYYY-MM-DD"
+          :shortcuts="createdAtShortcuts"
+          class="filter-date-range"
+          @change="handleCreatedAtRangeChange"
+        />
+        <el-select
+          v-model="selectedStatus"
+          placeholder="按状态筛选"
+          clearable
+          class="filter-status-select"
+          @change="handleFilterChange"
+        >
+          <el-option label="已上线" :value="1" />
+          <el-option label="已下线" :value="0" />
+        </el-select>
+        <el-select
           v-model="selectedCategoryId"
           placeholder="按分类筛选"
           clearable
           filterable
-          style="width: 200px"
+          class="filter-category-select"
           @change="handleFilterChange"
         >
           <el-option
@@ -38,9 +73,11 @@
           v-model="selectedCreatorId"
           :role-authorities="['ROLE_DESIGNER']"
           placeholder="按创作者筛选"
+          class="filter-creator-select"
           @change="handleFilterChange"
         />
         <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button @click="handleRecentOnlineDownloads">近30天上线下载排行</el-button>
         <el-button @click="handleRefreshStats" :loading="refreshingStats">刷新统计</el-button>
       </div>
     </div>
@@ -564,6 +601,18 @@ const searchName = ref('')
 const sortOrder = ref('created_at:desc')
 const selectedCategoryId = ref<number | undefined>(undefined)
 const selectedCreatorId = ref<number | undefined>(undefined)
+const selectedStatus = ref<number | undefined>(undefined)
+const createdAtRange = ref<[string, string] | null>(null)
+const createdAtPreset = ref('')
+
+const createdAtPresetOptions = [
+  { label: '今天', value: 'today' },
+  { label: '昨天', value: 'yesterday' },
+  { label: '近7天', value: 'last7' },
+  { label: '近30天', value: 'last30' },
+  { label: '本月', value: 'thisMonth' },
+  { label: '上月', value: 'lastMonth' },
+]
 
 const handleSearch = () => {
   currentPage.value = 1
@@ -577,6 +626,75 @@ const handleSort = () => {
 const handleFilterChange = () => {
   currentPage.value = 1
   fetchProducts()
+}
+
+const formatDateForQuery = (date: Date) => {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate()),
+  ].join('-')
+}
+
+const buildDateRange = (preset: string): [string, string] | null => {
+  const now = new Date()
+  const start = new Date(now)
+  const end = new Date(now)
+
+  if (preset === 'today') {
+    return [formatDateForQuery(start), formatDateForQuery(end)]
+  }
+  if (preset === 'yesterday') {
+    start.setDate(start.getDate() - 1)
+    end.setDate(end.getDate() - 1)
+    return [formatDateForQuery(start), formatDateForQuery(end)]
+  }
+  if (preset === 'last7') {
+    start.setDate(start.getDate() - 6)
+    return [formatDateForQuery(start), formatDateForQuery(end)]
+  }
+  if (preset === 'last30') {
+    start.setDate(start.getDate() - 29)
+    return [formatDateForQuery(start), formatDateForQuery(end)]
+  }
+  if (preset === 'thisMonth') {
+    start.setDate(1)
+    return [formatDateForQuery(start), formatDateForQuery(end)]
+  }
+  if (preset === 'lastMonth') {
+    start.setMonth(start.getMonth() - 1, 1)
+    end.setDate(0)
+    return [formatDateForQuery(start), formatDateForQuery(end)]
+  }
+  return null
+}
+
+const createdAtShortcuts = createdAtPresetOptions.map(option => ({
+  text: option.label,
+  value: () => {
+    const range = buildDateRange(option.value)
+    if (!range) return []
+    return range.map(date => new Date(`${date}T00:00:00`))
+  }
+}))
+
+const handleCreatedAtPresetChange = (preset: string) => {
+  createdAtRange.value = preset ? buildDateRange(preset) : null
+  handleFilterChange()
+}
+
+const handleCreatedAtRangeChange = () => {
+  createdAtPreset.value = ''
+  handleFilterChange()
+}
+
+const handleRecentOnlineDownloads = () => {
+  createdAtPreset.value = 'last30'
+  createdAtRange.value = buildDateRange('last30')
+  selectedStatus.value = 1
+  sortOrder.value = 'download:desc'
+  handleFilterChange()
 }
 
 // 手动刷新产品下载/购买统计
@@ -610,6 +728,9 @@ const fetchProducts = async () => {
       populate: '*',
       categoryId: selectedCategoryId.value || undefined,
       userId: selectedCreatorId.value || undefined,
+      status: selectedStatus.value,
+      createdAtStart: createdAtRange.value?.[0] ? `${createdAtRange.value[0]} 00:00:00` : undefined,
+      createdAtEnd: createdAtRange.value?.[1] ? `${createdAtRange.value[1]} 23:59:59` : undefined,
     })
     if (res.code === 0) {
       products.value = res.data?.list || []
@@ -947,8 +1068,64 @@ onMounted(() => {
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 20px;
+}
+
+.header h2 {
+  margin: 0;
+  line-height: 32px;
+  white-space: nowrap;
+}
+
+.product-filter-bar {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.filter-name-input {
+  width: 160px;
+}
+
+.filter-sort-select {
+  width: 140px;
+}
+
+.filter-date-preset {
+  width: 112px;
+}
+
+.filter-date-range {
+  width: 240px;
+}
+
+.filter-status-select {
+  width: 118px;
+}
+
+.filter-category-select {
+  width: 160px;
+}
+
+.filter-creator-select {
+  width: 180px;
+}
+
+@media (max-width: 900px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .product-filter-bar {
+    justify-content: flex-start;
+    width: 100%;
+  }
 }
 
 .pagination {
