@@ -152,7 +152,7 @@
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="360" fixed="right">
+      <el-table-column label="操作" width="440" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px;">
             <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
@@ -177,6 +177,14 @@
               @click="handleCreateTicket(row)"
             >
               创建工单
+            </el-button>
+            <el-button
+              type="primary"
+              link
+              :loading="repackLoadingMap.get(row.appId)"
+              @click="handleRepack(row)"
+            >
+              重新提交打包
             </el-button>
             <el-button 
               type="primary" 
@@ -514,12 +522,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import { formatDate } from '@/utils/date'
-import { fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats } from '@/api/products'
+import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -924,6 +932,48 @@ const handleCurrentChange = (val: number) => {
 
 // 状态切换加载状态映射
 const statusLoadingMap = ref<Map<number, boolean>>(new Map())
+const repackLoadingMap = ref<Map<number, boolean>>(new Map())
+
+const setRepackLoading = (appId: number, loading: boolean) => {
+  const next = new Map(repackLoadingMap.value)
+  next.set(appId, loading)
+  repackLoadingMap.value = next
+}
+
+const handleRepack = async (row: Product) => {
+  if (!row.designId) {
+    ElMessage.error('该应用缺少 designId，无法重新提交打包')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确认重新提交「${row.name || row.appId}」的 IQ 打包任务？`,
+      '重新提交打包',
+      {
+        confirmButtonText: '重新提交',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+  } catch {
+    return
+  }
+
+  setRepackLoading(row.appId, true)
+  try {
+    const res = await createProductPackageTask(row.designId)
+    if (res.code === 0) {
+      ElMessage.success('已重新提交打包任务')
+    } else {
+      ElMessage.error(res.msg || '重新提交失败')
+    }
+  } catch (error) {
+    ElMessage.error('重新提交失败')
+  } finally {
+    setRepackLoading(row.appId, false)
+  }
+}
 
 // 分类编辑弹窗
 const categoryDialogVisible = ref(false)
@@ -1090,31 +1140,31 @@ onMounted(() => {
 }
 
 .filter-name-input {
-  width: 160px;
+  width: 88px;
 }
 
 .filter-sort-select {
-  width: 140px;
+  width: 96px;
 }
 
 .filter-date-preset {
-  width: 112px;
+  width: 88px;
 }
 
 .filter-date-range {
-  width: 240px;
+  width: 180px;
 }
 
 .filter-status-select {
-  width: 118px;
+  width: 88px;
 }
 
 .filter-category-select {
-  width: 160px;
+  width: 96px;
 }
 
 .filter-creator-select {
-  width: 180px;
+  width: 104px;
 }
 
 @media (max-width: 900px) {

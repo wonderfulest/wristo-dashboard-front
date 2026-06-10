@@ -52,9 +52,19 @@
       <el-table-column prop="createdAt" label="创建时间" width="160">
         <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="120">
+      <el-table-column label="操作" width="210">
         <template #default="{ row }">
-          <el-button size="small" type="primary" @click="openCreateTicket(row)">创建工单</el-button>
+          <div class="row-actions">
+            <el-button
+              size="small"
+              type="primary"
+              :loading="isRepackSubmitting(row)"
+              @click="submitRepackTask(row)"
+            >
+              重新打包
+            </el-button>
+            <el-button size="small" @click="openCreateTicket(row)">创建工单</el-button>
+          </div>
         </template>
       </el-table-column>
       
@@ -127,8 +137,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { fetchUnSupportByDevicePage } from '@/api/products'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { createProductPackageTask, fetchUnSupportByDevicePage } from '@/api/products'
 import { pageGarminDevices } from '@/api/garmin-device'
 import type { Product } from '@/types/product'
 import { formatDate } from '@/utils/date'
@@ -163,6 +173,7 @@ const list = ref<Product[]>([])
 const pageNum = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
+const repackSubmittingIds = ref<Set<number>>(new Set())
 
 // device dropdown
 const deviceOptions = ref<any[]>([])
@@ -242,6 +253,58 @@ const onSizeChange = (val: number) => {
 const onPageChange = (val: number) => {
   pageNum.value = val
   fetchList()
+}
+
+const getProductRowKey = (row: Product): number => row.id ?? row.appId
+
+const isRepackSubmitting = (row: Product) => {
+  return repackSubmittingIds.value.has(getProductRowKey(row))
+}
+
+const setRepackSubmitting = (row: Product, submitting: boolean) => {
+  const next = new Set(repackSubmittingIds.value)
+  const key = getProductRowKey(row)
+  if (submitting) {
+    next.add(key)
+  } else {
+    next.delete(key)
+  }
+  repackSubmittingIds.value = next
+}
+
+const submitRepackTask = async (row: Product) => {
+  if (!row.designId) {
+    ElMessage.error('该应用缺少 designId，无法重新打包')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确认重新提交「${row.name || row.appId}」的 IQ 打包任务？`,
+      '重新打包',
+      {
+        confirmButtonText: '重新打包',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+  } catch {
+    return
+  }
+
+  setRepackSubmitting(row, true)
+  try {
+    const res = await createProductPackageTask(row.designId)
+    if (res.code === 0) {
+      ElMessage.success('已提交重新打包任务')
+    } else {
+      ElMessage.error(res.msg || '提交失败')
+    }
+  } catch {
+    ElMessage.error('提交失败')
+  } finally {
+    setRepackSubmitting(row, false)
+  }
 }
 
 // 创建工单
@@ -367,5 +430,7 @@ watch(() => ticketForm.value.assigneeId, (val) => {
 .product-name { font-weight: 600; color: #333; }
 .product-thumb { border-radius: 6px; }
 .product-details { display: flex; gap: 10px; font-size: 12px; color: #666; }
+.row-actions { display: flex; gap: 8px; align-items: center; }
+.row-actions .el-button + .el-button { margin-left: 0; }
 .pagination { margin-top: 12px; display: flex; justify-content: flex-end; }
 </style>

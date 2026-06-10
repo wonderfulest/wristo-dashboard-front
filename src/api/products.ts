@@ -54,6 +54,16 @@ export const requeueProductPackagingLog = (
   })
 }
 
+// 按设计 ID 创建新的产品 IQ 打包任务
+export const createProductPackageTask = (
+  designId: string,
+  releaseVersion: string = ''
+): Promise<ApiResponse<void>> => {
+  return instance.post('/admin/product-packaging-logs/create-task', null, {
+    params: { designId, releaseVersion }
+  })
+}
+
 // 手动清理打包任务队列锁
 export const clearProductPackagingQueueLock = (): Promise<ApiResponse<void>> => {
   return instance.delete('/admin/product-packaging-logs/queue/lock')
