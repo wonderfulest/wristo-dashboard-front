@@ -46,12 +46,14 @@ onMounted(async () => {
         const userRes = await getUserInfo()
         if (userRes.code === 0 && userRes.data) {
           userStore.setUserInfo(userRes.data)
+          router.replace('/')
+        } else {
+          error.value = userRes.msg || '当前账号无权限访问'
         }
       } catch (e) {
-        // 可选：用户信息获取失败处理
         console.error('获取用户信息失败', e)
+        error.value = '当前账号无权限访问'
       }
-      router.replace('/')
     } else {
       error.value = res.msg || '登录失败'
       redirectToSsoLogin('dashboard')

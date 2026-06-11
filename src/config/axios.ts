@@ -37,12 +37,14 @@ instance.interceptors.response.use(
   },
   error => {
     const status = error.response?.status
-    if (status === 401 || status === 403) {
+    if (status === 401) {
       const userStore = useUserStore()
       userStore.token = ''
       userStore.userInfo = null
       ElMessage.error('登录已过期，请重新登录')
       redirectToSsoLogin('dashboard', 1000)
+    } else if (status === 403) {
+      ElMessage.error(error.response?.data?.msg || '当前账号无权限访问')
     } else {
       ElMessage.error(error.response?.data?.msg || 'http error')
     }
