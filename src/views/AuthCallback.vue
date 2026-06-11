@@ -13,6 +13,7 @@ import type { SsoTokenResponseData } from '@/types/sso'
 import { getUserInfo } from '@/api/user'
 import type { ApiResponse } from '@/types/api'
 import { useUserStore } from '@/store/user'
+import { getSsoRedirectUri, redirectToSsoLogin } from '@/utils/ssoRedirect'
 
 const loading = ref(true)
 const error = ref('')
@@ -21,7 +22,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const clientId = 'dashboard'
-const redirectUri = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI
+const redirectUri = getSsoRedirectUri()
 
 onMounted(async () => {
   console.log('onMounted', userStore.userInfo)
@@ -53,15 +54,11 @@ onMounted(async () => {
       router.replace('/')
     } else {
       error.value = res.msg || '登录失败'
-      const ssoBaseUrl = import.meta.env.VITE_WRISTO_SSO_LOGIN_URL
-      const redirectUri = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI
-      window.location.href = `${ssoBaseUrl}?client=dashboard&redirect_uri=${encodeURIComponent(redirectUri)}`
+      redirectToSsoLogin('dashboard')
     }
   } catch (e: any) {
     error.value = e?.response?.data?.msg || e.message || '请求失败'
-    const ssoBaseUrl = import.meta.env.VITE_WRISTO_SSO_LOGIN_URL
-    const redirectUri = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI
-    window.location.href = `${ssoBaseUrl}?client=dashboard&redirect_uri=${encodeURIComponent(redirectUri)}`
+    redirectToSsoLogin('dashboard')
   } finally {
     loading.value = false
   }

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { redirectToSsoLogin } from '@/utils/ssoRedirect'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -520,13 +521,10 @@ const router = createRouter({
 router.beforeEach((to, _, next) => {
   const userStore = useUserStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const ssoBaseUrl = import.meta.env.VITE_WRISTO_SSO_LOGIN_URL
-  const redirectUri = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI
-  const ssoLoginUrl = `${ssoBaseUrl}?client=dashboard&redirect_uri=${encodeURIComponent(redirectUri)}`
 
   console.log('beforeEach userInfo', userStore.userInfo)
   if (requiresAuth && !userStore.userInfo) {
-    window.location.href = ssoLoginUrl
+    redirectToSsoLogin('dashboard')
     return
   } else {
     next()
