@@ -21,7 +21,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const clientId = 'dashboard'
-const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
+const redirectUri = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI
 
 onMounted(async () => {
   console.log('onMounted', userStore.userInfo)
@@ -53,14 +53,14 @@ onMounted(async () => {
       router.replace('/')
     } else {
       error.value = res.msg || '登录失败'
-      const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
-      const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
+      const ssoBaseUrl = import.meta.env.VITE_WRISTO_SSO_LOGIN_URL
+      const redirectUri = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI
       window.location.href = `${ssoBaseUrl}?client=dashboard&redirect_uri=${encodeURIComponent(redirectUri)}`
     }
   } catch (e: any) {
     error.value = e?.response?.data?.msg || e.message || '请求失败'
-    const ssoBaseUrl = import.meta.env.VITE_SSO_LOGIN_URL
-    const redirectUri = import.meta.env.VITE_SSO_REDIRECT_URI
+    const ssoBaseUrl = import.meta.env.VITE_WRISTO_SSO_LOGIN_URL
+    const redirectUri = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI
     window.location.href = `${ssoBaseUrl}?client=dashboard&redirect_uri=${encodeURIComponent(redirectUri)}`
   } finally {
     loading.value = false

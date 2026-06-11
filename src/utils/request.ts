@@ -5,7 +5,7 @@ import { redirectToSsoLogin } from '@/utils/ssoRedirect'
 
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_WRISTO_API_BASE_URL,
   timeout: 15000
 })
 

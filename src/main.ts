@@ -17,8 +17,8 @@ app.use(pinia)
 app.use(ElementPlus)
 
 console.log('当前运行环境:', import.meta.env.MODE)
-console.log('VITE_SSO_LOGIN_URL:', import.meta.env.VITE_SSO_LOGIN_URL)
-console.log('VITE_SSO_REDIRECT_URI:', import.meta.env.VITE_SSO_REDIRECT_URI)
+console.log('VITE_WRISTO_SSO_LOGIN_URL:', import.meta.env.VITE_WRISTO_SSO_LOGIN_URL)
+console.log('VITE_WRISTO_SSO_REDIRECT_URI:', import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI)
 
 app.mount('#app')
 
