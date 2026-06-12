@@ -85,6 +85,25 @@ export const getProductPackagingQueue = (
   })
 }
 
+// 获取打包任务死信队列列表
+export const getProductPackagingDeadQueue = (
+  populate: string = '*'
+): Promise<ApiResponse<ProductPackagingLogVO[]>> => {
+  return instance.get('/admin/product-packaging-logs/queue/dead', {
+    params: { populate }
+  })
+}
+
+// 将死信队列中的任务重新提交到正常打包队列
+export const requeueProductPackagingDeadQueueItem = (
+  id: number,
+  priority: number
+): Promise<ApiResponse<void>> => {
+  return instance.post(`/admin/product-packaging-logs/queue/dead/${id}/requeue`, null, {
+    params: { priority }
+  })
+}
+
 // 获取当前正在打包中的任务（基于队列锁标记）
 export const getLockedProductPackagingTask = (
   populate: string = '*'

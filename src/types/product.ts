@@ -134,6 +134,7 @@ export interface ProductPackagingLogVO {
   type: string
   deviceId: string
   priority: number | null
+  deadLetterAt?: string | number | null
   product: (ProductBase & { user?: UserBase | null }) | null
 }
 

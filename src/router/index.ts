@@ -148,6 +148,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/packaging/packaging-dead-queue',
+      name: 'PackagingDeadQueue',
+      component: () => import('@/views/dashboard/packaging/PackagingDeadQueue.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products',
       name: 'Products',
       component: () => import('@/views/products/Products.vue'),

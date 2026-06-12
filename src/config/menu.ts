@@ -106,6 +106,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'design-review', title: '设计审核', path: '/packaging/design-review' },
       { key: 'packaging-logs', title: '打包记录', path: '/packaging/packaging-logs' },
       { key: 'packaging-queue', title: '打包任务队列', path: '/packaging/packaging-queue' },
+      { key: 'packaging-dead-queue', title: '死信队列', path: '/packaging/packaging-dead-queue' },
       { key: 'inspirations', title: '设计灵感', path: '/design/inspirations' },
       {
         key: 'themes',
