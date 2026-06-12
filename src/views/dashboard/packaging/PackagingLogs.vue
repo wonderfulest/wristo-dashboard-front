@@ -28,7 +28,26 @@
       </div>
     </div>
 
-    <el-table :data="packagingLogs" style="width: 100%" v-loading="loading">
+    <div class="table-actions">
+      <el-button
+        type="primary"
+        :disabled="selectedPackagingLogs.length === 0"
+        @click="openBatchRequeueDialog"
+      >
+        批量重新提交
+      </el-button>
+      <span class="selection-tip" v-if="selectedPackagingLogs.length > 0">
+        已选择 {{ selectedPackagingLogs.length }} 条
+      </span>
+    </div>
+
+    <el-table
+      :data="packagingLogs"
+      style="width: 100%"
+      v-loading="loading"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="打包类型" width="100">
         <template #default="{ row }">
@@ -191,10 +210,15 @@
       title="重新提交打包任务"
       width="520px"
     >
-      <div v-if="requeueTargetRow">
+      <div v-if="requeueTargetRows.length > 0">
         <div style="margin-bottom: 12px; color: #606266;">
-          将重新提交产品：<b>{{ requeueTargetRow.product?.name || '-' }}</b>
-          （设计ID：{{ requeueTargetRow.product?.designId || '-' }}，打包记录ID：{{ requeueTargetRow.id }}）
+          <template v-if="requeueTargetRows.length === 1">
+            将重新提交产品：<b>{{ requeueTargetRows[0].product?.name || '-' }}</b>
+            （设计ID：{{ requeueTargetRows[0].product?.designId || '-' }}，打包记录ID：{{ requeueTargetRows[0].id }}）
+          </template>
+          <template v-else>
+            将重新提交已选择的 <b>{{ requeueTargetRows.length }}</b> 条打包记录。
+          </template>
         </div>
         <el-form label-position="top">
           <el-form-item label="优先级（0-9，0 为最高优先级）" required>
@@ -212,7 +236,9 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="requeueDialogVisible = false" :disabled="submittingRequeue">取消</el-button>
-          <el-button type="primary" @click="submitRequeue" :loading="submittingRequeue">确认重新提交</el-button>
+          <el-button type="primary" @click="submitRequeue" :loading="submittingRequeue">
+            确认重新提交
+          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -235,6 +261,7 @@ import AppProductInfo from '@/components/common/AppProductInfo.vue'
 // 响应式数据
 const loading = ref(false)
 const packagingLogs = ref<ProductPackagingLogVO[]>([])
+const selectedPackagingLogs = ref<ProductPackagingLogVO[]>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -260,7 +287,7 @@ const rejectTargetRow = ref<ProductPackagingLogVO | null>(null)
 
 // 重新提交打包任务对话框状态
 const requeueDialogVisible = ref(false)
-const requeueTargetRow = ref<ProductPackagingLogVO | null>(null)
+const requeueTargetRows = ref<ProductPackagingLogVO[]>([])
 const requeuePriority = ref<number | null>(5)
 const submittingRequeue = ref(false)
 
@@ -280,6 +307,7 @@ const fetchPackagingLogs = async () => {
     if (response.code === 0) {
       packagingLogs.value = response.data!.list
       total.value = response.data!.total
+      selectedPackagingLogs.value = []
     } else {
       ElMessage.error(response.msg || '获取打包记录失败')
     }
@@ -316,6 +344,10 @@ const handleSizeChange = (size: number) => {
 const handleCurrentChange = (page: number) => {
   currentPage.value = page
   fetchPackagingLogs()
+}
+
+const handleSelectionChange = (rows: ProductPackagingLogVO[]) => {
+  selectedPackagingLogs.value = rows
 }
 
 // 查看详情
@@ -384,14 +416,24 @@ const submitReject = async () => {
 
 // 打开重新提交打包任务对话框
 const openRequeueDialog = (row: ProductPackagingLogVO) => {
-  requeueTargetRow.value = row
+  requeueTargetRows.value = [row]
+  requeuePriority.value = 5
+  requeueDialogVisible.value = true
+}
+
+const openBatchRequeueDialog = () => {
+  if (selectedPackagingLogs.value.length === 0) {
+    ElMessage.warning('请先选择要重新提交的打包记录')
+    return
+  }
+  requeueTargetRows.value = [...selectedPackagingLogs.value]
   requeuePriority.value = 5
   requeueDialogVisible.value = true
 }
 
 // 提交重新打包任务
 const submitRequeue = async () => {
-  if (!requeueTargetRow.value) return
+  if (requeueTargetRows.value.length === 0) return
 
   // 校验优先级 0-9 整数
   let priority = typeof requeuePriority.value === 'number' ? requeuePriority.value : 5
@@ -402,12 +444,32 @@ const submitRequeue = async () => {
 
   try {
     submittingRequeue.value = true
-    const res = await requeueProductPackagingLog(requeueTargetRow.value.id, priority)
-    if (res.code === 0) {
-      ElMessage.success('已重新提交打包任务到队列')
+    let successCount = 0
+    let failedCount = 0
+
+    for (const row of requeueTargetRows.value) {
+      try {
+        const res = await requeueProductPackagingLog(row.id, priority)
+        if (res.code === 0) {
+          successCount += 1
+        } else {
+          failedCount += 1
+        }
+      } catch (e) {
+        failedCount += 1
+      }
+    }
+
+    if (successCount > 0 && failedCount === 0) {
+      ElMessage.success(`已重新提交 ${successCount} 条打包任务到队列`)
       requeueDialogVisible.value = false
-      // 可以选择刷新列表，确保最新状态
       fetchPackagingLogs()
+    } else if (successCount > 0) {
+      ElMessage.warning(`已重新提交 ${successCount} 条，${failedCount} 条失败`)
+      requeueDialogVisible.value = false
+      fetchPackagingLogs()
+    } else {
+      ElMessage.error('重新提交失败')
     }
   } catch (e) {
     // 错误提示由 axios 拦截器统一处理
@@ -442,6 +504,18 @@ onMounted(() => {
     font-size: 24px;
     font-weight: 600;
   }
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.selection-tip {
+  color: #606266;
+  font-size: 13px;
 }
 
 .product-info {

@@ -2,7 +2,23 @@
   <div class="packaging-dead-queue-container">
     <div class="header">
       <h2>死信队列</h2>
-      <el-button type="primary" @click="fetchDeadQueue" :loading="loading">刷新</el-button>
+      <div class="header-actions">
+        <el-button
+          type="primary"
+          :disabled="selectedDeadQueue.length === 0"
+          @click="openBatchRequeueDialog"
+        >
+          批量重提
+        </el-button>
+        <el-button
+          type="warning"
+          :disabled="deadQueue.length === 0"
+          @click="openRequeueAllDialog"
+        >
+          一键重提
+        </el-button>
+        <el-button @click="fetchDeadQueue" :loading="loading">刷新</el-button>
+      </div>
     </div>
 
     <el-alert
@@ -13,7 +29,17 @@
       title="这里展示打包 worker 失败后写入 wf:pack:dead 的任务。重新提交会从死信队列移除，并加入正常打包任务队列。"
     />
 
-    <el-table :data="deadQueue" style="width: 100%" v-loading="loading">
+    <div class="table-actions" v-if="selectedDeadQueue.length > 0">
+      已选择 {{ selectedDeadQueue.length }} 条
+    </div>
+
+    <el-table
+      :data="deadQueue"
+      style="width: 100%"
+      v-loading="loading"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="进入死信时间" width="180">
         <template #default="{ row }">
@@ -71,10 +97,15 @@
     </el-table>
 
     <el-dialog v-model="requeueDialogVisible" title="重新提交死信任务" width="420px">
-      <div v-if="requeueTargetRow">
+      <div v-if="requeueTargetRows.length > 0">
         <div class="dialog-tip">
-          将重新提交打包记录 ID：<b>{{ requeueTargetRow.id }}</b>
-          <span v-if="requeueTargetRow.product?.name">，产品：<b>{{ requeueTargetRow.product.name }}</b></span>
+          <template v-if="requeueTargetRows.length === 1">
+            将重新提交打包记录 ID：<b>{{ requeueTargetRows[0].id }}</b>
+            <span v-if="requeueTargetRows[0].product?.name">，产品：<b>{{ requeueTargetRows[0].product.name }}</b></span>
+          </template>
+          <template v-else>
+            将重新提交 <b>{{ requeueTargetRows.length }}</b> 条死信任务。
+          </template>
         </div>
         <el-form label-position="top">
           <el-form-item label="优先级（0-9，0 为最高优先级）" required>
@@ -113,9 +144,10 @@ import AppProductInfo from '@/components/common/AppProductInfo.vue'
 
 const loading = ref(false)
 const deadQueue = ref<ProductPackagingLogVO[]>([])
+const selectedDeadQueue = ref<ProductPackagingLogVO[]>([])
 
 const requeueDialogVisible = ref(false)
-const requeueTargetRow = ref<ProductPackagingLogVO | null>(null)
+const requeueTargetRows = ref<ProductPackagingLogVO[]>([])
 const requeuePriority = ref<number | null>(5)
 const submittingRequeue = ref(false)
 
@@ -129,6 +161,7 @@ const fetchDeadQueue = async () => {
     const res = await getProductPackagingDeadQueue('*')
     if (res.code === 0) {
       deadQueue.value = res.data || []
+      selectedDeadQueue.value = []
     } else {
       ElMessage.error(res.msg || '获取死信队列失败')
     }
@@ -140,14 +173,38 @@ const fetchDeadQueue = async () => {
   }
 }
 
+const handleSelectionChange = (rows: ProductPackagingLogVO[]) => {
+  selectedDeadQueue.value = rows
+}
+
 const openRequeueDialog = (row: ProductPackagingLogVO) => {
-  requeueTargetRow.value = row
+  requeueTargetRows.value = [row]
+  requeuePriority.value = 5
+  requeueDialogVisible.value = true
+}
+
+const openBatchRequeueDialog = () => {
+  if (selectedDeadQueue.value.length === 0) {
+    ElMessage.warning('请先选择要重新提交的死信任务')
+    return
+  }
+  requeueTargetRows.value = [...selectedDeadQueue.value]
+  requeuePriority.value = 5
+  requeueDialogVisible.value = true
+}
+
+const openRequeueAllDialog = () => {
+  if (deadQueue.value.length === 0) {
+    ElMessage.warning('当前没有可重新提交的死信任务')
+    return
+  }
+  requeueTargetRows.value = [...deadQueue.value]
   requeuePriority.value = 5
   requeueDialogVisible.value = true
 }
 
 const submitRequeue = async () => {
-  if (!requeueTargetRow.value) return
+  if (requeueTargetRows.value.length === 0) return
 
   const value = typeof requeuePriority.value === 'number' ? requeuePriority.value : 5
   if (!Number.isInteger(value) || value < 0 || value > 9) {
@@ -157,11 +214,32 @@ const submitRequeue = async () => {
 
   try {
     submittingRequeue.value = true
-    const res = await requeueProductPackagingDeadQueueItem(requeueTargetRow.value.id, value)
-    if (res.code === 0) {
-      ElMessage.success('已重新提交到打包任务队列')
+    let successCount = 0
+    let failedCount = 0
+
+    for (const row of requeueTargetRows.value) {
+      try {
+        const res = await requeueProductPackagingDeadQueueItem(row.id, value)
+        if (res.code === 0) {
+          successCount += 1
+        } else {
+          failedCount += 1
+        }
+      } catch (error) {
+        failedCount += 1
+      }
+    }
+
+    if (successCount > 0 && failedCount === 0) {
+      ElMessage.success(`已重新提交 ${successCount} 条死信任务到打包队列`)
       requeueDialogVisible.value = false
       fetchDeadQueue()
+    } else if (successCount > 0) {
+      ElMessage.warning(`已重新提交 ${successCount} 条，${failedCount} 条失败`)
+      requeueDialogVisible.value = false
+      fetchDeadQueue()
+    } else {
+      ElMessage.error('重新提交失败')
     }
   } catch (error) {
     // 错误由 axios 拦截器处理
@@ -197,8 +275,20 @@ onMounted(() => {
   }
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .queue-alert {
   margin-bottom: 16px;
+}
+
+.table-actions {
+  margin-bottom: 12px;
+  color: #606266;
+  font-size: 13px;
 }
 
 .error-message {
