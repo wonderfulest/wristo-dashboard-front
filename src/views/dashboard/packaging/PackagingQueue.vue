@@ -153,7 +153,7 @@
           （设计ID：{{ priorityTargetRow.product?.designId || '-' }}，打包记录ID：{{ priorityTargetRow.id }}）
         </div>
         <el-form label-position="top">
-          <el-form-item label="优先级（0-9，0 为最高优先级）" required>
+          <el-form-item label="优先级（0-9，0 为手动插队）" required>
             <el-input
               v-model.number="priorityValue"
               type="number"
@@ -254,7 +254,7 @@ const submitPriority = async () => {
 
   let value = typeof priorityValue.value === 'number' ? priorityValue.value : 5
   if (!Number.isInteger(value) || value < 0 || value > 9) {
-    ElMessage.error('优先级必须是 0-9 的整数，0 为最高优先级')
+    ElMessage.error('优先级必须是 0-9 的整数，0 为手动插队')
     return
   }
 

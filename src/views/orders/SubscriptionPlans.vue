@@ -5,7 +5,12 @@
     </div>
     <el-table :data="subscriptionPlans" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="planCode" label="计划编码" />
+      <el-table-column prop="scene" label="场景" width="100">
+        <template #default="{ row }">
+          <el-tag>{{ row.scene || 'store' }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="planCode" label="计划编码" min-width="150" />
       <el-table-column prop="name" label="计划名称" />
       <el-table-column label="时长" width="120">
         <template #default="{ row }">
@@ -35,13 +40,39 @@
             v-model="row.isActive"
             :active-value="1"
             :inactive-value="0"
+            :loading="statusLoadingId === row.id"
             @change="(val: number) => handleStatusChange(row, val)"
           />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column label="Paddle" min-width="280">
+        <template #default="{ row }">
+          <div class="paddle-info">
+            <div>
+              <span class="paddle-label">Product</span>
+              <el-tag v-if="row.paddleProductId" type="success" size="small">{{ row.paddleProductId }}</el-tag>
+              <el-tag v-else type="warning" size="small">未同步</el-tag>
+            </div>
+            <div>
+              <span class="paddle-label">Price</span>
+              <el-tag v-if="row.paddlePriceId" type="success" size="small">{{ row.paddlePriceId }}</el-tag>
+              <el-tag v-else type="warning" size="small">未同步</el-tag>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="280" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+          <el-button
+            type="success"
+            link
+            :loading="syncLoadingId === row.id"
+            :disabled="row.isGift || Number(row.originalPrice) <= 0"
+            @click="handleSyncPaddle(row)"
+          >
+            同步 Paddle
+          </el-button>
           <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
@@ -61,6 +92,12 @@
       >
         <el-form-item label="计划编码" prop="planCode">
           <el-input v-model="form.planCode" placeholder="请输入计划编码，如: monthly, lifetime" />
+        </el-form-item>
+        <el-form-item label="业务场景" prop="scene">
+          <el-select v-model="form.scene" placeholder="请选择业务场景">
+            <el-option label="Store 商城" value="store" />
+            <el-option label="Studio 会员" value="studio" />
+          </el-select>
         </el-form-item>
         <el-form-item label="计划名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入计划名称" />
@@ -133,13 +170,17 @@ import {
   createSubscriptionPlan, 
   updateSubscriptionPlan, 
   getAllSubscriptionPlans, 
-  deleteSubscriptionPlan 
+  deleteSubscriptionPlan,
+  syncSubscriptionPlanPaddle,
+  updateSubscriptionPlanStatus
 } from '@/api/subscription'
 import type { SubscriptionPlan, SubscriptionPlanDTO } from '@/types/subscription'
 
 // 表格数据
 const subscriptionPlans = ref<SubscriptionPlan[]>([])
 const loading = ref(false)
+const syncLoadingId = ref<number>()
+const statusLoadingId = ref<number>()
 
 // 表单相关
 const dialogVisible = ref(false)
@@ -147,6 +188,7 @@ const dialogType = ref<'add' | 'edit'>('add')
 const formRef = ref<FormInstance>()
 const form = ref<SubscriptionPlanDTO>({
   planCode: '',
+  scene: 'store',
   name: '',
   durationDays: 30,
   isGift: false,
@@ -174,6 +216,9 @@ const rules: FormRules = {
   ],
   currencyCode: [
     { required: true, message: '请选择货币代码', trigger: 'change' }
+  ],
+  scene: [
+    { required: true, message: '请选择业务场景', trigger: 'change' }
   ]
 }
 
@@ -215,6 +260,7 @@ const handleAdd = () => {
   dialogType.value = 'add'
   form.value = {
     planCode: '',
+    scene: 'store',
     name: '',
     durationDays: 30,
     isGift: false,
@@ -232,6 +278,7 @@ const handleEdit = (row: SubscriptionPlan) => {
   form.value = {
     id: row.id,
     planCode: row.planCode,
+    scene: row.scene || 'store',
     name: row.name,
     durationDays: row.durationDays,
     isGift: row.isGift,
@@ -308,18 +355,9 @@ const handleSubmit = async () => {
 
 // 切换订阅计划状态
 const handleStatusChange = async (row: SubscriptionPlan, val: number) => {
+  statusLoadingId.value = row.id
   try {
-    const updateData: SubscriptionPlanDTO = {
-      id: row.id,
-      planCode: row.planCode,
-      name: row.name,
-      durationDays: row.durationDays,
-      originalPrice: row.originalPrice,
-      currencyCode: row.currencyCode,
-      isActive: val === 1
-    }
-    
-    const res = await updateSubscriptionPlan(updateData)
+    const res = await updateSubscriptionPlanStatus(row.id, val === 1)
     if (res.code === 0) {
       ElMessage.success('状态更新成功')
       fetchSubscriptionPlans()
@@ -330,6 +368,25 @@ const handleStatusChange = async (row: SubscriptionPlan, val: number) => {
     ElMessage.error('状态更新失败')
     // 回滚UI
     row.isActive = val === 1 ? 0 : 1
+  } finally {
+    statusLoadingId.value = undefined
+  }
+}
+
+const handleSyncPaddle = async (row: SubscriptionPlan) => {
+  syncLoadingId.value = row.id
+  try {
+    const res = await syncSubscriptionPlanPaddle(row.id)
+    if (res.code === 0) {
+      ElMessage.success('Paddle 同步成功')
+      fetchSubscriptionPlans()
+    } else {
+      ElMessage.error(res.msg || 'Paddle 同步失败')
+    }
+  } catch (error) {
+    ElMessage.error('Paddle 同步失败')
+  } finally {
+    syncLoadingId.value = undefined
   }
 }
 
@@ -352,6 +409,19 @@ onMounted(() => {
 
 .form-tip {
   margin-left: 10px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.paddle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.paddle-label {
+  display: inline-block;
+  width: 58px;
   color: #909399;
   font-size: 12px;
 }
