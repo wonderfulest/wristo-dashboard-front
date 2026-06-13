@@ -166,6 +166,16 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/website/studio-memberships',
+      name: 'StudioMembershipAnalytics',
+      component: () => import('@/views/studio/StudioMembershipAnalytics.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/design/studio-memberships',
+      redirect: '/website/studio-memberships'
+    },
+    {
       path: '/products/delete-from-garmin',
       name: 'DeleteFromGarmin',
       component: () => import('@/views/products/DeleteFromGarmin.vue'),

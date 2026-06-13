@@ -19,6 +19,20 @@ export const updateSubscriptionPlan = (data: SubscriptionPlanDTO): Promise<ApiRe
 }
 
 /**
+ * 更新订阅计划启用状态
+ */
+export const updateSubscriptionPlanStatus = (id: number, active: boolean): Promise<ApiResponse<boolean>> => {
+  return instance.post(`/admin/subscription/plans/status/${id}/${active}`)
+}
+
+/**
+ * 同步订阅计划到 Paddle，缺少产品或价格 ID 时由后端创建并回写
+ */
+export const syncSubscriptionPlanPaddle = (id: number): Promise<ApiResponse<SubscriptionPlan>> => {
+  return instance.post(`/admin/subscription/plans/sync-paddle/${id}`)
+}
+
+/**
  * 根据编码获取订阅计划
  * @param planCode 计划编码
  */

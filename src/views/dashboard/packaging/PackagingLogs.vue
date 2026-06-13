@@ -221,7 +221,7 @@
           </template>
         </div>
         <el-form label-position="top">
-          <el-form-item label="优先级（0-9，0 为最高优先级）" required>
+          <el-form-item label="优先级（0-9，0 为手动插队）" required>
             <el-input
               v-model.number="requeuePriority"
               type="number"
@@ -438,7 +438,7 @@ const submitRequeue = async () => {
   // 校验优先级 0-9 整数
   let priority = typeof requeuePriority.value === 'number' ? requeuePriority.value : 5
   if (!Number.isInteger(priority) || priority < 0 || priority > 9) {
-    ElMessage.error('优先级必须是 0-9 的整数，例如 5；0 为最高优先级，9 为最低优先级')
+    ElMessage.error('优先级必须是 0-9 的整数，例如 5；0 为手动插队，9 为最低优先级')
     return
   }
 

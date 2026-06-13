@@ -1,6 +1,7 @@
 export interface SubscriptionPlan {
   id: number
   planCode: string
+  scene?: string
   name: string
   durationDays: number
   isGift: boolean
@@ -19,6 +20,7 @@ export interface SubscriptionPlan {
 export interface SubscriptionPlanDTO {
   id?: number
   planCode: string
+  scene?: string
   name: string
   durationDays: number
   isGift?: boolean
@@ -27,4 +29,3 @@ export interface SubscriptionPlanDTO {
   currencyCode: string
   isActive?: boolean
 }
-

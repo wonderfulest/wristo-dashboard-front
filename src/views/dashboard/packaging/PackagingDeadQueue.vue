@@ -108,13 +108,13 @@
           </template>
         </div>
         <el-form label-position="top">
-          <el-form-item label="优先级（0-9，0 为最高优先级）" required>
+          <el-form-item label="优先级（0-9，0 为手动插队）" required>
             <el-input
               v-model.number="requeuePriority"
               type="number"
               min="0"
               max="9"
-              placeholder="请输入 0-9 的整数"
+              placeholder="请输入 0-9 的整数，默认 7"
               style="width: 200px;"
             />
           </el-form-item>
@@ -148,7 +148,7 @@ const selectedDeadQueue = ref<ProductPackagingLogVO[]>([])
 
 const requeueDialogVisible = ref(false)
 const requeueTargetRows = ref<ProductPackagingLogVO[]>([])
-const requeuePriority = ref<number | null>(5)
+const requeuePriority = ref<number | null>(7)
 const submittingRequeue = ref(false)
 
 const formatNullableDateTime = (value: string | number | Date | null | undefined) => {
@@ -179,7 +179,7 @@ const handleSelectionChange = (rows: ProductPackagingLogVO[]) => {
 
 const openRequeueDialog = (row: ProductPackagingLogVO) => {
   requeueTargetRows.value = [row]
-  requeuePriority.value = 5
+  requeuePriority.value = 7
   requeueDialogVisible.value = true
 }
 
@@ -189,7 +189,7 @@ const openBatchRequeueDialog = () => {
     return
   }
   requeueTargetRows.value = [...selectedDeadQueue.value]
-  requeuePriority.value = 5
+  requeuePriority.value = 7
   requeueDialogVisible.value = true
 }
 
@@ -199,7 +199,7 @@ const openRequeueAllDialog = () => {
     return
   }
   requeueTargetRows.value = [...deadQueue.value]
-  requeuePriority.value = 5
+  requeuePriority.value = 7
   requeueDialogVisible.value = true
 }
 
@@ -208,7 +208,7 @@ const submitRequeue = async () => {
 
   const value = typeof requeuePriority.value === 'number' ? requeuePriority.value : 5
   if (!Number.isInteger(value) || value < 0 || value > 9) {
-    ElMessage.error('优先级必须是 0-9 的整数，0 为最高优先级')
+    ElMessage.error('优先级必须是 0-9 的整数，0 为手动插队')
     return
   }
 
