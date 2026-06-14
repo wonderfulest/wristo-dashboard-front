@@ -233,7 +233,6 @@ const formatProduct = (record: PurchaseRecordVO): string => {
 
 const recordBundles = (record: PurchaseRecordVO | null) => {
   if (!record) return []
-  if (record.bundles && record.bundles.length) return record.bundles
   return record.bundle ? [record.bundle] : []
 }
 

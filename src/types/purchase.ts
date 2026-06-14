@@ -14,7 +14,6 @@ export interface PurchaseRecordVO {
   isBundle: boolean
   product: ProductBase | null
   bundle: Bundle | null
-  bundles?: Bundle[] | null
   transactionId: string
   customerId: string
   addressId: string
