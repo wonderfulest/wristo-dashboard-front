@@ -151,7 +151,7 @@
           <el-input v-model="editForm.bundleDesc" type="textarea" :rows="4" />
         </el-form-item>
         <el-form-item label="价格" prop="price">
-          <el-input-number v-model="editForm.price" :min="5" :precision="2" :step="1" controls-position="right" style="width: 100%" />
+          <el-input-number v-model="editForm.price" :min="CUSTOM_BUNDLE_DEFAULT_PRICE" :precision="2" :step="1" controls-position="right" style="width: 100%" />
         </el-form-item>
         <el-form-item label="包含应用" prop="appIds">
           <el-select
@@ -217,8 +217,9 @@ const productsLoading = ref(false)
 const productOptions = ref<Product[]>([])
 const statusLoadingId = ref<number | undefined>(undefined)
 const editingDesignerText = ref('')
-const ACCOUNT_BUNDLE_DEFAULT_PRICE = 9.9
-const CUSTOM_BUNDLE_DEFAULT_PRICE = 5
+const CUSTOM_BUNDLE_DEFAULT_PRICE = 6.99
+const ACCOUNT_BUNDLE_DEFAULT_PRICE = 9.99
+const GLOBAL_BUNDLE_DEFAULT_PRICE = 19.99
 
 const editForm = reactive({
   bundleId: undefined as number | undefined,
@@ -226,7 +227,7 @@ const editForm = reactive({
   bundleType: 'custom',
   bundleName: '',
   bundleDesc: '',
-  price: 5,
+  price: CUSTOM_BUNDLE_DEFAULT_PRICE,
   appIds: [] as number[]
 })
 
@@ -339,7 +340,9 @@ const openEdit = async (row: Bundle) => {
 }
 
 const defaultBundlePrice = (bundleType?: string) => {
-  return bundleType === 'account' ? ACCOUNT_BUNDLE_DEFAULT_PRICE : CUSTOM_BUNDLE_DEFAULT_PRICE
+  if (bundleType === 'account') return ACCOUNT_BUNDLE_DEFAULT_PRICE
+  if (bundleType === 'global') return GLOBAL_BUNDLE_DEFAULT_PRICE
+  return CUSTOM_BUNDLE_DEFAULT_PRICE
 }
 
 const handleBundleTypeChange = () => {
