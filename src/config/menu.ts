@@ -97,7 +97,6 @@ export const topMenus: TopMenuGroup[] = [
       },
       { key: 'garmin-devices', title: '佳明设备', icon: 'Monitor', children: [
         { key: 'garmin-devices', title: '设备列表', icon: 'Monitor', path: '/products/garmin-devices' },
-        { key: 'garmin-device-detail', title: '设备详情', icon: 'View', path: '/products/garmin-devices/:id' },
       ] },
        { key: 'template-variables', title: '模板变量', icon: 'Files', path: '/system/template-variables' },
       { key: 'email-records', title: '邮件发送历史', icon: 'Message', path: '/email-records' },
@@ -155,6 +154,7 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/products', '/meter'],
     children: [
       { key: 'products', title: '应用列表', icon: 'Grid', path: '/products' },
+      { key: 'bundles', title: 'Bundle 管理', icon: 'Box', path: '/products/bundles' },
       { key: 'categories', title: '应用分类', icon: 'FolderOpened', path: '/website/categories' },
       { key: 'app-daily-config', title: '每日一图配置', icon: 'Picture', path: '/products/app-daily/config' },
       { key: 'device-un-support', title: '未支持应用', icon: 'Warning', path: '/products/device-un-support' },

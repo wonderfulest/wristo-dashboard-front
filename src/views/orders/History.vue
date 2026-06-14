@@ -40,8 +40,8 @@
         </el-table-column>
         <el-table-column label="Bundle" width="120" show-overflow-tooltip>
           <template #default="{ row }">
-            <span v-if="row.bundle">
-              {{ row.bundle.bundleName }}
+            <span v-if="recordBundles(row).length">
+              {{ formatBundleNames(row) }}
             </span>
             <span v-else>-</span>
           </template>
@@ -140,28 +140,22 @@
           </div>
           <div v-else class="empty-sub">No product info</div>
 
-          <el-divider content-position="left">Bundle</el-divider>
-          <template v-if="selectedRecord.bundle">
-            <el-descriptions :column="2" size="small">
-              <el-descriptions-item label="Bundle ID">{{ selectedRecord.bundle.bundleId }}</el-descriptions-item>
-              <el-descriptions-item label="Name">{{ selectedRecord.bundle.bundleName }}</el-descriptions-item>
-              <el-descriptions-item label="Desc" :span="2">
-                <div class="multiline">{{ selectedRecord.bundle.bundleDesc }}</div>
-              </el-descriptions-item>
-              <el-descriptions-item label="Price">${{ formatCurrency(selectedRecord.bundle.price) }}</el-descriptions-item>
-              <el-descriptions-item label="Owner">{{ selectedRecord.bundle.user?.username || '—' }}</el-descriptions-item>
-            </el-descriptions>
-            <div v-if="selectedRecord.bundle.products && selectedRecord.bundle.products.length" class="bundle-products">
-              <div class="bp-title">Products in Bundle</div>
-              <ul>
-                <li v-for="(p, idx) in selectedRecord.bundle.products" :key="p.appId + '-' + idx">
-                  <img v-if="p.garminImageUrl" :src="p.garminImageUrl" :alt="p.name" class="bp-thumb" />
-                  <span class="bp-name">{{ p.name }} ({{ p.appId }})</span>
-                  <a v-if="p.garminStoreUrl" :href="p.garminStoreUrl" target="_blank" class="product-link">Open</a>
-                </li>
-              </ul>
+          <el-divider content-position="left">App Bundles</el-divider>
+          <div v-if="recordBundles(selectedRecord).length" class="bundle-list-detail">
+            <div v-for="bundle in recordBundles(selectedRecord)" :key="bundle.bundleId" class="bundle-detail-item">
+              <el-descriptions :column="2" size="small">
+                <el-descriptions-item label="Bundle ID">{{ bundle.bundleId }}</el-descriptions-item>
+                <el-descriptions-item label="Name">{{ bundle.bundleName }}</el-descriptions-item>
+                <el-descriptions-item label="Type">{{ bundle.bundleType || 'custom' }}</el-descriptions-item>
+                <el-descriptions-item label="Status">{{ bundle.isActive === 1 ? 'Active' : 'Inactive' }}</el-descriptions-item>
+                <el-descriptions-item label="Desc" :span="2">
+                  <div class="multiline">{{ bundle.bundleDesc }}</div>
+                </el-descriptions-item>
+                <el-descriptions-item label="Price">${{ formatCurrency(bundle.price) }}</el-descriptions-item>
+                <el-descriptions-item label="Owner">{{ bundle.user?.username || '—' }}</el-descriptions-item>
+              </el-descriptions>
             </div>
-          </template>
+          </div>
           <div v-else class="empty-sub">No bundle info</div>
         </template>
         <template #footer>
@@ -235,6 +229,20 @@ const formatProduct = (record: PurchaseRecordVO): string => {
     return record.product.name
   }
   return 'Unknown Product'
+}
+
+const recordBundles = (record: PurchaseRecordVO | null) => {
+  if (!record) return []
+  if (record.bundles && record.bundles.length) return record.bundles
+  return record.bundle ? [record.bundle] : []
+}
+
+const formatBundleNames = (record: PurchaseRecordVO): string => {
+  const bundles = recordBundles(record)
+  if (bundles.length <= 2) {
+    return bundles.map((bundle) => bundle.bundleName).join(', ')
+  }
+  return `${bundles.slice(0, 2).map((bundle) => bundle.bundleName).join(', ')} +${bundles.length - 2}`
 }
 
 const getStatusClass = (status: number): string => {
@@ -616,6 +624,17 @@ onMounted(() => {
 
 .bundle-products {
   margin-top: 10px;
+}
+.bundle-list-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.bundle-detail-item {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fafafa;
 }
 .bp-title {
   font-weight: 600;

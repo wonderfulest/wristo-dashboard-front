@@ -15,6 +15,7 @@ export interface DbBackupJob {
   status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | string
   message: string
   operator: string
+  nodeIp?: string
   createdAt: string
   updatedAt: string
   startedAt: string

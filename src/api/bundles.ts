@@ -1,6 +1,6 @@
 import instance from '@/config/axios'
-import type { ApiResponse } from '@/types/api'
-import type { Bundle, CreateBundleDto, UpdateBundleDto } from '@/types/bundle'
+import type { ApiResponse, PageResponse } from '@/types/api'
+import type { Bundle, BundlePageQuery, CreateBundleDto, UpdateBundleDto } from '@/types/bundle'
 
 // 获取所有套餐列表
 export const fetchBundles = (): Promise<ApiResponse<Bundle[]>> => {
@@ -22,4 +22,28 @@ export const getBundle = (bundleId: number): Promise<ApiResponse<Bundle>> => {
 
 export const updateBundleActive = (bundleId: number, isActive: number): Promise<ApiResponse<Bundle>> => {
   return instance.post(`/bundles/${bundleId}/activate/${isActive}`)
+}
+
+export const fetchAdminBundlePage = (params: BundlePageQuery): Promise<ApiResponse<PageResponse<Bundle>>> => {
+  return instance.get('/admin/bundles/page?populate=user,products', { params })
+}
+
+export const getAdminBundle = (bundleId: number): Promise<ApiResponse<Bundle>> => {
+  return instance.get(`/admin/bundles/${bundleId}?populate=user,products`)
+}
+
+export const createAdminBundle = (data: CreateBundleDto): Promise<ApiResponse<Bundle>> => {
+  return instance.post('/admin/bundles/create?populate=user,products', data)
+}
+
+export const updateAdminBundle = (bundleId: number, data: UpdateBundleDto): Promise<ApiResponse<Bundle>> => {
+  return instance.post(`/admin/bundles/update/${bundleId}?populate=user,products`, data)
+}
+
+export const deleteAdminBundle = (bundleId: number): Promise<ApiResponse<boolean>> => {
+  return instance.post(`/admin/bundles/delete/${bundleId}`)
+}
+
+export const updateAdminBundleActive = (bundleId: number, isActive: number): Promise<ApiResponse<boolean>> => {
+  return instance.post(`/admin/bundles/${bundleId}/activate/${isActive}`)
 }

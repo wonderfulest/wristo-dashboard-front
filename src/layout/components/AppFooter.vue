@@ -3,7 +3,7 @@
     <div class="footer-inner">
       <div class="footer-left">
         <img class="footer-mark" src="https://cdn.wristo.io/brands/wristo-logo/svg/wristo-mark.svg" alt="" aria-hidden="true" />
-        <span>© Wristo 2025</span>
+        <span>© Wristo 2026</span>
       </div>
       <div class="footer-links">
         <a href="#">Terms of Use</a>

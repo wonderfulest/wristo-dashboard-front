@@ -33,6 +33,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="operator" label="操作人" width="120" />
+      <el-table-column prop="nodeIp" label="执行节点" width="150" show-overflow-tooltip />
       <el-table-column label="时间" min-width="260">
         <template #default="{ row }">
           <div class="cell-two-lines">
@@ -73,6 +74,7 @@
             <span v-else>-</span>
           </el-descriptions-item>
           <el-descriptions-item label="操作人">{{ current.operator }}</el-descriptions-item>
+          <el-descriptions-item label="执行节点 IP">{{ current.nodeIp || '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ formatDateTime(current.createdAt) }}</el-descriptions-item>
           <el-descriptions-item label="开始时间">{{ formatDateTime(current.startedAt) || '-' }}</el-descriptions-item>
           <el-descriptions-item label="结束时间">{{ formatDateTime(current.finishedAt) || '-' }}</el-descriptions-item>

@@ -160,6 +160,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/products/bundles',
+      name: 'Bundles',
+      component: () => import('@/views/products/Bundles.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products/designs',
       name: 'DesignAdmin',
       component: () => import('@/views/design/DesignAdmin.vue'),
