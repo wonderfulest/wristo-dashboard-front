@@ -92,9 +92,9 @@ export const topMenus: TopMenuGroup[] = [
         icon: 'Monitor',
         children: [
           { key: 'website-home-banners', title: '首页 Banner', icon: 'Picture', path: '/website/home-banners' },
-          { key: 'studio-memberships', title: 'Studio 会员', icon: 'CreditCard', path: '/website/studio-memberships' },
         ],
       },
+      { key: 'studio-memberships', title: 'Studio 会员', icon: 'CreditCard', path: '/website/studio-memberships' },
       { key: 'garmin-devices', title: '佳明设备', icon: 'Monitor', children: [
         { key: 'garmin-devices', title: '设备列表', icon: 'Monitor', path: '/products/garmin-devices' },
       ] },

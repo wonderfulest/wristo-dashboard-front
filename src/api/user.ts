@@ -1,6 +1,7 @@
 import instance from '@/config/axios'
 import type { ApiResponse, UserInfo, PageResponse } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
+import type { AdminEmailAccountCreateDTO } from '@/types/user'
 import type { ChangeUserEmailDTO } from '@/types/user'
 import type { PageQueryDTO } from '@/types/api'
 import type { MchUserVO, UserMchUpdateDTO } from '@/types/user'
@@ -33,6 +34,10 @@ export const getUserDetail = (id: number): Promise<ApiResponse<UserInfo>> => {
 
 export const createUser = (data: { username: string; password: string; email: string; roles?: string[] }): Promise<ApiResponse<UserInfo>> => {
   return instance.post('/admin/users/create', data)
+}
+
+export const registerEmailAccount = (data: AdminEmailAccountCreateDTO): Promise<ApiResponse<UserInfo>> => {
+  return instance.post('/admin/users/register/email-account', data)
 }
 
 export const updateUser = (id: number, data: UserUpdateDTO): Promise<ApiResponse<UserInfo>> => {

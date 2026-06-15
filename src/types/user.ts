@@ -16,6 +16,14 @@ export interface UserUpdateDTO {
   roles?: string[]
 }
 
+export interface AdminEmailAccountCreateDTO {
+  username: string
+  nickname?: string
+  email: string
+  password: string
+  roles?: string[]
+}
+
  export interface ChangeUserEmailDTO {
    userId: number
    oldEmail: string

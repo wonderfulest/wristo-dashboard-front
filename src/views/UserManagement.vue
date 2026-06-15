@@ -2,7 +2,7 @@
   <div class="user-management-page">
     <div class="page-header">
       <h2>用户管理</h2>
-      <el-button type="success" @click="handleAdd">新增用户</el-button>
+      <el-button type="success" @click="handleAdd">注册邮箱账号</el-button>
     </div>
     <div class="filters">
       <UserSelect v-model="searchUserId" placeholder="按用户搜索" @change="handleUserChange" />
@@ -37,9 +37,9 @@
         @size-change="handleSizeChange"
       />
     </div>
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '新增用户'">
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '注册邮箱账号'">
       <el-form :model="currentUser" label-width="80px">
-        <el-form-item label="ID">
+        <el-form-item v-if="isEdit" label="ID">
           <el-input v-model="currentUser.id" />
         </el-form-item>
         <el-form-item label="用户名">
@@ -71,10 +71,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { pageUsers, createUser, updateUser, deleteUser } from '@/api/user'
+import { pageUsers, registerEmailAccount, updateUser, deleteUser } from '@/api/user'
 import { getRoleList } from '@/api/role'
 import type { UserInfo, RoleInfo } from '@/types/api'
 import type { UserUpdateDTO } from '@/types/user'
+import type { AdminEmailAccountCreateDTO } from '@/types/user'
 import type { UserPageQueryDTO } from '@/api/user'
 import UserSelect from '@/components/users/UserSelect.vue'
 
@@ -214,12 +215,25 @@ const handleDelete = (row: UserInfo) => {
 }
 
 const handleSave = async () => {
-  if (!currentUser.value.username || !currentUser.value.email) {
+  const username = currentUser.value.username?.trim()
+  const nickname = currentUser.value.nickname?.trim()
+  const email = currentUser.value.email?.trim().toLowerCase()
+  const passwordValue = password.value.trim()
+
+  if (!username || !email) {
     ElMessage.error('用户名和邮箱不能为空')
     return
   }
-  if (!isEdit.value && !password.value) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    ElMessage.error('邮箱格式不正确')
+    return
+  }
+  if (!isEdit.value && !passwordValue) {
     ElMessage.error('新增用户时密码不能为空')
+    return
+  }
+  if (!isEdit.value && (passwordValue.length < 6 || passwordValue.length > 20)) {
+    ElMessage.error('密码长度必须在6-20个字符之间')
     return
   }
   
@@ -237,22 +251,26 @@ const handleSave = async () => {
     }
 
     const updatePayload: UserUpdateDTO = {
-      username: currentUser.value.username,
-      nickname: currentUser.value.nickname || undefined,
+      username,
+      nickname: nickname || undefined,
       avatar: currentUser.value.avatar || undefined,
       status: mappedStatus,
       roles: rolesInput.value
     }
     res = await updateUser(currentUser.value.id, updatePayload)
   } else {
-    // 创建用户时使用原有的逻辑
-    const createPayload: any = { ...currentUser.value, roles: rolesInput.value }
-    createPayload.password = password.value
-    res = await createUser(createPayload)
+    const createPayload: AdminEmailAccountCreateDTO = {
+      username,
+      nickname: nickname || undefined,
+      email,
+      password: passwordValue,
+      roles: rolesInput.value
+    }
+    res = await registerEmailAccount(createPayload)
   }
   
   if (res.code === 0) {
-    ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
+    ElMessage.success(isEdit.value ? '编辑成功' : '注册成功')
     dialogVisible.value = false
     fetchUsers()
   } else {
