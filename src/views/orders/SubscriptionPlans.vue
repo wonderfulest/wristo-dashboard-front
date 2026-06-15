@@ -17,6 +17,13 @@
           <span>{{ row.durationDays === -1 ? '永久' : `${row.durationDays}天` }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="配置计费" width="150">
+        <template #default="{ row }">
+          <el-tag :type="getConfiguredPriceMode(row) === 'one_time' ? 'info' : 'warning'">
+            {{ getConfiguredPriceMode(row) === 'one_time' ? '一次性 price' : `每 ${row.durationDays || 30} 天续费` }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="价格" width="180">
         <template #default="{ row }">
           <div>
@@ -24,6 +31,29 @@
             <div v-if="row.discountPrice !== null && row.discountPrice !== undefined">
               折扣价: {{ formatPrice(row.discountPrice, row.currencyCode) }}
             </div>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="Paddle 实际价格" min-width="220">
+        <template #default="{ row }">
+          <div class="paddle-info">
+            <div>
+              <span class="paddle-label">金额</span>
+              <span>{{ formatPaddleUnitPrice(row) }}</span>
+            </div>
+            <div>
+              <span class="paddle-label">计费</span>
+              <el-tag :type="getPaddlePriceMode(row) === 'recurring' ? 'warning' : 'info'" size="small">
+                {{ formatPaddleBilling(row) }}
+              </el-tag>
+            </div>
+            <el-tag
+              v-if="row.paddlePriceId && getConfiguredPriceMode(row) !== getPaddlePriceMode(row)"
+              type="danger"
+              size="small"
+            >
+              与配置不一致
+            </el-tag>
           </div>
         </template>
       </el-table-column>
@@ -45,7 +75,7 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="Paddle" min-width="280">
+      <el-table-column label="Paddle ID" min-width="280">
         <template #default="{ row }">
           <div class="paddle-info">
             <div>
@@ -106,6 +136,15 @@
           <el-input-number v-model="form.durationDays" :min="-1" placeholder="请输入时长，-1表示永久" />
           <span class="form-tip">-1表示永久</span>
         </el-form-item>
+        <el-form-item label="Paddle 计费" prop="priceMode">
+          <el-segmented
+            v-model="form.priceMode"
+            :options="priceModeOptions"
+          />
+          <div class="form-tip full-line">
+            一次性 price 不会自动续费；循环扣费会按上面的时长创建 Paddle billing cycle。
+          </div>
+        </el-form-item>
         <el-form-item label="原价" prop="originalPrice">
           <el-input-number 
             v-model="form.originalPrice" 
@@ -151,6 +190,17 @@
             inactive-text="禁用"
           />
         </el-form-item>
+        <div v-if="dialogType === 'edit' && editingPlan" class="paddle-current">
+          <div class="paddle-current-title">Paddle 当前配置</div>
+          <div class="paddle-current-grid">
+            <span>Price ID</span>
+            <strong>{{ editingPlan.paddlePriceId || '-' }}</strong>
+            <span>金额</span>
+            <strong>{{ formatPaddleUnitPrice(editingPlan) }}</strong>
+            <span>计费</span>
+            <strong>{{ formatPaddleBilling(editingPlan) }}</strong>
+          </div>
+        </div>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -181,6 +231,12 @@ const subscriptionPlans = ref<SubscriptionPlan[]>([])
 const loading = ref(false)
 const syncLoadingId = ref<number>()
 const statusLoadingId = ref<number>()
+const editingPlan = ref<SubscriptionPlan>()
+
+const priceModeOptions = [
+  { label: '一次性 price', value: 'one_time' },
+  { label: '按时长循环续费', value: 'recurring' }
+]
 
 // 表单相关
 const dialogVisible = ref(false)
@@ -191,6 +247,7 @@ const form = ref<SubscriptionPlanDTO>({
   scene: 'store',
   name: '',
   durationDays: 30,
+  priceMode: 'recurring',
   isGift: false,
   originalPrice: 0,
   discountPrice: undefined,
@@ -209,6 +266,9 @@ const rules: FormRules = {
   ],
   durationDays: [
     { required: true, message: '请输入时长', trigger: 'blur' }
+  ],
+  priceMode: [
+    { required: true, message: '请选择 Paddle 计费模式', trigger: 'change' }
   ],
   originalPrice: [
     { required: true, message: '请输入原价', trigger: 'blur' },
@@ -238,6 +298,44 @@ const formatPrice = (price: number, currencyCode: string): string => {
   return `${symbol}${price.toFixed(2)}`
 }
 
+const getConfiguredPriceMode = (row: SubscriptionPlan): 'one_time' | 'recurring' => {
+  if (row.priceMode === 'one_time' || row.priceMode === 'recurring') return row.priceMode
+  return row.durationDays === -1 ? 'one_time' : 'recurring'
+}
+
+const getPaddlePriceMode = (row: SubscriptionPlan): 'one_time' | 'recurring' => {
+  if (!row.paddlePriceId || !row.paddlePrice) return getConfiguredPriceMode(row)
+  return row.paddlePrice.billingCycle ? 'recurring' : 'one_time'
+}
+
+const formatBillingInterval = (interval?: string) => {
+  const labels: Record<string, string> = {
+    day: '天',
+    week: '周',
+    month: '月',
+    year: '年'
+  }
+  return labels[interval || ''] || interval || '周期'
+}
+
+const formatPaddleBilling = (row: SubscriptionPlan): string => {
+  if (!row.paddlePriceId) return '未同步'
+  const billingCycle = row.paddlePrice?.billingCycle
+  if (!billingCycle) return '一次性 price'
+  return `每 ${billingCycle.frequency || '-'} ${formatBillingInterval(billingCycle.interval)}续费`
+}
+
+const formatPaddleUnitPrice = (row: SubscriptionPlan): string => {
+  const unitPrice = row.paddlePrice?.unitPrice
+  if (!unitPrice?.amount) {
+    return row.paddlePriceId ? 'Paddle 未返回' : '-'
+  }
+  const amount = Number(unitPrice.amount)
+  if (!Number.isFinite(amount)) return unitPrice.amount
+  const currencyCode = unitPrice.currencyCode || unitPrice.currency_code || row.currencyCode || 'USD'
+  return formatPrice(amount / 100, currencyCode)
+}
+
 // 获取订阅计划列表
 const fetchSubscriptionPlans = async () => {
   loading.value = true
@@ -258,11 +356,13 @@ const fetchSubscriptionPlans = async () => {
 // 新增订阅计划
 const handleAdd = () => {
   dialogType.value = 'add'
+  editingPlan.value = undefined
   form.value = {
     planCode: '',
     scene: 'store',
     name: '',
     durationDays: 30,
+    priceMode: 'recurring',
     isGift: false,
     originalPrice: 0,
     discountPrice: undefined,
@@ -275,12 +375,14 @@ const handleAdd = () => {
 // 编辑订阅计划
 const handleEdit = (row: SubscriptionPlan) => {
   dialogType.value = 'edit'
+  editingPlan.value = row
   form.value = {
     id: row.id,
     planCode: row.planCode,
     scene: row.scene || 'store',
     name: row.name,
     durationDays: row.durationDays,
+    priceMode: getConfiguredPriceMode(row),
     isGift: row.isGift,
     originalPrice: row.originalPrice,
     discountPrice: row.discountPrice,
@@ -413,6 +515,11 @@ onMounted(() => {
   font-size: 12px;
 }
 
+.full-line {
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
 .paddle-info {
   display: flex;
   flex-direction: column;
@@ -424,5 +531,34 @@ onMounted(() => {
   width: 58px;
   color: #909399;
   font-size: 12px;
+}
+
+.paddle-current {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.paddle-current-title {
+  margin-bottom: 8px;
+  color: #303133;
+  font-weight: 600;
+}
+
+.paddle-current-grid {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 6px 12px;
+  color: #606266;
+  font-size: 13px;
+}
+
+.paddle-current-grid strong {
+  min-width: 0;
+  color: #303133;
+  font-weight: 500;
+  overflow-wrap: anywhere;
 }
 </style>

@@ -77,15 +77,19 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/orders/subscription-plans',
-      name: 'OrdersSubscriptionPlans',
+      path: '/website/subscription-plans',
+      name: 'WebsiteSubscriptionPlans',
       component: () => import('@/views/orders/SubscriptionPlans.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/orders/subscription-plans',
+      redirect: '/website/subscription-plans'
     },
     // Backward-compatible redirects
     {
       path: '/subscription-plans',
-      redirect: '/orders/subscription-plans'
+      redirect: '/website/subscription-plans'
     },
     {
       path: '/users/user-management',

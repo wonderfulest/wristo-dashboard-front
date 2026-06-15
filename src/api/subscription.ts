@@ -44,7 +44,9 @@ export const getSubscriptionPlanByCode = (planCode: string): Promise<ApiResponse
  * 获取所有订阅计划列表
  */
 export const getAllSubscriptionPlans = (): Promise<ApiResponse<SubscriptionPlan[]>> => {
-  return instance.get('/admin/subscription/plans/list')
+  return instance.get('/admin/subscription/plans/list', {
+    params: { populate: 'paddle_product,paddle_price' }
+  })
 }
 
 /**

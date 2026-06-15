@@ -95,6 +95,7 @@ export const topMenus: TopMenuGroup[] = [
         ],
       },
       { key: 'studio-memberships', title: 'Studio 会员', icon: 'CreditCard', path: '/website/studio-memberships' },
+      { key: 'subscription-plans', title: '订阅计划', icon: 'Notebook', path: '/website/subscription-plans' },
       { key: 'garmin-devices', title: '佳明设备', icon: 'Monitor', children: [
         { key: 'garmin-devices', title: '设备列表', icon: 'Monitor', path: '/products/garmin-devices' },
       ] },
@@ -220,7 +221,6 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'refund', title: '订单退款', icon: 'Money', path: '/orders/refund' },
       { key: 'paddle-refunds', title: 'Paddle 退款查询', icon: 'CreditCard', path: '/orders/paddle-refunds' },
       { key: 'discounts', title: '优惠管理', icon: 'Discount', path: '/orders/discounts' },
-      { key: 'subscription-plans', title: '订阅计划', icon: 'Notebook', path: '/orders/subscription-plans' },
     ],
   },
   {
