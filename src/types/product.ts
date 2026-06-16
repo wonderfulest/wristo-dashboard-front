@@ -126,6 +126,7 @@ export interface ProductPackagingLogVO {
   id: number
   packagingStatus: string
   errorMessage: string | null
+  lastBuildLog?: string | null
   createdAt: number
   updatedAt: number
   version: number

@@ -141,7 +141,7 @@
     <el-dialog
       v-model="detailDialogVisible"
       title="打包记录详情"
-      width="600px"
+      width="900px"
     >
       <div v-if="selectedLog" class="detail-content">
         <el-descriptions :column="2" border>
@@ -169,6 +169,11 @@
             <span v-else class="no-error">无错误信息</span>
           </el-descriptions-item>
         </el-descriptions>
+        <div class="build-log-section">
+          <div class="build-log-title">最近一次打包日志</div>
+          <pre v-if="selectedLog.lastBuildLog" class="build-log-content">{{ selectedLog.lastBuildLog }}</pre>
+          <div v-else class="build-log-empty">暂无日志</div>
+        </div>
       </div>
     </el-dialog>
 
@@ -579,6 +584,40 @@ onMounted(() => {
   .no-error {
     color: #909399;
     font-style: italic;
+  }
+
+  .build-log-section {
+    margin-top: 16px;
+  }
+
+  .build-log-title {
+    margin-bottom: 8px;
+    color: #303133;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .build-log-content {
+    max-height: 420px;
+    margin: 0;
+    padding: 12px;
+    overflow: auto;
+    color: #dcdfe6;
+    background: #1f2329;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .build-log-empty {
+    padding: 16px;
+    color: #909399;
+    text-align: center;
+    background: #f5f7fa;
+    border-radius: 6px;
   }
 }
 </style> 
