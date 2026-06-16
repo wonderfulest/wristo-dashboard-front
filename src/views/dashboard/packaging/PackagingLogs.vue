@@ -170,9 +170,17 @@
           </el-descriptions-item>
         </el-descriptions>
         <div class="build-log-section">
-          <div class="build-log-title">最近一次打包日志</div>
-          <pre v-if="selectedLog.lastBuildLog" class="build-log-content">{{ selectedLog.lastBuildLog }}</pre>
-          <div v-else class="build-log-empty">暂无日志</div>
+          <div class="build-log-title">最近一次打包日志文件</div>
+          <a
+            v-if="selectedLog.lastBuildLogPath"
+            class="build-log-link"
+            :href="selectedLog.lastBuildLogPath"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ selectedLog.lastBuildLogPath }}
+          </a>
+          <div v-else class="build-log-empty">暂无日志文件</div>
         </div>
       </div>
     </el-dialog>
@@ -597,18 +605,13 @@ onMounted(() => {
     font-weight: 600;
   }
 
-  .build-log-content {
-    max-height: 420px;
-    margin: 0;
+  .build-log-link {
+    display: block;
     padding: 12px;
-    overflow: auto;
-    color: #dcdfe6;
-    background: #1f2329;
+    color: #409eff;
+    background: #f5f7fa;
     border-radius: 6px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     font-size: 12px;
-    line-height: 1.6;
-    white-space: pre-wrap;
     word-break: break-word;
   }
 
