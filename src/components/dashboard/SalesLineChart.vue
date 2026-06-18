@@ -40,10 +40,6 @@
 
     <el-card shadow="never" :body-style="{ padding: '12px 12px 4px 12px' }" v-loading="loading">
       <div ref="chartRef" class="line-chart"></div>
-      <div class="chart-legend">
-        <span class="legend orders">订单数</span>
-        <span class="legend earnings">当日收益</span>
-      </div>
     </el-card>
   </div>
 </template>
@@ -149,18 +145,15 @@ const updateChart = () => {
   if (!chart) return
   const dates = items.value.map(i => i.date)
   const orderCounts = items.value.map(i => i.orderCount)
+  const downloads = items.value.map(i => Number(i.downloads) || 0)
+  const scaledDownloads = downloads.map(v => v / 20)
   // backend returns earnings in cents; convert to dollars for display
   const earnings = items.value.map(i => (Number(i.earnings) || 0) / 100)
 
-  // Unify axis ranges so both axes share the same min/max to help visually compare AOV
-  const allVals = [...orderCounts, ...earnings]
-  const finiteVals = allVals.filter(v => Number.isFinite(v)) as number[]
-  const minVal = finiteVals.length ? Math.min(...finiteVals) : 0
-  const maxVal = finiteVals.length ? Math.max(...finiteVals) : 0
-  // Add small padding
-  const pad = maxVal > 0 ? (maxVal - minVal) * 0.05 : 1
-  const yMin = Math.max(0, Math.floor(minVal - pad))
-  const yMax = Math.ceil(maxVal + pad)
+  const axisValues = [...orderCounts, ...scaledDownloads, ...earnings]
+  const finiteAxisValues = axisValues.filter(v => Number.isFinite(v)) as number[]
+  const maxVal = finiteAxisValues.length ? Math.max(...finiteAxisValues) : 0
+  const yMax = Math.max(1, Math.ceil(maxVal * 1.05))
 
   const option = {
     tooltip: {
@@ -169,31 +162,43 @@ const updateChart = () => {
       formatter: (params: any[]) => {
         const d = params?.[0]?.axisValue || ''
         const oc = params.find(p => p.seriesName === '订单数')?.data ?? '-'
+        const index = params?.[0]?.dataIndex ?? -1
+        const dl = index >= 0 ? downloads[index] : '-'
+        const scaledDl = params.find(p => p.seriesName === '下载量 ÷20')?.data ?? '-'
         const er = params.find(p => p.seriesName === '当日收益')?.data ?? '-'
-        return `${d}<br/>订单数：${oc}<br/>当日收益：$${Number(er).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        return `${d}<br/>订单数：${oc}<br/>下载量：${dl}（÷20=${Number(scaledDl).toLocaleString('en-US', { maximumFractionDigits: 2 })}）<br/>当日收益：$${Number(er).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       }
     },
-    grid: { left: 40, right: 60, top: 20, bottom: 30 },
+    legend: {
+      bottom: 2,
+      left: 'center',
+      selectedMode: true,
+      itemWidth: 12,
+      itemHeight: 8,
+      textStyle: { color: '#6c757d', fontSize: 12 },
+      data: ['订单数', '下载量 ÷20', '当日收益']
+    },
+    grid: { left: 48, right: 60, top: 24, bottom: 52 },
     xAxis: { type: 'category', data: dates, boundaryGap: false, axisLabel: { color: '#6c757d' } },
     yAxis: [
       {
         type: 'value',
         name: '订单数',
         position: 'left',
-        min: yMin,
+        min: 0,
         max: yMax,
         axisLabel: { color: '#6c757d' },
         splitLine: { lineStyle: { color: '#edf2f7' } }
       },
       {
         type: 'value',
-        name: '当日收益',
+        name: '美元',
         position: 'right',
-        min: yMin,
+        min: 0,
         max: yMax,
         axisLabel: {
           color: '#6c757d',
-          formatter: (val: number) => `$${Number(val).toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+          formatter: (val: number) => `$${Number(val).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
         },
         splitLine: { show: false }
       }
@@ -209,6 +214,16 @@ const updateChart = () => {
         // no area gradient for orders
         areaStyle: undefined as any,
         data: orderCounts
+      },
+      {
+        name: '下载量 ÷20',
+        type: 'line',
+        smooth: true,
+        yAxisIndex: 0,
+        showSymbol: false,
+        lineStyle: { color: '#f59f00', width: 2 },
+        areaStyle: undefined as any,
+        data: scaledDownloads
       },
       {
         name: '当日收益',
@@ -255,7 +270,4 @@ onBeforeUnmount(() => {
 .filters { margin: 8px 0 12px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .app-id-input { width: 180px; }
 .line-chart { width: 100%; height: 320px; }
-.chart-legend { display: flex; gap: 12px; padding: 6px 8px 10px 8px; color: #6c757d; font-size: 12px; }
-.legend.orders::before { content: ''; display: inline-block; width: 10px; height: 10px; background: #1e88e5; margin-right: 6px; border-radius: 2px; }
-.legend.earnings::before { content: ''; display: inline-block; width: 10px; height: 10px; background: #2f9e6e; margin-right: 6px; border-radius: 2px; }
 </style>

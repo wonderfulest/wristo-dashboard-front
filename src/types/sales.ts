@@ -6,6 +6,8 @@ export interface DailySalesItemVO {
   date: string
   /** 当日订单数 */
   orderCount: number
+  /** 当日下载量 */
+  downloads: number
   /** 当日收益 */
   earnings: number
 }
