@@ -71,6 +71,22 @@
       <el-form-item label="版权">
         <el-input v-model="form.copyright" type="textarea" autosize />
       </el-form-item>
+      <el-divider content-position="left">搜索索引</el-divider>
+      <el-form-item label="风格标签">
+        <el-input
+          v-model="form.styleTags"
+          placeholder="例如：digital,sport,rounded"
+          clearable
+        />
+      </el-form-item>
+      <el-form-item label="搜索关键词">
+        <el-input
+          v-model="form.searchKeywords"
+          type="textarea"
+          :rows="3"
+          placeholder="补充中文、英文、同义词，用逗号或空格分隔"
+        />
+      </el-form-item>
       <el-form-item label="TTF">
         <a v-if="font?.ttfFile?.url" :href="font?.ttfFile.url" target="_blank">下载当前 TTF</a>
         <span v-else>-</span>
@@ -147,6 +163,8 @@ watch(() => props.font, (v) => {
       versionName: v.versionName,
       glyphCount: v.glyphCount,
       copyright: v.copyright,
+      styleTags: v.styleTags,
+      searchKeywords: v.searchKeywords,
       isSystem: v.isSystem,
     }
   } else {

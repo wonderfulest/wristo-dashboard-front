@@ -16,6 +16,8 @@ export interface DesignFontVO {
   versionName: string
   glyphCount: number
   copyright?: string
+  styleTags?: string
+  searchKeywords?: string
   isSystem: number
   isMonospace?: number // 0/1
   status: string // Submitted / Approved / Rejected / Pending

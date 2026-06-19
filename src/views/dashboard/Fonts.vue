@@ -4,6 +4,15 @@
     <div class="header">
       <h2>字体管理</h2>
       <div class="header-toolbar">
+        <div class="header-row index-row">
+          <span class="index-status">字体搜索索引文档数：{{ fontIndexCountText }}</span>
+          <el-button size="small" :loading="fontIndexCountLoading" @click="loadFontSearchIndexCount">
+            刷新索引状态
+          </el-button>
+          <el-button size="small" type="warning" :loading="fontIndexRebuildLoading" @click="handleRebuildFontIndex">
+            重建字体搜索索引
+          </el-button>
+        </div>
           <div class="header-row header-row-actions">
           <el-button type="primary" plain @click="showUploadTtf = true">上传 TTF 字体</el-button>
           <span style="margin-left: 8px; color: #999;">|</span>
@@ -153,12 +162,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { computed, ref, onMounted, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { TableInstance } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignFontVO } from '@/types/font'
-import { pageFonts, reviewFont, reviewFontsBatch, removeFont, toggleFontSystem, updateFontTtf, getFontBySlug } from '@/api/fonts'
+import {
+  pageFonts,
+  reviewFont,
+  reviewFontsBatch,
+  removeFont,
+  toggleFontSystem,
+  updateFontTtf,
+  getFontBySlug,
+  rebuildFontSearchIndex,
+  getFontSearchIndexCount,
+} from '@/api/fonts'
 import type { EnumOption } from '@/api/common'
 import { DESIGN_FONT_TYPE_ENUM_NAME, useEnumStore } from '@/store/common'
 import FontEditDialog from '@/components/FontEditDialog.vue'
@@ -186,10 +205,15 @@ const searchType = ref<string | undefined>(undefined)
 const searchIsSystem = ref<number | undefined>(undefined)
 const sortOrder = ref('updated_at desc')
 const fontTypeOptions = ref<EnumOption[]>([])
+const fontIndexCount = ref<number | null>(null)
+const fontIndexCountLoading = ref(false)
+const fontIndexRebuildLoading = ref(false)
 
 const enumStore = useEnumStore()
 
 const showUploadTtf = ref(false)
+
+const fontIndexCountText = computed(() => fontIndexCount.value == null ? '-' : String(fontIndexCount.value))
 
 const tagType = (status: string) => {
   if (!status) return 'info'
@@ -294,6 +318,40 @@ const handleSearch = () => {
   currentPage.value = 1
   fetchPage()
 }
+
+const loadFontSearchIndexCount = async () => {
+  try {
+    fontIndexCountLoading.value = true
+    const resp = await getFontSearchIndexCount() as unknown as ApiResponse<number>
+    if (resp.code === 0 && typeof resp.data === 'number') {
+      fontIndexCount.value = resp.data
+    }
+  } catch (e) {
+    ElMessage.error('加载字体搜索索引状态失败')
+  } finally {
+    fontIndexCountLoading.value = false
+  }
+}
+
+const handleRebuildFontIndex = async () => {
+  try {
+    await ElMessageBox.confirm('确认重建字体搜索索引？该操作会把当前字体数据重新写入搜索引擎。', '确认', {
+      type: 'warning',
+    })
+    fontIndexRebuildLoading.value = true
+    const resp = await rebuildFontSearchIndex() as unknown as ApiResponse<boolean>
+    if (resp.code === 0 && resp.data) {
+      ElMessage.success('字体搜索索引重建已触发')
+      await loadFontSearchIndexCount()
+    } else {
+      ElMessage.error('字体搜索索引重建失败')
+    }
+  } catch (e: any) {
+    if (e !== 'cancel') ElMessage.error(e?.msg || e?.message || '字体搜索索引重建失败')
+  } finally {
+    fontIndexRebuildLoading.value = false
+  }
+}
 const handleSort = () => {
   currentPage.value = 1
   fetchPage()
@@ -393,6 +451,7 @@ const loadFontTypeOptions = async () => {
 
 onMounted(() => {
   loadFontTypeOptions()
+  loadFontSearchIndexCount()
   fetchPage()
 })
 </script>
@@ -412,5 +471,14 @@ onMounted(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+}
+
+.index-row {
+  justify-content: flex-end;
+}
+
+.index-status {
+  color: #606266;
+  font-size: 13px;
 }
 </style>

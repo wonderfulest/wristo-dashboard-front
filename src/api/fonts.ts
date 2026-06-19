@@ -71,3 +71,11 @@ export function uploadOnlyTtf(file: File, type: string) {
 export function autoIconFontBuild(glyphCode: string) {
   return instance.post<ApiResponse<DesignFontVO>>(`/admin/fonts/auto-icon-font-build/${glyphCode}`)
 }
+
+export function rebuildFontSearchIndex() {
+  return instance.post<ApiResponse<boolean>>('/admin/fonts/search-index/rebuild')
+}
+
+export function getFontSearchIndexCount() {
+  return instance.get<ApiResponse<number>>('/admin/fonts/search-index/count')
+}
