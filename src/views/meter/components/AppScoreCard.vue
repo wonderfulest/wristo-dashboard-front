@@ -16,20 +16,17 @@
 
     <template v-else>
       <el-row :gutter="16" class="score-summary">
-        <el-col :span="8">
+        <el-col :span="6">
           <el-statistic title="总分" :value="formatNum(score.total, 4)" />
         </el-col>
-        <el-col :span="4">
-          <el-statistic title="规模" :value="formatNum(items.scale.score, 4)" />
+        <el-col :span="6">
+          <el-statistic title="市场表现" :value="formatNum(items.market.score, 4)" />
         </el-col>
-        <el-col :span="4">
-          <el-statistic title="生命周期" :value="formatNum(items.lifecycle.score, 4)" />
+        <el-col :span="6">
+          <el-statistic title="近期互动" :value="formatNum(items.engagement.score, 4)" />
         </el-col>
-        <el-col :span="4">
-          <el-statistic title="活跃率" :value="formatNum(items.activeRate.score, 4)" />
-        </el-col>
-        <el-col :span="4">
-          <el-statistic title="有效率" :value="formatNum(items.effectiveRate.score, 4)" />
+        <el-col :span="6">
+          <el-statistic title="长期可信度" :value="formatNum(items.trust.score, 4)" />
         </el-col>
       </el-row>
 
@@ -40,7 +37,8 @@
         border
         style="width: 100%; margin-top: 12px"
       >
-        <el-table-column prop="name" label="维度" width="120" />
+        <el-table-column prop="name" label="维度" width="180" />
+        <el-table-column prop="value" label="raw" width="140" />
         <el-table-column prop="score" label="score" width="140" />
         <el-table-column prop="weight" label="weight" width="140" />
         <el-table-column prop="weighted" label="weight*score" min-width="160" />
@@ -72,31 +70,51 @@ const formatNum = (v: any, digits = 4) => {
   return n.toFixed(digits)
 }
 
+const scoreKeys = [
+  ['market', '市场表现'],
+  ['engagement', '近期互动'],
+  ['trust', '长期可信度'],
+  ['totalDownload', '累计下载'],
+  ['recentDownload', '近 30 天下载'],
+  ['purchaseVelocity', '购买速度'],
+  ['conversion', '购买转化率'],
+  ['recentPurchase', '近 30 天购买'],
+  ['recentActiveUser', '近 30 天活跃'],
+  ['recentUsage', '近 30 天使用'],
+  ['usageDepth', '使用深度'],
+  ['totalPurchase', '累计购买'],
+  ['ageTrust', '上架时间可信度'],
+] as const
+
 const items = computed(() => {
   const s = props.score
-  const get = (key: 'scale' | 'lifecycle' | 'activeRate' | 'effectiveRate') => {
+  const get = (key: string) => {
+    const value = safeNum((s as any)?.breakdown?.[key]?.value)
     const score = safeNum((s as any)?.breakdown?.[key]?.score)
     const weight = safeNum((s as any)?.weights?.[key] ?? (s as any)?.breakdown?.[key]?.weight)
     const weighted = safeNum((s as any)?.breakdown?.[key]?.weightedScore) || weight * score
-    return { score, weight, weighted }
+    return { value, score, weight, weighted }
   }
 
   return {
-    scale: get('scale'),
-    lifecycle: get('lifecycle'),
-    activeRate: get('activeRate'),
-    effectiveRate: get('effectiveRate'),
+    market: get('market'),
+    engagement: get('engagement'),
+    trust: get('trust'),
   }
 })
 
 const tableRows = computed(() => {
-  const it = items.value
-  return [
-    { name: 'scale', score: formatNum(it.scale.score), weight: formatNum(it.scale.weight), weighted: formatNum(it.scale.weighted) },
-    { name: 'lifecycle', score: formatNum(it.lifecycle.score), weight: formatNum(it.lifecycle.weight), weighted: formatNum(it.lifecycle.weighted) },
-    { name: 'activeRate', score: formatNum(it.activeRate.score), weight: formatNum(it.activeRate.weight), weighted: formatNum(it.activeRate.weighted) },
-    { name: 'effectiveRate', score: formatNum(it.effectiveRate.score), weight: formatNum(it.effectiveRate.weight), weighted: formatNum(it.effectiveRate.weighted) },
-  ]
+  const s = props.score
+  return scoreKeys.map(([key, label]) => {
+    const item = (s as any)?.breakdown?.[key] || {}
+    return {
+      name: label,
+      value: item.value == null ? '-' : formatNum(item.value),
+      score: formatNum(item.score),
+      weight: formatNum((s as any)?.weights?.[key] ?? item.weight),
+      weighted: formatNum(item.weightedScore),
+    }
+  })
 })
 
 const formulaText = computed(() => {
@@ -104,10 +122,10 @@ const formulaText = computed(() => {
   if (!s) return ''
   const it = items.value
 
-  const left = `total = w.scale*scale + w.lifecycle*lifecycle + w.activeRate*activeRate + w.effectiveRate*effectiveRate`
-  const right = `= ${formatNum(it.scale.weight)}*${formatNum(it.scale.score)} + ${formatNum(it.lifecycle.weight)}*${formatNum(it.lifecycle.score)} + ${formatNum(it.activeRate.weight)}*${formatNum(it.activeRate.score)} + ${formatNum(it.effectiveRate.weight)}*${formatNum(it.effectiveRate.score)}`
+  const left = `total = w.market*market + w.engagement*engagement + w.trust*trust`
+  const right = `= ${formatNum(it.market.weight)}*${formatNum(it.market.score)} + ${formatNum(it.engagement.weight)}*${formatNum(it.engagement.score)} + ${formatNum(it.trust.weight)}*${formatNum(it.trust.score)}`
 
-  const sum = it.scale.weighted + it.lifecycle.weighted + it.activeRate.weighted + it.effectiveRate.weighted
+  const sum = it.market.weighted + it.engagement.weighted + it.trust.weighted
   const result = `= ${formatNum(sum)} (backend total: ${formatNum((s as any).total)})`
 
   return [left, right, result].join('\n')

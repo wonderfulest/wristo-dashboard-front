@@ -26,6 +26,29 @@
           <el-descriptions-item label="Key TTL">{{ config.keyTtlDays }} 天</el-descriptions-item>
           <el-descriptions-item label="Usage Max Gap">{{ config.usageMaxGapSeconds }} 秒</el-descriptions-item>
           <el-descriptions-item label="Lifecycle Fixed Rate">{{ config.lifecycleFixedRateMs }} ms</el-descriptions-item>
+          <el-descriptions-item label="Recent Window">{{ config.scoreRecentWindowDays }} 天</el-descriptions-item>
+          <el-descriptions-item label="Velocity Min Age">{{ config.scoreMinAgeDaysForVelocity }} 天</el-descriptions-item>
+          <el-descriptions-item label="Trust Full Age">{{ config.scoreTrustFullAgeDays }} 天</el-descriptions-item>
+          <el-descriptions-item label="Score Targets" :span="2">
+            <span class="mono">
+              totalDownload={{ config.scoreTargetTotalDownloads }},
+              totalPurchase={{ config.scoreTargetTotalPurchases }},
+              recentDownload={{ config.scoreTargetRecentDownloads }},
+              recentPurchase={{ config.scoreTargetRecentPurchases }},
+              dailyPurchase={{ config.scoreTargetDailyPurchases }},
+              conversion={{ config.scoreTargetConversionRate }},
+              active={{ config.scoreTargetRecentActiveUsers }},
+              usage={{ config.scoreTargetRecentUsageMinutes }}m,
+              avgUsage={{ config.scoreTargetAvgUsageMinutes }}m
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="Score Weights" :span="2">
+            <span class="mono">
+              market={{ config.scoreMarketWeight }},
+              engagement={{ config.scoreEngagementWeight }},
+              trust={{ config.scoreTrustWeight }}
+            </span>
+          </el-descriptions-item>
           <el-descriptions-item label="Lifecycle App IDs" :span="2">
             <span class="mono">{{ config.lifecycleAppIds || '-' }}</span>
           </el-descriptions-item>
