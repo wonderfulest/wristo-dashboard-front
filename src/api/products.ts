@@ -1,6 +1,6 @@
 import instance from '@/config/axios'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import type { Product, ProductBase, ProductPackagingLogQuery, ProductPackagingLogVO, ProductPageQuery } from '@/types/product'
+import type { Product, ProductBase, ProductPackagingLogQuery, ProductPackagingLogVO, ProductPageQuery, ProductReviewVO } from '@/types/product'
 
 // 根据设备型号,分页查询未支持的应用列表,默认按下载量倒序
 export interface UnSupportDevicePageQueryDTO {
@@ -133,6 +133,14 @@ export const updateProductPackagingQueuePriority = (
 // 查询单个产品
 export const getProduct = (appId: number): Promise<ApiResponse<Product>> => {
   return instance.get(`/admin/products/get-by-appid/${appId}`)
+}
+
+export const getProductReviews = (appId: number): Promise<ApiResponse<ProductReviewVO[]>> => {
+  return instance.get(`/admin/products/app/${appId}/reviews`)
+}
+
+export const replyProductReview = (reviewId: number, reply: string): Promise<ApiResponse<ProductReviewVO>> => {
+  return instance.post(`/admin/products/reviews/${reviewId}/reply`, { reply })
 }
 
 // 更新产品

@@ -49,6 +49,10 @@ export interface Product {
   /** 下载次数 / 购买次数 */
   download?: number
   purchase?: number
+  averageRating?: number | null
+  ratingCount?: number | null
+  myRating?: number | null
+  myComment?: string | null
   /** 关联用户 */
   user?: UserBase | null
   /** 状态、激活与删除标记 */
@@ -89,6 +93,26 @@ export interface ProductPayment {
   currency: string
   paddleProductId: string
   paddlePriceId: string
+}
+
+export interface ProductReviewVO {
+  id: number
+  productId: number
+  appId: number
+  userId: number
+  rating: number
+  comment?: string | null
+  adminReply?: string | null
+  replyUserId?: number | null
+  repliedAt?: string | null
+  createdAt?: string | null
+  updatedAt?: string | null
+  userName?: string | null
+  userNickname?: string | null
+  userAvatar?: string | null
+  userEmail?: string | null
+  replyUserName?: string | null
+  replyUserNickname?: string | null
 }
 
 export interface ProductRelease {
