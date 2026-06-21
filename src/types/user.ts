@@ -44,6 +44,13 @@ export interface UserInfo {
   isDeleted: string
   roles: RoleInfo[] | null
   activatedApps: number[] | null
+  googleBound?: boolean | null
+}
+
+export interface UserStats {
+  totalUsers: number
+  emailUsers: number
+  googleUsers: number
 }
 
 export interface LoginResponseData {

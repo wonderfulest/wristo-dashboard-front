@@ -1,6 +1,6 @@
 import instance from '@/config/axios'
 import type { ApiResponse, UserInfo, PageResponse } from '@/types/api'
-import type { UserUpdateDTO } from '@/types/user'
+import type { UserUpdateDTO, UserStats } from '@/types/user'
 import type { AdminEmailAccountCreateDTO } from '@/types/user'
 import type { ChangeUserEmailDTO } from '@/types/user'
 import type { PageQueryDTO } from '@/types/api'
@@ -58,6 +58,10 @@ export interface UserPageQueryDTO extends PageQueryDTO {
 
 export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageResponse<UserInfo>>> => {
   return instance.post('/admin/users/page?populate=roles', dto)
+}
+
+export const getUserStats = (): Promise<ApiResponse<UserStats>> => {
+  return instance.get('/admin/users/stats')
 }
 
 // 商家用户分页（固定按商家角色筛选）

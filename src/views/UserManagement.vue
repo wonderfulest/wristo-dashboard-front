@@ -12,6 +12,20 @@
       <el-button type="primary" @click="handleSearch">查询</el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
+    <div class="stats-panel">
+      <div class="stat-item">
+        <div class="stat-label">系统用户</div>
+        <div class="stat-value">{{ formatCount(userStats.totalUsers) }}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">有邮箱</div>
+        <div class="stat-value">{{ formatCount(userStats.emailUsers) }}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">有 Google 账号</div>
+        <div class="stat-value">{{ formatCount(userStats.googleUsers) }}</div>
+      </div>
+    </div>
     <el-table :data="users" style="width: 100%" :loading="loading" :default-sort="defaultSort" @sort-change="handleSortChange">
       <el-table-column prop="id" label="ID" width="60" sortable="custom" />
       <el-table-column prop="username" label="用户名" width="180" sortable="custom" />
@@ -71,10 +85,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { pageUsers, registerEmailAccount, updateUser, deleteUser } from '@/api/user'
+import { pageUsers, registerEmailAccount, updateUser, deleteUser, getUserStats } from '@/api/user'
 import { getRoleList } from '@/api/role'
 import type { UserInfo, RoleInfo } from '@/types/api'
-import type { UserUpdateDTO } from '@/types/user'
+import type { UserStats, UserUpdateDTO } from '@/types/user'
 import type { AdminEmailAccountCreateDTO } from '@/types/user'
 import type { UserPageQueryDTO } from '@/api/user'
 import UserSelect from '@/components/users/UserSelect.vue'
@@ -88,6 +102,11 @@ const rolesInput = ref<string[]>([])
 const password = ref('')
 const roleOptions = ref<RoleInfo[]>([])
 const total = ref(0)
+const userStats = ref<UserStats>({
+  totalUsers: 0,
+  emailUsers: 0,
+  googleUsers: 0,
+})
 const defaultSort = ref<{ prop: string; order: 'ascending' | 'descending' }>({ prop: 'id', order: 'descending' })
 
 const query = ref<UserPageQueryDTO>({
@@ -101,6 +120,8 @@ const query = ref<UserPageQueryDTO>({
 })
 
 const searchUserId = ref<number | undefined>(undefined)
+
+const formatCount = (value?: number) => typeof value === 'number' ? value.toLocaleString() : '-'
 
 const handleUserChange = (val?: number) => {
   query.value.userId = val
@@ -135,6 +156,15 @@ const fetchUsers = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const fetchUserStats = async () => {
+  try {
+    const res = await getUserStats()
+    if (res.code === 0 && res.data) {
+      userStats.value = res.data
+    }
+  } catch {}
 }
 
 const fetchRoles = async () => {
@@ -208,6 +238,7 @@ const handleDelete = (row: UserInfo) => {
     if (res.code === 0) {
       ElMessage.success('删除成功')
       fetchUsers()
+      fetchUserStats()
     } else {
       ElMessage.error(res.msg || '删除失败')
     }
@@ -273,6 +304,7 @@ const handleSave = async () => {
     ElMessage.success(isEdit.value ? '编辑成功' : '注册成功')
     dialogVisible.value = false
     fetchUsers()
+    fetchUserStats()
   } else {
     ElMessage.error(res.msg || (isEdit.value ? '编辑失败' : '新增失败'))
   }
@@ -280,6 +312,7 @@ const handleSave = async () => {
 
 onMounted(() => {
   fetchUsers()
+  fetchUserStats()
   fetchRoles()
 })
 </script>
@@ -310,6 +343,33 @@ onMounted(() => {
 .el-table {
   flex: 1;
   margin-bottom: 24px;
+}
+
+.stats-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  padding: 14px 16px;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.stat-label {
+  color: #606266;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  color: #1f2937;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .el-dialog {
