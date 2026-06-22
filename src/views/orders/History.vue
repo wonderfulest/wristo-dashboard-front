@@ -46,6 +46,16 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
+        <el-table-column label="Country" width="100" align="center">
+          <template #default="{ row }">
+            {{ row.countryCode || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Device" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatDevice(row) }}
+          </template>
+        </el-table-column>
         <el-table-column label="Status" width="140" align="center">
           <template #default="{ row }">
             <span :class="['status-badge', getStatusClass(row.status)]">
@@ -116,7 +126,8 @@
             <el-descriptions-item label="Earnings (Wristo)">${{ formatCurrency(selectedRecord.earnings / 100) }}</el-descriptions-item>
             <el-descriptions-item label="Credit Used">${{ formatCurrency(selectedRecord.credit / 100) }}</el-descriptions-item>
             <el-descriptions-item label="Currency">{{ selectedRecord.currencyCode }}</el-descriptions-item>
-            <el-descriptions-item label="Country">{{ selectedRecord.countryCode }}</el-descriptions-item>
+            <el-descriptions-item label="Country">{{ selectedRecord.countryCode || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="Device">{{ formatDevice(selectedRecord) }}</el-descriptions-item>
             <el-descriptions-item label="Origin">{{ selectedRecord.origin }}</el-descriptions-item>
             <el-descriptions-item label="Transaction ID">{{ selectedRecord.transactionId }}</el-descriptions-item>
             <el-descriptions-item label="Customer ID">{{ selectedRecord.customerId }}</el-descriptions-item>
@@ -229,6 +240,11 @@ const formatProduct = (record: PurchaseRecordVO): string => {
     return record.product.name
   }
   return 'Unknown Product'
+}
+
+const formatDevice = (record: PurchaseRecordVO | null): string => {
+  if (!record) return '-'
+  return record.deviceDisplayName || record.partNumber || '-'
 }
 
 const recordBundles = (record: PurchaseRecordVO | null) => {

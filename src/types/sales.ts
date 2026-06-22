@@ -27,6 +27,19 @@ export interface AppSalesSummaryPageQueryDTO {
   userId?: number
 }
 
+export interface DeviceOrderStatsVO {
+  device: string
+  orderCount: number
+  percentage: number
+}
+
+export interface DeviceOrderStatsPageQueryDTO {
+  pageNum: number
+  pageSize: number
+  startDate?: string
+  endDate?: string
+}
+
 // ===== Funnel (Downloads -> Code Displayed -> Code Entered -> Start Purchase -> Purchases) =====
 export interface SalesQueryDTO {
   /** 可不传，后端会从登录上下文填充 */

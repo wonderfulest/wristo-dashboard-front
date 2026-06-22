@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard-content">
-    <h3 class="section-title">漏斗统计</h3>
+    <h3 class="section-title">转化分析</h3>
 
     <div class="funnel-toolbar">
       <el-radio-group v-model="rangeType" size="small" @change="handleRangeTypeChange">
@@ -41,7 +41,7 @@
     </div>
 
     <div v-if="funnelError" class="error-message">
-      <p>获取漏斗统计失败：{{ funnelError }}</p>
+      <p>获取转化漏斗失败：{{ funnelError }}</p>
     </div>
 
     <el-card shadow="never" :body-style="{ padding: '16px' }" v-loading="funnelLoading">
@@ -268,12 +268,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .dashboard-content { margin-top: 32px; }
-.section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 16px 0; }
+.section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 16px 0; text-align: left; }
 .funnel-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .funnel-header { display: flex; justify-content: space-between; font-size: 12px; color: #6c757d; }
 .funnel-chart { width: 100%; height: 360px; margin-bottom: 12px; }
 .funnel-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
-.funnel-step { background: #fff; border: 1px solid #e9ecef; border-radius: 10px; padding: 12px; text-align: center; }
+.funnel-step { background: #fff; border: 1px solid #e9ecef; border-radius: 10px; padding: 12px; text-align: left; }
 .funnel-step .step-title { font-size: 12px; color: #6c757d; }
 .funnel-step .step-value { font-size: 22px; font-weight: 700; color: #1b4332; }
 .funnel-step .step-rate { margin-top: 6px; font-size: 12px; color: #495057; }

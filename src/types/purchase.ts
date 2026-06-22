@@ -18,6 +18,7 @@ export interface PurchaseRecordVO {
   customerId: string
   addressId: string
   countryCode: string
+  deviceDisplayName?: string | null
   paymentMethod: string
   fee: number
   tax: number

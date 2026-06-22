@@ -31,6 +31,14 @@
           style="width: 220px; margin-right: 12px;"
         />
         <el-input
+          v-model="searchForm.paymentCode"
+          placeholder="六位激活码"
+          clearable
+          maxlength="6"
+          @input="handlePaymentCodeInput"
+          style="width: 160px; margin-right: 12px;"
+        />
+        <el-input
           v-model="searchForm.device"
           placeholder="设备"
           clearable
@@ -98,7 +106,16 @@
         <el-table-column prop="appId" label="产品ID" width="120" />
         <el-table-column prop="bundleId" label="套餐ID" width="120" />
         <el-table-column prop="email" label="邮箱" min-width="200" />
-        <el-table-column prop="device" label="设备" width="160" />
+        <el-table-column prop="paymentCode" label="六位激活码" width="130">
+          <template #default="{ row }">
+            {{ row.paymentCode || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="设备" width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.deviceDisplayName || row.device || row.partNumber || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="platform" label="平台" width="120" />
         <el-table-column prop="isTest" label="测试" width="80">
           <template #default="{ row }">
@@ -175,6 +192,7 @@ const searchForm = reactive({
   appId: undefined as number | undefined,
   bundleId: undefined as number | undefined,
   email: '',
+  paymentCode: '',
   device: '',
   status: undefined as number | undefined
 })
@@ -189,6 +207,7 @@ const fetchData = async () => {
       appId: searchForm.appId,
       bundleId: searchForm.bundleId,
       email: searchForm.email || undefined,
+      paymentCode: searchForm.paymentCode || undefined,
       device: searchForm.device || undefined,
       status: searchForm.status
     }
@@ -209,10 +228,15 @@ const handleSearch = () => {
   fetchData()
 }
 
+const handlePaymentCodeInput = (value: string) => {
+  searchForm.paymentCode = value.replace(/\D/g, '').slice(0, 6)
+}
+
 const handleReset = () => {
   searchForm.appId = undefined
   searchForm.bundleId = undefined
   searchForm.email = ''
+  searchForm.paymentCode = ''
   searchForm.device = ''
   searchForm.status = undefined
   query.pageNum = 1

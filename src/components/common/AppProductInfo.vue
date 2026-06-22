@@ -8,7 +8,15 @@
       :preview-teleported="true"
       fit="cover"
       class="product-thumb"
-      :style="{ width: thumbPx + 'px', height: thumbPx + 'px' }"
+      :style="{
+        width: thumbPx + 'px',
+        height: thumbPx + 'px',
+        minWidth: thumbPx + 'px',
+        minHeight: thumbPx + 'px',
+        maxWidth: thumbPx + 'px',
+        maxHeight: thumbPx + 'px',
+        flexBasis: thumbPx + 'px'
+      }"
     />
     <div class="product-meta">
       <div class="product-name">
@@ -100,7 +108,9 @@ const imgUrl = computed(() => {
   object-fit: cover;
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  aspect-ratio: 1 / 1;
   flex: 0 0 auto;
+  flex-shrink: 0;
 }
 
 .product-meta {

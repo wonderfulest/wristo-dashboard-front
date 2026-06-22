@@ -6,8 +6,11 @@
       <!-- 最近60天销售折线图 -->
       <SalesLineChart />
 
-      <!-- 漏斗统计 -->
+      <!-- 转化漏斗 -->
       <FunnelAnalytics />
+
+      <!-- 设备型号订单统计 -->
+      <DeviceOrderSummary />
 
       <!-- 应用销售总计（分页） -->
       <AppSalesSummary />
@@ -20,6 +23,7 @@ import ReviewTimeControl from '@/components/dashboard/ReviewTimeControl.vue'
 import FunnelAnalytics from '@/components/dashboard/FunnelAnalytics.vue'
 import AppSalesSummary from '@/components/dashboard/AppSalesSummary.vue'
 import SalesLineChart from '@/components/dashboard/SalesLineChart.vue'
+import DeviceOrderSummary from '@/components/dashboard/DeviceOrderSummary.vue'
 </script>
 
 <style scoped>

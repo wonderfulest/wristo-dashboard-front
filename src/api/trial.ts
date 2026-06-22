@@ -8,6 +8,7 @@ export interface Trial {
   accountToken: string
   platform: string
   device: string
+  deviceDisplayName?: string | null
   isTest: boolean
   skipTrial: boolean
   libv: string
@@ -28,6 +29,7 @@ export interface TrialPageQueryDTO {
   appId?: number
   bundleId?: number
   email?: string
+  paymentCode?: string
   device?: string
   status?: number
 }
