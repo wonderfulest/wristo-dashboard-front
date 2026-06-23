@@ -44,6 +44,8 @@ export interface Design {
   product?: Product | null
   coverImage: ImageVO | null
   backgroundImage: ImageVO | null
+  cover?: ImageVO | null
+  background?: ImageVO | null
   payment: ProductPayment | null
   release: ProductRelease | null
 }

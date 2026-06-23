@@ -9,6 +9,15 @@ export const fetchDesignPage = (
   return instance.get('/admin/design/page', { params })
 }
 
+export const fetchDesignDetail = (
+  designUid: string,
+  populate: string = 'user,product,cover,background'
+): Promise<ApiResponse<Design>> => {
+  return instance.get(`/admin/design/get-by-uid/${designUid}`, {
+    params: { populate }
+  })
+}
+
 // 更新设计是否为模板
 // isTemplate: 0-否，1-是
 export const updateDesignTemplateFlag = (

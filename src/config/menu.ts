@@ -109,8 +109,8 @@ export const topMenus: TopMenuGroup[] = [
     icon: 'Brush',
     basePaths: ['/design', '/packaging', '/themes', '/data-type-options', '/color-type-options'],
     children: [
-      { key: 'designs', title: '设计列表', icon: 'Brush', path: '/products/designs' },
       { key: 'design-review', title: '设计审核', icon: 'View', path: '/packaging/design-review' },
+      { key: 'designs', title: '设计列表', icon: 'Brush', path: '/products/designs' },
       { key: 'packaging-logs', title: '打包记录', icon: 'DocumentChecked', path: '/packaging/packaging-logs' },
       { key: 'packaging-queue', title: '打包任务队列', icon: 'Box', path: '/packaging/packaging-queue' },
       { key: 'packaging-dead-queue', title: '死信队列', icon: 'Warning', path: '/packaging/packaging-dead-queue' },

@@ -48,15 +48,21 @@
     </div>
 
     <el-table :data="designs" style="width: 100%" v-loading="loading">
-      <el-table-column prop="designUid" label="设计UID" width="200" />
-      <el-table-column label="应用信息" min-width="320">
+      <el-table-column label="设计信息" min-width="360">
         <template #default="{ row }">
-          <AppProductInfo
-            v-if="row.product"
-            :product="row.product"
-            :thumb-size="56"
-          />
-          <span v-else>{{ row.name }}</span>
+          <div class="design-info">
+            <div class="design-name">{{ row.name || '-' }}</div>
+            <div class="design-meta">
+              <span>{{ row.designUid }}</span>
+              <a
+                :href="`https://studio.wristo.io/design?id=${encodeURIComponent(String(row.designUid))}`"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                打开 Studio
+              </a>
+            </div>
+          </div>
         </template>
       </el-table-column>
       <el-table-column label="设计师" width="160">
@@ -85,6 +91,11 @@
           {{ formatDate(row.updatedAt) }}
         </template>
       </el-table-column>
+      <el-table-column label="操作" width="120" fixed="right">
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openDetail(row)">查看详情</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -98,6 +109,36 @@
         @current-change="handleCurrentChange"
       />
     </div>
+
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="设计详情"
+      width="720px"
+      destroy-on-close
+    >
+      <div v-loading="detailLoading">
+        <template v-if="detailDesign">
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="设计名">{{ detailDesign.name || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="设计UID">{{ detailDesign.designUid }}</el-descriptions-item>
+            <el-descriptions-item label="设计师">{{ detailDesign.user?.username || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="是否模板">{{ detailDesign.isTemplate === 1 ? '是' : '否' }}</el-descriptions-item>
+            <el-descriptions-item label="状态">{{ detailDesign.designStatus || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="创建时间">{{ formatDate(detailDesign.createdAt) }}</el-descriptions-item>
+          </el-descriptions>
+
+          <div class="detail-section">
+            <h3>关联应用</h3>
+            <AppProductInfo
+              v-if="detailDesign.product"
+              :product="toProductInfoProduct(detailDesign.product)"
+              :thumb-size="72"
+            />
+            <el-empty v-else description="暂无关联应用" :image-size="80" />
+          </div>
+        </template>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -107,7 +148,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils/date'
 import type { DesignPageQueryDTO, Design } from '@/types/design'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import { fetchDesignPage, updateDesignTemplateFlag } from '@/api/design-admin'
+import { fetchDesignDetail, fetchDesignPage, updateDesignTemplateFlag } from '@/api/design-admin'
 import UserSelect from '@/components/users/UserSelect.vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 
@@ -122,6 +163,9 @@ const searchDesignUid = ref('')
 const searchUserId = ref<number | undefined>(undefined)
 const searchIsTemplate = ref<number | undefined>(undefined)
 const sortOrder = ref('created_at:desc')
+const detailDialogVisible = ref(false)
+const detailLoading = ref(false)
+const detailDesign = ref<Design | null>(null)
 
 const fetchDesigns = async () => {
   loading.value = true
@@ -134,7 +178,7 @@ const fetchDesigns = async () => {
       designUid: searchDesignUid.value || undefined,
       userId: searchUserId.value,
       isTemplate: searchIsTemplate.value,
-      populate: 'user,product,image'
+      populate: 'user'
     }
     const resp = await fetchDesignPage(params) as unknown as ApiResponse<PageResponse<Design>>
     if (resp.code === 0 && resp.data) {
@@ -149,6 +193,26 @@ const fetchDesigns = async () => {
     loading.value = false
   }
 }
+
+const openDetail = async (row: Design) => {
+  detailDialogVisible.value = true
+  detailLoading.value = true
+  detailDesign.value = null
+  try {
+    const resp = await fetchDesignDetail(row.designUid) as unknown as ApiResponse<Design>
+    if (resp.code === 0 && resp.data) {
+      detailDesign.value = resp.data
+    } else {
+      ElMessage.error(resp.msg || '获取设计详情失败')
+    }
+  } catch (error) {
+    ElMessage.error('获取设计详情失败')
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+const toProductInfoProduct = (product: Design['product']) => product as any
 
 const handleSearch = () => {
   currentPage.value = 1
@@ -220,5 +284,42 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.design-info {
+  min-width: 0;
+}
+
+.design-name {
+  color: #303133;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.design-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  margin-top: 4px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.design-meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-section {
+  margin-top: 18px;
+}
+
+.detail-section h3 {
+  margin: 0 0 12px;
+  color: #303133;
+  font-size: 15px;
+  font-weight: 600;
 }
 </style>
