@@ -185,4 +185,23 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
   padding: 3px 6px;
   white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+  .breadcrumb-nav {
+    padding: 8px 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .breadcrumb-list {
+    flex-wrap: nowrap;
+    min-width: max-content;
+  }
+
+  .breadcrumb-link,
+  .breadcrumb-current {
+    font-size: 12px;
+    padding: 4px;
+  }
+}
 </style>

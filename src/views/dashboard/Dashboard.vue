@@ -29,4 +29,14 @@ import DeviceOrderSummary from '@/components/dashboard/DeviceOrderSummary.vue'
 <style scoped>
 .dashboard { padding: 16px; }
 .dashboard-content { margin-top: 16px; display: grid; gap: 16px; }
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 0;
+  }
+
+  .dashboard-content {
+    gap: 12px;
+  }
+}
 </style>

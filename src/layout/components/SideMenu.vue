@@ -408,4 +408,10 @@ watch(
   border-left-color: #19b36b;
   border-left-width: 3px;
 }
+
+@media (max-width: 768px) {
+  .side-menu {
+    display: none;
+  }
+}
 </style>

@@ -269,4 +269,11 @@ onBeforeUnmount(() => {
   .section-heading { align-items: flex-start; flex-direction: column; }
   .summary-actions { justify-content: flex-start; }
 }
+
+@media (max-width: 768px) {
+  .dashboard-content { margin-top: 18px; }
+  .summary-actions { width: 100%; align-items: stretch; flex-direction: column; }
+  .pie-chart { height: 300px; min-height: 300px; }
+  .table-panel { overflow-x: auto; }
+}
 </style>

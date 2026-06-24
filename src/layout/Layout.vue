@@ -1,6 +1,6 @@
 <template>
   <div class="global-layout">
-    <HeaderBar />
+    <HeaderBar @open-mobile-menu="mobileMenuVisible = true" />
     <div class="side-main-wrapper">
       <SideMenu :collapsed="isSideMenuCollapsed" @toggle-collapse="toggleSideMenu" />
       <!-- Main Content -->
@@ -13,21 +13,120 @@
         </div>
       </main>
     </div>
+    <el-drawer
+      v-model="mobileMenuVisible"
+      title="菜单"
+      direction="ltr"
+      size="82%"
+      custom-class="mobile-menu-drawer"
+    >
+      <nav class="mobile-menu-tree" aria-label="手机菜单">
+        <section v-for="group in topMenus" :key="group.key" class="mobile-menu-group">
+          <button
+            type="button"
+            class="mobile-menu-group-title"
+            :class="{ active: isTopActive(group) }"
+            :aria-expanded="isMobileGroupOpen(group.key)"
+            @click="toggleMobileGroup(group.key)"
+          >
+            <span>{{ group.title }}</span>
+            <el-icon class="mobile-menu-arrow" :class="{ open: isMobileGroupOpen(group.key) }">
+              <ArrowRight />
+            </el-icon>
+          </button>
+          <div v-if="isMobileGroupOpen(group.key)" class="mobile-menu-children">
+            <template v-for="item in group.children" :key="item.key">
+              <div v-if="item.children?.length" class="mobile-menu-subgroup">
+                <button
+                  type="button"
+                  class="mobile-menu-subtitle"
+                  :class="{ active: isMobileSubmenuActive(item) }"
+                  :aria-expanded="isMobileSubmenuOpen(item.key)"
+                  @click="toggleMobileSubmenu(item.key)"
+                >
+                  <span>{{ item.title }}</span>
+                  <el-icon class="mobile-menu-arrow" :class="{ open: isMobileSubmenuOpen(item.key) }">
+                    <ArrowRight />
+                  </el-icon>
+                </button>
+                <template v-if="isMobileSubmenuOpen(item.key)">
+                  <router-link
+                    v-for="sub in item.children"
+                    :key="sub.key"
+                    :to="sub.path as string"
+                    class="mobile-menu-link"
+                    active-class="active"
+                    @click="closeMobileMenu"
+                  >
+                    {{ sub.title }}
+                  </router-link>
+                </template>
+              </div>
+              <router-link
+                v-else-if="item.path"
+                :to="item.path"
+                class="mobile-menu-link"
+                active-class="active"
+                @click="closeMobileMenu"
+              >
+                {{ item.title }}
+              </router-link>
+            </template>
+          </div>
+        </section>
+      </nav>
+    </el-drawer>
     <AppFooter />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import HeaderBar from '@/layout/components/HeaderBar.vue'
 import SideMenu from '@/layout/components/SideMenu.vue'
 import AppFooter from '@/layout/components/AppFooter.vue'
+import { hasMatchingChildPath, isTopMenuActive, topMenus, type SubMenuItem, type TopMenuGroup } from '@/config/menu'
+import { ArrowRight } from '@element-plus/icons-vue'
 
 const isSideMenuCollapsed = ref(false)
+const mobileMenuVisible = ref(false)
+const openMobileGroups = ref<Set<string>>(new Set())
+const openMobileSubmenus = ref<Set<string>>(new Set())
+const route = useRoute()
 const toggleSideMenu = () => {
   isSideMenuCollapsed.value = !isSideMenuCollapsed.value
 }
+const toggleSetValue = (setRef: typeof openMobileGroups, key: string) => {
+  const next = new Set(setRef.value)
+  if (next.has(key)) {
+    next.delete(key)
+  } else {
+    next.add(key)
+  }
+  setRef.value = next
+}
+const closeMobileMenu = () => {
+  mobileMenuVisible.value = false
+}
+const toggleMobileGroup = (key: string) => toggleSetValue(openMobileGroups, key)
+const toggleMobileSubmenu = (key: string) => toggleSetValue(openMobileSubmenus, key)
+const isMobileGroupOpen = (key: string) => openMobileGroups.value.has(key)
+const isMobileSubmenuOpen = (key: string) => openMobileSubmenus.value.has(key)
+const isTopActive = (group: TopMenuGroup) => isTopMenuActive(group, route.path)
+const isMobileSubmenuActive = (item: SubMenuItem) => item.children ? hasMatchingChildPath(item.children, route.path) : false
+
+const syncActiveMobileMenu = () => {
+  const activeGroup = topMenus.find((group) => isTopMenuActive(group, route.path))
+  openMobileGroups.value = activeGroup ? new Set([activeGroup.key]) : new Set()
+  const activeSubmenu = activeGroup?.children.find((item) => item.children && hasMatchingChildPath(item.children, route.path))
+  openMobileSubmenus.value = activeSubmenu ? new Set([activeSubmenu.key]) : new Set()
+}
+
+watch(mobileMenuVisible, (visible) => {
+  if (visible) syncActiveMobileMenu()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -258,6 +357,112 @@ const toggleSideMenu = () => {
 
   .page-content {
     padding: 12px;
+    margin: 0;
   }
+}
+
+.mobile-menu-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.mobile-menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-menu-group-title {
+  display: flex;
+  min-height: 42px;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  color: #303133;
+  font-size: 15px;
+  font-weight: 700;
+  background: #f7f8fa;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mobile-menu-group-title.active {
+  color: #19b36b;
+  background: #e8f5e8;
+}
+
+.mobile-menu-group-title:focus-visible,
+.mobile-menu-subtitle:focus-visible {
+  outline: 2px solid rgba(25, 179, 107, 0.35);
+  outline-offset: 2px;
+}
+
+.mobile-menu-children {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-menu-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobile-menu-subtitle {
+  display: flex;
+  min-height: 36px;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  color: #909399;
+  font-size: 12px;
+  font-weight: 600;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mobile-menu-subtitle.active {
+  color: #19b36b;
+  background: rgba(25, 179, 107, 0.06);
+}
+
+.mobile-menu-link {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 8px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.mobile-menu-link.active,
+.mobile-menu-link.router-link-exact-active {
+  color: #19b36b;
+  background: rgba(25, 179, 107, 0.08);
+  font-weight: 600;
+}
+
+.mobile-menu-arrow {
+  flex: 0 0 auto;
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.mobile-menu-arrow.open {
+  transform: rotate(90deg);
+}
+
+:deep(.mobile-menu-drawer .el-drawer__header) {
+  margin-bottom: 8px;
 }
 </style>

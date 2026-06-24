@@ -270,4 +270,9 @@ onBeforeUnmount(() => {
 .filters { margin: 8px 0 12px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .app-id-input { width: 180px; }
 .line-chart { width: 100%; height: 320px; }
+
+@media (max-width: 768px) {
+  .dashboard-content { margin-top: 18px; }
+  .line-chart { height: 300px; min-height: 300px; }
+}
 </style>

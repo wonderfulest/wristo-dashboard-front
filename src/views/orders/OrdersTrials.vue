@@ -101,16 +101,18 @@
         </div>
       </template>
 
-      <el-table :data="rows" v-loading="loading" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="100" />
-        <el-table-column prop="appId" label="产品ID" width="120" />
-        <el-table-column prop="bundleId" label="套餐ID" width="120" />
-        <el-table-column prop="email" label="邮箱" min-width="200" />
-        <el-table-column prop="paymentCode" label="六位激活码" width="130">
-          <template #default="{ row }">
-            {{ row.paymentCode || '-' }}
-          </template>
-        </el-table-column>
+      <ResponsiveTableShell mobile-mode="cards">
+        <template #table>
+          <el-table :data="rows" v-loading="loading" style="width: 100%">
+            <el-table-column prop="id" label="ID" width="100" />
+            <el-table-column prop="appId" label="产品ID" width="120" />
+            <el-table-column prop="bundleId" label="套餐ID" width="120" />
+            <el-table-column prop="email" label="邮箱" min-width="200" />
+            <el-table-column prop="paymentCode" label="六位激活码" width="130">
+              <template #default="{ row }">
+                {{ row.paymentCode || '-' }}
+              </template>
+            </el-table-column>
         <el-table-column label="设备" width="180" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.deviceDisplayName || row.device || row.partNumber || '-' }}
@@ -146,7 +148,50 @@
             {{ formatDateTime(row.updatedAt) }}
           </template>
         </el-table-column>
-      </el-table>
+          </el-table>
+        </template>
+        <template #mobile>
+          <MobileRecordList :items="rows" row-key="id" :loading="loading" empty-text="暂无试用记录">
+            <template #default="{ item: row }">
+              <div class="trial-mobile-card">
+                <div class="trial-mobile-title">
+                  <div>
+                    <div class="trial-mobile-email">{{ row.email || '-' }}</div>
+                    <div class="trial-mobile-id">ID {{ row.id }}</div>
+                  </div>
+                  <div class="trial-mobile-code">{{ row.paymentCode || '-' }}</div>
+                </div>
+                <div class="mobile-field-grid">
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">产品 / 套餐</div>
+                    <div class="mobile-field-value">{{ row.appId || '-' }} / {{ row.bundleId || '-' }}</div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">设备</div>
+                    <div class="mobile-field-value">{{ row.deviceDisplayName || row.device || row.partNumber || '-' }}</div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">状态</div>
+                    <div class="mobile-field-value">{{ getStatusText(row.status) }}</div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">平台</div>
+                    <div class="mobile-field-value">{{ row.platform || '-' }}</div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">测试 / 跳过试用</div>
+                    <div class="mobile-field-value">{{ row.isTest ? '是' : '否' }} / {{ row.skipTrial ? '是' : '否' }}</div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">创建时间</div>
+                    <div class="mobile-field-value">{{ formatDateTime(row.createdAt) }}</div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </MobileRecordList>
+        </template>
+      </ResponsiveTableShell>
 
       <div class="pagination-bar">
         <el-pagination
@@ -172,6 +217,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getTrialPage, backupTrialMonth, cleanupOldTrials, type TrialPageQueryDTO, type Trial } from '@/api/trial'
+import MobileRecordList from '@/components/common/MobileRecordList.vue'
+import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 
 const loading = ref(false)
 const total = ref(0)
@@ -396,5 +443,52 @@ onMounted(() => {
   text-align: center;
   color: #999;
   padding: 32px 0;
+}
+
+@media (max-width: 768px) {
+  .trials-page {
+    padding: 0;
+  }
+
+  .page-header {
+    margin-bottom: 12px;
+  }
+
+  .trial-mobile-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .trial-mobile-title {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .trial-mobile-email {
+    color: #303133;
+    font-size: 14px;
+    font-weight: 700;
+    word-break: break-word;
+  }
+
+  .trial-mobile-id {
+    margin-top: 2px;
+    color: #909399;
+    font-size: 12px;
+  }
+
+  .trial-mobile-code {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border-radius: 7px;
+    background: #f0f9f4;
+    color: #19b36b;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
 }
 </style>

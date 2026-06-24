@@ -280,4 +280,19 @@ onBeforeUnmount(() => {
 .error-message { background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 16px; margin: 24px 0; color: #721c24; }
 .step-toggle { display: inline-flex; align-items: center; gap: 8px; }
 .toggle-label { color: #6c757d; font-size: 12px; }
+
+@media (max-width: 768px) {
+  .dashboard-content { margin-top: 18px; }
+  .funnel-toolbar,
+  .step-toggle {
+    align-items: stretch;
+    width: 100%;
+    flex-direction: column;
+  }
+  .funnel-header {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .funnel-chart { height: 320px; min-height: 320px; }
+}
 </style>

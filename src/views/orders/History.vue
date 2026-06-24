@@ -21,12 +21,14 @@
 
     <!-- Purchase Records Table -->
     <div v-else class="table-container">
-      <el-table :data="purchaseRecords" style="width: 100%">
-        <el-table-column prop="createdAt" label="Timestamp" width="160">
-          <template #default="{ row }">
-            {{ formatTimestamp(row.createdAt) }}
-          </template>
-        </el-table-column>
+      <ResponsiveTableShell mobile-mode="cards">
+        <template #table>
+          <el-table :data="purchaseRecords" style="width: 100%">
+            <el-table-column prop="createdAt" label="Timestamp" width="160">
+              <template #default="{ row }">
+                {{ formatTimestamp(row.createdAt) }}
+              </template>
+            </el-table-column>
         <el-table-column prop="email" label="User Email" min-width="180" />
         <el-table-column label="Product" min-width="320">
           <template #default="{ row }">
@@ -96,7 +98,60 @@
             <el-button size="small" @click="openDetail(row)">Details</el-button>
           </template>
         </el-table-column>
-      </el-table>
+          </el-table>
+        </template>
+        <template #mobile>
+          <MobileRecordList :items="purchaseRecords" row-key="id" empty-text="No purchase records">
+            <template #default="{ item: row }">
+              <div class="order-mobile-card">
+                <div class="order-mobile-title">
+                  <div class="order-mobile-email">{{ row.email }}</div>
+                  <span :class="['status-badge', getStatusClass(row.status)]">{{ row.statusDesc }}</span>
+                </div>
+                <div class="order-mobile-product">
+                  <AppProductInfo
+                    v-if="row.product"
+                    :product="row.product"
+                    :thumb-size="48"
+                  />
+                  <span v-else class="product-name">{{ formatProduct(row) }}</span>
+                </div>
+                <div class="mobile-field-grid">
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">Timestamp</div>
+                    <div class="mobile-field-value">{{ formatTimestamp(row.createdAt) }}</div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">Payment</div>
+                    <div class="mobile-field-value">
+                      <span class="pay-tag" :style="paymentTagStyle(row.paymentMethod)">{{ paymentLabel(row.paymentMethod) }}</span>
+                    </div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">Amount</div>
+                    <div class="mobile-field-value">${{ formatCurrency(row.grandTotal / 100) }}</div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">Device</div>
+                    <div class="mobile-field-value">{{ formatDevice(row) }}</div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">Bundle</div>
+                    <div class="mobile-field-value">{{ recordBundles(row).length ? formatBundleNames(row) : '-' }}</div>
+                  </div>
+                  <div class="mobile-field">
+                    <div class="mobile-field-label">Origin</div>
+                    <div class="mobile-field-value">{{ row.origin || '-' }}</div>
+                  </div>
+                </div>
+              </div>
+            </template>
+            <template #actions="{ item: row }">
+              <el-button size="small" type="primary" @click="openDetail(row)">Details</el-button>
+            </template>
+          </MobileRecordList>
+        </template>
+      </ResponsiveTableShell>
 
       <!-- Details Dialog -->
       <el-dialog v-model="detailVisible" title="Order Details" width="720px">
@@ -202,6 +257,8 @@
 import { ref, onMounted } from 'vue'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
+import MobileRecordList from '@/components/common/MobileRecordList.vue'
+import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 import { getPurchaseRecordPageList } from '@/api/purchase'
 import type { PurchaseRecordVO, PurchaseRecordPageQueryDTO, PageResponse } from '@/types/api'
 
@@ -684,6 +741,40 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .account-page {
+    padding: 0;
+  }
+
+  .table-container {
+    margin-top: 16px;
+    overflow-x: visible;
+  }
+
+  .order-mobile-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .order-mobile-title {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .order-mobile-email {
+    min-width: 0;
+    color: #212529;
+    font-size: 14px;
+    font-weight: 700;
+    word-break: break-word;
+  }
+
+  .order-mobile-product {
+    min-width: 0;
+  }
+
   .purchase-table {
     font-size: 12px;
   }

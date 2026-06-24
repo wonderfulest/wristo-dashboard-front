@@ -82,13 +82,15 @@
       </div>
     </div>
 
-    <el-table :data="products" style="width: 100%" v-loading="loading">
-      <el-table-column prop="appId" label="ID" width="80" />
-      <el-table-column label="商品信息" min-width="320">
-        <template #default="{ row }">
-          <AppProductInfo :product="row" :thumb-size="56" />
-        </template>
-      </el-table-column>
+    <ResponsiveTableShell mobile-mode="cards">
+      <template #table>
+        <el-table :data="products" style="width: 100%" v-loading="loading">
+          <el-table-column prop="appId" label="ID" width="80" />
+          <el-table-column label="商品信息" min-width="320">
+            <template #default="{ row }">
+              <AppProductInfo :product="row" :thumb-size="56" />
+            </template>
+          </el-table-column>
       
       <el-table-column label="作者" width="80">
         <template #default="{ row }">
@@ -196,7 +198,72 @@
           </div>
         </template>
       </el-table-column>
-    </el-table>
+        </el-table>
+      </template>
+      <template #mobile>
+        <MobileRecordList :items="products" row-key="appId" :loading="loading" empty-text="暂无商品">
+          <template #default="{ item: row }">
+            <div class="product-mobile-card">
+              <AppProductInfo
+                :app-id="row.appId"
+                :title="row.name"
+                :design-id="row.designId"
+                :image-url="row.garminImageUrl || row.heroFile?.url || ''"
+                :store-url="row.garminStoreUrl"
+                :thumb-size="52"
+              />
+              <div class="mobile-field-grid product-mobile-fields">
+                <div class="mobile-field">
+                  <div class="mobile-field-label">ID</div>
+                  <div class="mobile-field-value">{{ row.appId }}</div>
+                </div>
+                <div class="mobile-field">
+                  <div class="mobile-field-label">作者</div>
+                  <div class="mobile-field-value">{{ row.user?.username || '-' }}</div>
+                </div>
+                <div class="mobile-field">
+                  <div class="mobile-field-label">下载 / 购买</div>
+                  <div class="mobile-field-value">{{ row.download }} / {{ row.purchase ?? '-' }}</div>
+                </div>
+                <div class="mobile-field">
+                  <div class="mobile-field-label">价格</div>
+                  <div class="mobile-field-value">${{ row.price }}</div>
+                </div>
+                <div class="mobile-field">
+                  <div class="mobile-field-label">试用时长</div>
+                  <div class="mobile-field-value">{{ row.trialLasts }}小时</div>
+                </div>
+                <div class="mobile-field">
+                  <div class="mobile-field-label">创建时间</div>
+                  <div class="mobile-field-value">{{ row.createdAt ? formatDate(row.createdAt) : '-' }}</div>
+                </div>
+              </div>
+              <div class="product-mobile-categories">
+                <el-tag v-for="cat in row.categories" :key="cat.id" size="small">{{ cat.name }}</el-tag>
+                <el-button size="small" type="primary" link :icon="Edit" @click="handleEditCategories(row)">
+                  分类
+                </el-button>
+              </div>
+            </div>
+          </template>
+          <template #actions="{ item: row }">
+            <el-button size="small" type="primary" @click="handleEdit(row)">编辑</el-button>
+            <el-button
+              size="small"
+              :type="row.status === 1 ? 'danger' : 'success'"
+              :loading="statusLoadingMap.get(row.appId)"
+              @click="handleToggleStatus(row)"
+            >
+              {{ row.status === 1 ? '下线' : '上线' }}
+            </el-button>
+            <el-button size="small" @click="openTransferDialog(row)">转移</el-button>
+            <el-button size="small" @click="handleCreateTicket(row)">工单</el-button>
+            <el-button size="small" :loading="repackLoadingMap.get(row.appId)" @click="handleRepack(row)">打包</el-button>
+            <el-button size="small" @click="handleShare(row)">Share</el-button>
+          </template>
+        </MobileRecordList>
+      </template>
+    </ResponsiveTableShell>
     <!-- 分页 -->
     <div class="pagination">
       <el-pagination
@@ -524,8 +591,10 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Edit } from '@element-plus/icons-vue'
+import { Edit, Plus } from '@element-plus/icons-vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
+import MobileRecordList from '@/components/common/MobileRecordList.vue'
+import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 import { formatDate } from '@/utils/date'
 import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
@@ -1175,6 +1244,46 @@ onMounted(() => {
   .product-filter-bar {
     justify-content: flex-start;
     width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .products-container {
+    padding: 0;
+  }
+
+  .header {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .header h2 {
+    white-space: normal;
+  }
+
+  .product-mobile-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .product-mobile-fields {
+    padding-top: 4px;
+  }
+
+  .product-mobile-categories {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .share-product-card {
+    align-items: flex-start;
+  }
+
+  .share-platform-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

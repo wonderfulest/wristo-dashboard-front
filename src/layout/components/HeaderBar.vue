@@ -4,6 +4,15 @@
       <div class="logo">
         <img class="logo-image" src="https://cdn.wristo.io/brands/wristo-logo/svg/wristo-logo-horizontal.svg" alt="Wristo" />
       </div>
+      <button
+        type="button"
+        class="mobile-menu-button"
+        aria-label="打开菜单"
+        title="打开菜单"
+        @click="emit('open-mobile-menu')"
+      >
+        <el-icon><Menu /></el-icon>
+      </button>
       <nav class="nav-list">
         <router-link
           v-for="group in topMenus"
@@ -38,6 +47,11 @@ import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { findFirstPath, isTopMenuActive, topMenus } from '@/config/menu'
 import { redirectToSsoLogin } from '@/utils/ssoRedirect'
+import { Menu } from '@element-plus/icons-vue'
+
+const emit = defineEmits<{
+  (e: 'open-mobile-menu'): void
+}>()
 
 const userStore = useUserStore()
 const defaultAvatar = 'https://cdn.wristo.io/test/avatar/561aae25-41bd-47ab-974e-7231f5a850e8.png'
@@ -97,6 +111,19 @@ const getGroupDefaultPath = (group: any) => findFirstPath(group?.children) || '/
 .nav-item { color: $color-link; font-weight: 500; text-decoration: none; font-size: 1.1rem; transition: color 0.2s; }
 .nav-item.active, .nav-item:hover { color: $color-success; }
 .header-right { display: flex; gap: 24px; align-items: center; }
+.mobile-menu-button {
+  display: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #303133;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
 
 .dropdown-content {
   display: flex; flex-direction: column; align-items: flex-start; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border-radius: 8px; padding: 10px 0; position: absolute; right: 0; top: 64px; min-width: 160px; z-index: 100;
@@ -135,5 +162,56 @@ const getGroupDefaultPath = (group: any) => findFirstPath(group?.children) || '/
   color: $color-link;
   font-size: 0.95rem;
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    height: 56px;
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .logo-image {
+    width: 112px;
+  }
+
+  .mobile-menu-button {
+    display: inline-flex;
+    order: -1;
+    flex: 0 0 40px;
+  }
+
+  .nav-list {
+    display: none;
+  }
+
+  .header-right {
+    margin-left: auto;
+    min-width: 0;
+  }
+
+  .user-profile-dropdown {
+    height: 56px;
+  }
+
+  .user-avatar-container {
+    gap: 6px;
+    padding: 2px;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .user-profile-name {
+    max-width: 88px;
+    font-size: 12px;
+  }
+
+  .dropdown-content {
+    top: 56px;
+    right: 0;
+  }
 }
 </style>
