@@ -15,7 +15,7 @@
         <div class="el-upload__text">
           <div>将 SVG 拖拽到此处，或点击选择，支持多文件</div>
           <div>1. 支持选择上传的图标，只能同时上传一种类型的图标</div>
-          <div>2. 如果不选择，则上传文件名需要与 icon 的 Symbol Code 保持一致，比如 heart_rate.svg，可以同时上传多种类型的图标</div>
+          <div>2. 如果不选择，则文件名可使用 Symbol Code（如 heart_rate.svg），也可使用 hex-name（如 0030-heart-rate.svg / 101d-clear-sky.svg），可同时上传多种类型的图标</div>
         </div>
         <template #tip>
           <div class="el-upload__tip">
@@ -123,6 +123,32 @@ watch(
 
 const iconStore = useIconStore()
 const enumStore = useEnumStore()
+
+const normalizeSymbolCode = (value?: string) => (value || '').trim().toLowerCase().replace(/[-\s]+/g, '_')
+
+const findIconBySymbolCode = (symbolCode?: string) => {
+  const normalized = normalizeSymbolCode(symbolCode)
+  if (!normalized) return undefined
+  return iconList.value.find(it => normalizeSymbolCode(it.symbolCode) === normalized)
+}
+
+const readFileNameIconMetadata = (fileName: string) => {
+  const baseName = fileName.replace(/\.svg$/i, '').trim()
+  const hexNameMatch = baseName.match(/^([0-9a-fA-F]{2,6})-(.+)$/)
+  if (!hexNameMatch) {
+    return {
+      baseName,
+      symbolCode: baseName,
+      iconUnicode: undefined as string | undefined,
+    }
+  }
+  return {
+    baseName,
+    symbolCode: hexNameMatch[2].replace(/-/g, '_'),
+    iconUnicode: hexNameMatch[1].toLowerCase(),
+  }
+}
+
 watch(dialogVisible, async (v) => {
   if (v && iconList.value.length === 0) {
     try {
@@ -170,23 +196,28 @@ const doUpload = async (options: { file: File }) => {
   }
   startLoading(`正在上传 ${file.name} ...`)
   try {
-    // Determine unicode: prefer selected icon; otherwise infer from file name by matching symbolCode
-    const baseName = file.name.replace(/\.svg$/i, '')
+    // Determine unicode: prefer selected icon; otherwise infer from filename.
     let unicode = ''
     if (selectedSymbolCode.value) {
-      const found = iconList.value.find(it => it.symbolCode === selectedSymbolCode.value)
+      const found = findIconBySymbolCode(selectedSymbolCode.value)
       unicode = found?.iconUnicode || ''
     } else {
       // if parent passed iconUnicode but no selected symbol yet, try that first
       if (props.iconUnicode) {
         unicode = props.iconUnicode
       }
-      // fallback to infer by filename
-      const foundByName = iconList.value.find(it => it.symbolCode === baseName)
-      unicode = foundByName?.iconUnicode || ''
+      // fallback to infer by filename, supporting both heart_rate.svg and 0030-heart-rate.svg
+      const fileNameMetadata = readFileNameIconMetadata(file.name)
+      if (!unicode && fileNameMetadata.iconUnicode) {
+        unicode = fileNameMetadata.iconUnicode
+      }
+      if (!unicode) {
+        const foundByName = findIconBySymbolCode(fileNameMetadata.symbolCode || fileNameMetadata.baseName)
+        unicode = foundByName?.iconUnicode || ''
+      }
     }
     if (!unicode) {
-      throw new Error('未能确定上传图标的 unicode，请在上方选择图标类型，或确保文件名与 Symbol Code 一致')
+      throw new Error('未能确定上传图标的 unicode，请在上方选择图标类型，或使用 heart_rate.svg、0030-heart-rate.svg 这类文件名')
     }
 
     await uploadIconSvg(file, unicode, (evt: any) => {

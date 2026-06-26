@@ -356,16 +356,6 @@ const router = createRouter({
       redirect: '/marketing/campaigns'
     },
     {
-      path: '/images',
-      redirect: '/design/images'
-    },
-    {
-      path: '/design/images',
-      name: 'Images',
-      component: () => import('@/views/dashboard/ImageAssets.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
       path: '/analog-assets',
       redirect: '/design/analog-assets'
     },
@@ -383,36 +373,6 @@ const router = createRouter({
       path: '/design/icon-library',
       name: 'IconLibrary',
       component: () => import('@/views/icons/IconLibrary.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/icon-assets',
-      redirect: '/design/icon-assets'
-    },
-    {
-      path: '/design/icon-assets',
-      name: 'IconAssets',
-      component: () => import('@/views/icons/IconAssets.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/icon-glyphs',
-      redirect: '/design/icon-glyphs'
-    },
-    {
-      path: '/design/icon-glyphs',
-      name: 'IconGlyphs',
-      component: () => import('@/views/icons/IconGlyphs.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/icon-glyphs/:glyphId/assets',
-      redirect: (to) => `/design/icon-glyphs/${to.params.glyphId}/assets`
-    },
-    {
-      path: '/design/icon-glyphs/:glyphId/assets',
-      name: 'IconGlyphAssets',
-      component: () => import('@/views/icons/IconGlyphAssets.vue'),
       meta: { requiresAuth: true }
     },
     {

@@ -109,6 +109,7 @@ export const topMenus: TopMenuGroup[] = [
     icon: 'Brush',
     basePaths: ['/design', '/packaging', '/themes', '/data-type-options', '/color-type-options'],
     children: [
+      { key: 'fonts-manage', title: '字体管理', icon: 'Document', path: '/design/fonts' },
       { key: 'design-review', title: '设计审核', icon: 'View', path: '/packaging/design-review' },
       { key: 'designs', title: '设计列表', icon: 'Brush', path: '/products/designs' },
       { key: 'packaging-logs', title: '打包记录', icon: 'DocumentChecked', path: '/packaging/packaging-logs' },
@@ -125,26 +126,8 @@ export const topMenus: TopMenuGroup[] = [
         ],
       },
       { key: 'data-type-options', title: '数据项', icon: 'Grid', path: '/data-type-options' },
+      { key: 'icon-library', title: '图标字典', icon: 'Collection', path: '/design/icon-library' },
       { key: 'color-type-options', title: '颜色配置', icon: 'BrushFilled', path: '/color-type-options' },
-      {
-        key: 'fonts',
-        title: '字体',
-        icon: 'Document',
-        children: [
-          { key: 'fonts-manage', title: '字体管理', icon: 'Document', path: '/design/fonts' },
-        ],
-      },
-      {
-        key: 'icons',
-        title: '图标',
-        icon: 'Star',
-        children: [
-          { key: 'icon-library', title: '图标字典', icon: 'Collection', path: '/design/icon-library' },
-          { key: 'icon-assets', title: '图标素材', icon: 'Picture', path: '/design/icon-assets' },
-          { key: 'icon-glyphs', title: '图标字体管理', icon: 'Grid', path: '/design/icon-glyphs' },
-        ],
-      },
-      { key: 'images', title: '图片素材', icon: 'Picture', path: '/design/images' },
       { key: 'analog-assets', title: '指针表盘素材', icon: 'Compass', path: '/design/analog-assets' },
     ],
   },
