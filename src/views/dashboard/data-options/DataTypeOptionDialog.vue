@@ -13,11 +13,11 @@
         <el-form-item label="Value Code" prop="valueCode">
           <el-input-number v-model="form.valueCode" :min="0" />
         </el-form-item>
-        <el-form-item label="Label (EN)" prop="label">
-          <el-input v-model="form.label" />
+        <el-form-item label="EN Short" prop="engShort">
+          <el-input v-model="form.engShort" />
         </el-form-item>
-        <el-form-item label="Label (CN)" prop="zhsLong">
-          <el-input v-model="form.zhsLong" />
+        <el-form-item label="CN Short" prop="zhsShort">
+          <el-input v-model="form.zhsShort" />
         </el-form-item>
         <el-form-item label="Unit" prop="unit">
           <el-input v-model="form.unit" />
@@ -64,7 +64,7 @@ import { createDataTypeOption, updateDataTypeOption } from '@/api/data-type-opti
 const props = defineProps({
   visible: { type: Boolean, default: false },
   type: { type: String as PropType<'add'|'edit'>, default: 'add' },
-  form: { type: Object as PropType<Partial<DataTypeOptionUpdateDTO> & { zhsLong?: string }>, required: true },
+  form: { type: Object as PropType<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zhsShort?: string }>, required: true },
   categories: { type: Array as PropType<string[]>, default: () => [] }
 })
 
@@ -112,8 +112,8 @@ const rules = {
   metricSymbol: [{ required: true, message: 'Metric symbol required', trigger: 'blur' }],
   category: [{ required: true, message: 'Category required', trigger: 'change' }],
   valueCode: [{ required: true, message: 'Value code required', trigger: 'change' }],
-  label: [{ required: true, message: 'Label required', trigger: 'blur' }],
-  zhsLong: [{ required: true, message: '中文标签必填', trigger: 'blur' }]
+  engShort: [{ required: true, message: 'English short label required', trigger: 'blur' }],
+  zhsShort: [{ required: true, message: '中文短标签必填', trigger: 'blur' }]
 }
 
 function onCancel() {
@@ -128,9 +128,10 @@ function onSave() {
         metricSymbol: props.form.metricSymbol || '',
         category: props.form.category || 'field',
         valueCode: Number(props.form.valueCode ?? 0),
-        label: props.form.label || '',
+        label: props.form.engShort || '',
         labelI18n: {
-          zhs: { long: props.form.zhsLong || '' }
+          eng: props.form.engShort || '',
+          zhs: props.form.zhsShort || ''
         },
         unit: props.form.unit || '',
         iconUnicode: props.form.iconUnicode || '',
@@ -148,9 +149,10 @@ function onSave() {
         metricSymbol: props.form.metricSymbol || '',
         category: props.form.category || 'field',
         valueCode: Number(props.form.valueCode ?? 0),
-        label: props.form.label || '',
+        label: props.form.engShort || '',
         labelI18n: {
-          zhs: { long: props.form.zhsLong || '' }
+          eng: props.form.engShort || '',
+          zhs: props.form.zhsShort || ''
         },
         unit: props.form.unit || '',
         iconUnicode: props.form.iconUnicode || '',

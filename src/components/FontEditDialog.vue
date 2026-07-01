@@ -1,7 +1,7 @@
 <template>
   <el-dialog v-model="visible" title="编辑字体" width="720px" :close-on-click-modal="false">
     <div v-if="font" style="margin-bottom: 16px;">
-      <FontPreview :name="font.fullName" :url="font.ttfFile?.url || null" :full="true" :type="font.type" :size="48"/>
+      <FontPreview :name="font.fullName" :url="font.ttfFile?.url || null" :full="true" :type="font.type" :language="font.language" :size="48"/>
     </div>
     <el-form :model="form" label-width="120px">
       <el-row :gutter="16">

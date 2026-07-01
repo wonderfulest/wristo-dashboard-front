@@ -1,10 +1,6 @@
 import type { PageQueryDTO, PageResponse, ApiResponse } from './common'
 
-export interface LabelI18nItem {
-  long?: string
-  short?: string
-  medium?: string
-}
+export type LabelI18n = Record<string, string>
 
 export type IconRuleType = 'boolean' | 'numeric' | 'enum'
 
@@ -25,10 +21,16 @@ export interface DataTypeOptionVO {
   metricSymbol: string
   category: string
   valueCode: number
+  value?: number
   label: string
-  labelI18n?: Record<string, LabelI18nItem>
+  labelI18n?: LabelI18n
+  labelCn?: string
+  enLabel?: string
+  displayLabel?: string
   unit: string
   iconUnicode: string
+  icon?: string
+  stringKey?: string
   defaultValue: string
   isActive: number
   sortOrder: number
@@ -41,7 +43,7 @@ export interface DataTypeOptionCreateDTO {
   category: string
   valueCode: number
   label: string
-  labelI18n?: Record<string, LabelI18nItem>
+  labelI18n?: LabelI18n
   unit: string
   iconUnicode: string
   defaultValue: string

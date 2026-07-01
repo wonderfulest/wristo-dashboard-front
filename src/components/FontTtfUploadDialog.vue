@@ -37,6 +37,8 @@
           <FontPreview
             :url="objectUrl"
             :name="parsedInfo?.fullName || selectedFile?.name || ''"
+            :type="selectedFontType"
+            :language="selectedFontLanguage"
             full
             size="20px"
           />
@@ -55,6 +57,15 @@
             >
               {{ opt.name }}
             </el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <div class="preview-section">
+          <div class="preview-label">Font language:</div>
+          <el-radio-group v-model="selectedFontLanguage">
+            <el-radio-button label="en">English</el-radio-button>
+            <el-radio-button label="zh">中文</el-radio-button>
+            <el-radio-button label="multi">多语言</el-radio-button>
           </el-radio-group>
         </div>
 
@@ -147,6 +158,7 @@ const parsedInfo = ref<ParsedFontInfo | null>(null)
 const fontTypeOptions = ref<EnumOption[]>([])
 const loadingFontTypes = ref(false)
 const selectedFontType = ref<string>('')
+const selectedFontLanguage = ref<string>('en')
 // Blob URL for local preview via FontPreview component
 const objectUrl = ref<string>('')
 
@@ -166,6 +178,12 @@ onMounted(async () => {
     fontTypeOptions.value = [{ name: 'ratio', value: 'ratio' }]
   } finally {
     loadingFontTypes.value = false
+  }
+})
+
+watch(selectedFontType, (type) => {
+  if (type === 'text_font_zh') {
+    selectedFontLanguage.value = 'zh'
   }
 })
 
@@ -258,6 +276,7 @@ const resetState = () => {
   selectedFile.value = null
   uploading.value = false
   parsedInfo.value = null
+  selectedFontLanguage.value = selectedFontType.value === 'text_font_zh' ? 'zh' : 'en'
   if (objectUrl.value) {
     try { URL.revokeObjectURL(objectUrl.value) } catch {}
     objectUrl.value = ''
@@ -280,7 +299,7 @@ const handleConfirm = async () => {
   }
   try {
     uploading.value = true
-    const resp = await uploadOnlyTtf(selectedFile.value, selectedFontType.value)
+    const resp = await uploadOnlyTtf(selectedFile.value, selectedFontType.value, selectedFontLanguage.value)
     const data = (resp as any).data?.data || (resp as any).data
     if (!data) {
       ElMessage.error('上传失败')

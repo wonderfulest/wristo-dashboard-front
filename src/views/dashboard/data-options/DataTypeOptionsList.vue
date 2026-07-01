@@ -6,7 +6,7 @@
       <el-table-column prop="category" label="Category" width="120" />
 
       <el-table-column prop="label" label="Label" min-width="140" :formatter="labelEnFormatter" />
-      <el-table-column prop="labelI18n" label="i18n" min-width="60">
+      <el-table-column prop="labelI18n" label="i18n" min-width="260">
         <template #default="{ row }">
           <DataOptionI18nPopover :row="row" :supported-langs="supportedLangs" @updated="$emit('refresh')" />
         </template>
@@ -21,7 +21,17 @@
       <el-table-column prop="defaultValue" label="Default" min-width="120" />
       <el-table-column prop="isActive" label="Active" width="100" sortable="custom">
         <template #default="{ row }">
-          <el-tag :type="row.isActive === 1 ? 'success' : 'info'">{{ row.isActive === 1 ? 'Yes' : 'No' }}</el-tag>
+          <el-switch
+            :model-value="row.isActive"
+            :active-value="1"
+            :inactive-value="0"
+            :loading="activeLoadingIds.has(Number(row.id))"
+            active-text="Yes"
+            inactive-text="No"
+            inline-prompt
+            aria-label="Toggle data type option active state"
+            @change="handleActiveSwitchChange(row, $event)"
+          />
         </template>
       </el-table-column>
       <el-table-column prop="sortOrder" label="Sort" width="90" sortable="custom" />
@@ -60,6 +70,7 @@ const props = defineProps({
   pageNum: { type: Number, default: 1 },
   pageSize: { type: Number, default: 100 },
   supportedLangs: { type: Array as PropType<string[]>, default: () => [] },
+  activeLoadingIds: { type: Object as PropType<Set<number>>, default: () => new Set<number>() },
 })
 
 const emit = defineEmits<{
@@ -69,6 +80,7 @@ const emit = defineEmits<{
   (e: 'edit', row: DataTypeOptionVO): void
   (e: 'delete', row: DataTypeOptionVO): void
   (e: 'refresh'): void
+  (e: 'active-change', row: DataTypeOptionVO, value: number): void
 }>()
 
 const pageNumLocal = ref(props.pageNum)
@@ -89,14 +101,23 @@ function onCurrentChange(page: number) {
   emit('current-change', page)
 }
 
+function handleActiveSwitchChange(row: DataTypeOptionVO, value: string | number | boolean) {
+  emit('active-change', row, Number(value))
+}
+
 function labelEnFormatter(row: any) {
   const i18n = row?.labelI18n
   const eng = i18n?.eng
-  return eng?.long || row.label || ''
+  return normalizeI18nValue(eng) || row.enLabel || row.label || ''
+}
+
+function normalizeI18nValue(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (value && typeof value === 'object') return String((value as any).short || '')
+  return ''
 }
 
 function iconRulesSummary(row: any): string {
-  console.log(row)
   const rules: IconRules | undefined = row?.iconRules
   if (!rules || !rules.type) return ''
   if (rules.type === 'numeric') {

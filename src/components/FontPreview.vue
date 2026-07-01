@@ -13,6 +13,7 @@ const props = defineProps<{
   url?: string | null
   sampleText?: string
   type?: string
+  language?: string
   sectionName?: string
   size?: number | string
   full?: boolean
@@ -31,7 +32,14 @@ const iconPreviewText = String.fromCodePoint(
   ...ICON_FONT_UNICODES.map(code => parseInt(code, 16))
 )
 
-
+const normalizedLanguage = computed(() => String(props.language || '').trim().toLowerCase())
+const isChineseTextFont = computed(() => {
+  const type = props.type?.toLowerCase() || ''
+  return type === 'text_font_zh'
+    || normalizedLanguage.value === 'zh'
+    || normalizedLanguage.value === 'zh-cn'
+    || normalizedLanguage.value === 'multi'
+})
 
 const sampleText = computed(() => {
   // 允许外部自定义 sampleText，优先级最高
@@ -45,6 +53,9 @@ const sampleText = computed(() => {
   const t = props.type?.toLowerCase() || ''
   if (t.includes('number')) {
     return '0123456789:'
+  }
+  if (isChineseTextFont.value) {
+    return '12:34 晴 25°C 周二 六月 农历五月十六'
   }
   return '12:34 AM 72°F & Sunny 0123456789'
 })

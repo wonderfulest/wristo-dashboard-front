@@ -131,6 +131,8 @@ export interface ProductPageQuery {
   status?: number
   createdAtStart?: string
   createdAtEnd?: string
+  lastGoLiveStart?: string
+  lastGoLiveEnd?: string
 }
 
 export interface CreateProductDto {

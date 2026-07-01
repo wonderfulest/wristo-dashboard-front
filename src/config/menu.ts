@@ -138,6 +138,7 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/products', '/meter'],
     children: [
       { key: 'products', title: '应用列表', icon: 'Grid', path: '/products' },
+      { key: 'products-recent-online', title: '最近上线', icon: 'TrendCharts', path: '/products/recent-online' },
       { key: 'bundles', title: 'Bundle 管理', icon: 'Box', path: '/products/bundles' },
       { key: 'categories', title: '应用分类', icon: 'FolderOpened', path: '/website/categories' },
       { key: 'app-daily-config', title: '每日一图配置', icon: 'Picture', path: '/products/app-daily/config' },

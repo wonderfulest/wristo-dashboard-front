@@ -15,12 +15,14 @@
       :page-num="pageNum"
       :page-size="pageSize"
       :supported-langs="supportedLangs"
+      :active-loading-ids="activeLoadingIds"
       @sort-change="handleSortChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
       @edit="handleEdit"
       @delete="handleDelete"
       @refresh="loadData"
+      @active-change="handleActiveChange"
     />
 
     <DataTypeOptionDialog
@@ -37,7 +39,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { DataTypeOptionVO, DataTypeOptionUpdateDTO, DataTypeOptionPageQueryDTO } from '@/types/data-type-option'
-import { pageDataTypeOptions, removeDataTypeOption } from '@/api/data-type-options'
+import { pageDataTypeOptions, removeDataTypeOption, updateDataTypeOption } from '@/api/data-type-options'
 import DataTypeOptionDialog from './DataTypeOptionDialog.vue'
 import DataTypeOptionsSearch from './DataTypeOptionsSearch.vue'
 import DataTypeOptionsList from './DataTypeOptionsList.vue'
@@ -57,6 +59,7 @@ const supportedLangs = [
 
 const list = ref<DataTypeOptionVO[]>([])
 const loading = ref(false)
+const activeLoadingIds = ref(new Set<number>())
 const total = ref(0)
 const pageNum = ref(1)
 const pageSize = ref(50)
@@ -66,7 +69,7 @@ const query = reactive<Partial<DataTypeOptionPageQueryDTO>>({ category: '', acti
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 
-const form = reactive<Partial<DataTypeOptionUpdateDTO> & { zhsLong?: string }>({
+const form = reactive<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zhsShort?: string }>({
   id: undefined,
   metricSymbol: '',
   category: 'field',
@@ -78,6 +81,8 @@ const form = reactive<Partial<DataTypeOptionUpdateDTO> & { zhsLong?: string }>({
   isActive: 1,
   sortOrder: 1,
   description: '',
+  engShort: '',
+  zhsShort: '',
   iconRules: undefined
 })
 
@@ -145,7 +150,8 @@ function handleAdd() {
     isActive: 1,
     sortOrder: 1,
     description: '',
-    zhsLong: '',
+    engShort: '',
+    zhsShort: '',
     iconRules: undefined
   })
   dialogVisible.value = true
@@ -155,12 +161,44 @@ function handleEdit(row: DataTypeOptionVO) {
   dialogType.value = 'edit'
   Object.assign(form, row)
   const i18n = (row as any).labelI18n || {}
-  const zhs = i18n.zhs || {}
-  form.zhsLong = zhs.long || form.zhsLong || ''
+  form.engShort = normalizeI18nValue(i18n.eng) || row.enLabel || row.label || ''
+  form.zhsShort = normalizeI18nValue(i18n.zhs) || row.labelCn || ''
   dialogVisible.value = true
 }
 
 // saving handled by child dialog component
+
+function normalizeI18nValue(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (value && typeof value === 'object') return String((value as any).short || '')
+  return ''
+}
+
+async function handleActiveChange(row: DataTypeOptionVO, value: number) {
+  const id = Number(row.id)
+  const previous = row.isActive
+  setActiveLoading(id, true)
+  row.isActive = value
+  try {
+    await updateDataTypeOption(id, { isActive: value })
+    ElMessage.success(value === 1 ? 'Activated' : 'Deactivated')
+  } catch {
+    row.isActive = previous
+    ElMessage.error('Failed to update active state')
+  } finally {
+    setActiveLoading(id, false)
+  }
+}
+
+function setActiveLoading(id: number, loading: boolean) {
+  const next = new Set(activeLoadingIds.value)
+  if (loading) {
+    next.add(id)
+  } else {
+    next.delete(id)
+  }
+  activeLoadingIds.value = next
+}
 
 function handleDelete(row: DataTypeOptionVO) {
   ElMessageBox.confirm('Are you sure to delete this item?', 'Warning', { type: 'warning' })

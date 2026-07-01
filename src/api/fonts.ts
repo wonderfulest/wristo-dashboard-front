@@ -59,12 +59,14 @@ export function updateFontTtf(id: number, file: File) {
 }
 
 // 管理员上传自定义字体，仅上传 TTF 文件
-export function uploadOnlyTtf(file: File, type: string) {
+export function uploadOnlyTtf(file: File, type: string, language?: string) {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('type', type)
+  if (language) formData.append('language', language)
   return instance.post<ApiResponse<DesignFontVO>>('/admin/fonts/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
   })
 }
 

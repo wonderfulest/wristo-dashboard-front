@@ -164,6 +164,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/products/recent-online',
+      name: 'ProductsRecentOnline',
+      component: () => import('@/views/products/RecentOnline.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products/bundles',
       name: 'Bundles',
       component: () => import('@/views/products/Bundles.vue'),

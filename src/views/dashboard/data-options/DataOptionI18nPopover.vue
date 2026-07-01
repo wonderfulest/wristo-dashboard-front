@@ -1,64 +1,55 @@
 <template>
-  <el-popover placement="bottom-start" trigger="click" width="520" :persistent="true">
+  <el-popover placement="bottom-start" trigger="click" width="420" :persistent="true">
     <template #reference>
-      <span class="i18n-summary">{{ summary }}</span>
+      <button class="i18n-summary" type="button" aria-label="Edit i18n labels">
+        <template v-if="summaryItems.length">
+          <span v-for="item in summaryItems" :key="item.lang" class="summary-chip">
+            <span class="summary-lang">{{ item.lang }}</span>
+            <span class="summary-text">{{ item.value }}</span>
+          </span>
+        </template>
+        <span v-else class="summary-empty">No i18n values</span>
+      </button>
     </template>
+
     <div class="i18n-editor">
-      <table class="i18n-table">
-        <thead>
-          <tr>
-            <th style="width: 30px;">Lang</th>
-            <th style="width: 120px;">Long</th>
-            <th style="width: 120px;">Medium</th>
-            <th style="width: 120px;">Short</th>
-            <th style="width: 56px;"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="lang in orderedKeys" :key="lang">
-            <td class="lang">{{ lang }}</td>
-            <td class="text">
-              <el-input :model-value="editI18n[lang]?.long ?? ''" @update:model-value="onEditField(lang, 'long', $event)" placeholder="long" size="small" />
-            </td>
-            <td class="text">
-              <el-input :model-value="editI18n[lang]?.medium ?? ''" @update:model-value="onEditField(lang, 'medium', $event)" placeholder="medium" size="small" />
-            </td>
-            <td class="text">
-              <el-input :model-value="editI18n[lang]?.short ?? ''" @update:model-value="onEditField(lang, 'short', $event)" placeholder="short" size="small" />
-            </td>
-            <td class="ops">
-              <el-button link type="danger" size="small" @click="removeLang(lang)">Del</el-button>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="5">
-              <div class="add-lang">
-                <el-select v-model="newLang" placeholder="select language" size="small" style="width: 220px;" :teleported="false">
-                  <el-option
-                    v-for="code in supportedLangs"
-                    :key="code"
-                    :label="code"
-                    :value="code"
-                    :disabled="Boolean(editI18n[code] || (row.labelI18n && row.labelI18n[code]))"
-                  />
-                </el-select>
-                <el-button size="small" @click="addLang">Add</el-button>
-                <span class="hint">Preferred order: eng, zhs, others</span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-if="orderedKeys.length" class="i18n-rows">
+        <div v-for="lang in orderedKeys" :key="lang" class="i18n-row">
+          <span class="lang">{{ lang }}</span>
+          <el-input
+            :model-value="editI18n[lang] ?? ''"
+            placeholder="Display value"
+            size="small"
+            clearable
+            aria-label="i18n display value"
+            @update:model-value="onEditField(lang, $event)"
+          />
+          <el-button link type="danger" size="small" @click="removeLang(lang)">Del</el-button>
+        </div>
+      </div>
+      <div v-else class="empty-i18n">No i18n values</div>
+
       <div class="i18n-actions">
-        <el-button size="small" type="primary" @click="save">Save</el-button>
+        <el-select v-model="newLang" placeholder="Language" size="small" class="lang-select" :teleported="false">
+          <el-option
+            v-for="code in supportedLangs"
+            :key="code"
+            :label="code"
+            :value="code"
+            :disabled="hasLang(code)"
+          />
+        </el-select>
+        <el-button size="small" @click="addLang">Add</el-button>
+        <el-button size="small" type="primary" :loading="saving" @click="save">Save</el-button>
       </div>
     </div>
   </el-popover>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
-import type { DataTypeOptionVO, LabelI18nItem } from '@/types/data-type-option'
+import { computed, reactive, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { DataTypeOptionVO } from '@/types/data-type-option'
 import { updateDataTypeOption } from '@/api/data-type-options'
 
 const props = defineProps<{
@@ -68,35 +59,51 @@ const props = defineProps<{
 
 const emit = defineEmits<{ (e: 'updated'): void }>()
 
-const editI18n = reactive<Record<string, LabelI18nItem>>({})
+const editI18n = reactive<Record<string, string>>({})
 const newLang = ref('')
+const saving = ref(false)
 
 function initEdit() {
+  Object.keys(editI18n).forEach(k => delete editI18n[k])
   const src = props.row.labelI18n || {}
-  Object.keys(src).forEach(k => { editI18n[k] = { ...(src[k] || {}) } })
+  Object.keys(src).forEach(k => { editI18n[k] = normalizeValue((src as any)[k]) })
 }
 initEdit()
+watch(() => props.row.labelI18n, initEdit, { deep: true })
 
-function orderedKeys(): string[] {
-  const keys = Object.keys(props.row.labelI18n || {})
+const orderedKeys = computed((): string[] => {
+  const keys = Object.keys(editI18n || {})
   const ordered: string[] = []
   if (keys.includes('eng')) ordered.push('eng')
   if (keys.includes('zhs')) ordered.push('zhs')
   const others = keys.filter(k => k !== 'eng' && k !== 'zhs').sort()
   return ordered.concat(others)
+})
+
+const summaryItems = computed(() => orderedKeys.value.map(lang => ({
+  lang,
+  value: editI18n[lang] || '-'
+})))
+
+function normalizeValue(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (value && typeof value === 'object') return String((value as any).short || '')
+  return ''
 }
 
-const summary = computed(() => orderedKeys().join(', '))
+function hasLang(code: string): boolean {
+  return Object.prototype.hasOwnProperty.call(editI18n, code)
+    || Object.prototype.hasOwnProperty.call(props.row.labelI18n || {}, code)
+}
 
-function onEditField(lang: string, field: keyof LabelI18nItem, v: string) {
-  if (!editI18n[lang]) editI18n[lang] = {}
-  ;(editI18n[lang] as any)[field] = v
+function onEditField(lang: string, v: string | number) {
+  editI18n[lang] = String(v)
 }
 
 function addLang() {
   const code = newLang.value
   if (!code) return
-  if (!editI18n[code]) editI18n[code] = {}
+  if (!editI18n[code]) editI18n[code] = ''
   newLang.value = ''
 }
 
@@ -105,19 +112,64 @@ function removeLang(lang: string) {
 }
 
 async function save() {
-  const payload = { labelI18n: editI18n }
-  await updateDataTypeOption(Number(props.row.id), payload)
-  emit('updated')
+  saving.value = true
+  try {
+    const payload = { labelI18n: { ...editI18n } }
+    await updateDataTypeOption(Number(props.row.id), payload)
+    ElMessage.success('i18n updated')
+    emit('updated')
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
 <style scoped>
-.i18n-summary { cursor: pointer; color: #409EFF; }
-.i18n-editor { }
-.i18n-table { width: 100%; border-collapse: collapse; }
-.i18n-actions { margin-top: 8px; }
-.add-lang { display: flex; gap: 8px; align-items: center; }
-.lang { width: 30px; }
-.text { width: 120px; }
-.ops { width: 56px; }
+.i18n-summary {
+  display: flex;
+  width: 100%;
+  min-height: 32px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.summary-chip {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: flex-start;
+  gap: 4px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  padding: 4px 7px;
+  background: #f8fafc;
+  font-size: 12px;
+  line-height: 18px;
+}
+.summary-lang {
+  flex: 0 0 auto;
+  color: #909399;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.summary-text {
+  color: #303133;
+  font-weight: 600;
+  white-space: normal;
+  word-break: break-word;
+}
+.summary-empty { color: #909399; font-size: 12px; }
+.i18n-editor { display: flex; flex-direction: column; gap: 8px; min-width: 240px; }
+.i18n-rows { display: flex; flex-direction: column; gap: 6px; }
+.i18n-row { display: grid; grid-template-columns: 42px minmax(120px, 1fr) 42px; align-items: center; gap: 8px; }
+.lang { color: #909399; font-size: 11px; font-weight: 500; line-height: 24px; text-transform: uppercase; }
+.empty-i18n { color: #909399; font-size: 12px; line-height: 24px; }
+.i18n-actions { display: flex; align-items: center; gap: 8px; }
+.lang-select { width: 112px; }
 </style>

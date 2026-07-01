@@ -87,11 +87,12 @@
                 :name="row.fullName"
                 :url="row.ttfFile?.url || null"
                 :type="row.type"
+                :language="row.language"
                 :full="true"
                 :size="32"
               />
             </template>
-            <FontPreview :id="row.id" :name="row.fullName" :url="row.ttfFile?.url || null" :type="row.type" />
+            <FontPreview :id="row.id" :name="row.fullName" :url="row.ttfFile?.url || null" :type="row.type" :language="row.language" />
           </el-tooltip>
         </template>
       </el-table-column>
