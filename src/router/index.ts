@@ -33,6 +33,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/marketing/watchface-assets',
+      name: 'WatchfaceMarketingAssets',
+      component: () => import('@/views/marketing/WatchfaceMarketingAssets.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/marketing/email-templates/:id/edit',
       name: 'EmailTemplateEdit',
       component: () => import('@/views/marketing/EmailTemplateEdit.vue'),

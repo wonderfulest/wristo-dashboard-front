@@ -175,6 +175,7 @@ export const topMenus: TopMenuGroup[] = [
         ],
       },
       // { key: 'customers', title: '客户管理', path: '/marketing/customers' },
+      { key: 'watchface-assets', title: '表盘营销资产', icon: 'EditPen', path: '/marketing/watchface-assets' },
       { key: 'user-profiles', title: '用户画像', icon: 'Avatar', path: '/marketing/user-profiles' },
       // { key: 'tags', title: '标签管理', path: '/marketing/tags' },
       { key: 'segments', title: '用户分群', icon: 'UserFilled', path: '/marketing/segments' },
