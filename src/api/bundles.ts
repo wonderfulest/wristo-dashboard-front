@@ -44,6 +44,10 @@ export const deleteAdminBundle = (bundleId: number): Promise<ApiResponse<boolean
   return instance.post(`/admin/bundles/delete/${bundleId}`)
 }
 
+export const physicalDeleteNonMerchantAccountBundles = (): Promise<ApiResponse<number>> => {
+  return instance.post('/admin/bundles/physical-delete/non-merchant-account')
+}
+
 export const updateAdminBundleActive = (bundleId: number, isActive: number): Promise<ApiResponse<boolean>> => {
   return instance.post(`/admin/bundles/${bundleId}/activate/${isActive}`)
 }

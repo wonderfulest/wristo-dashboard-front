@@ -49,3 +49,15 @@ export interface PurchaseRecordPageQueryDTO {
   status?: number | null
   userId?: number
 }
+
+export type GiftEntitlementTargetType = 'APP' | 'BUNDLE'
+export type GiftEntitlementChannel = 'taobao' | 'xiaohongshu' | 'xianyu' | 'other'
+
+export interface GiftEntitlementRequest {
+  email: string
+  targetType: GiftEntitlementTargetType
+  appId?: number | null
+  bundleId?: number | null
+  channel: GiftEntitlementChannel
+  externalOrderId?: string | null
+}

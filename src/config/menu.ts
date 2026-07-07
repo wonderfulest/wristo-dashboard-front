@@ -202,6 +202,7 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/orders'],
     children: [
       { key: 'history', title: '订单记录', icon: 'Document', path: '/orders/history' },
+      { key: 'entitlement-grants', title: '赠送权益', icon: 'Key', path: '/orders/entitlement-grants' },
       { key: 'trial-records', title: '试用记录', icon: 'Tickets', path: '/orders/trials' },
       { key: 'refund', title: '订单退款', icon: 'Money', path: '/orders/refund' },
       { key: 'paddle-refunds', title: 'Paddle 退款查询', icon: 'CreditCard', path: '/orders/paddle-refunds' },

@@ -187,7 +187,7 @@
             <el-descriptions-item label="Transaction ID">{{ selectedRecord.transactionId }}</el-descriptions-item>
             <el-descriptions-item label="Customer ID">{{ selectedRecord.customerId }}</el-descriptions-item>
             <el-descriptions-item label="Address ID">{{ selectedRecord.addressId }}</el-descriptions-item>
-            <el-descriptions-item label="In Payout">{{ selectedRecord.inPayout === 1 ? 'Yes' : 'No' }}</el-descriptions-item>
+            <el-descriptions-item label="In Payout">{{ formatInPayout(selectedRecord) }}</el-descriptions-item>
             <el-descriptions-item label="Updated At">{{ formatTimestamp(selectedRecord.updatedAt) }}</el-descriptions-item>
           </el-descriptions>
 
@@ -255,6 +255,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import MobileRecordList from '@/components/common/MobileRecordList.vue'
@@ -265,8 +266,10 @@ import type { PurchaseRecordVO, PurchaseRecordPageQueryDTO, PageResponse } from 
 const purchaseRecords = ref<PurchaseRecordVO[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-const searchAppId = ref<number | null | undefined>(undefined)
-const searchEmail = ref<string>('')
+const route = useRoute()
+const initialAppId = typeof route.query.appId === 'string' && route.query.appId.trim() ? Number(route.query.appId) : undefined
+const searchAppId = ref<number | null | undefined>(Number.isFinite(initialAppId) ? initialAppId : undefined)
+const searchEmail = ref<string>(typeof route.query.email === 'string' ? route.query.email : '')
 const detailVisible = ref(false)
 const selectedRecord = ref<PurchaseRecordVO | null>(null)
 const pageData = ref<PageResponse<PurchaseRecordVO>>({
@@ -344,6 +347,8 @@ const paymentMeta = (method?: string | null): PaymentMeta => {
       return { label: 'WeChat Pay', color: '#07c160', bg: 'rgba(7,193,96,0.08)', border: 'rgba(7,193,96,0.3)' }
     case 'credit':
       return { label: 'Credit', color: '#6f42c1', bg: 'rgba(111,66,193,0.08)', border: 'rgba(111,66,193,0.3)' }
+    case 'gift':
+      return { label: 'Gift', color: '#b45309', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.35)' }
     default:
       return { label: (method || 'Unknown').toUpperCase(), color: '#6c757d', bg: 'rgba(108,117,125,0.08)', border: 'rgba(108,117,125,0.3)' }
   }
@@ -358,8 +363,21 @@ const paymentTagStyle = (method?: string | null) => {
   } as Record<string, string>
 }
 
+const formatInPayout = (record: PurchaseRecordVO | null): string => {
+  if (!record) return '-'
+  if ((record.paymentMethod || '').toLowerCase() === 'gift') return 'No commission'
+  return record.inPayout === 1 ? 'Yes' : 'No'
+}
+
 const originBadgeStyle = (origin?: string | null) => {
   const key = (origin || '').toLowerCase()
+  if (key.startsWith('gift:')) {
+    return {
+      color: '#b45309',
+      backgroundColor: '#fffbeb',
+      borderColor: '#fde68a',
+    } as Record<string, string>
+  }
   const styles: Record<string, { color: string; bg: string; border: string }> = {
     store: { color: '#047857', bg: '#ecfdf5', border: '#a7f3d0' },
     store_cart: { color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },

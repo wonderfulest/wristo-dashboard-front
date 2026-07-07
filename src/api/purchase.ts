@@ -1,6 +1,7 @@
 import instance from '@/config/axios'
 import type {
   ApiResponse,
+  GiftEntitlementRequest,
   PurchaseRecordPageQueryDTO,
   PageResponse,
   PurchaseRecordVO,
@@ -15,6 +16,10 @@ import type {
 
 export const getPurchaseRecordPageList = async (dto: PurchaseRecordPageQueryDTO): Promise<ApiResponse<PageResponse<PurchaseRecordVO>>> => {
   return instance.post('/admin/purchases/page?populate=product,bundle,user', dto)
+}
+
+export const giftEntitlement = async (dto: GiftEntitlementRequest): Promise<ApiResponse<PurchaseRecordVO>> => {
+  return instance.post('/admin/purchases/entitlements/gift?populate=product,bundle,user', dto)
 }
 
 export const getAppSalesSummaryPage = async (

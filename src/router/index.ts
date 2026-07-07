@@ -77,6 +77,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/orders/entitlement-grants',
+      name: 'EntitlementGrants',
+      component: () => import('@/views/orders/EntitlementGrants.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/orders/discounts',
       name: 'OrdersDiscounts',
       component: () => import('@/views/orders/Discounts.vue'),

@@ -10,6 +10,9 @@
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
         <el-button type="success" @click="openCreate">新增 Bundle</el-button>
+        <el-button type="danger" :loading="cleanupLoading" @click="handleCleanupNonMerchantBundles">
+          物理删除非商家账号级 Bundle
+        </el-button>
       </div>
     </div>
 
@@ -184,13 +187,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import UserSelect from '@/components/users/UserSelect.vue'
 import {
   createAdminBundle,
   fetchAdminBundlePage,
   getAdminBundle,
+  physicalDeleteNonMerchantAccountBundles,
   updateAdminBundle,
   updateAdminBundleActive
 } from '@/api/bundles'
@@ -216,6 +220,7 @@ const productsDirty = ref(false)
 const productsLoading = ref(false)
 const productOptions = ref<Product[]>([])
 const statusLoadingId = ref<number | undefined>(undefined)
+const cleanupLoading = ref(false)
 const editingDesignerText = ref('')
 const CUSTOM_BUNDLE_DEFAULT_PRICE = 6.99
 const ACCOUNT_BUNDLE_DEFAULT_PRICE = 9.99
@@ -402,6 +407,28 @@ const handleActiveChange = async (row: Bundle, value: string | number | boolean)
     throw error
   } finally {
     statusLoadingId.value = undefined
+  }
+}
+
+const handleCleanupNonMerchantBundles = async () => {
+  await ElMessageBox.confirm(
+    '将物理删除所有非商家/非管理员用户拥有的账号级 Bundle，并同步删除这些 Bundle 的应用关联。该操作不可恢复，确认继续？',
+    '物理删除确认',
+    {
+      type: 'warning',
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      confirmButtonClass: 'el-button--danger'
+    }
+  )
+  cleanupLoading.value = true
+  try {
+    const res = await physicalDeleteNonMerchantAccountBundles()
+    const deleted = Number(res.data || 0)
+    ElMessage.success(`已物理删除 ${deleted} 个非商家账号级 Bundle`)
+    fetchPage()
+  } finally {
+    cleanupLoading.value = false
   }
 }
 

@@ -30,7 +30,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { changeUserEmail, getUserDetail } from '@/api/user'
+import { changeUserEmail, getUserDetail, mergeUserEmailEntitlements } from '@/api/user'
 import UserSelect from '@/components/users/UserSelect.vue'
 import type { ChangeUserEmailDTO } from '@/types/user'
 
@@ -92,6 +92,41 @@ function handleReset() {
   formRef.value?.clearValidate()
 }
 
+function getErrorMessage(e: any) {
+  return e?.msg || e?.response?.data?.msg || e?.message || ''
+}
+
+function isEmailAlreadyExistsError(e: any) {
+  return getErrorMessage(e).toLowerCase().includes('new email already exists')
+}
+
+async function confirmMergeEntitlements() {
+  await ElMessageBox.confirm(
+    `新邮箱 ${form.newEmail} 已经注册。是否确认把旧邮箱 ${form.oldEmail} 的权益合并到该新邮箱账号？\n\n合并后旧账号不会被删除，但旧邮箱对应的试用、订单和订阅权益会迁移到新邮箱账号。`,
+    '确认合并邮箱权益',
+    {
+      confirmButtonText: '确认合并',
+      cancelButtonText: '取消',
+      type: 'warning',
+      dangerouslyUseHTMLString: false,
+    }
+  )
+}
+
+async function mergeEntitlementsToExistingEmail() {
+  await confirmMergeEntitlements()
+  const res = await mergeUserEmailEntitlements({
+    userId: Number(form.userId),
+    oldEmail: form.oldEmail,
+    newEmail: form.newEmail,
+  })
+  if (res.code === 0) {
+    ElMessage.success('邮箱权益合并成功')
+  } else {
+    ElMessage.error(res.msg || '邮箱权益合并失败')
+  }
+}
+
 async function handleSubmit() {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
@@ -124,7 +159,16 @@ async function handleSubmit() {
         ElMessage.error(res.msg || '变更邮箱失败')
       }
     } catch (e: any) {
-      ElMessage.error(e?.msg || e?.message || '变更邮箱失败')
+      if (isEmailAlreadyExistsError(e)) {
+        try {
+          await mergeEntitlementsToExistingEmail()
+        } catch (mergeError: any) {
+          if (mergeError === 'cancel' || mergeError === 'close') return
+          ElMessage.error(getErrorMessage(mergeError) || '邮箱权益合并失败')
+        }
+        return
+      }
+      ElMessage.error(getErrorMessage(e) || '变更邮箱失败')
     } finally {
       submitting.value = false
     }

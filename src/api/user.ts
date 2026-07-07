@@ -133,3 +133,7 @@ export const syncPaddleCustomers = (
 export const changeUserEmail = (dto: ChangeUserEmailDTO): Promise<ApiResponse<UserInfo>> => {
   return instance.post('/admin/users/change/email', dto)
 }
+
+export const mergeUserEmailEntitlements = (dto: ChangeUserEmailDTO): Promise<ApiResponse<UserInfo>> => {
+  return instance.post('/admin/users/merge/email-entitlements', dto)
+}
