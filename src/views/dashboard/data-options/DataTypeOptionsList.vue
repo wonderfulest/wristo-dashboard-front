@@ -5,7 +5,7 @@
       <el-table-column prop="metricSymbol" label="Metric Symbol" min-width="320" />
       <el-table-column prop="category" label="Category" width="120" />
 
-      <el-table-column prop="label" label="Label" min-width="140" :formatter="labelEnFormatter" />
+      <el-table-column prop="displayLabel" label="Label" min-width="140" :formatter="displayLabelFormatter" />
       <el-table-column prop="labelI18n" label="i18n" min-width="260">
         <template #default="{ row }">
           <DataOptionI18nPopover :row="row" :supported-langs="supportedLangs" @updated="$emit('refresh')" />
@@ -105,16 +105,8 @@ function handleActiveSwitchChange(row: DataTypeOptionVO, value: string | number 
   emit('active-change', row, Number(value))
 }
 
-function labelEnFormatter(row: any) {
-  const i18n = row?.labelI18n
-  const eng = i18n?.eng
-  return normalizeI18nValue(eng) || row.enLabel || row.label || ''
-}
-
-function normalizeI18nValue(value: unknown): string {
-  if (typeof value === 'string') return value
-  if (value && typeof value === 'object') return String((value as any).short || '')
-  return ''
+function displayLabelFormatter(row: any) {
+  return row?.displayLabel || row?.label || ''
 }
 
 function iconRulesSummary(row: any): string {

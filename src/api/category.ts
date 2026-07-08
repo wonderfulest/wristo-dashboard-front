@@ -1,6 +1,15 @@
 import instance from '@/config/axios'
 import type { ApiResponse } from '@/types/api'
-import type { Category, CategoryPageQuery, CategoryPageData, CreateCategoryDto } from '@/types/category'
+import type {
+  Category,
+  CategoryPageQuery,
+  CategoryPageData,
+  CreateCategoryDto,
+  ProductTag,
+  ProductTagMutationPayload,
+  ProductTagPageData,
+  ProductTagPageQuery,
+} from '@/types/category'
 
 export const fetchCategoryPage = (params: CategoryPageQuery): Promise<ApiResponse<CategoryPageData>> => {
   return instance.get('/admin/categories/page?populate=image', { params })
@@ -28,4 +37,20 @@ export const updateCategoryStatus = (id: number, isActive: number): Promise<ApiR
 
 export const fetchAllCategories = (): Promise<ApiResponse<Category[]>> => {
   return instance.get('/admin/categories/all')
+}
+
+export const fetchProductTagPage = (params: ProductTagPageQuery): Promise<ApiResponse<ProductTagPageData>> => {
+  return instance.get('/admin/product-tags/page', { params })
+}
+
+export const createProductTag = (data: ProductTagMutationPayload): Promise<ApiResponse<ProductTag>> => {
+  return instance.post('/admin/product-tags/create', data)
+}
+
+export const updateProductTag = (id: number, data: ProductTagMutationPayload): Promise<ApiResponse<ProductTag>> => {
+  return instance.post(`/admin/product-tags/update/${id}`, data)
+}
+
+export const updateProductTagStatus = (id: number, status: number): Promise<ApiResponse<ProductTag>> => {
+  return instance.post(`/admin/product-tags/status/${id}/${status}`)
 }

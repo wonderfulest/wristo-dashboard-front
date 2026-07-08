@@ -13,6 +13,9 @@
         <el-form-item label="Value Code" prop="valueCode">
           <el-input-number v-model="form.valueCode" :min="0" />
         </el-form-item>
+        <el-form-item label="Label" prop="label" class="full">
+          <el-input v-model="form.label" />
+        </el-form-item>
         <el-form-item label="EN Short" prop="engShort">
           <el-input v-model="form.engShort" />
         </el-form-item>
@@ -112,6 +115,7 @@ const rules = {
   metricSymbol: [{ required: true, message: 'Metric symbol required', trigger: 'blur' }],
   category: [{ required: true, message: 'Category required', trigger: 'change' }],
   valueCode: [{ required: true, message: 'Value code required', trigger: 'change' }],
+  label: [{ required: true, message: 'Label required', trigger: 'blur' }],
   engShort: [{ required: true, message: 'English short label required', trigger: 'blur' }],
   zhsShort: [{ required: true, message: '中文短标签必填', trigger: 'blur' }]
 }
@@ -128,7 +132,7 @@ function onSave() {
         metricSymbol: props.form.metricSymbol || '',
         category: props.form.category || 'field',
         valueCode: Number(props.form.valueCode ?? 0),
-        label: props.form.engShort || '',
+        label: props.form.label || '',
         labelI18n: {
           eng: props.form.engShort || '',
           zhs: props.form.zhsShort || ''
@@ -149,7 +153,7 @@ function onSave() {
         metricSymbol: props.form.metricSymbol || '',
         category: props.form.category || 'field',
         valueCode: Number(props.form.valueCode ?? 0),
-        label: props.form.engShort || '',
+        label: props.form.label || '',
         labelI18n: {
           eng: props.form.engShort || '',
           zhs: props.form.zhsShort || ''

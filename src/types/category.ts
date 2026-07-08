@@ -10,6 +10,7 @@ export interface Category {
   hero?: ImageVO | null
   sort: number
   isActive: number
+  appCount?: number | null
 }
 
 export interface CategoryPageQuery {
@@ -31,4 +32,45 @@ export interface CreateCategoryDto {
   slug: string
   heroId?: number | null
   bannerId?: number | null
+}
+
+export type ProductTagGroup = 'style' | 'function' | 'scene' | 'seasonal' | 'device' | 'meta' | string
+
+export interface ProductTag {
+  id: number
+  name: string
+  slug: string
+  tagGroup: ProductTagGroup
+  sort: number
+  status: number
+  description?: string | null
+  appCount?: number | null
+  createdAt?: string | null
+  updatedAt?: string | null
+}
+
+export interface ProductTagPageQuery {
+  pageNum: number
+  pageSize: number
+  orderBy?: string
+  keyword?: string
+  tagGroup?: string
+  status?: number
+}
+
+export interface ProductTagPageData {
+  pageNum: number
+  pageSize: number
+  total: number
+  pages: number
+  list: ProductTag[]
+}
+
+export interface ProductTagMutationPayload {
+  name: string
+  slug: string
+  tagGroup: string
+  sort?: number
+  status?: number
+  description?: string
 }
