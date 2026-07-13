@@ -36,6 +36,10 @@ export interface DataTypeOptionVO {
   sortOrder: number
   description: string
   iconRules?: IconRules
+  dialMode?: 'goal' | 'range' | null
+  dialMin?: number | null
+  dialMax?: number | null
+  dialGoalSource?: 'garmin' | 'fixed' | null
 }
 
 export interface DataTypeOptionCreateDTO {
@@ -51,6 +55,10 @@ export interface DataTypeOptionCreateDTO {
   sortOrder: number
   description: string
   iconRules?: IconRules
+  dialMode?: 'goal' | 'range' | null
+  dialMin?: number | null
+  dialMax?: number | null
+  dialGoalSource?: 'garmin' | 'fixed' | null
 }
 
 export interface DataTypeOptionUpdateDTO extends DataTypeOptionCreateDTO {

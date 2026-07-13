@@ -37,6 +37,26 @@
         <el-form-item label="Default Value" prop="defaultValue">
           <el-input v-model="form.defaultValue" />
         </el-form-item>
+        <el-form-item label="Dial Mode" prop="dialMode" class="full">
+          <el-select v-model="form.dialMode" placeholder="Not Supported" clearable style="width: 220px">
+            <el-option label="Not Supported" :value="null" />
+            <el-option label="Goal" value="goal" />
+            <el-option label="Range" value="range" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="form.dialMode === 'goal'" label="Goal Source" prop="dialGoalSource" class="full">
+          <el-select v-model="form.dialGoalSource" style="width: 220px">
+            <el-option label="Garmin Goal" value="garmin" />
+          </el-select>
+        </el-form-item>
+        <template v-if="form.dialMode === 'range'">
+          <el-form-item label="Range Min" prop="dialMin">
+            <el-input-number v-model="form.dialMin" controls-position="right" />
+          </el-form-item>
+          <el-form-item label="Range Max" prop="dialMax">
+            <el-input-number v-model="form.dialMax" controls-position="right" />
+          </el-form-item>
+        </template>
         
         <el-form-item label="Active" prop="isActive">
           <el-switch v-model="switchActive" />
@@ -63,6 +83,7 @@ import DataOptionIconRulesEditor from './DataOptionIconRulesEditor.vue'
 import type { PropType } from 'vue'
 import type { DataTypeOptionCreateDTO, DataTypeOptionUpdateDTO, IconRules } from '@/types/data-type-option'
 import { createDataTypeOption, updateDataTypeOption } from '@/api/data-type-options'
+import { normalizeDialFields, validateDialFields } from './dialConfig.mjs'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -111,6 +132,11 @@ watch(() => props.form.iconRules?.type, (t) => {
   }
 })
 
+watch(() => props.form.dialMode, (mode) => {
+  if (mode === 'goal' && !props.form.dialGoalSource) props.form.dialGoalSource = 'garmin'
+  Object.assign(props.form, normalizeDialFields(props.form))
+})
+
 const rules = {
   metricSymbol: [{ required: true, message: 'Metric symbol required', trigger: 'blur' }],
   category: [{ required: true, message: 'Category required', trigger: 'change' }],
@@ -127,6 +153,12 @@ function onCancel() {
 function onSave() {
   formRef.value.validate(async (valid: boolean) => {
     if (!valid) return
+    const dialError = validateDialFields(props.form)
+    if (dialError) {
+      ElMessage.error(dialError)
+      return
+    }
+    const dialFields = normalizeDialFields(props.form)
     if (props.type === 'add') {
       const payload: DataTypeOptionCreateDTO = {
         metricSymbol: props.form.metricSymbol || '',
@@ -143,7 +175,8 @@ function onSave() {
         isActive: typeof props.form.isActive === 'number' ? props.form.isActive : 1,
         sortOrder: Number(props.form.sortOrder ?? 1),
         description: props.form.description || '',
-        iconRules: switchIconRules.value ? (props.form.iconRules as any) : ({} as any)
+        iconRules: switchIconRules.value ? (props.form.iconRules as any) : ({} as any),
+        ...dialFields
       }
       await createDataTypeOption(payload)
       ElMessage.success('Added successfully')
@@ -164,7 +197,8 @@ function onSave() {
         isActive: typeof props.form.isActive === 'number' ? props.form.isActive : 1,
         sortOrder: Number(props.form.sortOrder ?? 1),
         description: props.form.description || '',
-        iconRules: switchIconRules.value ? (props.form.iconRules as any) : ({} as any)
+        iconRules: switchIconRules.value ? (props.form.iconRules as any) : ({} as any),
+        ...dialFields
       }
       await updateDataTypeOption(Number(props.form.id), payload)
       ElMessage.success('Updated successfully')

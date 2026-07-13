@@ -83,7 +83,11 @@ const form = reactive<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zh
   description: '',
   engShort: '',
   zhsShort: '',
-  iconRules: undefined
+  iconRules: undefined,
+  dialMode: null,
+  dialMin: null,
+  dialMax: null,
+  dialGoalSource: null
 })
 
 const orderFieldMap: Record<string, string> = {
@@ -152,7 +156,11 @@ function handleAdd() {
     description: '',
     engShort: '',
     zhsShort: '',
-    iconRules: undefined
+    iconRules: undefined,
+    dialMode: null,
+    dialMin: null,
+    dialMax: null,
+    dialGoalSource: null
   })
   dialogVisible.value = true
 }

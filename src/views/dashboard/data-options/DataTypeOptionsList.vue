@@ -19,6 +19,9 @@
       </el-table-column>
       <el-table-column prop="unit" label="Unit" width="100" />
       <el-table-column prop="defaultValue" label="Default" min-width="120" />
+      <el-table-column label="Dial" min-width="160">
+        <template #default="{ row }">{{ dialSummary(row) }}</template>
+      </el-table-column>
       <el-table-column prop="isActive" label="Active" width="100" sortable="custom">
         <template #default="{ row }">
           <el-switch
@@ -62,6 +65,7 @@ import { ref, watch } from 'vue'
 import type { PropType } from 'vue'
 import type { DataTypeOptionVO, IconRules } from '@/types/data-type-option'
 import DataOptionI18nPopover from './DataOptionI18nPopover.vue'
+import { dialSummary } from './dialConfig.mjs'
 
 const props = defineProps({
   list: { type: Array as PropType<DataTypeOptionVO[]>, default: () => [] },
