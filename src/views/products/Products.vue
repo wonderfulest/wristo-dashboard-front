@@ -508,6 +508,70 @@
           </div>
         </div>
 
+        <!-- Bound Share Assets -->
+        <div class="share-section">
+          <div class="bound-share-toolbar">
+            <div>
+              <div class="share-section-title">Bound Share Images</div>
+              <div class="bound-share-hint">PNG, JPEG, or WebP · up to 10 MB each · maximum {{ MAX_SHARE_IMAGES }} per app</div>
+            </div>
+            <el-tag size="small" type="info">{{ boundShareImages.length }}/{{ MAX_SHARE_IMAGES }}</el-tag>
+          </div>
+
+          <el-upload
+            v-model:file-list="shareImageFiles"
+            multiple
+            :auto-upload="false"
+            :limit="MAX_SHARE_IMAGES"
+            accept="image/png,image/jpeg,image/webp"
+            :disabled="shareImagesUploading || boundShareImages.length >= MAX_SHARE_IMAGES"
+            :on-exceed="handleShareImageExceed"
+          >
+            <el-button :disabled="shareImagesUploading || boundShareImages.length >= MAX_SHARE_IMAGES">
+              Select Images
+            </el-button>
+          </el-upload>
+
+          <el-button
+            v-if="shareImageFiles.length"
+            type="primary"
+            :loading="shareImagesUploading"
+            :disabled="boundShareImages.length + shareImageFiles.length > MAX_SHARE_IMAGES"
+            class="bound-share-upload-button"
+            @click="handleUploadShareImages"
+          >
+            Upload and Bind {{ shareImageFiles.length }}
+          </el-button>
+
+          <div v-loading="shareImagesLoading" class="bound-share-grid">
+            <div v-for="image in boundShareImages" :key="image.id" class="bound-share-card">
+              <el-image
+                :src="getShareImageUrl(image)"
+                fit="cover"
+                class="bound-share-image"
+                :preview-src-list="[getShareImageUrl(image)]"
+                preview-teleported
+              />
+              <div class="bound-share-card-footer">
+                <span :title="image.fileName || image.altText">{{ image.fileName || image.altText || `Image ${image.id}` }}</span>
+                <el-button
+                  type="danger"
+                  link
+                  :loading="shareImageDeletingId === image.id"
+                  @click="handleDeleteShareImage(image)"
+                >
+                  Delete
+                </el-button>
+              </div>
+            </div>
+            <el-empty
+              v-if="!shareImagesLoading && boundShareImages.length === 0"
+              description="No bound share images"
+              :image-size="56"
+            />
+          </div>
+        </div>
+
         <!-- Platform Selection -->
         <div class="share-section">
           <div class="share-section-title">Select Platforms</div>
@@ -590,7 +654,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules, UploadFiles, UploadRawFile, UploadUserFile } from 'element-plus'
 import { Edit, Plus } from '@element-plus/icons-vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import MobileRecordList from '@/components/common/MobileRecordList.vue'
@@ -606,6 +670,12 @@ import { useUserStore } from '@/store/user'
 import UserSelect from '@/components/users/UserSelect.vue'
 import { generateShareImages } from '@/api/share'
 import type { ShareProductVO } from '@/api/share'
+import {
+  deleteProductShareImage,
+  fetchProductShareImages,
+  uploadProductShareImages,
+} from '@/api/product-share-images'
+import type { ProductShareImageVO } from '@/api/product-share-images'
 
 // 表格数据
 const userStore = useUserStore()
@@ -1103,6 +1173,12 @@ const shareDialogVisible = ref(false)
 const shareGenerating = ref(false)
 const shareProduct = ref<Product | null>(null)
 const shareResult = ref<ShareProductVO | null>(null)
+const boundShareImages = ref<ProductShareImageVO[]>([])
+const shareImageFiles = ref<UploadUserFile[]>([])
+const shareImagesLoading = ref(false)
+const shareImagesUploading = ref(false)
+const shareImageDeletingId = ref<number | null>(null)
+const MAX_SHARE_IMAGES = 8
 const selectedPlatforms = ref<string[]>(['facebook', 'instagram', 'x', 'pinterest'])
 const shareOptions = ref({
   title: '',
@@ -1129,9 +1205,81 @@ const getPlatformLabel = (value: string) => {
 const handleShare = (row: Product) => {
   shareProduct.value = row
   shareResult.value = null
+  boundShareImages.value = []
+  shareImageFiles.value = []
   shareOptions.value = { title: '', subtitle: '', bgColor: '', brandLogo: '' }
   selectedPlatforms.value = ['facebook', 'instagram', 'x', 'pinterest']
   shareDialogVisible.value = true
+  void loadBoundShareImages(row.appId)
+}
+
+const loadBoundShareImages = async (appId: number) => {
+  try {
+    shareImagesLoading.value = true
+    const res = await fetchProductShareImages(appId)
+    boundShareImages.value = res.data || []
+  } catch {
+    boundShareImages.value = []
+  } finally {
+    shareImagesLoading.value = false
+  }
+}
+
+const getShareImageUrl = (image: ProductShareImageVO) => {
+  return image.imageUrl || image.image?.url || ''
+}
+
+const handleShareImageExceed = (_files: File[], currentFiles: UploadFiles) => {
+  const remaining = Math.max(0, MAX_SHARE_IMAGES - boundShareImages.value.length)
+  ElMessage.warning(`This app can bind ${remaining} more share image${remaining === 1 ? '' : 's'}`)
+  shareImageFiles.value = currentFiles.slice(0, remaining)
+}
+
+const handleUploadShareImages = async () => {
+  if (!shareProduct.value) return
+  const files = shareImageFiles.value
+    .map((file) => file.raw)
+    .filter((file): file is UploadRawFile => Boolean(file))
+  if (!files.length) {
+    ElMessage.warning('Select at least one image')
+    return
+  }
+  if (boundShareImages.value.length + files.length > MAX_SHARE_IMAGES) {
+    ElMessage.warning(`Each app can bind at most ${MAX_SHARE_IMAGES} share images`)
+    return
+  }
+
+  try {
+    shareImagesUploading.value = true
+    const res = await uploadProductShareImages(shareProduct.value.appId, files)
+    boundShareImages.value = res.data || []
+    shareImageFiles.value = []
+    ElMessage.success('Share images uploaded and bound')
+  } finally {
+    shareImagesUploading.value = false
+  }
+}
+
+const handleDeleteShareImage = async (image: ProductShareImageVO) => {
+  if (!shareProduct.value) return
+  try {
+    await ElMessageBox.confirm(
+      'Delete this bound share image? Existing product images will not be affected.',
+      'Delete Share Image',
+      { type: 'warning', confirmButtonText: 'Delete' },
+    )
+  } catch {
+    return
+  }
+
+  try {
+    shareImageDeletingId.value = image.id
+    await deleteProductShareImage(shareProduct.value.appId, image.id)
+    await loadBoundShareImages(shareProduct.value.appId)
+    ElMessage.success('Share image deleted')
+  } finally {
+    shareImageDeletingId.value = null
+  }
 }
 
 const handleGenerateShareImages = async () => {
@@ -1385,6 +1533,60 @@ onMounted(() => {
   color: #86868b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.bound-share-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.bound-share-hint {
+  margin-top: 4px;
+  color: #86868b;
+  font-size: 12px;
+}
+
+.bound-share-upload-button {
+  margin-top: 10px;
+}
+
+.bound-share-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-height: 84px;
+  margin-top: 12px;
+}
+
+.bound-share-card {
+  overflow: hidden;
+  border: 1px solid #ebeef5;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.bound-share-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.bound-share-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.bound-share-card-footer span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .share-platform-grid {
