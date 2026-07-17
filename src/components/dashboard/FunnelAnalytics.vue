@@ -14,11 +14,11 @@
       <el-date-picker
         v-if="rangeType === 'custom'"
         v-model="dateRange"
-        type="datetimerange"
+        type="daterange"
         range-separator="-"
         start-placeholder="开始时间"
         end-placeholder="结束时间"
-        value-format="YYYY-MM-DD HH:mm"
+        value-format="YYYY-MM-DD"
         size="small"
       />
 
@@ -47,7 +47,7 @@
     <el-card shadow="never" :body-style="{ padding: '16px' }" v-loading="funnelLoading">
       <template #header>
         <div class="funnel-header">
-          <span>统计周期：{{ funnel?.periodKey || displayPeriod }}</span>
+          <span>统计周期：{{ displayPeriod }}</span>
           <span v-if="funnel && funnel.app">应用：{{ funnel.app.name }} (ID: {{ funnel.appId }})</span>
         </div>
       </template>
@@ -73,6 +73,7 @@
 import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { getFunnel } from '@/api/purchase'
 import type { AppFunnelVO, SalesQueryDTO } from '@/types/api'
+import { buildCompletedDayRange, buildSelectedDayRange } from './funnelRange.mjs'
 
 // ===== Funnel state & methods =====
 const funnel = ref<AppFunnelVO | null>(null)
@@ -93,40 +94,18 @@ const formatPercent = (fromVal?: number, toVal?: number) => {
   return pct.toFixed(1) + '%'
 }
 
-const nowYMDHM = (d = new Date()) => {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hh = String(d.getHours()).padStart(2, '0')
-  const mm = String(d.getMinutes()).padStart(2, '0')
-  return `${y}-${m}-${day} ${hh}:${mm}`
-}
-
-const offsetDayYMDHM = (offset: number) => {
-  const d = new Date()
-  d.setMinutes(d.getMinutes() + 0)
-  d.setDate(d.getDate() + offset)
-  return nowYMDHM(d)
-}
-
 const displayPeriod = ref('')
+const rangeDays = { '1d': 1, '3d': 3, '7d': 7, '30d': 30 } as const
 
 const applyRangeByType = () => {
-  let start = ''
-  let end = nowYMDHM()
-  switch (rangeType.value) {
-    case '1d': start = offsetDayYMDHM(-1); break
-    case '3d': start = offsetDayYMDHM(-3); break
-    case '7d': start = offsetDayYMDHM(-7); break
-    case '30d': start = offsetDayYMDHM(-30); break
-    case 'custom':
-      if (dateRange.value) { start = dateRange.value[0]; end = dateRange.value[1] }
-      break
+  if (rangeType.value === 'custom') {
+    if (!dateRange.value) return
+    displayPeriod.value = buildSelectedDayRange(dateRange.value[0], dateRange.value[1]).displayPeriod
+    return
   }
-  if (start && end) {
-    dateRange.value = [start, end]
-    displayPeriod.value = `${start}~${end}`
-  }
+  const range = buildCompletedDayRange(rangeDays[rangeType.value])
+  dateRange.value = [range.startDate, range.endDate]
+  displayPeriod.value = range.displayPeriod
 }
 
 const handleRangeTypeChange = () => { applyRangeByType(); fetchFunnel() }
@@ -254,6 +233,7 @@ watch(funnel, () => updateFunnelChart())
 // Auto-fetch when using custom range and user changes dates
 watch(dateRange, (val) => {
   if (rangeType.value === 'custom' && val && val[0] && val[1]) {
+    applyRangeByType()
     fetchFunnel()
   }
 })

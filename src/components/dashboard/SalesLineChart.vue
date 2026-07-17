@@ -39,6 +39,11 @@
     </div>
 
     <el-card shadow="never" :body-style="{ padding: '12px 12px 4px 12px' }" v-loading="loading">
+      <template #header>
+        <div class="funnel-header">
+          <span>统计周期：{{ displayPeriod }}</span>
+        </div>
+      </template>
       <div ref="chartRef" class="line-chart"></div>
     </el-card>
   </div>
@@ -48,6 +53,7 @@
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { getSales } from '@/api/purchase'
 import type { DailySalesItemVO, SalesQueryDTO } from '@/types/api'
+import { buildCompletedDayRange, buildSelectedDayRange } from './funnelRange.mjs'
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -55,25 +61,18 @@ const items = ref<DailySalesItemVO[]>([])
 
 // date range and quick ranges
 type Range = [Date, Date]
-const today = () => new Date()
-const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(0,0,0,0); return d }
 const rangeType = ref<'7d'|'15d'|'30d'|'60d'|'custom'>('60d')
-const getRangeByType = (): Range => {
-  const end = today()
-  switch (rangeType.value) {
-    case '7d': return [daysAgo(6), end]
-    case '15d': return [daysAgo(14), end]
-    case '30d': return [daysAgo(29), end]
-    case '60d': return [daysAgo(59), end]
-    default: return [daysAgo(29), end]
-  }
-}
-const dateRange = ref<Range>(getRangeByType())
+const rangeDays = { '7d': 7, '15d': 15, '30d': 30, '60d': 60 } as const
+const initialRange = buildCompletedDayRange(60)
+const dateRange = ref<Range>([new Date(`${initialRange.startDate}T00:00:00`), new Date(`${initialRange.endDate}T00:00:00`)])
+const displayPeriod = ref(initialRange.displayPeriod)
 const appId = ref<number | null>(null)
 
 const handleRangeTypeChange = async () => {
   if (rangeType.value !== 'custom') {
-    dateRange.value = getRangeByType()
+    const range = buildCompletedDayRange(rangeDays[rangeType.value])
+    dateRange.value = [new Date(`${range.startDate}T00:00:00`), new Date(`${range.endDate}T00:00:00`)]
+    displayPeriod.value = range.displayPeriod
   }
   await handleQuery()
 }
@@ -82,18 +81,15 @@ const handleQuery = async () => {
   await fetchSales(buildDto())
 }
 
-const fmt = (d: Date) => {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
 const buildDto = (): SalesQueryDTO => {
-  const [s, e] = (rangeType.value === 'custom') ? dateRange.value : getRangeByType()
+  const [s, e] = dateRange.value
+  const range = rangeType.value === 'custom'
+    ? buildSelectedDayRange(s, e)
+    : buildCompletedDayRange(rangeDays[rangeType.value])
+  displayPeriod.value = range.displayPeriod
   const dto: SalesQueryDTO = {
-    startDate: fmt(s),
-    endDate: fmt(e)
+    startDate: range.startDate,
+    endDate: range.endDate
   }
   if (appId.value !== null && Number.isFinite(appId.value) && (appId.value as number) > 0) {
     dto.appId = appId.value
@@ -268,6 +264,7 @@ onBeforeUnmount(() => {
 .section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 16px 0; text-align: left; }
 .error-message { background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 16px; margin: 24px 0; color: #721c24; }
 .filters { margin: 8px 0 12px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.funnel-header { display: flex; justify-content: space-between; font-size: 12px; color: #6c757d; }
 .app-id-input { width: 180px; }
 .line-chart { width: 100%; height: 320px; }
 
