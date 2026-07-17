@@ -34,3 +34,23 @@ export const buildCompletedDayRange = (days, now = new Date()) => {
   endInclusive.setDate(endInclusive.getDate() - 1)
   return buildSelectedDayRange(start, endInclusive)
 }
+
+export const buildRecentDayRange = (days, now = new Date()) => {
+  const endInclusive = new Date(now)
+  endInclusive.setHours(0, 0, 0, 0)
+  const start = new Date(endInclusive)
+  start.setDate(start.getDate() - days + 1)
+  return buildSelectedDayRange(start, endInclusive)
+}
+
+export const buildCurrentDayRange = (now = new Date()) => {
+  const current = new Date(now)
+  const date = formatLocalDate(current)
+  const hour = String(current.getHours()).padStart(2, '0')
+  const minute = String(current.getMinutes()).padStart(2, '0')
+  return {
+    startDate: date,
+    endDate: date,
+    displayPeriod: `[${date} 00:00, ${date} ${hour}:${minute}]`,
+  }
+}

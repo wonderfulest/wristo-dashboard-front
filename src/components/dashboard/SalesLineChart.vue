@@ -53,7 +53,7 @@
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { getSales } from '@/api/purchase'
 import type { DailySalesItemVO, SalesQueryDTO } from '@/types/api'
-import { buildCompletedDayRange, buildSelectedDayRange } from './funnelRange.mjs'
+import { buildRecentDayRange, buildSelectedDayRange } from './funnelRange.mjs'
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -63,14 +63,14 @@ const items = ref<DailySalesItemVO[]>([])
 type Range = [Date, Date]
 const rangeType = ref<'7d'|'15d'|'30d'|'60d'|'custom'>('60d')
 const rangeDays = { '7d': 7, '15d': 15, '30d': 30, '60d': 60 } as const
-const initialRange = buildCompletedDayRange(60)
+const initialRange = buildRecentDayRange(60)
 const dateRange = ref<Range>([new Date(`${initialRange.startDate}T00:00:00`), new Date(`${initialRange.endDate}T00:00:00`)])
 const displayPeriod = ref(initialRange.displayPeriod)
 const appId = ref<number | null>(null)
 
 const handleRangeTypeChange = async () => {
   if (rangeType.value !== 'custom') {
-    const range = buildCompletedDayRange(rangeDays[rangeType.value])
+    const range = buildRecentDayRange(rangeDays[rangeType.value])
     dateRange.value = [new Date(`${range.startDate}T00:00:00`), new Date(`${range.endDate}T00:00:00`)]
     displayPeriod.value = range.displayPeriod
   }
@@ -85,7 +85,7 @@ const buildDto = (): SalesQueryDTO => {
   const [s, e] = dateRange.value
   const range = rangeType.value === 'custom'
     ? buildSelectedDayRange(s, e)
-    : buildCompletedDayRange(rangeDays[rangeType.value])
+    : buildRecentDayRange(rangeDays[rangeType.value])
   displayPeriod.value = range.displayPeriod
   const dto: SalesQueryDTO = {
     startDate: range.startDate,

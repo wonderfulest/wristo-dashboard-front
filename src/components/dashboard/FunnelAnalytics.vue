@@ -4,6 +4,7 @@
 
     <div class="funnel-toolbar">
       <el-radio-group v-model="rangeType" size="small" @change="handleRangeTypeChange">
+        <el-radio-button label="today">当天</el-radio-button>
         <el-radio-button label="1d">近1天</el-radio-button>
         <el-radio-button label="3d">近3天</el-radio-button>
         <el-radio-button label="7d">近一周</el-radio-button>
@@ -73,13 +74,13 @@
 import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { getFunnel } from '@/api/purchase'
 import type { AppFunnelVO, SalesQueryDTO } from '@/types/api'
-import { buildCompletedDayRange, buildSelectedDayRange } from './funnelRange.mjs'
+import { buildCompletedDayRange, buildCurrentDayRange, buildSelectedDayRange } from './funnelRange.mjs'
 
 // ===== Funnel state & methods =====
 const funnel = ref<AppFunnelVO | null>(null)
 const funnelLoading = ref(false)
 const funnelError = ref<string | null>(null)
-const rangeType = ref<'1d' | '3d' | '7d' | '30d' | 'custom'>('7d')
+const rangeType = ref<'today' | '1d' | '3d' | '7d' | '30d' | 'custom'>('7d')
 const dateRange = ref<[string, string] | null>(null)
 const appId = ref<number | null>(null)
 
@@ -103,6 +104,12 @@ const applyRangeByType = () => {
     displayPeriod.value = buildSelectedDayRange(dateRange.value[0], dateRange.value[1]).displayPeriod
     return
   }
+  if (rangeType.value === 'today') {
+    const range = buildCurrentDayRange()
+    dateRange.value = [range.startDate, range.endDate]
+    displayPeriod.value = range.displayPeriod
+    return
+  }
   const range = buildCompletedDayRange(rangeDays[rangeType.value])
   dateRange.value = [range.startDate, range.endDate]
   displayPeriod.value = range.displayPeriod
@@ -114,7 +121,7 @@ const fetchFunnel = async () => {
   try {
     funnelLoading.value = true
     funnelError.value = null
-    if (!dateRange.value) applyRangeByType()
+    if (rangeType.value === 'today' || !dateRange.value) applyRangeByType()
     if (!dateRange.value) { funnelError.value = '请选择时间范围'; return }
     const appIdVal = appId.value != null && !Number.isNaN(appId.value) ? appId.value : null
     const toDate = (s: string) => s?.split(' ')[0] || s
