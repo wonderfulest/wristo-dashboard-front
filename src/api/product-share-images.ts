@@ -5,10 +5,14 @@ export interface ProductShareImageVO {
   id: number
   productId: number
   imageId: number
-  type: 'share'
+  type: string
   sortOrder: number
   altText?: string
   imageUrl?: string
+  previewUrl?: string
+  downloadUrl?: string
+  width?: number
+  height?: number
   fileName?: string
   image?: {
     id: number
@@ -20,7 +24,7 @@ export interface ProductShareImageVO {
 export const fetchProductShareImages = (
   appId: number,
 ): Promise<ApiResponse<ProductShareImageVO[]>> => {
-  return instance.get(`/admin/products/${appId}/share-images`)
+  return instance.get(`/admin/products/${appId}/images`)
 }
 
 export const uploadProductShareImages = (
@@ -29,12 +33,12 @@ export const uploadProductShareImages = (
 ): Promise<ApiResponse<ProductShareImageVO[]>> => {
   const formData = new FormData()
   files.forEach((file) => formData.append('files', file))
-  return instance.post(`/admin/products/${appId}/share-images`, formData)
+  return instance.post(`/admin/products/${appId}/images`, formData)
 }
 
 export const deleteProductShareImage = (
   appId: number,
   productImageId: number,
 ): Promise<ApiResponse<void>> => {
-  return instance.delete(`/admin/products/${appId}/share-images/${productImageId}`)
+  return instance.delete(`/admin/products/${appId}/images/${productImageId}`)
 }

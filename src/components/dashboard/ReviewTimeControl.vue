@@ -49,6 +49,7 @@ import { getReviewTime, setReviewTime, refreshReviewTime } from '@/api/config'
 import type { GlobalConfig } from '@/types/ops'
 import { formatDateTime } from '@/utils/date'
 import { insertBundleProductRelations } from '@/api/ops-db'
+import { rebuildAll } from '@/api/watchface-search'
 
 // 默认用于预处理的 bundleId
 const BUNDLE_ID = 107642
@@ -92,6 +93,7 @@ const onRefreshNow = async () => {
   try {
     await insertBundleProductRelations(BUNDLE_ID)
     const res = await refreshReviewTime()
+    void rebuildAll(true).catch(() => undefined)
     if (res?.data?.configValue) {
       reviewTime.value = res.data.configValue
       setInput.value = reviewTime.value
