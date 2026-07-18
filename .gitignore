@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 tmp/
+.worktrees/
 
 # Local test and browser automation artifacts
 .playwright-cli/
