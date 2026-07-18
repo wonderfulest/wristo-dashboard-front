@@ -60,6 +60,14 @@ test('historical single-day ranges select yesterday and the day before yesterday
   })
 })
 
+test('historical single-day range is included in the TypeScript declaration', async () => {
+  const declaration = await readFile(new URL('../src/components/dashboard/funnelRange.d.mts', import.meta.url), 'utf8')
+  assert.match(
+    declaration,
+    /export function buildHistoricalDayRange\(dayOffset: number, now\?: Date\): NaturalDayRange/,
+  )
+})
+
 test('dashboard funnel exposes yesterday and day-before-yesterday options', async () => {
   const funnel = await readFile(new URL('../src/components/dashboard/FunnelAnalytics.vue', import.meta.url), 'utf8')
   assert.match(funnel, /<el-radio-button label="yesterday">昨天<\/el-radio-button>/)
