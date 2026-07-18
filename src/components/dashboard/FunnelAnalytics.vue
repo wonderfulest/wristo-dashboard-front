@@ -5,7 +5,8 @@
     <div class="funnel-toolbar">
       <el-radio-group v-model="rangeType" size="small" @change="handleRangeTypeChange">
         <el-radio-button label="today">当天</el-radio-button>
-        <el-radio-button label="1d">近1天</el-radio-button>
+        <el-radio-button label="yesterday">昨天</el-radio-button>
+        <el-radio-button label="dayBeforeYesterday">前天</el-radio-button>
         <el-radio-button label="3d">近3天</el-radio-button>
         <el-radio-button label="7d">近一周</el-radio-button>
         <el-radio-button label="30d">近一月</el-radio-button>
@@ -74,13 +75,20 @@
 import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { getFunnel } from '@/api/purchase'
 import type { AppFunnelVO, SalesQueryDTO } from '@/types/api'
-import { buildCompletedDayRange, buildCurrentDayRange, buildSelectedDayRange } from './funnelRange.mjs'
+import {
+  buildCompletedDayRange,
+  buildCurrentDayRange,
+  buildHistoricalDayRange,
+  buildSelectedDayRange,
+} from './funnelRange.mjs'
 
 // ===== Funnel state & methods =====
+type RangeType = 'today' | 'yesterday' | 'dayBeforeYesterday' | '3d' | '7d' | '30d' | 'custom'
+
 const funnel = ref<AppFunnelVO | null>(null)
 const funnelLoading = ref(false)
 const funnelError = ref<string | null>(null)
-const rangeType = ref<'today' | '1d' | '3d' | '7d' | '30d' | 'custom'>('7d')
+const rangeType = ref<RangeType>('7d')
 const dateRange = ref<[string, string] | null>(null)
 const appId = ref<number | null>(null)
 
@@ -96,7 +104,8 @@ const formatPercent = (fromVal?: number, toVal?: number) => {
 }
 
 const displayPeriod = ref('')
-const rangeDays = { '1d': 1, '3d': 3, '7d': 7, '30d': 30 } as const
+const rangeDays = { '3d': 3, '7d': 7, '30d': 30 } as const
+const historicalDayOffsets = { yesterday: 1, dayBeforeYesterday: 2 } as const
 
 const applyRangeByType = () => {
   if (rangeType.value === 'custom') {
@@ -106,6 +115,12 @@ const applyRangeByType = () => {
   }
   if (rangeType.value === 'today') {
     const range = buildCurrentDayRange()
+    dateRange.value = [range.startDate, range.endDate]
+    displayPeriod.value = range.displayPeriod
+    return
+  }
+  if (rangeType.value === 'yesterday' || rangeType.value === 'dayBeforeYesterday') {
+    const range = buildHistoricalDayRange(historicalDayOffsets[rangeType.value])
     dateRange.value = [range.startDate, range.endDate]
     displayPeriod.value = range.displayPeriod
     return

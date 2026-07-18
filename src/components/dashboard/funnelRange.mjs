@@ -25,6 +25,13 @@ export const buildSelectedDayRange = (startValue, endValue) => {
   }
 }
 
+export const buildHistoricalDayRange = (dayOffset, now = new Date()) => {
+  const day = new Date(now)
+  day.setHours(0, 0, 0, 0)
+  day.setDate(day.getDate() - dayOffset)
+  return buildSelectedDayRange(day, day)
+}
+
 export const buildCompletedDayRange = (days, now = new Date()) => {
   const endExclusive = new Date(now)
   endExclusive.setHours(0, 0, 0, 0)

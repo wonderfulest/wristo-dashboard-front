@@ -1,11 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import {
+import * as funnelRange from '../src/components/dashboard/funnelRange.mjs'
+
+const {
   buildCompletedDayRange,
   buildCurrentDayRange,
   buildRecentDayRange,
-} from '../src/components/dashboard/funnelRange.mjs'
+} = funnelRange
 
 test('dashboard funnel and sales trend display half-open natural-day intervals', async () => {
   const funnel = await readFile(new URL('../src/components/dashboard/FunnelAnalytics.vue', import.meta.url), 'utf8')
@@ -41,6 +43,29 @@ test('current-day range covers local midnight through now', () => {
     endDate: '2026-07-17',
     displayPeriod: '[2026-07-17 00:00, 2026-07-17 18:23]',
   })
+})
+
+test('historical single-day ranges select yesterday and the day before yesterday', () => {
+  assert.equal(typeof funnelRange.buildHistoricalDayRange, 'function')
+  const now = new Date(2026, 6, 17, 18, 23, 0)
+  assert.deepEqual(funnelRange.buildHistoricalDayRange(1, now), {
+    startDate: '2026-07-16',
+    endDate: '2026-07-16',
+    displayPeriod: '[2026-07-16 00:00, 2026-07-17 00:00)',
+  })
+  assert.deepEqual(funnelRange.buildHistoricalDayRange(2, now), {
+    startDate: '2026-07-15',
+    endDate: '2026-07-15',
+    displayPeriod: '[2026-07-15 00:00, 2026-07-16 00:00)',
+  })
+})
+
+test('dashboard funnel exposes yesterday and day-before-yesterday options', async () => {
+  const funnel = await readFile(new URL('../src/components/dashboard/FunnelAnalytics.vue', import.meta.url), 'utf8')
+  assert.match(funnel, /<el-radio-button label="yesterday">昨天<\/el-radio-button>/)
+  assert.match(funnel, /<el-radio-button label="dayBeforeYesterday">前天<\/el-radio-button>/)
+  assert.doesNotMatch(funnel, />近1天<\/el-radio-button>/)
+  assert.match(funnel, /buildHistoricalDayRange\(historicalDayOffsets\[rangeType\.value\]\)/)
 })
 
 test('dashboard exposes today conversion option and uses current-day ranges', async () => {
