@@ -109,8 +109,8 @@ export const topMenus: TopMenuGroup[] = [
     icon: 'Brush',
     basePaths: ['/design', '/packaging', '/themes', '/data-type-options', '/color-type-options'],
     children: [
-      { key: 'fonts-manage', title: '字体管理', icon: 'Document', path: '/design/fonts' },
       { key: 'design-review', title: '设计审核', icon: 'View', path: '/packaging/design-review' },
+      { key: 'fonts-manage', title: '字体管理', icon: 'Document', path: '/design/fonts' },
       { key: 'designs', title: '设计列表', icon: 'Brush', path: '/products/designs' },
       { key: 'packaging-logs', title: '打包记录', icon: 'DocumentChecked', path: '/packaging/packaging-logs' },
       { key: 'packaging-queue', title: '打包任务队列', icon: 'Box', path: '/packaging/packaging-queue' },
@@ -137,8 +137,8 @@ export const topMenus: TopMenuGroup[] = [
     icon: 'Grid',
     basePaths: ['/products', '/meter'],
     children: [
-      { key: 'products', title: '应用列表', icon: 'Grid', path: '/products' },
       { key: 'products-recent-online', title: '最近上线', icon: 'TrendCharts', path: '/products/recent-online' },
+      { key: 'products', title: '应用列表', icon: 'Grid', path: '/products' },
       { key: 'bundles', title: 'Bundle 管理', icon: 'Box', path: '/products/bundles' },
       { key: 'categories', title: '应用分类', icon: 'FolderOpened', path: '/website/categories' },
       { key: 'app-daily-config', title: '每日一图配置', icon: 'Picture', path: '/products/app-daily/config' },
