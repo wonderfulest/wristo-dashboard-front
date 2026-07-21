@@ -1,7 +1,6 @@
 <template>
   <div class="user-profiles-page">
     <div class="page-header">
-      <h2>用户画像</h2>
       <el-button type="success" @click="openCreate">新增画像</el-button>
     </div>
 

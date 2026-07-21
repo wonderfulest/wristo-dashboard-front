@@ -2,7 +2,6 @@
   <div class="fonts-container">
     <input ref="ttfInputRef" type="file" accept=".ttf" style="display: none" @change="onTtfFileChange" />
     <div class="header">
-      <h2>字体管理</h2>
       <div class="header-toolbar">
         <div class="header-row index-row">
           <span class="index-status">字体搜索索引文档数：{{ fontIndexCountText }}</span>

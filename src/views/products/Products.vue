@@ -1,7 +1,6 @@
 <template>
   <div class="products-container">
     <div class="header">
-      <h2>作品管理</h2>
       <div class="product-filter-bar">
         <el-input
           v-model="searchName"

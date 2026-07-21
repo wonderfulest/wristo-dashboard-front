@@ -1,7 +1,6 @@
 <template>
   <div class="page">
     <div class="header">
-      <h2>Icon Library</h2>
       <div class="filters">
         <el-select
           v-model="query.category"

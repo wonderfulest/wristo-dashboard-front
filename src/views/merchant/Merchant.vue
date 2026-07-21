@@ -1,8 +1,5 @@
 <template>
   <div class="merchant-page">
-    <div class="page-header">
-      <h2>商家用户</h2>
-    </div>
 
     <div class="filters">
       <UserSelect v-model="searchUserId" placeholder="按商家用户搜索" @change="handleUserChange" />

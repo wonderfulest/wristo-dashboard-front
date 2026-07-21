@@ -1,6 +1,5 @@
 <template>
   <div class="account-page">
-    <h2>Discounts</h2>
     <p>这里是 Discounts 页面。</p>
   </div>
 </template>
@@ -14,4 +13,4 @@
   background: #fff;
   min-height: 300px;
 }
-</style> 
+</style>

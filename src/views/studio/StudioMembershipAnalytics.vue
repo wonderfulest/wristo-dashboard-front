@@ -2,7 +2,6 @@
   <div class="studio-membership-page">
     <div class="page-header">
       <div>
-        <h2>Studio 会员</h2>
         <p>按当前权益统计创建过 Studio 应用的用户</p>
       </div>
       <el-button type="primary" :loading="summaryLoading || tableLoading" @click="refreshAll">

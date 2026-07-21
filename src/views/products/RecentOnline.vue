@@ -1,7 +1,6 @@
 <template>
   <div class="recent-online-container">
     <div class="header">
-      <h2>最近上线</h2>
       <div class="filters">
         <el-select v-model="rangePreset" class="range-select" @change="handleRangePresetChange">
           <el-option label="近 7 天" value="last7" />

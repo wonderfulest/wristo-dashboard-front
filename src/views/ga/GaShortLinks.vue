@@ -1,7 +1,6 @@
 <template>
   <div class="ga-short-links-page">
     <div class="page-header">
-      <h2>GA 短链配置</h2>
       <div class="header-actions">
         <el-button type="primary" @click="openCreate">新建短链</el-button>
         <el-button @click="fetchPage">刷新</el-button>

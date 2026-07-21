@@ -1,6 +1,5 @@
 <template>
     <div class="header">
-      <h2>打包记录</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-input
           v-model="searchProductId"

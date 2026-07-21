@@ -1,7 +1,6 @@
 <template>
   <div class="search-records-container">
     <div class="header">
-      <h2>用户搜索记录</h2>
       <div class="filters">
         <el-input
           v-model="keyword"

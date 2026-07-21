@@ -1,7 +1,6 @@
 <template>
   <div class="app-daily-config-edit">
     <div class="header">
-      <h2>每日一图 · 配置编辑（AppID: {{ appId }}）</h2>
       <div class="actions">
         <el-button @click="goBack">返回列表</el-button>
       </div>

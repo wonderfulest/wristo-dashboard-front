@@ -1,7 +1,6 @@
 <template>
   <div class="categories-container">
     <div class="header">
-      <h2>Home Banner</h2>
       <el-button type="primary" @click="handleAdd">新增 Banner</el-button>
     </div>
 

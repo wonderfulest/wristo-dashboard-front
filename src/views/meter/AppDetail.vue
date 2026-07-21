@@ -1,7 +1,6 @@
 <template>
   <div class="meter-app-detail-page">
     <div class="header">
-      <h2>应用指标详情</h2>
       <div class="filters">
         <AppSearchSelect
           v-model="appId"

@@ -1,8 +1,5 @@
 <template>
   <div class="paddle-refunds-page">
-    <div class="page-header">
-      <h2>Paddle 退款查询</h2>
-    </div>
 
     <el-card class="search-card">
       <template #header>

@@ -1,7 +1,6 @@
 <template>
   <div class="user-management-page">
     <div class="page-header">
-      <h2>用户管理</h2>
       <el-button type="success" @click="handleAdd">注册邮箱账号</el-button>
     </div>
     <div class="filters">

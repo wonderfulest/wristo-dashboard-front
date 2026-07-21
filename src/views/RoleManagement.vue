@@ -1,6 +1,5 @@
 <template>
   <div class="role-management-page">
-    <h2>角色管理</h2>
     <el-button type="success" style="margin-bottom: 16px;" @click="handleAdd">新增角色</el-button>
     <el-table :data="roles" style="width: 100%" :loading="loading">
       <el-table-column prop="roleName" label="角色名" width="180" />
@@ -118,4 +117,4 @@ onMounted(fetchRoles)
   background: #fff;
   border-radius: 8px;
 }
-</style> 
+</style>

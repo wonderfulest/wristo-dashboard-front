@@ -1,8 +1,5 @@
 <template>
   <div class="merchant-refund-page">
-    <div class="page-header">
-      <h2>订单退款</h2>
-    </div>
 
     <div class="refund-form-container">
       <el-card class="refund-card">

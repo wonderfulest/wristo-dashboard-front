@@ -1,7 +1,6 @@
 <template>
   <div class="theme-rules-page">
     <div class="header">
-      <h2>主题规则</h2>
       <div class="tools">
         <AppSearchSelect v-model="qAppId" width="220px" />
         <el-input

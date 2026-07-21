@@ -1,7 +1,6 @@
 <template>
   <div class="packaging-queue-container">
     <div class="header">
-      <h2>打包任务队列</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-button type="primary" @click="handleRefresh" :loading="loading || lockedLoading">
           刷新

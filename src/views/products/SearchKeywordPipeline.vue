@@ -1,7 +1,6 @@
 <template>
   <div class="search-keyword-pipeline-container">
     <div class="header">
-      <h2>动作流水线任务</h2>
 
       <div class="toolbar">
         <el-button type="primary" :loading="running" @click="runBuildFinalKeyword">构建 Final Keyword</el-button>

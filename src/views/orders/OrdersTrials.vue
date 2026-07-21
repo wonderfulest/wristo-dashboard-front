@@ -1,8 +1,5 @@
 <template>
   <div class="trials-page">
-    <div class="page-header">
-      <h2>试用记录管理</h2>
-    </div>
 
     <el-card class="search-card">
       <template #header>

@@ -1,7 +1,6 @@
 <template>
   <div class="watchface-search-admin-container">
     <div class="header">
-      <h2>搜索引擎管理</h2>
 
       <div class="toolbar">
         <el-button type="primary" :loading="rebuildLoading" @click="handleRebuildAll(true)">

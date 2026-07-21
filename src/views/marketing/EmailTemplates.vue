@@ -1,7 +1,6 @@
 <template>
   <div class="email-templates">
     <div class="header">
-      <h2>邮件模板管理</h2>
       <div class="actions">
         <el-input v-model="searchName" placeholder="按模板名搜索" clearable style="width: 220px" @keyup.enter.native="handleSearch" />
         <el-input v-model="searchFile" placeholder="按文件名搜索" clearable style="width: 220px" @keyup.enter.native="handleSearch" />

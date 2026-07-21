@@ -1,7 +1,6 @@
 <template>
   <div class="dict-container">
     <div class="header">
-      <h2>字典管理</h2>
       <div class="tools">
         <el-input v-model="enumKeyword" placeholder="搜索枚举名称/类名" clearable style="width: 240px" />
         <el-input v-model="optionKeyword" placeholder="搜索枚举项 name/value" clearable style="width: 240px" @keyup.enter.native="reloadOptions" />

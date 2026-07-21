@@ -2,7 +2,6 @@
   <div class="categories-container">
     <div class="header">
       <div>
-        <h2>官网分类与标签体系</h2>
         <p>官网只展示主系列；所有基础分类、细分分类、功能、场景和设备维度统一维护为标签。</p>
       </div>
       <div class="header-actions">

@@ -1,7 +1,6 @@
 <template>
   <div class="product-keyword-scores-container">
     <div class="header">
-      <h2>评分表</h2>
 
       <div class="filters">
         <el-input

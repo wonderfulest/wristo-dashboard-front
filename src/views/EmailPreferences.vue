@@ -1,7 +1,6 @@
 <template>
   <div class="email-preferences-page">
     <div class="page-header">
-      <h2>用户隐私（邮件偏好）</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-input v-model="searchEmail" placeholder="按邮箱搜索" clearable style="width: 280px" @keyup.enter.native="handleSearch" />
         <el-input v-model="updatedBy" placeholder="操作人（updatedBy，可选）" clearable style="width: 220px" />

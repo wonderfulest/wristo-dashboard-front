@@ -1,7 +1,6 @@
 <template>
   <div class="unsupport-container">
     <div class="header">
-      <h2>未支持应用列表</h2>
       <div class="filters">
         <el-select
           v-model="selectedDevice"

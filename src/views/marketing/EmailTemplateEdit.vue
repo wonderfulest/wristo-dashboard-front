@@ -1,7 +1,6 @@
 <template>
   <div class="email-template-edit">
     <div class="header">
-      <h2>编辑模板：{{ detail?.name || '-' }}</h2>
       <div class="header-actions">
         <el-button @click="backToList">返回列表</el-button>
         <el-button @click="openPreview" plain>预览</el-button>

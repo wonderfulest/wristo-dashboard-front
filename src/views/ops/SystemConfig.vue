@@ -1,7 +1,6 @@
 <template>
   <div class="config-page">
     <div class="header">
-      <h2>系统配置</h2>
       <div class="filters">
         <el-select v-model="query.category" placeholder="分类" clearable style="width: 180px" @change="fetchList">
           <el-option v-for="c in categoryOptions" :key="c.value" :label="c.label" :value="c.value" />

@@ -1,7 +1,6 @@
 <template>
   <div class="db-backups-container">
     <div class="header">
-      <h2>数据库备份</h2>
       <div style="display:flex; gap:12px; align-items:center;">
         <el-input-number v-model="limit" :min="1" :max="200" :step="5" :controls="false" style="width: 120px" />
         <el-button @click="fetchRecent" :loading="loading">刷新</el-button>

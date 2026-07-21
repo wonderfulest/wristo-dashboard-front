@@ -1,7 +1,6 @@
 <template>
   <div class="inspiration-container">
     <div class="header">
-      <h2>设计灵感</h2>
       <div class="tools">
         <el-input
           v-model="keyword"

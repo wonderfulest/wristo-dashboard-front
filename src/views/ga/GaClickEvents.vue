@@ -1,8 +1,5 @@
 <template>
   <div class="ga-click-events-page">
-    <div class="page-header">
-      <h2>GA 点击事件</h2>
-    </div>
 
     <div class="filters">
       <el-input

@@ -1,8 +1,5 @@
 <template>
   <div class="customers-page">
-    <div class="page-header">
-      <h2>客户管理</h2>
-    </div>
 
     <div class="filters">
       <el-input v-model="query.username" placeholder="按用户名搜索" clearable style="width: 220px; margin-right: 12px;" />

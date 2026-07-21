@@ -1,7 +1,6 @@
 <template>
   <div class="merchant-payouts-page">
     <div class="page-header">
-      <h2>结算管理</h2>
       <div class="actions">
         <el-button :loading="loading" @click="fetchData">刷新</el-button>
       </div>

@@ -1,7 +1,6 @@
 <template>
   <div class="theme-configs-page">
     <div class="header">
-      <h2>主题配置</h2>
       <div class="tools">
         <AppSearchSelect v-model="qAppId" width="220px" />
         <el-input v-model="qKey" placeholder="key" clearable style="width: 160px" @keyup.enter.native="handleSearch" />

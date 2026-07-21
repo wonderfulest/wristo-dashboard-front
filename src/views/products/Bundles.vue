@@ -1,7 +1,6 @@
 <template>
   <div class="bundles-page">
     <div class="header">
-      <h2>Bundle 管理</h2>
       <div class="tools">
         <el-select v-model="qActive" placeholder="状态" clearable style="width: 140px" @change="handleSearch">
           <el-option label="启用" :value="1" />

@@ -1,7 +1,6 @@
 <template>
   <div class="analog-assets-container">
     <div class="header">
-      <h2>指针素材管理</h2>
       <div class="tools">
         <el-select v-model="queryType" placeholder="素材类型" clearable style="width: 140px" @change="handleSearch">
           <el-option label="全部" value="" />

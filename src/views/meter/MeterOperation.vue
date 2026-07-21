@@ -1,8 +1,5 @@
 <template>
   <div class="meter-operation-page">
-    <div class="header">
-      <h2>运维操作</h2>
-    </div>
 
     <!-- Meter 配置 -->
     <el-card class="section-card" shadow="never">

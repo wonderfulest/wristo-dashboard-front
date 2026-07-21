@@ -1,8 +1,5 @@
 <template>
   <div class="api-page">
-    <div class="api-header">
-      <h1>Merchant API</h1>
-    </div>
     <div class="api-content">
       <p class="api-tip">
         Use the Merchant API to get your sales results in JSON format to use in an app or clockface and keep constant track of your sales!

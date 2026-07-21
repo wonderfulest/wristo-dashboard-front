@@ -1,7 +1,6 @@
 <template>
   <div class="segments-page">
     <div class="page-header">
-      <h2>用户分群</h2>
       <div style="display:flex; gap:8px;">
         <el-button @click="handleRefreshAll">刷新全部</el-button>
         <el-button type="success" @click="openCreate">新增分群</el-button>

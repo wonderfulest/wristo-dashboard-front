@@ -1,7 +1,6 @@
 <template>
   <div class="app-daily-config-container">
     <div class="header">
-      <h2>每日一图 · 配置</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <AppSearchSelect v-model="searchAppId" :width="'240px'" />
         <el-button type="primary" @click="handleSearch">搜索</el-button>

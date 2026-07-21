@@ -1,7 +1,6 @@
 <template>
   <div class="packaging-dead-queue-container">
     <div class="header">
-      <h2>死信队列</h2>
       <div class="header-actions">
         <el-button
           type="primary"

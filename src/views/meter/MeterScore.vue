@@ -1,7 +1,6 @@
 <template>
   <div class="meter-score-page">
     <div class="header">
-      <h2>健康评分排行</h2>
       <div class="filters">
         <el-radio-group v-model="mode" @change="fetchData">
           <el-radio-button value="top">Top N</el-radio-button>

@@ -1,7 +1,6 @@
 <template>
   <div class="promotion-campaigns-page">
     <div class="page-header">
-      <h2>营销推广活动</h2>
       <div>
         <el-button type="primary" @click="openCreate">新建活动</el-button>
         <el-button @click="fetchPage">刷新</el-button>

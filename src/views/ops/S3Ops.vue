@@ -1,7 +1,6 @@
 <template>
   <div class="s3-ops-page">
     <div class="header">
-      <h2>AWS S3 运维</h2>
       <div class="ops">
         <el-popconfirm
           width="260"

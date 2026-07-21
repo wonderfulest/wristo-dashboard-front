@@ -1,7 +1,6 @@
 <template>
   <div class="app-daily-picks">
     <div class="header">
-      <h2>每日图片 · 列表（AppID: {{ appId }}）</h2>
       <div class="actions">
         <el-date-picker
           v-model="fromNaturalDay"

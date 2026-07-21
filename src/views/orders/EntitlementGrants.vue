@@ -2,7 +2,6 @@
   <div class="grant-page">
     <div class="page-header">
       <div>
-        <h1>赠送激活权益</h1>
         <p>为外部渠道订单创建不参与分佣的购买记录。</p>
       </div>
     </div>

@@ -1,7 +1,6 @@
 <template>
   <div class="delete-garmin-container">
     <div class="header">
-      <h2>从佳明应用商城删除</h2>
       <p class="desc">
         使用下方搜索选择一个应用，确认后将从佳明应用商城删除，并同步清理该应用在本系统中的 Garmin UUID 和商店链接。
       </p>

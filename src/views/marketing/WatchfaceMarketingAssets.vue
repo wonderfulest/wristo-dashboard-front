@@ -2,7 +2,6 @@
   <div class="watchface-marketing-page">
     <div class="page-header">
       <div>
-        <h2>表盘营销资产生成器</h2>
         <p>输入 Product ID 后自动读取商品信息，生成小红书和 Instagram 帖子草稿。</p>
       </div>
     </div>

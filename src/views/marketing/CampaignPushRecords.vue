@@ -1,7 +1,6 @@
 <template>
   <div class="campaign-push-records-page">
     <div class="page-header">
-      <h2>营销推送记录</h2>
       <div>
         <el-button type="primary" @click="openCreate">新建推送记录</el-button>
         <el-button type="success" :disabled="selectedRows.length === 0 || sending" :loading="sending" @click="handleBatchTrigger">发送推送</el-button>

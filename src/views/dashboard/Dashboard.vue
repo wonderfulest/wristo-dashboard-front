@@ -1,6 +1,5 @@
 <template>
   <div class="dashboard">
-    <h2>Dashboard</h2>
     <ReviewTimeControl />
     <div class="dashboard-content">
       <!-- 最近60天销售折线图 -->

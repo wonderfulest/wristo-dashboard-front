@@ -1,7 +1,6 @@
 <template>
   <div class="final-search-keywords-container">
     <div class="header">
-      <h2>结果词</h2>
 
       <div class="filters">
         <el-input

@@ -1,7 +1,6 @@
 <template>
   <div class="product-keyword-candidates-container">
     <div class="header">
-      <h2>产品候选关键词</h2>
 
       <div class="filters">
         <el-input

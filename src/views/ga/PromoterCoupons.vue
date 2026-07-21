@@ -1,7 +1,6 @@
 <template>
   <div class="promoter-coupons-container">
     <div class="header">
-      <h2>推广口令管理</h2>
 
       <div class="filters">
         <el-input

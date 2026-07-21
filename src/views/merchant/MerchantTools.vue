@@ -1,8 +1,5 @@
 <template>
   <div class="merchant-tools-page">
-    <div class="page-header">
-      <h2>商家工具</h2>
-    </div>
     <div class="tools-grid">
       <DesignerBulkToggle />
       <ReviewTimeControl />

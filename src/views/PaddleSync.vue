@@ -1,7 +1,6 @@
 <template>
   <div class="paddle-sync-page">
     <div class="page-header">
-      <h2>Paddle 用户同步</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-button @click="refreshAfter" :loading="afterLoading">刷新游标</el-button>
         <el-button type="primary" @click="handleSync" :loading="syncing">开始同步</el-button>

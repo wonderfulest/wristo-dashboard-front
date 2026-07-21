@@ -1,7 +1,6 @@
 <template>
   <div class="product-action-suggestions-container">
     <div class="header">
-      <h2>动作建议</h2>
 
       <div class="filters">
         <el-input

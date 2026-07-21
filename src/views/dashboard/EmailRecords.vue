@@ -1,7 +1,6 @@
 <template>
   <div class="email-records-container">
     <div class="header">
-      <h2>邮件发送历史</h2>
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-input
           v-model="toEmail"

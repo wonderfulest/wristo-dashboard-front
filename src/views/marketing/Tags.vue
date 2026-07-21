@@ -1,7 +1,6 @@
 <template>
   <div class="tags-page">
     <div class="page-header">
-      <h2>标签管理</h2>
       <el-button type="success" @click="openCreate">新增标签</el-button>
     </div>
 

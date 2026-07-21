@@ -1,7 +1,6 @@
 <template>
   <div class="page">
     <div class="page-header">
-      <h2>变更用户邮箱</h2>
       <el-button @click="goBack">返回</el-button>
     </div>
 
