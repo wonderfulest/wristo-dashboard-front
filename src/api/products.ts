@@ -173,6 +173,11 @@ export const deleteProductCategory = (appId: number, categoryId: number): Promis
   return instance.post(`/admin/products/category/${appId}/delete?categoryId=${categoryId}`)
 }
 
+// 根据分类规则维护所有应用：whole 批量加入，其他分类批量清空
+export const manageCategoryForAllProducts = (categoryId: number): Promise<ApiResponse<number>> => {
+  return instance.post(`/admin/products/category/all/${categoryId}`)
+}
+
 // 从佳明应用商城删除，同步清理 uuid 和 store url
 export const deleteProductFromGarmin = (appId: number): Promise<ApiResponse<boolean>> => {
   return instance.post('/admin/products/delete-from-garmin', null, {

@@ -78,6 +78,9 @@
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="handleRecentOnlineDownloads">近30天上线下载排行</el-button>
         <el-button @click="handleRefreshStats" :loading="refreshingStats">刷新统计</el-button>
+        <el-button type="warning" plain @click="bulkCategoryDialogVisible = true">
+          一键管理分类
+        </el-button>
         <el-button
           type="warning"
           :loading="resettingStoreWeights"
@@ -486,6 +489,52 @@
       </template>
     </el-dialog>
 
+    <!-- 所有应用分类管理对话框 -->
+    <el-dialog
+      v-model="bulkCategoryDialogVisible"
+      title="一键管理分类"
+      width="520px"
+    >
+      <el-alert
+        title="此操作作用于所有应用，与当前筛选和分页无关。"
+        type="warning"
+        :closable="false"
+      />
+      <el-select
+        v-model="bulkCategorySelection"
+        filterable
+        placeholder="请选择分类"
+        class="bulk-category-select"
+      >
+        <el-option
+          v-for="cat in allCategories"
+          :key="cat.id"
+          :label="`${cat.name} (${cat.slug})`"
+          :value="cat.id"
+        />
+      </el-select>
+      <p v-if="selectedBulkCategory" class="bulk-category-hint">
+        {{
+          isWholeBulkCategory
+            ? '将 whole 分类加入所有尚未关联的应用。'
+            : `将“${selectedBulkCategory.name}”分类从所有应用中清空，其他分类不受影响。`
+        }}
+      </p>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="bulkCategoryDialogVisible = false">取消</el-button>
+          <el-button
+            type="danger"
+            :disabled="!selectedBulkCategory"
+            :loading="bulkCategorySubmitting"
+            @click="handleBulkCategoryManagement"
+          >
+            {{ bulkCategoryActionLabel }}
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
     <!-- Social Media Share Dialog -->
     <el-dialog
       v-model="shareDialogVisible"
@@ -658,7 +707,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules, UploadFiles, UploadRawFile, UploadUserFile } from 'element-plus'
 import { Edit, Plus } from '@element-plus/icons-vue'
@@ -666,7 +715,7 @@ import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import MobileRecordList from '@/components/common/MobileRecordList.vue'
 import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 import { formatDate } from '@/utils/date'
-import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights } from '@/api/products'
+import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, manageCategoryForAllProducts } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -1156,6 +1205,16 @@ const handleRepack = async (row: Product) => {
 const categoryDialogVisible = ref(false)
 const productForCategoryEdit = ref<Product | null>(null)
 const selectedCategoryIds = ref<number[]>([])
+const bulkCategoryDialogVisible = ref(false)
+const bulkCategorySelection = ref<number | undefined>(undefined)
+const bulkCategorySubmitting = ref(false)
+const selectedBulkCategory = computed(() =>
+  allCategories.value.find(category => category.id === bulkCategorySelection.value)
+)
+const isWholeBulkCategory = computed(() => selectedBulkCategory.value?.slug === 'whole')
+const bulkCategoryActionLabel = computed(() =>
+  isWholeBulkCategory.value ? '加入所有应用' : '清空该分类'
+)
 
 // 分类增删逻辑 - 改为弹窗批量修改
 const handleEditCategories = (row: Product) => {
@@ -1178,6 +1237,41 @@ const handleConfirmCategoryUpdate = async () => {
     }
   } catch (error) {
     ElMessage.error('更新失败');
+  }
+}
+
+const handleBulkCategoryManagement = async () => {
+  const category = selectedBulkCategory.value
+  if (!category) return
+
+  const description = category.slug === 'whole'
+    ? '确认将 whole 分类加入所有应用吗？'
+    : `确认从所有应用中清空“${category.name}”分类吗？其他分类不会改变。`
+  try {
+    await ElMessageBox.confirm(description, '确认一键管理分类', {
+      type: 'warning',
+      confirmButtonText: bulkCategoryActionLabel.value,
+      cancelButtonText: '取消',
+    })
+  } catch {
+    return
+  }
+
+  try {
+    bulkCategorySubmitting.value = true
+    const response = await manageCategoryForAllProducts(category.id)
+    if (response.code !== 0) {
+      ElMessage.error(response.msg || '分类批量操作失败')
+      return
+    }
+    ElMessage.success(`${bulkCategoryActionLabel.value}完成，影响 ${response.data ?? 0} 个应用`)
+    bulkCategoryDialogVisible.value = false
+    bulkCategorySelection.value = undefined
+    await fetchProducts()
+  } catch {
+    ElMessage.error('分类批量操作失败')
+  } finally {
+    bulkCategorySubmitting.value = false
   }
 }
 
@@ -1416,6 +1510,17 @@ onMounted(() => {
 
 .filter-category-select {
   width: 96px;
+}
+
+.bulk-category-select {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.bulk-category-hint {
+  margin: 14px 0 0;
+  color: #606266;
+  line-height: 1.6;
 }
 
 .filter-creator-select {
