@@ -199,3 +199,8 @@ export const transferProductOwner = (appId: number, newUserId: number): Promise<
 export const refreshProductStats = (): Promise<ApiResponse<boolean>> => {
   return instance.post('/admin/products/stats/refresh')
 }
+
+// 将所有未删除应用的商城权重重置为默认值
+export const resetAllProductStoreWeights = (): Promise<ApiResponse<number>> => {
+  return instance.post('/admin/products/store-weight/reset-all')
+}

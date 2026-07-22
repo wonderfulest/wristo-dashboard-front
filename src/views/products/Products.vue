@@ -78,6 +78,13 @@
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="handleRecentOnlineDownloads">近30天上线下载排行</el-button>
         <el-button @click="handleRefreshStats" :loading="refreshingStats">刷新统计</el-button>
+        <el-button
+          type="warning"
+          :loading="resettingStoreWeights"
+          @click="handleResetAllStoreWeights"
+        >
+          重置所有应用权重
+        </el-button>
       </div>
     </div>
 
@@ -659,7 +666,7 @@ import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import MobileRecordList from '@/components/common/MobileRecordList.vue'
 import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 import { formatDate } from '@/utils/date'
-import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats } from '@/api/products'
+import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -681,6 +688,7 @@ const userStore = useUserStore()
 const products = ref<Product[]>([])
 const loading = ref(false)
 const refreshingStats = ref(false)
+const resettingStoreWeights = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -859,6 +867,37 @@ const handleRefreshStats = async () => {
     ElMessage.error('刷新统计失败')
   } finally {
     refreshingStats.value = false
+  }
+}
+
+const handleResetAllStoreWeights = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '将所有未删除应用中不为 20 的权重重置为 20。该操作影响全部应用，不受当前筛选和分页限制，是否继续？',
+      '重置所有应用权重',
+      {
+        confirmButtonText: '确认重置',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+  } catch {
+    return
+  }
+
+  resettingStoreWeights.value = true
+  try {
+    const res = await resetAllProductStoreWeights()
+    if (res.code === 0) {
+      ElMessage.success(`已重置 ${res.data ?? 0} 个应用权重`)
+      await fetchProducts()
+    } else {
+      ElMessage.error(res.msg || '重置应用权重失败')
+    }
+  } catch {
+    ElMessage.error('重置应用权重失败')
+  } finally {
+    resettingStoreWeights.value = false
   }
 }
 
