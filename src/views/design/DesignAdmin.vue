@@ -3,17 +3,10 @@
     <div class="header">
       <div style="display: flex; gap: 12px; align-items: center;">
         <el-input
-          v-model="searchName"
-          placeholder="按设计名称搜索"
+          v-model="searchKeyword"
+          placeholder="搜索设计名 / AppId / Design UID"
           clearable
-          style="width: 200px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-input
-          v-model="searchDesignUid"
-          placeholder="按设计UID搜索"
-          clearable
-          style="width: 220px"
+          style="width: 320px"
           @keyup.enter.native="handleSearch"
         />
         <UserSelect
@@ -157,8 +150,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
-const searchName = ref('')
-const searchDesignUid = ref('')
+const searchKeyword = ref('')
 const searchUserId = ref<number | undefined>(undefined)
 const searchIsTemplate = ref<number | undefined>(undefined)
 const sortOrder = ref('created_at:desc')
@@ -173,8 +165,7 @@ const fetchDesigns = async () => {
       pageNum: currentPage.value,
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
-      name: searchName.value || undefined,
-      designUid: searchDesignUid.value || undefined,
+      keyword: searchKeyword.value || undefined,
       userId: searchUserId.value,
       isTemplate: searchIsTemplate.value,
       populate: 'user'
@@ -214,6 +205,7 @@ const openDetail = async (row: Design) => {
 const toProductInfoProduct = (product: Design['product']) => product as any
 
 const handleSearch = () => {
+  searchKeyword.value = searchKeyword.value.trim()
   currentPage.value = 1
   fetchDesigns()
 }

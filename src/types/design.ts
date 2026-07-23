@@ -6,6 +6,7 @@ export interface FetchDesignReviewPageParams {
   designStatus?: string
   designUid?: string
   name?: string
+  appId?: number
   populate?: string
 }
 
@@ -15,8 +16,7 @@ export interface DesignPageQueryDTO {
   pageSize: number
   orderBy?: string
   designStatus?: string
-  designUid?: string
-  name?: string
+  keyword?: string
   userId?: number
   isTemplate?: number
   populate?: string

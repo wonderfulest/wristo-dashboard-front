@@ -9,6 +9,13 @@
           style="width: 200px"
           @keyup.enter.native="handleSearch"
         />
+        <el-input
+          v-model="searchAppId"
+          placeholder="按 AppId 搜索"
+          clearable
+          style="width: 180px"
+          @keyup.enter.native="handleSearch"
+        />
         <UserSelect
           v-model="searchUserId"
           :role-authorities="['ROLE_DESIGNER']"
@@ -104,6 +111,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const searchName = ref('')
+const searchAppId = ref('')
 const searchUserId = ref<number | undefined>(undefined)
 const sortOrder = ref('created_at:desc')
 
@@ -115,6 +123,7 @@ const fetchDesigns = async () => {
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
       name: searchName.value ? searchName.value : undefined,
+      appId: searchAppId.value ? Number(searchAppId.value) : undefined,
       userId: typeof searchUserId.value === 'number' ? searchUserId.value : undefined,
       designStatus: 'submitted',
       populate: 'cover,product,payment,user'
@@ -165,6 +174,12 @@ const handleBatchApprove = async () => {
 }
 
 const handleSearch = () => {
+  const appId = searchAppId.value.trim()
+  if (appId && (!/^\d+$/.test(appId) || Number(appId) <= 0)) {
+    ElMessage.warning('请输入有效的 AppId')
+    return
+  }
+  searchAppId.value = appId
   currentPage.value = 1
   fetchDesigns()
 }
