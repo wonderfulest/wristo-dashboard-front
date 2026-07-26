@@ -11,6 +11,9 @@
       <!-- 设备型号订单统计 -->
       <DeviceOrderSummary />
 
+      <!-- 国家订单分布 -->
+      <CountryOrderDistribution />
+
       <!-- 应用销售总计（分页） -->
       <AppSalesSummary />
     </div>
@@ -23,6 +26,7 @@ import FunnelAnalytics from '@/components/dashboard/FunnelAnalytics.vue'
 import AppSalesSummary from '@/components/dashboard/AppSalesSummary.vue'
 import SalesLineChart from '@/components/dashboard/SalesLineChart.vue'
 import DeviceOrderSummary from '@/components/dashboard/DeviceOrderSummary.vue'
+import CountryOrderDistribution from '@/components/dashboard/CountryOrderDistribution.vue'
 </script>
 
 <style scoped>

@@ -40,6 +40,29 @@ export interface DeviceOrderStatsPageQueryDTO {
   endDate?: string
 }
 
+export type CountryOrderTopN = 5 | 10 | 20
+
+export interface CountryOrderStatsQueryDTO {
+  startDate?: string
+  endDate?: string
+  topN?: CountryOrderTopN
+}
+
+export interface CountryOrderStatsItemVO {
+  countryCode: string
+  orderCount: number
+  percentage: number
+}
+
+export interface CountryOrderDistributionVO {
+  startDate: string
+  endDate: string
+  topN: CountryOrderTopN
+  totalOrders: number
+  otherOrderCount: number
+  items: CountryOrderStatsItemVO[]
+}
+
 // ===== Funnel (Downloads -> Code Displayed -> Code Entered -> Start Purchase -> Purchases) =====
 export interface SalesQueryDTO {
   /** 可不传，后端会从登录上下文填充 */

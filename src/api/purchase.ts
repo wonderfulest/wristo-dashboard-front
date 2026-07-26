@@ -10,6 +10,8 @@ import type {
   SalesQueryDTO,
   AppFunnelVO,
   DailySalesItemVO,
+  CountryOrderDistributionVO,
+  CountryOrderStatsQueryDTO,
   DeviceOrderStatsVO,
   DeviceOrderStatsPageQueryDTO
 } from '@/types/api'
@@ -42,4 +44,10 @@ export const getDeviceOrderSummary = async (
   dto: DeviceOrderStatsPageQueryDTO
 ): Promise<ApiResponse<PageResponse<DeviceOrderStatsVO>>> => {
   return instance.post('/admin/purchases/device/summary', dto)
+}
+
+export const getCountryOrderDistribution = async (
+  dto: CountryOrderStatsQueryDTO
+): Promise<ApiResponse<CountryOrderDistributionVO>> => {
+  return instance.post('/admin/purchases/country/summary', dto)
 }
