@@ -47,6 +47,11 @@
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
       <el-table-column prop="appCount" label="App数" width="90" />
       <el-table-column prop="totalDownloads" label="总下载" width="120" />
+      <el-table-column label="应用平均下载量" width="140">
+        <template #default="{ row }">
+          {{ formatAverageDownloads(row) }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="340" fixed="right" >
         <template #default="{ row }">
           <el-switch
@@ -202,6 +207,14 @@ const roleFormatter = (row: any) => {
     return row.roles.join(', ')
   }
   return ''
+}
+
+const formatAverageDownloads = (row: MchUserVO) => {
+  const appCount = Number(row?.appCount) || 0
+  if (appCount <= 0) return '-'
+
+  const totalDownloads = Number(row?.totalDownloads) || 0
+  return Math.round(totalDownloads / appCount)
 }
 
 const activeLoadingIds = ref(new Set<number>())
