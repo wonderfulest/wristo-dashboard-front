@@ -409,7 +409,7 @@ watch(
   border-left-width: 3px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .side-menu {
     display: none;
   }

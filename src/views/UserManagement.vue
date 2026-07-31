@@ -25,6 +25,7 @@
         <div class="stat-value">{{ formatCount(userStats.googleUsers) }}</div>
       </div>
     </div>
+    <div class="table-scroll" role="region" aria-label="用户列表表格，可横向滚动" tabindex="0">
     <el-table :data="users" style="width: 100%" :loading="loading" :default-sort="defaultSort" @sort-change="handleSortChange">
       <el-table-column prop="id" label="ID" width="60" sortable="custom" />
       <el-table-column prop="username" label="用户名" width="180" sortable="custom" />
@@ -38,6 +39,7 @@
         </template>
       </el-table-column>
     </el-table>
+    </div>
     <div class="pagination-bar">
       <el-pagination
         background

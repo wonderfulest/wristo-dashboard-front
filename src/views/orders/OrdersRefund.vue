@@ -94,6 +94,7 @@
           <el-button @click="handleResetSearch">重置</el-button>
         </div>
         
+        <div class="table-scroll" role="region" aria-label="退款记录表格，可横向滚动" tabindex="0">
         <el-table :data="recentRefunds" style="width: 100%" v-loading="historyLoading">
           <el-table-column prop="transactionId" label="交易ID" width="200" />
           <el-table-column prop="refundReason" label="退款原因" min-width="200">
@@ -119,6 +120,7 @@
             </template>
           </el-table-column>
         </el-table>
+        </div>
         
         <div class="pagination-bar">
           <el-pagination

@@ -164,7 +164,7 @@ const getGroupDefaultPath = (group: any) => findFirstPath(group?.children) || '/
   font-weight: 600;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .header-inner {
     height: 56px;
     padding: 0 12px;

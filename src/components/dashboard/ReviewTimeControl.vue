@@ -145,4 +145,10 @@ onMounted(fetchCurrent)
 @media (max-width: 960px) {
   .review-body { grid-template-columns: 1fr; }
 }
+@media (max-width: 768px) {
+  .card-header { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .current-box .meta { flex-wrap: wrap; gap: 6px 12px; }
+  .manual-set { width: 100%; align-items: stretch; flex-direction: column; }
+  .circle-btn { width: 132px; height: 132px; }
+}
 </style>

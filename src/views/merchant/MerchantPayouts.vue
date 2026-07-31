@@ -20,6 +20,7 @@
       <el-button @click="handleReset">重置</el-button>
     </div>
 
+    <div class="table-scroll" role="region" aria-label="商家结算表格，可横向滚动" tabindex="0">
     <el-table :data="rows" style="width: 100%" :loading="loading">
       <el-table-column prop="id" label="ID" width="80" >
         <template #default="{ row }">
@@ -85,6 +86,7 @@
         </template>
       </el-table-column>
     </el-table>
+    </div>
 
     <div class="pagination-bar">
       <el-pagination

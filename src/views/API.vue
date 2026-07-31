@@ -125,4 +125,25 @@ async function generateKey() {
   background: $color-primary;
   border-color: $color-primary;
 }
+
+@media (max-width: 768px) {
+  .api-page {
+    min-height: auto;
+  }
+
+  .api-content {
+    margin-top: 12px;
+    padding: 0;
+  }
+
+  .api-key-card {
+    margin-top: 20px;
+  }
+
+  .el-card {
+    width: 100%;
+    min-width: 0;
+    padding: 16px;
+  }
+}
 </style>
