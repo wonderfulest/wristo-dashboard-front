@@ -6,6 +6,7 @@
       <p>获取应用销售总计失败：{{ summaryError }}</p>
     </div>
 
+    <div class="table-scroll" role="region" aria-label="应用销售总计表格，可横向滚动" tabindex="0">
     <el-table v-loading="summaryLoading" :data="summaryList" border style="width: 100%" empty-text="No data">
       <el-table-column label="应用" min-width="240">
         <template #default="{ row }">
@@ -27,6 +28,7 @@
       </el-table-column>
       <el-table-column prop="bundleTriggerCount" label="触发套餐次数" width="160" align="right" />
     </el-table>
+    </div>
 
     <div class="table-footer">
       <el-pagination

@@ -7,7 +7,7 @@
       <main class="main-content">
         <Breadcrumb />
         <div class="content-wrapper">
-          <div class="page-content">
+          <div class="page-content" data-mobile-table-fallback>
             <router-view />
           </div>
         </div>
@@ -322,6 +322,7 @@ watch(mobileMenuVisible, (visible) => {
 .side-main-wrapper {
   display: flex;
   flex: 1;
+  min-width: 0;
   min-height: calc(100vh - 64px);
 }
 /* 移除重复的 .user-profile-dropdown 定义，避免覆盖上方布局样式 */
@@ -348,16 +349,29 @@ watch(mobileMenuVisible, (visible) => {
 
 @media (max-width: 768px) {
   .global-layout {
+    width: 100%;
     overflow-x: hidden;
   }
 
+  .side-main-wrapper,
   .main-content {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     overflow: visible;
+  }
+
+  .content-wrapper,
+  .page-content {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .page-content {
     padding: 12px;
     margin: 0;
+    overflow-y: visible;
   }
 }
 

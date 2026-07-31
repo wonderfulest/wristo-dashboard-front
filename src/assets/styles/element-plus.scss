@@ -154,6 +154,12 @@
 }
 
 @media (max-width: 768px) {
+  .el-message,
+  .el-message-box {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px);
+  }
+
   .el-dialog {
     width: calc(100vw - 24px) !important;
     max-width: calc(100vw - 24px);
@@ -176,6 +182,11 @@
 
   .el-drawer {
     max-width: 92vw;
+  }
+
+  .el-drawer__body {
+    min-width: 0;
+    overflow-x: hidden;
   }
 
   .el-form {
@@ -227,6 +238,20 @@
     overflow-x: auto;
   }
 
+  .el-tabs__nav-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .el-tabs__nav-wrap.is-scrollable {
+    padding: 0 20px;
+  }
+
+  .el-upload,
+  .el-upload-dragger {
+    max-width: 100%;
+  }
+
   .el-pagination {
     flex-wrap: wrap;
     justify-content: center;
@@ -240,6 +265,22 @@
 
   // 手机端固定操作列会像抽屉一样盖住行内容；改为普通列，交给横向滚动承载。
   .el-table {
+    width: 100% !important;
+    max-width: 100%;
+
+    .el-table__inner-wrapper,
+    .el-scrollbar,
+    .el-scrollbar__wrap {
+      max-width: 100%;
+    }
+
+    .el-table__body-wrapper,
+    .el-scrollbar__wrap {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-inline: contain;
+    }
+
     .el-table__cell.el-table-fixed-column--left,
     .el-table__cell.el-table-fixed-column--right,
     .el-table__cell.is-left,

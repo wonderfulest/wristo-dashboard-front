@@ -39,6 +39,7 @@
         </div>
       </template>
 
+      <div class="table-scroll" role="region" aria-label="Paddle 调整记录表格，可横向滚动" tabindex="0">
       <el-table :data="rows" v-loading="loading" style="width: 100%">
         <el-table-column prop="id" label="ID" width="220" />
         <el-table-column prop="type" label="类型" width="120" />
@@ -73,6 +74,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <div class="pagination-bar">
         <el-pagination
