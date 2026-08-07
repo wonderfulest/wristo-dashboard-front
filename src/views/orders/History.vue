@@ -48,9 +48,9 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="Country" width="100" align="center">
+        <el-table-column label="Country" min-width="150" align="center">
           <template #default="{ row }">
-            {{ row.countryCode || '-' }}
+            {{ formatCountry(row.countryCode) }}
           </template>
         </el-table-column>
         <el-table-column label="Device" min-width="180" show-overflow-tooltip>
@@ -136,6 +136,10 @@
                     <div class="mobile-field-value">{{ formatDevice(row) }}</div>
                   </div>
                   <div class="mobile-field">
+                    <div class="mobile-field-label">Country</div>
+                    <div class="mobile-field-value">{{ formatCountry(row.countryCode) }}</div>
+                  </div>
+                  <div class="mobile-field">
                     <div class="mobile-field-label">Bundle</div>
                     <div class="mobile-field-value">{{ recordBundles(row).length ? formatBundleNames(row) : '-' }}</div>
                   </div>
@@ -181,7 +185,7 @@
             <el-descriptions-item label="Earnings (Wristo)">${{ formatCurrency(selectedRecord.earnings / 100) }}</el-descriptions-item>
             <el-descriptions-item label="Credit Used">${{ formatCurrency(selectedRecord.credit / 100) }}</el-descriptions-item>
             <el-descriptions-item label="Currency">{{ selectedRecord.currencyCode }}</el-descriptions-item>
-            <el-descriptions-item label="Country">{{ selectedRecord.countryCode || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="Country">{{ formatCountry(selectedRecord.countryCode) }}</el-descriptions-item>
             <el-descriptions-item label="Device">{{ formatDevice(selectedRecord) }}</el-descriptions-item>
             <el-descriptions-item label="Origin">{{ selectedRecord.origin }}</el-descriptions-item>
             <el-descriptions-item label="Transaction ID">{{ selectedRecord.transactionId }}</el-descriptions-item>
@@ -262,6 +266,7 @@ import MobileRecordList from '@/components/common/MobileRecordList.vue'
 import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 import { getPurchaseRecordPageList } from '@/api/purchase'
 import type { PurchaseRecordVO, PurchaseRecordPageQueryDTO, PageResponse } from '@/types/api'
+import { formatCountry } from '@/utils/country'
 
 const purchaseRecords = ref<PurchaseRecordVO[]>([])
 const loading = ref(true)
