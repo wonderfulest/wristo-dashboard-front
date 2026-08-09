@@ -1,5 +1,8 @@
 <template>
   <div class="page">
+    <el-tabs v-model="activeTab">
+      <el-tab-pane label="Data Items" name="items">
+        <div class="tab-content">
     <DataTypeOptionsSearch
       :query="query"
       :categories="categories"
@@ -39,6 +42,12 @@
       :units="selectableUnits"
       @saved="loadData"
     />
+        </div>
+      </el-tab-pane>
+      <el-tab-pane label="Units" name="units" lazy>
+        <DataUnitDefinitionsPanel />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
@@ -52,10 +61,12 @@ import { listDataUnits } from '@/api/data-units'
 import DataTypeOptionDialog from './DataTypeOptionDialog.vue'
 import DataTypeOptionsSearch from './DataTypeOptionsSearch.vue'
 import DataTypeOptionsList from './DataTypeOptionsList.vue'
+import DataUnitDefinitionsPanel from './DataUnitDefinitionsPanel.vue'
 import { cloneDataTypeForm, createEmptyDataTypeForm, createLatestRequestGate } from './dataCatalogForm.mjs'
 import { DATA_TYPE_CATEGORY_ENUM_NAME, useEnumStore } from '@/store/common'
 
 const categories = ref<string[]>([])
+const activeTab = ref('items')
 const enumStore = useEnumStore()
 const list = ref<DataTypeOptionVO[]>([])
 const activeUnits = ref<DataUnitDefinitionVO[]>([])
@@ -252,5 +263,6 @@ onMounted(() => {
 
 <style scoped>
 .page { padding: 24px; }
+.tab-content { padding-top: 8px; }
 .units-alert { margin-bottom: 16px; }
 </style>
