@@ -25,6 +25,12 @@
         <el-form-item label="Unit" prop="unit">
           <el-input v-model="form.unit" />
         </el-form-item>
+        <el-form-item label="EN Unit" prop="engUnit">
+          <el-input v-model="form.engUnit" />
+        </el-form-item>
+        <el-form-item label="CN Unit" prop="zhsUnit">
+          <el-input v-model="form.zhsUnit" />
+        </el-form-item>
         <el-form-item label="Icon Unicode" prop="iconUnicode">
           <el-input v-model="form.iconUnicode" />
         </el-form-item>
@@ -88,7 +94,7 @@ import { normalizeDialFields, validateDialFields } from './dialConfig.mjs'
 const props = defineProps({
   visible: { type: Boolean, default: false },
   type: { type: String as PropType<'add'|'edit'>, default: 'add' },
-  form: { type: Object as PropType<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zhsShort?: string }>, required: true },
+  form: { type: Object as PropType<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zhsShort?: string; engUnit?: string; zhsUnit?: string }>, required: true },
   categories: { type: Array as PropType<string[]>, default: () => [] }
 })
 
@@ -170,6 +176,10 @@ function onSave() {
           zhs: props.form.zhsShort || ''
         },
         unit: props.form.unit || '',
+        unitI18n: {
+          eng: props.form.engUnit || '',
+          zhs: props.form.zhsUnit || ''
+        },
         iconUnicode: props.form.iconUnicode || '',
         defaultValue: props.form.defaultValue || '',
         isActive: typeof props.form.isActive === 'number' ? props.form.isActive : 1,
@@ -192,6 +202,10 @@ function onSave() {
           zhs: props.form.zhsShort || ''
         },
         unit: props.form.unit || '',
+        unitI18n: {
+          eng: props.form.engUnit || '',
+          zhs: props.form.zhsUnit || ''
+        },
         iconUnicode: props.form.iconUnicode || '',
         defaultValue: props.form.defaultValue || '',
         isActive: typeof props.form.isActive === 'number' ? props.form.isActive : 1,

@@ -8,7 +8,13 @@
       <el-table-column prop="displayLabel" label="Label" min-width="140" :formatter="displayLabelFormatter" />
       <el-table-column prop="labelI18n" label="i18n" min-width="260">
         <template #default="{ row }">
-          <DataOptionI18nPopover :row="row" :supported-langs="supportedLangs" @updated="$emit('refresh')" />
+          <DataOptionI18nPopover
+            :row="row"
+            :supported-langs="supportedLangs"
+            field="labelI18n"
+            aria-label="Edit label translations"
+            @updated="$emit('refresh')"
+          />
         </template>
       </el-table-column>
       <el-table-column prop="iconUnicode" label="Icon Unicode" min-width="100" />
@@ -18,6 +24,17 @@
         </template>
       </el-table-column>
       <el-table-column prop="unit" label="Unit" width="100" />
+      <el-table-column prop="unitI18n" label="Unit i18n" min-width="260">
+        <template #default="{ row }">
+          <DataOptionI18nPopover
+            :row="row"
+            :supported-langs="supportedLangs"
+            field="unitI18n"
+            aria-label="Edit unit translations"
+            @updated="$emit('refresh')"
+          />
+        </template>
+      </el-table-column>
       <el-table-column prop="defaultValue" label="Default" min-width="120" />
       <el-table-column label="Dial" min-width="160">
         <template #default="{ row }">{{ dialSummary(row) }}</template>

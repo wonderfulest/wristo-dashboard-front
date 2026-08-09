@@ -28,6 +28,7 @@ export interface DataTypeOptionVO {
   enLabel?: string
   displayLabel?: string
   unit: string
+  unitI18n?: LabelI18n
   iconUnicode: string
   icon?: string
   stringKey?: string
@@ -49,6 +50,7 @@ export interface DataTypeOptionCreateDTO {
   label: string
   labelI18n?: LabelI18n
   unit: string
+  unitI18n?: LabelI18n
   iconUnicode: string
   defaultValue: string
   isActive: number

@@ -1,7 +1,7 @@
 <template>
   <el-popover placement="bottom-start" trigger="click" width="420" :persistent="true">
     <template #reference>
-      <button class="i18n-summary" type="button" aria-label="Edit i18n labels">
+      <button class="i18n-summary" type="button" :aria-label="ariaLabel">
         <template v-if="summaryItems.length">
           <span v-for="item in summaryItems" :key="item.lang" class="summary-chip">
             <span class="summary-lang">{{ item.lang }}</span>
@@ -30,7 +30,7 @@
       <div v-else class="empty-i18n">No i18n values</div>
 
       <div class="i18n-actions">
-        <el-select v-model="newLang" placeholder="Language" size="small" class="lang-select" :teleported="false">
+        <el-select v-model="newLang" placeholder="Language" size="small" class="lang-select" :teleported="false" filterable>
           <el-option
             v-for="code in supportedLangs"
             :key="code"
@@ -49,12 +49,14 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { DataTypeOptionVO } from '@/types/data-type-option'
+import type { DataTypeOptionUpdateDTO, DataTypeOptionVO } from '@/types/data-type-option'
 import { updateDataTypeOption } from '@/api/data-type-options'
 
 const props = defineProps<{
   row: DataTypeOptionVO
   supportedLangs: string[]
+  field: 'labelI18n' | 'unitI18n'
+  ariaLabel?: string
 }>()
 
 const emit = defineEmits<{ (e: 'updated'): void }>()
@@ -65,11 +67,12 @@ const saving = ref(false)
 
 function initEdit() {
   Object.keys(editI18n).forEach(k => delete editI18n[k])
-  const src = props.row.labelI18n || {}
+  const src = props.row[props.field] || {}
   Object.keys(src).forEach(k => { editI18n[k] = normalizeValue((src as any)[k]) })
 }
 initEdit()
-watch(() => props.row.labelI18n, initEdit, { deep: true })
+watch(() => props.row[props.field], initEdit, { deep: true })
+watch(() => props.field, initEdit)
 
 const orderedKeys = computed((): string[] => {
   const keys = Object.keys(editI18n || {})
@@ -93,7 +96,7 @@ function normalizeValue(value: unknown): string {
 
 function hasLang(code: string): boolean {
   return Object.prototype.hasOwnProperty.call(editI18n, code)
-    || Object.prototype.hasOwnProperty.call(props.row.labelI18n || {}, code)
+    || Object.prototype.hasOwnProperty.call(props.row[props.field] || {}, code)
 }
 
 function onEditField(lang: string, v: string | number) {
@@ -108,13 +111,15 @@ function addLang() {
 }
 
 function removeLang(lang: string) {
-  if (editI18n[lang]) delete editI18n[lang]
+  delete editI18n[lang]
 }
 
 async function save() {
   saving.value = true
   try {
-    const payload = { labelI18n: { ...editI18n } }
+    const payload: Partial<DataTypeOptionUpdateDTO> = {
+      [props.field]: { ...editI18n }
+    }
     await updateDataTypeOption(Number(props.row.id), payload)
     ElMessage.success('i18n updated')
     emit('updated')

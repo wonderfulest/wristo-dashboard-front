@@ -69,7 +69,7 @@ const query = reactive<Partial<DataTypeOptionPageQueryDTO>>({ category: '', acti
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 
-const form = reactive<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zhsShort?: string }>({
+const form = reactive<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zhsShort?: string; engUnit?: string; zhsUnit?: string }>({
   id: undefined,
   metricSymbol: '',
   category: 'field',
@@ -83,6 +83,8 @@ const form = reactive<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zh
   description: '',
   engShort: '',
   zhsShort: '',
+  engUnit: '',
+  zhsUnit: '',
   iconRules: undefined,
   dialMode: null,
   dialMin: null,
@@ -156,6 +158,8 @@ function handleAdd() {
     description: '',
     engShort: '',
     zhsShort: '',
+    engUnit: '',
+    zhsUnit: '',
     iconRules: undefined,
     dialMode: null,
     dialMin: null,
@@ -171,6 +175,9 @@ function handleEdit(row: DataTypeOptionVO) {
   const i18n = (row as any).labelI18n || {}
   form.engShort = normalizeI18nValue(i18n.eng) || row.enLabel || row.label || ''
   form.zhsShort = normalizeI18nValue(i18n.zhs) || row.labelCn || ''
+  const unitI18n = row.unitI18n || {}
+  form.engUnit = normalizeI18nValue(unitI18n.eng) || row.unit || ''
+  form.zhsUnit = normalizeI18nValue(unitI18n.zhs)
   dialogVisible.value = true
 }
 
