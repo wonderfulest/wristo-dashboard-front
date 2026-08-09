@@ -17,6 +17,7 @@ test('unit editor starts with a valid explicit non-none variant shape', () => {
     unitKey: '',
     name: '',
     defaultVariant: 'default',
+    selectionPolicy: { type: 'fixed', variant: 'default' },
     variants: {
       default: { aliases: ['default'], label: { eng: '', zhs: '' } },
     },
@@ -24,6 +25,42 @@ test('unit editor starts with a valid explicit non-none variant shape', () => {
     sortOrder: 0,
     description: '',
   })
+})
+
+test('normalizes a distance device-setting policy', async () => {
+  const { normalizeUnitPayload } = await import('../src/views/dashboard/data-options/dataCatalogForm.mjs')
+  const payload = normalizeUnitPayload({
+    unitKey: 'distance', name: 'Distance', defaultVariant: 'km',
+    selectionPolicy: {
+      type: 'deviceSetting', setting: 'distanceUnits',
+      mapping: { metric: 'km', statute: 'mi' },
+    },
+    variants: {
+      km: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } },
+      mi: { aliases: ['mi'], label: { eng: 'mi', zhs: '英里' } },
+    },
+    isActive: 1, sortOrder: 0, description: '',
+  })
+  assert.deepEqual(payload.selectionPolicy, {
+    type: 'deviceSetting', setting: 'distanceUnits',
+    mapping: { metric: 'km', statute: 'mi' },
+  })
+})
+
+test('rejects a mapped variant missing from variants', async () => {
+  const { normalizeUnitPayload } = await import('../src/views/dashboard/data-options/dataCatalogForm.mjs')
+  assert.throws(() => normalizeUnitPayload({
+    unitKey: 'distance', name: 'Distance', defaultVariant: 'km',
+    selectionPolicy: {
+      type: 'deviceSetting', setting: 'distanceUnits',
+      mapping: { metric: 'km', statute: 'yard' },
+    },
+    variants: {
+      km: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } },
+      mi: { aliases: ['mi'], label: { eng: 'mi', zhs: '英里' } },
+    },
+    isActive: 1, sortOrder: 0, description: '',
+  }), /distance\.selectionPolicy\.mapping\.statute variant yard does not exist/)
 })
 
 test('renaming a variant only follows the default when the old key was default', () => {
@@ -133,6 +170,9 @@ test('units tab provides paging, CRUD, reference safety, and fail-closed writes'
   assert.match(dialog, /saveSession/)
   assert.match(dialog, /validateUnitForm/)
   assert.match(dialog, /normalizeUnitPayload/)
+  assert.match(dialog, /form\.selectionPolicy\.type/)
+  assert.match(dialog, /distanceUnits/)
+  assert.match(dialog, /temperatureUnits/)
   assert.match(dialog, /clearValidate/)
   assert.match(dialog, /formVersion/)
   assert.match(variants, /commitVariantKeyDraft/)

@@ -178,6 +178,7 @@ test('unit payload trims strict lowercase keys and normalizes aliases determinis
     unitKey: ' distance ',
     name: ' Distance ',
     defaultVariant: ' km ',
+    selectionPolicy: { type: 'fixed', variant: ' km ' },
     variants: {
       ' km ': {
         aliases: [' KM ', 'km', ' Kilometre '],
@@ -203,6 +204,7 @@ test('unit validation rejects uppercase unit, variant, and default keys at exact
   const base = {
     name: 'Distance',
     defaultVariant: 'km',
+    selectionPolicy: { type: 'fixed', variant: 'km' },
     variants: { km: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } } },
     isActive: 1,
     sortOrder: 0,
@@ -235,6 +237,7 @@ test('unit normalization rejects __proto__ without prototype pollution and accep
     unitKey: 'distance',
     name: 'Distance',
     defaultVariant: 'km',
+    selectionPolicy: { type: 'fixed', variant: 'km' },
     isActive: 1,
     sortOrder: 0,
   }
@@ -246,6 +249,7 @@ test('unit normalization rejects __proto__ without prototype pollution and accep
   const constructorPayload = normalizeUnitPayload({
     ...base,
     defaultVariant: 'constructor',
+    selectionPolicy: { type: 'fixed', variant: 'constructor' },
     variants: validConstructor,
   })
   assert.equal(Object.getPrototypeOf(constructorPayload.variants), Object.prototype)
@@ -262,6 +266,7 @@ test('unit normalization reports malformed variant shapes instead of throwing im
     unitKey: 'distance',
     name: 'Distance',
     defaultVariant: 'km',
+    selectionPolicy: { type: 'fixed', variant: 'km' },
     isActive: 1,
     sortOrder: 0,
   }
@@ -304,6 +309,7 @@ test('unit validation mirrors none and active default-variant rules with exact p
       unitKey: 'none',
       name: 'None',
       defaultVariant: 'none',
+      selectionPolicy: { type: 'none' },
       variants: {},
       isActive: 1,
       sortOrder: 0,
@@ -316,6 +322,7 @@ test('unit validation mirrors none and active default-variant rules with exact p
       unitKey: 'distance',
       name: 'Distance',
       defaultVariant: 'mi',
+      selectionPolicy: { type: 'fixed', variant: 'km' },
       variants: { km: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } } },
       isActive: 1,
       sortOrder: 0,
@@ -329,6 +336,7 @@ test('unit validation requires localized labels and nonblank aliases at exact va
     unitKey: 'distance',
     name: 'Distance',
     defaultVariant: 'km',
+    selectionPolicy: { type: 'fixed', variant: 'km' },
     isActive: 1,
     sortOrder: 0,
   }
@@ -355,6 +363,7 @@ test('unit validation rejects aliases owned by two variants', () => {
       unitKey: 'distance',
       name: 'Distance',
       defaultVariant: 'm',
+      selectionPolicy: { type: 'fixed', variant: 'm' },
       variants: { m: { aliases: ['z', 'm'], label: { eng: 'm', zhs: '米' } } },
       isActive: 1,
       sortOrder: 0,
@@ -363,6 +372,7 @@ test('unit validation rejects aliases owned by two variants', () => {
       unitKey: 'length',
       name: 'Length',
       defaultVariant: 'meter',
+      selectionPolicy: { type: 'fixed', variant: 'meter' },
       variants: { meter: { aliases: [' Z ', ' M '], label: { eng: 'm', zhs: '米' } } },
       isActive: 1,
       sortOrder: 1,

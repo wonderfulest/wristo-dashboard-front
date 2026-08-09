@@ -96,7 +96,7 @@ export function validateDataTypeForm(form) {
 export function normalizeUnitPayload(form) {
   const unitKey = trim(form.unitKey)
   const candidate = unitKey === 'none'
-    ? { ...form, unitKey, defaultVariant: null, variants: {} }
+    ? { ...form, unitKey, defaultVariant: null, selectionPolicy: { type: 'none' }, variants: {} }
     : form
   const validationError = validateUnitDefinition(candidate)
   if (validationError) throw new Error(validationError)
@@ -121,6 +121,7 @@ export function normalizeUnitPayload(form) {
     defaultVariant: candidate.defaultVariant === null || trim(candidate.defaultVariant) === ''
       ? null
       : trim(candidate.defaultVariant),
+    selectionPolicy: normalizeSelectionPolicy(candidate.selectionPolicy),
     variants: Object.fromEntries(variants),
     isActive: Number(form.isActive),
     sortOrder: Number(form.sortOrder),
@@ -179,6 +180,7 @@ function validateUnitDefinition(rawUnit) {
   if (unitKey === 'none') {
     if (Object.keys(rawUnit.variants).length) return 'none.variants must be empty'
     if (rawDefault) return 'none.defaultVariant must be null'
+    if (rawUnit.selectionPolicy?.type !== 'none') return 'none.selectionPolicy.type must be none'
     return null
   }
   if (rawUnit.isActive === 1 && Object.keys(rawUnit.variants).length === 0) {
@@ -216,6 +218,64 @@ function validateUnitDefinition(rawUnit) {
   }
   if ((rawUnit.isActive === 1 || rawDefault !== null) && !variantKeys.has(rawDefault)) {
     return `${unitKey}.defaultVariant must reference an existing variant`
+  }
+  const policyError = validateSelectionPolicy(rawUnit.selectionPolicy, unitKey, variantKeys)
+  if (policyError) return policyError
+  return null
+}
+
+function normalizeSelectionPolicy(rawPolicy) {
+  const type = trim(rawPolicy?.type)
+  if (type === 'none') return { type }
+  if (type === 'fixed') return { type, variant: trim(rawPolicy?.variant) }
+  if (type === 'deviceSetting') {
+    return {
+      type,
+      setting: trim(rawPolicy?.setting),
+      mapping: {
+        metric: trim(rawPolicy?.mapping?.metric),
+        statute: trim(rawPolicy?.mapping?.statute),
+      },
+    }
+  }
+  if (type === 'provider') {
+    const fallbackVariant = trim(rawPolicy?.fallbackVariant)
+    return fallbackVariant ? { type, fallbackVariant } : { type }
+  }
+  return { type }
+}
+
+function validateSelectionPolicy(rawPolicy, unitKey, variantKeys) {
+  if (!isPlainRecord(rawPolicy)) return `${unitKey}.selectionPolicy is required`
+  const policy = normalizeSelectionPolicy(rawPolicy)
+  const path = `${unitKey}.selectionPolicy`
+  if (!['fixed', 'deviceSetting', 'provider'].includes(policy.type)) {
+    return `${path}.type is unsupported`
+  }
+  if (policy.type === 'fixed') {
+    const keyError = validateKey(policy.variant, `${path}.variant`)
+    if (keyError) return keyError
+    if (!variantKeys.has(policy.variant)) return `${path}.variant ${policy.variant} does not exist`
+  }
+  if (policy.type === 'deviceSetting') {
+    if (!['distanceUnits', 'temperatureUnits'].includes(policy.setting)) {
+      return `${path}.setting is unsupported`
+    }
+    for (const context of ['metric', 'statute']) {
+      const variant = policy.mapping[context]
+      const keyError = validateKey(variant, `${path}.mapping.${context}`)
+      if (keyError) return keyError
+      if (!variantKeys.has(variant)) {
+        return `${path}.mapping.${context} variant ${variant} does not exist`
+      }
+    }
+  }
+  if (policy.type === 'provider' && policy.fallbackVariant) {
+    const keyError = validateKey(policy.fallbackVariant, `${path}.fallbackVariant`)
+    if (keyError) return keyError
+    if (!variantKeys.has(policy.fallbackVariant)) {
+      return `${path}.fallbackVariant ${policy.fallbackVariant} does not exist`
+    }
   }
   return null
 }

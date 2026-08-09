@@ -6,10 +6,21 @@ export interface DataUnitVariant {
   label: LocalizedText
 }
 
+export type DataUnitSelectionPolicy =
+  | { type: 'none' }
+  | { type: 'fixed'; variant: string }
+  | {
+      type: 'deviceSetting'
+      setting: 'distanceUnits' | 'temperatureUnits'
+      mapping: { metric: string; statute: string }
+    }
+  | { type: 'provider'; fallbackVariant?: string }
+
 export interface DataUnitDefinitionFields {
   unitKey: string
   name: string
   defaultVariant: string | null
+  selectionPolicy: DataUnitSelectionPolicy
   variants: Record<string, DataUnitVariant>
   isActive: number
   sortOrder: number

@@ -16,6 +16,41 @@
         <el-form-item label="Name" prop="name"><el-input v-model="form.name" :disabled="saving" /></el-form-item>
         <el-form-item label="Active"><el-switch v-model="active" :disabled="saving || (form.referenceCount ?? 0) > 0" /></el-form-item>
         <el-form-item label="Sort order" prop="sortOrder"><el-input-number v-model="form.sortOrder" :min="0" :disabled="saving" /></el-form-item>
+        <el-form-item label="Unit policy">
+          <el-select v-model="form.selectionPolicy.type" :disabled="saving || form.unitKey === 'none'" @change="onPolicyTypeChange">
+            <el-option label="Fixed" value="fixed" />
+            <el-option label="Device setting" value="deviceSetting" />
+            <el-option label="Provider" value="provider" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="form.selectionPolicy.type === 'fixed'" label="Fixed variant">
+          <el-select v-model="form.selectionPolicy.variant" :disabled="saving">
+            <el-option v-for="key in variantKeys" :key="key" :label="key" :value="key" />
+          </el-select>
+        </el-form-item>
+        <template v-if="form.selectionPolicy.type === 'deviceSetting'">
+          <el-form-item label="Device setting">
+            <el-select v-model="form.selectionPolicy.setting" :disabled="saving">
+              <el-option label="Distance units" value="distanceUnits" />
+              <el-option label="Temperature units" value="temperatureUnits" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Metric variant">
+            <el-select v-model="form.selectionPolicy.mapping.metric" :disabled="saving">
+              <el-option v-for="key in variantKeys" :key="key" :label="key" :value="key" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Statute variant">
+            <el-select v-model="form.selectionPolicy.mapping.statute" :disabled="saving">
+              <el-option v-for="key in variantKeys" :key="key" :label="key" :value="key" />
+            </el-select>
+          </el-form-item>
+        </template>
+        <el-form-item v-if="form.selectionPolicy.type === 'provider'" label="Preview fallback">
+          <el-select v-model="form.selectionPolicy.fallbackVariant" clearable :disabled="saving">
+            <el-option v-for="key in variantKeys" :key="key" :label="key" :value="key" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="Description" class="full"><el-input v-model="form.description" type="textarea" :disabled="saving" /></el-form-item>
         <el-form-item class="full" label-width="0">
           <DataUnitVariantsEditor :form="form" :disabled="saving" />
@@ -55,6 +90,7 @@ const active = computed({
   get: () => props.form.isActive === 1,
   set: value => { props.form.isActive = value ? 1 : 0 },
 })
+const variantKeys = computed(() => Object.keys(props.form.variants ?? {}).sort())
 const required = (message: string) => [{ required: true, message, trigger: 'blur' }]
 const rules = { unitKey: required('Unit key required'), name: required('Name required') }
 
@@ -74,6 +110,22 @@ watch(() => props.formVersion, async () => {
   formRef.value?.clearValidate()
 })
 watch(visibleLocal, value => emit('update:visible', value))
+watch(() => props.form.unitKey, value => {
+  if (value === 'none') props.form.selectionPolicy = { type: 'none' }
+  else if (props.form.selectionPolicy.type === 'none') onPolicyTypeChange('fixed')
+})
+
+function onPolicyTypeChange(value: string) {
+  const first = variantKeys.value[0] ?? ''
+  if (value === 'fixed') props.form.selectionPolicy = { type: 'fixed', variant: first }
+  else if (value === 'deviceSetting') {
+    props.form.selectionPolicy = {
+      type: 'deviceSetting', setting: 'distanceUnits',
+      mapping: { metric: first, statute: first },
+    }
+  } else if (value === 'provider') props.form.selectionPolicy = { type: 'provider' }
+  else props.form.selectionPolicy = { type: 'none' }
+}
 async function onSave() {
   if (saving.value) return
   const session = saveSession.value
