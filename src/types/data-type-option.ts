@@ -1,6 +1,9 @@
 import type { PageQueryDTO, PageResponse, ApiResponse } from './common'
 
-export type LabelI18n = Record<string, string>
+export interface LocalizedText {
+  eng: string
+  zhs: string
+}
 
 export type IconRuleType = 'boolean' | 'numeric' | 'enum'
 
@@ -16,52 +19,36 @@ export interface IconRules {
   ranges?: IconRange[]
 }
 
-export interface DataTypeOptionVO {
+export type DataTypeCategory = 'field' | 'goal' | 'chart' | 'indicator' | 'date'
+export type DialMode = 'goal' | 'range' | null
+export type DialGoalSource = 'garmin' | 'fixed' | null
+
+export interface DataTypeOptionFields {
+  metricSymbol: string
+  category: DataTypeCategory
+  valueCode: number
+  settingsLabel: LocalizedText
+  label: LocalizedText
+  unitKey: string
+  iconUnicode: string
+  defaultValue: string
+  isActive: number
+  sortOrder: number
+  description: string
+  iconRules?: IconRules
+  dialMode?: DialMode
+  dialMin?: number | null
+  dialMax?: number | null
+  dialGoalSource?: DialGoalSource
+}
+
+export interface DataTypeOptionVO extends DataTypeOptionFields {
   id: number
-  metricSymbol: string
-  category: string
-  valueCode: number
-  value?: number
-  label: string
-  labelI18n?: LabelI18n
-  labelCn?: string
-  enLabel?: string
-  displayLabel?: string
-  unit: string
-  iconUnicode: string
-  icon?: string
-  stringKey?: string
-  defaultValue: string
-  isActive: number
-  sortOrder: number
-  description: string
-  iconRules?: IconRules
-  dialMode?: 'goal' | 'range' | null
-  dialMin?: number | null
-  dialMax?: number | null
-  dialGoalSource?: 'garmin' | 'fixed' | null
 }
 
-export interface DataTypeOptionCreateDTO {
-  metricSymbol: string
-  category: string
-  valueCode: number
-  label: string
-  labelI18n?: LabelI18n
-  unit: string
-  iconUnicode: string
-  defaultValue: string
-  isActive: number
-  sortOrder: number
-  description: string
-  iconRules?: IconRules
-  dialMode?: 'goal' | 'range' | null
-  dialMin?: number | null
-  dialMax?: number | null
-  dialGoalSource?: 'garmin' | 'fixed' | null
-}
+export type DataTypeOptionCreateDTO = DataTypeOptionFields
 
-export interface DataTypeOptionUpdateDTO extends DataTypeOptionCreateDTO {
+export interface DataTypeOptionUpdateDTO extends Partial<DataTypeOptionFields> {
   id: number
 }
 
