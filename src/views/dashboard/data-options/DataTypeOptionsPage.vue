@@ -3,7 +3,7 @@
     <DataTypeOptionsSearch
       :query="query"
       :categories="categories"
-      :add-disabled="unitsUnavailable"
+      :add-disabled="!catalogWritable"
       @update:query="val => Object.assign(query, val)"
       @search="handleSearch"
       @add="handleAdd"
@@ -16,7 +16,7 @@
       :page-num="pageNum"
       :page-size="pageSize"
       :active-loading-ids="activeLoadingIds"
-      :edit-disabled="unitsUnavailable"
+      :catalog-writable="catalogWritable"
       @sort-change="handleSortChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
@@ -62,6 +62,7 @@ const activeUnits = ref<DataUnitDefinitionVO[]>([])
 const unitsLoading = ref(false)
 const unitsError = ref(false)
 const unitsUnavailable = computed(() => unitsLoading.value || unitsError.value || activeUnits.value.length === 0)
+const catalogWritable = computed(() => !unitsUnavailable.value)
 const referencedInactiveUnit = ref<DataUnitDefinitionVO | null>(null)
 const selectableUnits = computed(() => {
   const units = [...activeUnits.value]
@@ -144,7 +145,7 @@ function resetForm(next = createEmptyDataTypeForm()) {
 }
 
 function handleAdd() {
-  if (unitsUnavailable.value) return
+  if (!catalogWritable.value) return
   editRequestGate.invalidate()
   dialogType.value = 'add'
   referencedInactiveUnit.value = null
@@ -153,7 +154,7 @@ function handleAdd() {
 }
 
 async function handleEdit(row: DataTypeOptionVO) {
-  if (unitsUnavailable.value) return
+  if (!catalogWritable.value) return
   const request = editRequestGate.begin()
   const nextForm = cloneDataTypeForm(row)
   let inactiveUnit: DataUnitDefinitionVO | null = null
@@ -180,6 +181,7 @@ async function handleEdit(row: DataTypeOptionVO) {
 }
 
 async function handleActiveChange(row: DataTypeOptionVO, value: number) {
+  if (!catalogWritable.value) return
   const id = Number(row.id)
   const previous = row.isActive
   setActiveLoading(id, true)
@@ -202,6 +204,7 @@ function setActiveLoading(id: number, pending: boolean) {
 }
 
 function handleDelete(row: DataTypeOptionVO) {
+  if (!catalogWritable.value) return
   ElMessageBox.confirm('Are you sure to delete this item?', 'Warning', { type: 'warning' })
     .then(async () => {
       await removeDataTypeOption(row.id)

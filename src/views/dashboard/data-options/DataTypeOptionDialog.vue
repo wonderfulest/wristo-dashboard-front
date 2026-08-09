@@ -184,39 +184,69 @@ function onCancel() { visibleLocal.value = false }
 async function onSave() {
   if (saving.value) return
   saving.value = true
+  let valid: boolean
   try {
-    const valid = await formRef.value?.validate().catch(() => false)
-    if (!valid) return
-    if (!selectedUnit.value) {
-      ElMessage.error('Select an available unit')
-      return
-    }
-    const catalogError = validateDataTypeForm(props.form)
-    if (catalogError) {
-      ElMessage.error(catalogError)
-      return
-    }
-    const dialError = validateDialFields(props.form)
-    if (dialError) {
-      ElMessage.error(dialError)
-      return
-    }
+    valid = await validateFormWithCallback(formRef.value)
+  } catch (error) {
+    saving.value = false
+    ElMessage.error(error instanceof Error ? error.message : 'Unable to validate the form')
+    return
+  }
+  if (!valid) {
+    saving.value = false
+    return
+  }
+  if (!selectedUnit.value) {
+    saving.value = false
+    ElMessage.error('Select an available unit')
+    return
+  }
+  const catalogError = validateDataTypeForm(props.form)
+  if (catalogError) {
+    saving.value = false
+    ElMessage.error(catalogError)
+    return
+  }
+  const dialError = validateDialFields(props.form)
+  if (dialError) {
+    saving.value = false
+    ElMessage.error(dialError)
+    return
+  }
+
+  let payload: DataTypeOptionCreateDTO | DataTypeOptionUpdateDTO
+  try {
     Object.assign(props.form, normalizeDialFields(props.form))
-    const payload = normalizeDataTypePayload(props.form)
-    if (props.type === 'add') {
-      await createDataTypeOption(payload as DataTypeOptionCreateDTO)
-      ElMessage.success('Added successfully')
-    } else {
-      await updateDataTypeOption(Number(props.form.id), payload as DataTypeOptionUpdateDTO)
-      ElMessage.success('Updated successfully')
-    }
-    visibleLocal.value = false
-    emit('saved')
+    payload = normalizeDataTypePayload(props.form)
+  } catch (error) {
+    saving.value = false
+    ElMessage.error(error instanceof Error ? error.message : 'Unable to normalize the form')
+    return
+  }
+
+  try {
+    await submitRequest(payload)
   } catch {
     // The shared HTTP interceptor owns request-error notifications.
-  } finally {
     saving.value = false
+    return
   }
+  saving.value = false
+  ElMessage.success(props.type === 'add' ? 'Added successfully' : 'Updated successfully')
+  visibleLocal.value = false
+  emit('saved')
+}
+
+function validateFormWithCallback(form: any): Promise<boolean> {
+  if (!form) throw new Error('Form is unavailable')
+  return new Promise(resolve => {
+    form.validate((valid: boolean) => resolve(valid))
+  })
+}
+
+function submitRequest(payload: DataTypeOptionCreateDTO | DataTypeOptionUpdateDTO) {
+  if (props.type === 'add') return createDataTypeOption(payload as DataTypeOptionCreateDTO)
+  return updateDataTypeOption(Number(props.form.id), payload as DataTypeOptionUpdateDTO)
 }
 </script>
 
