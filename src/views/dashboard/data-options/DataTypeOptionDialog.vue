@@ -101,13 +101,13 @@
     </el-form>
     <template #footer>
       <el-button @click="onCancel">Cancel</el-button>
-      <el-button type="primary" @click="onSave">Save</el-button>
+      <el-button type="primary" :loading="saving" :disabled="saving || !selectedUnit" @click="onSave">Save</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { PropType } from 'vue'
 import type { DataTypeOptionCreateDTO, DataTypeOptionUpdateDTO } from '@/types/data-type-option'
@@ -121,6 +121,7 @@ const props = defineProps({
   visible: { type: Boolean, default: false },
   type: { type: String as PropType<'add' | 'edit'>, default: 'add' },
   form: { type: Object as PropType<DataTypeOptionCreateDTO & { id?: number }>, required: true },
+  formVersion: { type: Number, required: true },
   categories: { type: Array as PropType<string[]>, default: () => [] },
   units: { type: Array as PropType<DataUnitDefinitionVO[]>, default: () => [] },
 })
@@ -133,10 +134,21 @@ const visibleLocal = ref(props.visible)
 const formRef = ref()
 const switchActive = ref((props.form.isActive ?? 1) === 1)
 const switchIconRules = ref(!!props.form.iconRules)
+const saving = ref(false)
 const titleText = computed(() => props.type === 'add' ? 'Add Data Type Option' : 'Edit Data Type Option')
 const selectedUnit = computed(() => props.units.find(unit => unit.unitKey === props.form.unitKey))
 
-watch(() => props.visible, value => visibleLocal.value = value)
+watch(() => props.visible, async value => {
+  visibleLocal.value = value
+  if (value) {
+    await nextTick()
+    formRef.value?.clearValidate()
+  }
+})
+watch(() => props.formVersion, async () => {
+  await nextTick()
+  formRef.value?.clearValidate()
+})
 watch(visibleLocal, value => emit('update:visible', value))
 watch(switchActive, value => { props.form.isActive = value ? 1 : 0 })
 watch(() => props.form.isActive, value => { switchActive.value = (value ?? 1) === 1 })
@@ -169,9 +181,16 @@ const rules = {
 
 function onCancel() { visibleLocal.value = false }
 
-function onSave() {
-  formRef.value.validate(async (valid: boolean) => {
+async function onSave() {
+  if (saving.value) return
+  saving.value = true
+  try {
+    const valid = await formRef.value?.validate().catch(() => false)
     if (!valid) return
+    if (!selectedUnit.value) {
+      ElMessage.error('Select an available unit')
+      return
+    }
     const catalogError = validateDataTypeForm(props.form)
     if (catalogError) {
       ElMessage.error(catalogError)
@@ -193,7 +212,11 @@ function onSave() {
     }
     visibleLocal.value = false
     emit('saved')
-  })
+  } catch {
+    // The shared HTTP interceptor owns request-error notifications.
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 

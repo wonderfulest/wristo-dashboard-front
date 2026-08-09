@@ -3,6 +3,7 @@
     <DataTypeOptionsSearch
       :query="query"
       :categories="categories"
+      :add-disabled="unitsUnavailable"
       @update:query="val => Object.assign(query, val)"
       @search="handleSearch"
       @add="handleAdd"
@@ -15,6 +16,7 @@
       :page-num="pageNum"
       :page-size="pageSize"
       :active-loading-ids="activeLoadingIds"
+      :edit-disabled="unitsUnavailable"
       @sort-change="handleSortChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
@@ -23,10 +25,16 @@
       @active-change="handleActiveChange"
     />
 
+    <el-alert v-if="unitsError" type="error" :closable="false" class="units-alert">
+      <template #title>Units could not be loaded. Data items are read-only until units are available.</template>
+      <el-button link type="primary" :loading="unitsLoading" @click="retryUnits">Retry units</el-button>
+    </el-alert>
+
     <DataTypeOptionDialog
       v-model:visible="dialogVisible"
       :type="dialogType"
       :form="form"
+      :form-version="formVersion"
       :categories="categories"
       :units="selectableUnits"
       @saved="loadData"
@@ -44,13 +52,16 @@ import { listDataUnits } from '@/api/data-units'
 import DataTypeOptionDialog from './DataTypeOptionDialog.vue'
 import DataTypeOptionsSearch from './DataTypeOptionsSearch.vue'
 import DataTypeOptionsList from './DataTypeOptionsList.vue'
-import { cloneDataTypeForm, createEmptyDataTypeForm } from './dataCatalogForm.mjs'
+import { cloneDataTypeForm, createEmptyDataTypeForm, createLatestRequestGate } from './dataCatalogForm.mjs'
 import { DATA_TYPE_CATEGORY_ENUM_NAME, useEnumStore } from '@/store/common'
 
 const categories = ref<string[]>([])
 const enumStore = useEnumStore()
 const list = ref<DataTypeOptionVO[]>([])
 const activeUnits = ref<DataUnitDefinitionVO[]>([])
+const unitsLoading = ref(false)
+const unitsError = ref(false)
+const unitsUnavailable = computed(() => unitsLoading.value || unitsError.value || activeUnits.value.length === 0)
 const referencedInactiveUnit = ref<DataUnitDefinitionVO | null>(null)
 const selectableUnits = computed(() => {
   const units = [...activeUnits.value]
@@ -68,6 +79,9 @@ const query = reactive<Partial<DataTypeOptionPageQueryDTO>>({ category: '', acti
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 const form = reactive(createEmptyDataTypeForm())
+const formVersion = ref(0)
+const listRequestGate = createLatestRequestGate()
+const editRequestGate = createLatestRequestGate()
 
 const orderFieldMap: Record<string, string> = {
   valueCode: 'value_code',
@@ -76,6 +90,7 @@ const orderFieldMap: Record<string, string> = {
 }
 
 async function loadData() {
+  const request = listRequestGate.begin()
   loading.value = true
   try {
     const res = await pageDataTypeOptions({
@@ -86,10 +101,14 @@ async function loadData() {
       keyword: query.keyword || undefined,
       orderBy: query.orderBy,
     })
-    total.value = res.data?.total ?? 0
-    list.value = res.data?.list ?? []
+    if (listRequestGate.isLatest(request)) {
+      total.value = res.data?.total ?? 0
+      list.value = res.data?.list ?? []
+    }
+  } catch {
+    // The shared HTTP interceptor reports the request failure; keep the last good page.
   } finally {
-    loading.value = false
+    if (listRequestGate.isLatest(request)) loading.value = false
   }
 }
 
@@ -121,9 +140,12 @@ function handleSortChange(payload: { prop: string; order: 'ascending' | 'descend
 
 function resetForm(next = createEmptyDataTypeForm()) {
   Object.assign(form, next)
+  formVersion.value += 1
 }
 
 function handleAdd() {
+  if (unitsUnavailable.value) return
+  editRequestGate.invalidate()
   dialogType.value = 'add'
   referencedInactiveUnit.value = null
   resetForm()
@@ -131,13 +153,29 @@ function handleAdd() {
 }
 
 async function handleEdit(row: DataTypeOptionVO) {
-  dialogType.value = 'edit'
-  referencedInactiveUnit.value = null
-  resetForm(cloneDataTypeForm(row))
-  if (!activeUnits.value.some(unit => unit.unitKey === row.unitKey)) {
-    const response = await listDataUnits()
-    referencedInactiveUnit.value = response.data?.find(unit => unit.unitKey === row.unitKey) ?? null
+  if (unitsUnavailable.value) return
+  const request = editRequestGate.begin()
+  const nextForm = cloneDataTypeForm(row)
+  let inactiveUnit: DataUnitDefinitionVO | null = null
+  try {
+    if (!activeUnits.value.some(unit => unit.unitKey === row.unitKey)) {
+      const response = await listDataUnits()
+      inactiveUnit = response.data?.find(unit => unit.unitKey === row.unitKey) ?? null
+      if (!inactiveUnit) {
+        if (editRequestGate.isLatest(request)) {
+          ElMessage.error(`Referenced unit ${row.unitKey} is unavailable.`)
+        }
+        return
+      }
+    }
+  } catch {
+    // The shared HTTP interceptor reports the lookup failure.
+    return
   }
+  if (!editRequestGate.isLatest(request)) return
+  dialogType.value = 'edit'
+  referencedInactiveUnit.value = inactiveUnit
+  resetForm(nextForm)
   dialogVisible.value = true
 }
 
@@ -184,16 +222,32 @@ async function loadCategories() {
 }
 
 async function loadActiveUnits() {
-  const response = await listDataUnits(1)
-  activeUnits.value = response.data ?? []
+  unitsLoading.value = true
+  unitsError.value = false
+  try {
+    const response = await listDataUnits(1)
+    activeUnits.value = response.data ?? []
+    unitsError.value = activeUnits.value.length === 0
+  } catch {
+    activeUnits.value = []
+    unitsError.value = true
+  } finally {
+    unitsLoading.value = false
+  }
 }
 
-onMounted(async () => {
-  await Promise.all([loadCategories(), loadActiveUnits()])
-  loadData()
+function retryUnits() {
+  void loadActiveUnits()
+}
+
+onMounted(() => {
+  void loadData()
+  void loadCategories()
+  void loadActiveUnits()
 })
 </script>
 
 <style scoped>
 .page { padding: 24px; }
+.units-alert { margin-bottom: 16px; }
 </style>

@@ -49,7 +49,7 @@
       <el-table-column prop="sortOrder" label="Sort" width="90" sortable="custom" />
       <el-table-column label="Action" width="180" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link @click="$emit('edit', row)">Edit</el-button>
+          <el-button type="primary" link :disabled="editDisabled" @click="$emit('edit', row)">Edit</el-button>
           <el-button type="danger" link @click="$emit('delete', row)">Delete</el-button>
         </template>
       </el-table-column>
@@ -82,6 +82,7 @@ const props = defineProps({
   pageNum: { type: Number, default: 1 },
   pageSize: { type: Number, default: 100 },
   activeLoadingIds: { type: Object as PropType<Set<number>>, default: () => new Set<number>() },
+  editDisabled: { type: Boolean, default: false },
 })
 
 const emit = defineEmits<{

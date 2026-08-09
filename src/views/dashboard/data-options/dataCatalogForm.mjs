@@ -33,6 +33,15 @@ export function cloneDataTypeForm(value) {
   }
 }
 
+export function createLatestRequestGate() {
+  let generation = 0
+  return {
+    begin() { return ++generation },
+    invalidate() { generation += 1 },
+    isLatest(token) { return token === generation },
+  }
+}
+
 export function validateLocalizedText(value, path) {
   if (!String(value?.eng ?? '').trim()) return `${path}.eng is required`
   if (!String(value?.zhs ?? '').trim()) return `${path}.zhs is required`

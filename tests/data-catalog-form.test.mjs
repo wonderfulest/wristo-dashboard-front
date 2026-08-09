@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises'
 import {
   createEmptyDataTypeForm,
   cloneDataTypeForm,
+  createLatestRequestGate,
   normalizeDataTypePayload,
   normalizeUnitPayload,
   validateCatalogAliasOwnership,
@@ -32,8 +33,30 @@ test('data item editor exposes separate canonical labels, unit selection, and re
   assert.match(listSource, /DataTypeLabel/)
   assert.match(pageSource, /listDataUnits\(1\)/)
   assert.match(pageSource, /cloneDataTypeForm\(row\)/)
+  assert.match(pageSource, /unitsError/)
+  assert.match(pageSource, /retryUnits/)
+  assert.match(pageSource, /listRequestGate\.begin\(\)/)
+  assert.match(pageSource, /editRequestGate\.begin\(\)/)
+  assert.match(dialogSource, /:loading="saving"/)
+  assert.match(dialogSource, /:disabled="saving \|\| !selectedUnit"/)
+  assert.match(dialogSource, /await formRef\.value\?\.validate/)
+  assert.match(dialogSource, /nextTick/)
+  assert.match(dialogSource, /clearValidate/)
+  assert.match(dialogSource, /props\.formVersion/)
+  assert.match(pageSource, /formVersion\.value \+= 1/)
   assert.doesNotMatch(pageSource, /labelCn|enLabel|displayLabel|labelI18n|engShort|zhsShort/)
   assert.doesNotMatch(listSource, /DataOptionI18nPopover|displayLabel|labelI18n/)
+})
+
+test('latest request gate invalidates every older request', () => {
+  const gate = createLatestRequestGate()
+  const first = gate.begin()
+  assert.equal(gate.isLatest(first), true)
+  const second = gate.begin()
+  assert.equal(gate.isLatest(first), false)
+  assert.equal(gate.isLatest(second), true)
+  gate.invalidate()
+  assert.equal(gate.isLatest(second), false)
 })
 
 test('editing a data item deep-clones canonical labels and icon rules', () => {
