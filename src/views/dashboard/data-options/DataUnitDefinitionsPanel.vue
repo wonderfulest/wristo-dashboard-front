@@ -29,7 +29,13 @@
       <el-table-column label="Actions" width="150" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="openEdit(row)">Edit</el-button>
-          <el-button link type="danger" :disabled="row.referenceCount > 0 || row.unitKey === 'none'" @click="remove(row)">Delete</el-button>
+          <el-button
+            link
+            type="danger"
+            :loading="deletingIds.has(row.id)"
+            :disabled="deletingIds.has(row.id) || row.referenceCount > 0 || row.unitKey === 'none'"
+            @click="remove(row)"
+          >Delete</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -58,7 +64,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { DataUnitDefinitionPageQueryDTO, DataUnitDefinitionVO } from '@/types/data-unit-definition'
 import { pageDataUnits, removeDataUnit, updateDataUnit } from '@/api/data-units'
 import { createLatestRequestGate } from './dataCatalogForm.mjs'
-import { cloneUnitForm, createEmptyUnitForm, replaceUnitForm } from './unitCatalogEditor.mjs'
+import { cloneUnitForm, createEmptyUnitForm, isInterceptorHandledError, replaceUnitForm } from './unitCatalogEditor.mjs'
 import DataUnitDefinitionDialog from './DataUnitDefinitionDialog.vue'
 
 const list = ref<DataUnitDefinitionVO[]>([])
@@ -68,6 +74,7 @@ const pageSize = ref(20)
 const loading = ref(false)
 const loadError = ref(false)
 const activeLoadingIds = ref(new Set<number>())
+const deletingIds = ref(new Set<number>())
 const query = reactive<Partial<DataUnitDefinitionPageQueryDTO>>({ active: undefined, keyword: '' })
 const requestGate = createLatestRequestGate()
 const dialogVisible = ref(false)
@@ -112,8 +119,11 @@ async function changeActive(row: DataUnitDefinitionVO, value: string | number | 
   try {
     await updateDataUnit(row.id, { isActive: desired })
     await loadData()
-  } catch {
-    ElMessage.error('Failed to update unit state')
+  } catch (error) {
+    // The shared interceptor reports the exact backend/transport error.
+    if (!isInterceptorHandledError(error)) {
+      ElMessage.error(error instanceof Error ? error.message : 'Failed to update unit state')
+    }
   } finally {
     setActiveLoading(row.id, false)
   }
@@ -130,18 +140,36 @@ function setActiveLoading(id: number, pending: boolean) {
 }
 
 async function remove(row: DataUnitDefinitionVO) {
+  if (deletingIds.value.has(row.id)) return
   if (row.referenceCount > 0 || row.unitKey === 'none') {
     ElMessage.warning('Referenced units and none cannot be deleted')
     return
   }
+  setDeleting(row.id, true)
   try {
-    await ElMessageBox.confirm(`Delete unit ${row.unitKey}?`, 'Warning', { type: 'warning' })
+    try {
+      await ElMessageBox.confirm(`Delete unit ${row.unitKey}?`, 'Warning', { type: 'warning' })
+    } catch (error) {
+      if (error === 'cancel' || error === 'close') return
+      throw error
+    }
     await removeDataUnit(row.id)
     ElMessage.success('Deleted successfully')
     await loadData()
-  } catch (error: any) {
-    if (error !== 'cancel' && error !== 'close') ElMessage.error('Failed to delete unit')
+  } catch (error) {
+    // The shared interceptor reports request errors; the current row remains unchanged.
+    if (!isInterceptorHandledError(error)) {
+      ElMessage.error(error instanceof Error ? error.message : 'Failed to delete unit')
+    }
+  } finally {
+    setDeleting(row.id, false)
   }
+}
+
+function setDeleting(id: number, pending: boolean) {
+  const next = new Set(deletingIds.value)
+  pending ? next.add(id) : next.delete(id)
+  deletingIds.value = next
 }
 
 onMounted(loadData)

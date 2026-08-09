@@ -8,7 +8,7 @@
     <el-card v-for="(variant, key) in form.variants" v-else :key="key" shadow="never" class="variant-card">
       <div class="variant-grid">
         <el-form-item label="Variant key" required>
-          <el-input :model-value="String(key)" :disabled="disabled" @change="onRenameInput(String(key), $event)" />
+          <el-input v-model="variantKeyDrafts[key]" :disabled="disabled" @change="onRenameInput(String(key), $event)" />
         </el-form-item>
         <el-form-item label="Default">
           <el-radio v-model="form.defaultVariant" :label="String(key)" :disabled="disabled">Default</el-radio>
@@ -37,21 +37,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { PropType } from 'vue'
 import type { DataUnitVariant } from '@/types/data-unit-definition'
 import type { UnitForm } from './unitCatalogEditor.mjs'
-import { addVariant, deleteVariant, renameVariant } from './unitCatalogEditor.mjs'
+import { addVariant, commitVariantKeyDraft, deleteVariant } from './unitCatalogEditor.mjs'
 
 const props = defineProps({
   form: { type: Object as PropType<UnitForm>, required: true },
   disabled: { type: Boolean, default: false },
 })
 const noneUnit = computed(() => props.form.unitKey === 'none')
+const variantKeyDrafts = reactive<Record<string, string>>({})
+
+watch(() => Object.keys(props.form.variants).join('\u0000'), () => {
+  for (const key of Object.keys(variantKeyDrafts)) delete variantKeyDrafts[key]
+  for (const key of Object.keys(props.form.variants)) variantKeyDrafts[key] = key
+}, { immediate: true })
 
 function onRename(oldKey: string, value: string) {
-  const error = renameVariant(props.form, oldKey, value)
+  const error = commitVariantKeyDraft(props.form, variantKeyDrafts, oldKey, value)
   if (error) ElMessage.error(error)
 }
 

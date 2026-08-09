@@ -1,5 +1,13 @@
 <template>
-  <el-dialog v-model="visibleLocal" :title="type === 'add' ? 'Add Unit' : 'Edit Unit'" width="820px">
+  <el-dialog
+    v-model="visibleLocal"
+    :title="type === 'add' ? 'Add Unit' : 'Edit Unit'"
+    width="820px"
+    :close-on-click-modal="!saving"
+    :close-on-press-escape="!saving"
+    :show-close="!saving"
+    :before-close="beforeClose"
+  >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
       <div class="form-grid">
         <el-form-item label="Unit key" prop="unitKey">
@@ -28,6 +36,7 @@ import type { PropType } from 'vue'
 import type { DataUnitDefinitionCreateDTO, DataUnitDefinitionUpdateDTO } from '@/types/data-unit-definition'
 import DataUnitVariantsEditor from './DataUnitVariantsEditor.vue'
 import type { UnitForm } from './unitCatalogEditor.mjs'
+import { isInterceptorHandledError } from './unitCatalogEditor.mjs'
 import { normalizeUnitPayload, validateUnitForm } from './dataCatalogForm.mjs'
 import { createDataUnit, updateDataUnit } from '@/api/data-units'
 
@@ -40,6 +49,7 @@ const props = defineProps({
 const emit = defineEmits<{ (e: 'update:visible', value: boolean): void; (e: 'saved'): void }>()
 const formRef = ref()
 const saving = ref(false)
+const saveSession = ref(0)
 const visibleLocal = ref(props.visible)
 const active = computed({
   get: () => props.form.isActive === 1,
@@ -49,6 +59,8 @@ const required = (message: string) => [{ required: true, message, trigger: 'blur
 const rules = { unitKey: required('Unit key required'), name: required('Name required') }
 
 watch(() => props.visible, async value => {
+  saveSession.value += 1
+  saving.value = false
   visibleLocal.value = value
   if (value) {
     await nextTick()
@@ -56,39 +68,49 @@ watch(() => props.visible, async value => {
   }
 })
 watch(() => props.formVersion, async () => {
+  saveSession.value += 1
+  saving.value = false
   await nextTick()
   formRef.value?.clearValidate()
 })
 watch(visibleLocal, value => emit('update:visible', value))
-watch(() => props.form.unitKey, unitKey => {
-  if (unitKey === 'none') {
-    props.form.variants = {}
-    props.form.defaultVariant = null
-  }
-})
-
 async function onSave() {
   if (saving.value) return
+  const session = saveSession.value
   saving.value = true
   try {
     const valid = await validateFormWithCallback(formRef.value)
     if (!valid) return
-    const error = validateUnitForm(props.form)
+    const payload = normalizeUnitPayload(props.form)
+    const error = validateUnitForm(payload)
     if (error) {
       ElMessage.error(error)
       return
     }
-    const payload = normalizeUnitPayload(props.form)
-    if (props.type === 'add') await createDataUnit(payload as DataUnitDefinitionCreateDTO)
-    else await updateDataUnit(Number(props.form.id), payload as DataUnitDefinitionUpdateDTO)
+    try {
+      if (props.type === 'add') await createDataUnit(payload as DataUnitDefinitionCreateDTO)
+      else await updateDataUnit(Number(props.form.id), payload as DataUnitDefinitionUpdateDTO)
+    } catch (error) {
+      // The shared interceptor reports the exact backend/transport error.
+      if (!isInterceptorHandledError(error)) {
+        ElMessage.error(error instanceof Error ? error.message : 'Failed to save unit')
+      }
+      return
+    }
+    if (session !== saveSession.value) return
     ElMessage.success(props.type === 'add' ? 'Added successfully' : 'Updated successfully')
     visibleLocal.value = false
     emit('saved')
   } catch (error) {
+    if (session !== saveSession.value) return
     ElMessage.error(error instanceof Error ? error.message : 'Failed to save unit')
   } finally {
-    saving.value = false
+    if (session === saveSession.value) saving.value = false
   }
+}
+
+function beforeClose(done: () => void) {
+  if (!saving.value) done()
 }
 
 function validateFormWithCallback(form: any): Promise<boolean> {

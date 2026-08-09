@@ -40,6 +40,20 @@ export function renameVariant(form, oldKey, rawNewKey) {
   return null
 }
 
+export function commitVariantKeyDraft(form, drafts, oldKey, rawNewKey) {
+  const error = renameVariant(form, oldKey, rawNewKey)
+  if (error) {
+    drafts[oldKey] = oldKey
+    return error
+  }
+  const newKey = String(rawNewKey ?? '').trim()
+  if (newKey !== oldKey) {
+    delete drafts[oldKey]
+    drafts[newKey] = newKey
+  }
+  return null
+}
+
 export function deleteVariant(form, key) {
   if (form.defaultVariant === key) return `Select another default variant before deleting ${key}`
   const { [key]: _removed, ...remaining } = form.variants
@@ -63,4 +77,9 @@ export function replaceUnitForm(target, source) {
     if (!Object.hasOwn(source, key)) delete target[key]
   }
   Object.assign(target, source)
+}
+
+export function isInterceptorHandledError(error) {
+  return !!error && typeof error === 'object'
+    && (error.isAxiosError === true || (Object.hasOwn(error, 'code') && Object.hasOwn(error, 'msg')))
 }

@@ -7,6 +7,8 @@ import {
   deleteVariant,
   renameVariant,
   replaceUnitForm,
+  commitVariantKeyDraft,
+  isInterceptorHandledError,
 } from '../src/views/dashboard/data-options/unitCatalogEditor.mjs'
 
 test('unit editor starts with a valid explicit non-none variant shape', () => {
@@ -52,6 +54,25 @@ test('variant keys use the strict trimmed catalog regex', () => {
   assert.equal(form.defaultVariant, 'kilometre')
 })
 
+test('invalid or colliding variant drafts roll back to the canonical form key', () => {
+  const form = {
+    unitKey: 'distance',
+    defaultVariant: 'km',
+    variants: {
+      km: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } },
+      mi: { aliases: ['mi'], label: { eng: 'mi', zhs: '英里' } },
+    },
+  }
+  const drafts = { km: 'km', mi: 'mi' }
+  assert.equal(commitVariantKeyDraft(form, drafts, 'km', ' KM '), 'variantKey must match ^[a-z][a-z0-9_]*$')
+  assert.deepEqual(drafts, { km: 'km', mi: 'mi' })
+  assert.equal(commitVariantKeyDraft(form, drafts, 'km', 'mi'), 'variantKey mi already exists')
+  assert.deepEqual(drafts, { km: 'km', mi: 'mi' })
+  assert.equal(commitVariantKeyDraft(form, drafts, 'km', ' kilometre '), null)
+  assert.deepEqual(drafts, { kilometre: 'kilometre', mi: 'mi' })
+  assert.equal(form.defaultVariant, 'kilometre')
+})
+
 test('current default cannot be deleted before another default is selected', () => {
   const form = {
     unitKey: 'distance',
@@ -76,6 +97,12 @@ test('replacing an edit form removes stale server-only state before add', () => 
   assert.equal(target.unitKey, '')
 })
 
+test('request errors already reported by the interceptor are distinguishable from local errors', () => {
+  assert.equal(isInterceptorHandledError({ isAxiosError: true, message: 'network' }), true)
+  assert.equal(isInterceptorHandledError({ code: 4001, msg: 'unit is referenced' }), true)
+  assert.equal(isInterceptorHandledError(new Error('local validation failed')), false)
+})
+
 test('units tab provides paging, CRUD, reference safety, and fail-closed writes', async () => {
   const [page, panel, dialog, variants] = await Promise.all([
     readFile(new URL('../src/views/dashboard/data-options/DataTypeOptionsPage.vue', import.meta.url), 'utf8'),
@@ -91,6 +118,7 @@ test('units tab provides paging, CRUD, reference safety, and fail-closed writes'
   assert.match(panel, /pageDataUnits/)
   assert.match(panel, /referenceCount/)
   assert.match(panel, /activeLoadingIds/)
+  assert.match(panel, /deletingIds/)
   assert.match(panel, /row\.referenceCount > 0/)
   assert.match(panel, /removeDataUnit/)
   assert.match(panel, /updateDataUnit/)
@@ -99,11 +127,16 @@ test('units tab provides paging, CRUD, reference safety, and fail-closed writes'
   assert.match(panel, /loadData\(\)/)
   assert.doesNotMatch(panel, /splice\(/)
   assert.match(dialog, /:loading="saving"/)
+  assert.match(dialog, /:close-on-click-modal="!saving"/)
+  assert.match(dialog, /:close-on-press-escape="!saving"/)
+  assert.match(dialog, /:before-close="beforeClose"/)
+  assert.match(dialog, /saveSession/)
   assert.match(dialog, /validateUnitForm/)
   assert.match(dialog, /normalizeUnitPayload/)
   assert.match(dialog, /clearValidate/)
   assert.match(dialog, /formVersion/)
-  assert.match(variants, /renameVariant/)
+  assert.match(variants, /commitVariantKeyDraft/)
+  assert.match(variants, /variantKeyDrafts/)
   assert.match(variants, /deleteVariant/)
   assert.match(variants, /allow-create/)
   assert.match(variants, /label\.eng/)
@@ -116,6 +149,20 @@ test('none unit is represented without variants or a default', async () => {
     'utf8',
   )
   assert.match(dialog, /form\.unitKey/)
-  assert.match(dialog, /form\.variants = {}/)
-  assert.match(dialog, /form\.defaultVariant = null/)
+  assert.doesNotMatch(dialog, /props\.form\.variants = {}/)
+  assert.doesNotMatch(dialog, /props\.form\.defaultVariant = null/)
+})
+
+test('normalizing none preserves the form draft but sends an explicit empty unit', async () => {
+  const { normalizeUnitPayload } = await import('../src/views/dashboard/data-options/dataCatalogForm.mjs')
+  const form = {
+    unitKey: 'none', name: 'None', defaultVariant: 'km',
+    variants: { km: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } } },
+    isActive: 1, sortOrder: 0, description: '',
+  }
+  const payload = normalizeUnitPayload(form)
+  assert.equal(payload.defaultVariant, null)
+  assert.deepEqual(payload.variants, {})
+  assert.equal(form.defaultVariant, 'km')
+  assert.equal(Object.hasOwn(form.variants, 'km'), true)
 })

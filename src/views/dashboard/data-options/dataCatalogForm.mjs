@@ -94,14 +94,17 @@ export function validateDataTypeForm(form) {
 }
 
 export function normalizeUnitPayload(form) {
-  const validationError = validateUnitDefinition(form)
+  const unitKey = trim(form.unitKey)
+  const candidate = unitKey === 'none'
+    ? { ...form, unitKey, defaultVariant: null, variants: {} }
+    : form
+  const validationError = validateUnitDefinition(candidate)
   if (validationError) throw new Error(validationError)
-  const aliasError = validateCatalogAliasOwnership([form])
+  const aliasError = validateCatalogAliasOwnership([candidate])
   if (aliasError) throw new Error(aliasError)
 
-  const unitKey = trim(form.unitKey)
   const variants = []
-  for (const [rawKey, rawVariant] of sortedEntries(form.variants)) {
+  for (const [rawKey, rawVariant] of sortedEntries(candidate.variants)) {
     const variantKey = trim(rawKey)
     variants.push([
       variantKey,
@@ -115,9 +118,9 @@ export function normalizeUnitPayload(form) {
     ...(form.id === undefined || form.id === null ? {} : { id: Number(form.id) }),
     unitKey,
     name: trim(form.name),
-    defaultVariant: form.defaultVariant === null || trim(form.defaultVariant) === ''
+    defaultVariant: candidate.defaultVariant === null || trim(candidate.defaultVariant) === ''
       ? null
-      : trim(form.defaultVariant),
+      : trim(candidate.defaultVariant),
     variants: Object.fromEntries(variants),
     isActive: Number(form.isActive),
     sortOrder: Number(form.sortOrder),
