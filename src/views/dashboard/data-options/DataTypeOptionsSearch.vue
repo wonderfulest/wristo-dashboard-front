@@ -10,7 +10,7 @@
       </el-select>
       <el-input v-model="localQuery.keyword" placeholder="Keyword (label/标签/metric)" clearable style="width: 220px" />
       <el-button type="primary" @click="onSearch">Search</el-button>
-      <el-button type="primary" @click="$emit('add')">Add</el-button>
+      <el-button type="primary" :disabled="addDisabled" @click="$emit('add')">Add</el-button>
     </div>
   </div>
 </template>
@@ -22,7 +22,8 @@ import type { DataTypeOptionPageQueryDTO } from '@/types/data-type-option'
 
 const props = defineProps({
   categories: { type: Array as PropType<string[]>, default: () => [] },
-  query: { type: Object as PropType<Partial<DataTypeOptionPageQueryDTO>>, required: true }
+  query: { type: Object as PropType<Partial<DataTypeOptionPageQueryDTO>>, required: true },
+  addDisabled: { type: Boolean, default: false },
 })
 
 const emit = defineEmits<{
