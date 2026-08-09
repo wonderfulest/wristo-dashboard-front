@@ -33,6 +33,7 @@ export interface DataTypeOptionFields {
   iconUnicode: string
   defaultValue: string
   isActive: number
+  systemDefault: number
   sortOrder: number
   description: string
   iconRules?: IconRules
@@ -55,6 +56,7 @@ export interface DataTypeOptionUpdateDTO extends Partial<DataTypeOptionFields> {
 export interface DataTypeOptionPageQueryDTO extends PageQueryDTO {
   category?: string
   active?: number
+  systemDefault?: number
   keyword?: string
 }
 

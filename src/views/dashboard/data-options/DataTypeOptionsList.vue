@@ -38,12 +38,28 @@
             :active-value="1"
             :inactive-value="0"
             :loading="activeLoadingIds.has(Number(row.id))"
-            :disabled="!catalogWritable || activeLoadingIds.has(Number(row.id))"
+            :disabled="!catalogWritable || activeLoadingIds.has(Number(row.id)) || systemDefaultLoadingIds.has(Number(row.id))"
             active-text="Yes"
             inactive-text="No"
             inline-prompt
             aria-label="Toggle data type option active state"
             @change="handleActiveSwitchChange(row, $event)"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column prop="systemDefault" label="System Default" width="130">
+        <template #default="{ row }">
+          <el-switch
+            :model-value="row.systemDefault"
+            :active-value="1"
+            :inactive-value="0"
+            :loading="systemDefaultLoadingIds.has(Number(row.id))"
+            :disabled="!catalogWritable || row.isActive !== 1 || activeLoadingIds.has(Number(row.id)) || systemDefaultLoadingIds.has(Number(row.id))"
+            active-text="Yes"
+            inactive-text="No"
+            inline-prompt
+            aria-label="Toggle data type option system default state"
+            @change="handleSystemDefaultSwitchChange(row, $event)"
           />
         </template>
       </el-table-column>
@@ -83,6 +99,7 @@ const props = defineProps({
   pageNum: { type: Number, default: 1 },
   pageSize: { type: Number, default: 100 },
   activeLoadingIds: { type: Object as PropType<Set<number>>, default: () => new Set<number>() },
+  systemDefaultLoadingIds: { type: Object as PropType<Set<number>>, default: () => new Set<number>() },
   catalogWritable: { type: Boolean, default: false },
 })
 
@@ -93,6 +110,7 @@ const emit = defineEmits<{
   (e: 'edit', row: DataTypeOptionVO): void
   (e: 'delete', row: DataTypeOptionVO): void
   (e: 'active-change', row: DataTypeOptionVO, value: number): void
+  (e: 'system-default-change', row: DataTypeOptionVO, value: number): void
 }>()
 
 const pageNumLocal = ref(props.pageNum)
@@ -108,6 +126,9 @@ function onSizeChange(size: number) { emit('size-change', size) }
 function onCurrentChange(page: number) { emit('current-change', page) }
 function handleActiveSwitchChange(row: DataTypeOptionVO, value: string | number | boolean) {
   emit('active-change', row, Number(value))
+}
+function handleSystemDefaultSwitchChange(row: DataTypeOptionVO, value: string | number | boolean) {
+  emit('system-default-change', row, Number(value))
 }
 
 function iconRulesSummary(row: DataTypeOptionVO): string {

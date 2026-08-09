@@ -91,6 +91,14 @@
         <el-form-item label="Active" prop="isActive">
           <el-switch v-model="switchActive" />
         </el-form-item>
+        <el-form-item label="System Default" prop="systemDefault">
+          <el-switch
+            v-model="form.systemDefault"
+            :active-value="1"
+            :inactive-value="0"
+            :disabled="form.isActive !== 1"
+          />
+        </el-form-item>
         <el-form-item label="Sort Order" prop="sortOrder">
           <el-input-number v-model="form.sortOrder" :min="0" />
         </el-form-item>
@@ -150,7 +158,10 @@ watch(() => props.formVersion, async () => {
   formRef.value?.clearValidate()
 })
 watch(visibleLocal, value => emit('update:visible', value))
-watch(switchActive, value => { props.form.isActive = value ? 1 : 0 })
+watch(switchActive, value => {
+  props.form.isActive = value ? 1 : 0
+  if (!value) props.form.systemDefault = 0
+})
 watch(() => props.form.isActive, value => { switchActive.value = (value ?? 1) === 1 })
 watch(() => props.form.iconRules, value => { switchIconRules.value = !!value })
 watch(switchIconRules, enabled => {

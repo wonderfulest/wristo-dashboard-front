@@ -8,7 +8,7 @@
         <el-option :value="1" label="Active" />
         <el-option :value="0" label="Inactive" />
       </el-select>
-      <el-input v-model="localQuery.keyword" placeholder="Keyword (label/标签/metric)" clearable style="width: 220px" />
+      <el-input v-model="localQuery.keyword" placeholder="Keyword (name/metric)" clearable style="width: 220px" />
       <el-button type="primary" @click="onSearch">Search</el-button>
       <el-button type="primary" :disabled="addDisabled" @click="$emit('add')">Add</el-button>
     </div>

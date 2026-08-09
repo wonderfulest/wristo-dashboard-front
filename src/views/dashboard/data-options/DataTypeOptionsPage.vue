@@ -19,6 +19,7 @@
       :page-num="pageNum"
       :page-size="pageSize"
       :active-loading-ids="activeLoadingIds"
+      :system-default-loading-ids="systemDefaultLoadingIds"
       :catalog-writable="catalogWritable"
       @sort-change="handleSortChange"
       @size-change="handleSizeChange"
@@ -26,6 +27,7 @@
       @edit="handleEdit"
       @delete="handleDelete"
       @active-change="handleActiveChange"
+      @system-default-change="handleSystemDefaultChange"
     />
 
     <el-alert v-if="unitsError" type="error" :closable="false" class="units-alert">
@@ -84,6 +86,7 @@ const selectableUnits = computed(() => {
 })
 const loading = ref(false)
 const activeLoadingIds = ref(new Set<number>())
+const systemDefaultLoadingIds = ref(new Set<number>())
 const total = ref(0)
 const pageNum = ref(1)
 const pageSize = ref(50)
@@ -195,16 +198,39 @@ async function handleActiveChange(row: DataTypeOptionVO, value: number) {
   if (!catalogWritable.value) return
   const id = Number(row.id)
   const previous = row.isActive
+  const previousSystemDefault = row.systemDefault
   setActiveLoading(id, true)
   row.isActive = value
+  if (value === 0) row.systemDefault = 0
   try {
-    await updateDataTypeOption(id, { isActive: value })
+    await updateDataTypeOption(id, {
+      isActive: value,
+      ...(value === 0 ? { systemDefault: 0 } : {}),
+    })
     ElMessage.success(value === 1 ? 'Activated' : 'Deactivated')
   } catch {
     row.isActive = previous
+    row.systemDefault = previousSystemDefault
     ElMessage.error('Failed to update active state')
   } finally {
     setActiveLoading(id, false)
+  }
+}
+
+async function handleSystemDefaultChange(row: DataTypeOptionVO, value: number) {
+  if (!catalogWritable.value) return
+  const id = Number(row.id)
+  const previous = row.systemDefault
+  setSystemDefaultLoading(id, true)
+  row.systemDefault = value
+  try {
+    await updateDataTypeOption(id, { systemDefault: value })
+    ElMessage.success(value === 1 ? 'Set as system default' : 'Removed from system defaults')
+  } catch {
+    row.systemDefault = previous
+    ElMessage.error('Failed to update system default state')
+  } finally {
+    setSystemDefaultLoading(id, false)
   }
 }
 
@@ -212,6 +238,12 @@ function setActiveLoading(id: number, pending: boolean) {
   const next = new Set(activeLoadingIds.value)
   pending ? next.add(id) : next.delete(id)
   activeLoadingIds.value = next
+}
+
+function setSystemDefaultLoading(id: number, pending: boolean) {
+  const next = new Set(systemDefaultLoadingIds.value)
+  pending ? next.add(id) : next.delete(id)
+  systemDefaultLoadingIds.value = next
 }
 
 function handleDelete(row: DataTypeOptionVO) {

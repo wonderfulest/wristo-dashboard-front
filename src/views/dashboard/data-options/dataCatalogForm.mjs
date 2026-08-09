@@ -14,6 +14,7 @@ export function createEmptyDataTypeForm() {
     iconUnicode: '',
     defaultValue: '',
     isActive: 1,
+    systemDefault: 0,
     sortOrder: 1,
     description: '',
     iconRules: undefined,
@@ -27,6 +28,7 @@ export function createEmptyDataTypeForm() {
 export function cloneDataTypeForm(value) {
   return {
     ...value,
+    systemDefault: Number(value?.systemDefault ?? 0),
     settingsLabel: normalizeLocalizedText(value?.settingsLabel),
     label: normalizeLocalizedText(value?.label),
     iconRules: normalizeIconRules(value?.iconRules),
@@ -59,6 +61,7 @@ export function normalizeDataTypePayload(form) {
     iconUnicode: trim(form.iconUnicode),
     defaultValue: trim(form.defaultValue),
     isActive: Number(form.isActive),
+    systemDefault: Number(form.systemDefault),
     sortOrder: Number(form.sortOrder),
     description: trim(form.description),
     iconRules: normalizeIconRules(form.iconRules),
@@ -87,6 +90,8 @@ export function validateDataTypeForm(form) {
   const unitError = validateKey(normalized.unitKey, 'unitKey')
   if (unitError) return unitError
   if (normalized.isActive !== 0 && normalized.isActive !== 1) return 'isActive must be 0 or 1'
+  if (normalized.systemDefault !== 0 && normalized.systemDefault !== 1) return 'systemDefault must be 0 or 1'
+  if (normalized.systemDefault === 1 && normalized.isActive !== 1) return 'System Default requires Active'
   if (!Number.isInteger(normalized.sortOrder) || normalized.sortOrder < 0) {
     return 'sortOrder must be nonnegative'
   }
