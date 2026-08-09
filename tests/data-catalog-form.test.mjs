@@ -26,7 +26,7 @@ test('data item payload trims canonical labels and omits compatibility aliases',
     valueCode: 1,
     settingsLabel: { eng: ' Steps ', zhs: ' 步数 ' },
     label: { eng: ' STEPS ', zhs: ' 步数 ' },
-    unitKey: ' NONE ',
+    unitKey: ' none ',
     enLabel: 'legacy',
     labelCn: '旧值',
     displayLabel: 'legacy',
@@ -65,18 +65,18 @@ test('data item validation requires both label purposes and strict symbol and un
     'metricSymbol must match ^:[A-Z][A-Z0-9_]*$',
   )
   assert.equal(
-    validateDataTypeForm({ ...base, unitKey: 'No Unit' }),
+    validateDataTypeForm({ ...base, unitKey: 'NONE' }),
     'unitKey must match ^[a-z][a-z0-9_]*$',
   )
 })
 
-test('unit payload lowercases keys and normalizes aliases deterministically', () => {
+test('unit payload trims strict lowercase keys and normalizes aliases deterministically', () => {
   const payload = normalizeUnitPayload({
-    unitKey: ' Distance ',
+    unitKey: ' distance ',
     name: ' Distance ',
-    defaultVariant: ' KM ',
+    defaultVariant: ' km ',
     variants: {
-      ' KM ': {
+      ' km ': {
         aliases: [' KM ', 'km', ' Kilometre '],
         label: { eng: ' km ', zhs: ' 公里 ' },
       },
@@ -94,6 +94,33 @@ test('unit payload lowercases keys and normalizes aliases deterministically', ()
       label: { eng: 'km', zhs: '公里' },
     },
   })
+})
+
+test('unit validation rejects uppercase unit, variant, and default keys at exact paths', () => {
+  const base = {
+    name: 'Distance',
+    defaultVariant: 'km',
+    variants: { km: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } } },
+    isActive: 1,
+    sortOrder: 0,
+  }
+
+  assert.equal(
+    validateUnitForm({ ...base, unitKey: 'Distance' }),
+    'unitKey must match ^[a-z][a-z0-9_]*$',
+  )
+  assert.equal(
+    validateUnitForm({
+      ...base,
+      unitKey: 'distance',
+      variants: { KM: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } } },
+    }),
+    'distance.variantKey must match ^[a-z][a-z0-9_]*$',
+  )
+  assert.equal(
+    validateUnitForm({ ...base, unitKey: 'distance', defaultVariant: 'KM' }),
+    'distance.defaultVariant must match ^[a-z][a-z0-9_]*$',
+  )
 })
 
 test('unit validation mirrors none and active default-variant rules with exact paths', () => {

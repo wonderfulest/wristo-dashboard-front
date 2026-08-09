@@ -37,7 +37,7 @@ export function normalizeDataTypePayload(form) {
     valueCode: Number(form.valueCode),
     settingsLabel: normalizeLocalizedText(form.settingsLabel),
     label: normalizeLocalizedText(form.label),
-    unitKey: lowerKey(form.unitKey),
+    unitKey: trim(form.unitKey),
     iconUnicode: trim(form.iconUnicode),
     defaultValue: trim(form.defaultValue),
     isActive: Number(form.isActive),
@@ -76,10 +76,10 @@ export function validateDataTypeForm(form) {
 }
 
 export function normalizeUnitPayload(form) {
-  const unitKey = lowerKey(form.unitKey)
+  const unitKey = trim(form.unitKey)
   const variants = {}
   for (const [rawKey, rawVariant] of Object.entries(form.variants ?? {})) {
-    const variantKey = lowerKey(rawKey)
+    const variantKey = trim(rawKey)
     variants[variantKey] = {
       aliases: [...new Set((rawVariant?.aliases ?? []).map(alias => trim(alias).toLowerCase()))].sort(),
       label: normalizeLocalizedText(rawVariant?.label),
@@ -91,7 +91,7 @@ export function normalizeUnitPayload(form) {
     name: trim(form.name),
     defaultVariant: form.defaultVariant === null || trim(form.defaultVariant) === ''
       ? null
-      : lowerKey(form.defaultVariant),
+      : trim(form.defaultVariant),
     variants: Object.fromEntries(Object.entries(variants).sort(([left], [right]) => left.localeCompare(right))),
     isActive: Number(form.isActive),
     sortOrder: Number(form.sortOrder),
@@ -104,7 +104,7 @@ export function validateUnitForm(value) {
   const owners = new Map()
 
   for (const rawUnit of units) {
-    const rawUnitKey = lowerKey(rawUnit?.unitKey)
+    const rawUnitKey = trim(rawUnit?.unitKey)
     const unitKeyError = validateKey(rawUnitKey, 'unitKey')
     if (unitKeyError) return unitKeyError
     if (!trim(rawUnit?.name)) return `${rawUnitKey}.name is required`
@@ -128,7 +128,7 @@ export function validateUnitForm(value) {
 
     const normalizedVariantKeys = new Set()
     for (const [rawVariantKey, variant] of Object.entries(rawVariants)) {
-      const variantKey = lowerKey(rawVariantKey)
+      const variantKey = trim(rawVariantKey)
       const variantKeyError = validateKey(variantKey, `${rawUnitKey}.variantKey`)
       if (variantKeyError) return variantKeyError
       if (normalizedVariantKeys.has(variantKey)) {
@@ -152,7 +152,7 @@ export function validateUnitForm(value) {
       }
     }
 
-    const defaultVariant = rawDefault === null ? null : lowerKey(rawDefault)
+    const defaultVariant = rawDefault
     if (defaultVariant !== null) {
       const defaultError = validateKey(defaultVariant, `${rawUnitKey}.defaultVariant`)
       if (defaultError) return defaultError
@@ -170,10 +170,6 @@ function normalizeLocalizedText(value) {
 
 function validateKey(value, path) {
   return KEY_PATTERN.test(value) ? null : `${path} must match ^[a-z][a-z0-9_]*$`
-}
-
-function lowerKey(value) {
-  return trim(value).toLowerCase()
 }
 
 function trim(value) {
