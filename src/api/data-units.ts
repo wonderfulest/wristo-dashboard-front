@@ -23,10 +23,10 @@ export function getDataUnit(id: number) {
   return instance.get<ApiResponse<DataUnitDefinitionVO>>(`/admin/data-units/get/${id}`)
 }
 
-export function listDataUnits(active?: number) {
+export function listDataUnits(active?: number): Promise<ApiResponse<DataUnitDefinitionVO[]>> {
   return instance.get<ApiResponse<DataUnitDefinitionVO[]>>('/admin/data-units/list', {
     params: active === undefined ? undefined : { active },
-  })
+  }) as unknown as Promise<ApiResponse<DataUnitDefinitionVO[]>>
 }
 
 export function pageDataUnits(

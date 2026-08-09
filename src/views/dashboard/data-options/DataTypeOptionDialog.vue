@@ -1,41 +1,72 @@
 <template>
-  <el-dialog v-model="visibleLocal" :title="titleText" width="700px">
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+  <el-dialog v-model="visibleLocal" :title="titleText" width="760px">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="130px">
       <div class="form-grid">
         <el-form-item label="Symbol" prop="metricSymbol" class="full">
-          <el-input v-model="form.metricSymbol" style="width: 300px" />
+          <el-input v-model="form.metricSymbol" />
         </el-form-item>
         <el-form-item label="Category" prop="category">
           <el-select v-model="form.category" placeholder="Category">
-            <el-option v-for="c in categories" :key="c" :label="c" :value="c" />
+            <el-option v-for="category in categories" :key="category" :label="category" :value="category" />
           </el-select>
         </el-form-item>
         <el-form-item label="Value Code" prop="valueCode">
           <el-input-number v-model="form.valueCode" :min="0" />
         </el-form-item>
-        <el-form-item label="Label" prop="label" class="full">
-          <el-input v-model="form.label" />
-        </el-form-item>
-        <el-form-item label="EN Short" prop="engShort">
-          <el-input v-model="form.engShort" />
-        </el-form-item>
-        <el-form-item label="CN Short" prop="zhsShort">
-          <el-input v-model="form.zhsShort" />
-        </el-form-item>
-        <el-form-item label="Unit" prop="unit">
-          <el-input v-model="form.unit" />
+
+        <section class="label-section full">
+          <h3>Connect IQ Settings Label</h3>
+          <p>Shown to users in the Garmin Connect IQ app settings page.</p>
+          <div class="label-fields">
+            <el-form-item label="English" prop="settingsLabel.eng">
+              <el-input v-model="form.settingsLabel.eng" />
+            </el-form-item>
+            <el-form-item label="简体中文" prop="settingsLabel.zhs">
+              <el-input v-model="form.settingsLabel.zhs" />
+            </el-form-item>
+          </div>
+        </section>
+
+        <section class="label-section full">
+          <h3>Watchface Data Label</h3>
+          <p>Rendered as the data-item label on the watchface.</p>
+          <div class="label-fields">
+            <el-form-item label="English" prop="label.eng">
+              <el-input v-model="form.label.eng" />
+            </el-form-item>
+            <el-form-item label="简体中文" prop="label.zhs">
+              <el-input v-model="form.label.zhs" />
+            </el-form-item>
+          </div>
+        </section>
+
+        <el-form-item label="Unit" prop="unitKey" class="full">
+          <div class="unit-field">
+            <el-select v-model="form.unitKey" filterable>
+              <el-option
+                v-for="unit in units"
+                :key="unit.unitKey"
+                :value="unit.unitKey"
+                :label="`${unit.name} (${unit.unitKey})${unit.isActive === 0 ? ' — inactive' : ''}`"
+              />
+            </el-select>
+            <div v-if="selectedUnit" class="unit-preview">
+              <div>Default: {{ selectedUnit.defaultVariant || 'none' }}</div>
+              <div v-for="(variant, key) in selectedUnit.variants" :key="key">
+                {{ key }}: {{ variant.label.eng }} / {{ variant.label.zhs }}
+                <span class="aliases">({{ variant.aliases.join(', ') }})</span>
+              </div>
+            </div>
+          </div>
         </el-form-item>
         <el-form-item label="Icon Unicode" prop="iconUnicode">
           <el-input v-model="form.iconUnicode" />
         </el-form-item>
-        <el-form-item label="Icon Rules" class="full">
-          <DataOptionIconRulesEditor
-            v-model:enabled="switchIconRules"
-            v-model="form.iconRules"
-          />
-        </el-form-item>
         <el-form-item label="Default Value" prop="defaultValue">
           <el-input v-model="form.defaultValue" />
+        </el-form-item>
+        <el-form-item label="Icon Rules" class="full">
+          <DataOptionIconRulesEditor v-model:enabled="switchIconRules" v-model="form.iconRules" />
         </el-form-item>
         <el-form-item label="Dial Mode" prop="dialMode" class="full">
           <el-select v-model="form.dialMode" placeholder="Not Supported" clearable style="width: 220px">
@@ -57,7 +88,6 @@
             <el-input-number v-model="form.dialMax" controls-position="right" />
           </el-form-item>
         </template>
-        
         <el-form-item label="Active" prop="isActive">
           <el-switch v-model="switchActive" />
         </el-form-item>
@@ -65,7 +95,7 @@
           <el-input-number v-model="form.sortOrder" :min="0" />
         </el-form-item>
         <el-form-item label="Description" prop="description" class="full">
-          <el-input type="textarea" v-model="form.description" :rows="3" />
+          <el-input v-model="form.description" type="textarea" :rows="3" />
         </el-form-item>
       </div>
     </el-form>
@@ -77,130 +107,88 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import DataOptionIconRulesEditor from './DataOptionIconRulesEditor.vue'
 import type { PropType } from 'vue'
-import type { DataTypeOptionCreateDTO, DataTypeOptionUpdateDTO, IconRules } from '@/types/data-type-option'
+import type { DataTypeOptionCreateDTO, DataTypeOptionUpdateDTO } from '@/types/data-type-option'
+import type { DataUnitDefinitionVO } from '@/types/data-unit-definition'
 import { createDataTypeOption, updateDataTypeOption } from '@/api/data-type-options'
+import DataOptionIconRulesEditor from './DataOptionIconRulesEditor.vue'
+import { normalizeDataTypePayload, validateDataTypeForm } from './dataCatalogForm.mjs'
 import { normalizeDialFields, validateDialFields } from './dialConfig.mjs'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
-  type: { type: String as PropType<'add'|'edit'>, default: 'add' },
-  form: { type: Object as PropType<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zhsShort?: string }>, required: true },
-  categories: { type: Array as PropType<string[]>, default: () => [] }
+  type: { type: String as PropType<'add' | 'edit'>, default: 'add' },
+  form: { type: Object as PropType<DataTypeOptionCreateDTO & { id?: number }>, required: true },
+  categories: { type: Array as PropType<string[]>, default: () => [] },
+  units: { type: Array as PropType<DataUnitDefinitionVO[]>, default: () => [] },
 })
 
 const emit = defineEmits<{
-  (e: 'update:visible', v: boolean): void
+  (e: 'update:visible', value: boolean): void
   (e: 'saved'): void
 }>()
-
 const visibleLocal = ref(props.visible)
-watch(() => props.visible, v => visibleLocal.value = v)
-watch(visibleLocal, v => emit('update:visible', v))
-
-const titleText = computed(() => props.type === 'add' ? 'Add Data Type Option' : 'Edit Data Type Option')
-
 const formRef = ref()
-
-// local switches and watchers for form sync
 const switchActive = ref((props.form.isActive ?? 1) === 1)
-watch(switchActive, v => { props.form.isActive = v ? 1 : 0 })
-watch(() => props.form.isActive, v => { switchActive.value = (v ?? 1) === 1 })
+const switchIconRules = ref(!!props.form.iconRules)
+const titleText = computed(() => props.type === 'add' ? 'Add Data Type Option' : 'Edit Data Type Option')
+const selectedUnit = computed(() => props.units.find(unit => unit.unitKey === props.form.unitKey))
 
-const switchIconRules = ref(!!(props.form as any).iconRules)
-watch(switchIconRules, (v) => {
-  if (!v) {
-    props.form.iconRules = undefined
-  } else {
-    if (!props.form.iconRules) {
-      props.form.iconRules = { type: 'boolean', icons: {} } as IconRules
-    }
-  }
+watch(() => props.visible, value => visibleLocal.value = value)
+watch(visibleLocal, value => emit('update:visible', value))
+watch(switchActive, value => { props.form.isActive = value ? 1 : 0 })
+watch(() => props.form.isActive, value => { switchActive.value = (value ?? 1) === 1 })
+watch(() => props.form.iconRules, value => { switchIconRules.value = !!value })
+watch(switchIconRules, enabled => {
+  if (!enabled) props.form.iconRules = undefined
+  else if (!props.form.iconRules) props.form.iconRules = { type: 'boolean', icons: {} }
 })
-
-watch(() => props.form.iconRules?.type, (t) => {
-  if (!t) return
-  if (t === 'numeric') {
-    if (!props.form.iconRules) props.form.iconRules = { type: 'numeric' } as IconRules
-    if (!props.form.iconRules!.ranges) props.form.iconRules!.ranges = []
-  } else {
-    if (!props.form.iconRules) props.form.iconRules = { type: t } as IconRules
-    if (!props.form.iconRules!.icons) props.form.iconRules!.icons = {}
-  }
+watch(() => props.form.iconRules?.type, type => {
+  if (!type || !props.form.iconRules) return
+  if (type === 'numeric') props.form.iconRules.ranges ||= []
+  else props.form.iconRules.icons ||= {}
 })
-
-watch(() => props.form.dialMode, (mode) => {
+watch(() => props.form.dialMode, mode => {
   if (mode === 'goal' && !props.form.dialGoalSource) props.form.dialGoalSource = 'garmin'
   Object.assign(props.form, normalizeDialFields(props.form))
 })
 
+const required = (message: string, trigger = 'blur') => [{ required: true, message, trigger }]
 const rules = {
-  metricSymbol: [{ required: true, message: 'Metric symbol required', trigger: 'blur' }],
-  category: [{ required: true, message: 'Category required', trigger: 'change' }],
-  valueCode: [{ required: true, message: 'Value code required', trigger: 'change' }],
-  label: [{ required: true, message: 'Label required', trigger: 'blur' }],
-  engShort: [{ required: true, message: 'English short label required', trigger: 'blur' }],
-  zhsShort: [{ required: true, message: '中文短标签必填', trigger: 'blur' }]
+  metricSymbol: required('Metric symbol required'),
+  category: required('Category required', 'change'),
+  valueCode: required('Value code required', 'change'),
+  'settingsLabel.eng': required('Connect IQ English label required'),
+  'settingsLabel.zhs': required('Connect IQ 简体中文标签必填'),
+  'label.eng': required('Watchface English label required'),
+  'label.zhs': required('Watchface 简体中文标签必填'),
+  unitKey: required('Unit required', 'change'),
 }
 
-function onCancel() {
-  visibleLocal.value = false
-}
+function onCancel() { visibleLocal.value = false }
 
 function onSave() {
   formRef.value.validate(async (valid: boolean) => {
     if (!valid) return
+    const catalogError = validateDataTypeForm(props.form)
+    if (catalogError) {
+      ElMessage.error(catalogError)
+      return
+    }
     const dialError = validateDialFields(props.form)
     if (dialError) {
       ElMessage.error(dialError)
       return
     }
-    const dialFields = normalizeDialFields(props.form)
+    Object.assign(props.form, normalizeDialFields(props.form))
+    const payload = normalizeDataTypePayload(props.form)
     if (props.type === 'add') {
-      const payload: DataTypeOptionCreateDTO = {
-        metricSymbol: props.form.metricSymbol || '',
-        category: props.form.category || 'field',
-        valueCode: Number(props.form.valueCode ?? 0),
-        label: props.form.label || '',
-        labelI18n: {
-          eng: props.form.engShort || '',
-          zhs: props.form.zhsShort || ''
-        },
-        unit: props.form.unit || '',
-        iconUnicode: props.form.iconUnicode || '',
-        defaultValue: props.form.defaultValue || '',
-        isActive: typeof props.form.isActive === 'number' ? props.form.isActive : 1,
-        sortOrder: Number(props.form.sortOrder ?? 1),
-        description: props.form.description || '',
-        iconRules: switchIconRules.value ? (props.form.iconRules as any) : ({} as any),
-        ...dialFields
-      }
-      await createDataTypeOption(payload)
+      await createDataTypeOption(payload as DataTypeOptionCreateDTO)
       ElMessage.success('Added successfully')
     } else {
-      const payload: DataTypeOptionUpdateDTO = {
-        id: Number(props.form.id),
-        metricSymbol: props.form.metricSymbol || '',
-        category: props.form.category || 'field',
-        valueCode: Number(props.form.valueCode ?? 0),
-        label: props.form.label || '',
-        labelI18n: {
-          eng: props.form.engShort || '',
-          zhs: props.form.zhsShort || ''
-        },
-        unit: props.form.unit || '',
-        iconUnicode: props.form.iconUnicode || '',
-        defaultValue: props.form.defaultValue || '',
-        isActive: typeof props.form.isActive === 'number' ? props.form.isActive : 1,
-        sortOrder: Number(props.form.sortOrder ?? 1),
-        description: props.form.description || '',
-        iconRules: switchIconRules.value ? (props.form.iconRules as any) : ({} as any),
-        ...dialFields
-      }
-      await updateDataTypeOption(Number(props.form.id), payload)
+      await updateDataTypeOption(Number(props.form.id), payload as DataTypeOptionUpdateDTO)
       ElMessage.success('Updated successfully')
     }
     visibleLocal.value = false
@@ -212,4 +200,11 @@ function onSave() {
 <style scoped>
 .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 24px; }
 .form-grid .full { grid-column: 1 / -1; }
+.label-section { padding: 14px 16px 2px; border: 1px solid #dcdfe6; border-radius: 6px; }
+.label-section h3 { margin: 0; font-size: 15px; }
+.label-section p { margin: 5px 0 14px; color: #909399; font-size: 13px; }
+.label-fields { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.unit-field, .unit-field :deep(.el-select) { width: 100%; }
+.unit-preview { margin-top: 8px; padding: 8px 10px; background: #f5f7fa; color: #606266; font-size: 12px; line-height: 1.7; }
+.aliases { color: #909399; }
 </style>

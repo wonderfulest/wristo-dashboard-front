@@ -14,14 +14,12 @@
       :total="total"
       :page-num="pageNum"
       :page-size="pageSize"
-      :supported-langs="supportedLangs"
       :active-loading-ids="activeLoadingIds"
       @sort-change="handleSortChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
       @edit="handleEdit"
       @delete="handleDelete"
-      @refresh="loadData"
       @active-change="handleActiveChange"
     />
 
@@ -30,65 +28,46 @@
       :type="dialogType"
       :form="form"
       :categories="categories"
+      :units="selectableUnits"
       @saved="loadData"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { DataTypeOptionVO, DataTypeOptionUpdateDTO, DataTypeOptionPageQueryDTO } from '@/types/data-type-option'
+import type { DataTypeOptionVO, DataTypeOptionPageQueryDTO } from '@/types/data-type-option'
+import type { DataUnitDefinitionVO } from '@/types/data-unit-definition'
 import { pageDataTypeOptions, removeDataTypeOption, updateDataTypeOption } from '@/api/data-type-options'
+import { listDataUnits } from '@/api/data-units'
 import DataTypeOptionDialog from './DataTypeOptionDialog.vue'
 import DataTypeOptionsSearch from './DataTypeOptionsSearch.vue'
 import DataTypeOptionsList from './DataTypeOptionsList.vue'
+import { cloneDataTypeForm, createEmptyDataTypeForm } from './dataCatalogForm.mjs'
 import { DATA_TYPE_CATEGORY_ENUM_NAME, useEnumStore } from '@/store/common'
 
 const categories = ref<string[]>([])
 const enumStore = useEnumStore()
-
-// Supported language codes (aligned with backend LanguageCode enum)
-const supportedLangs = [
-  'ara','bul','ces','dan','deu','dut','eng','est',
-  'fin','fre','gre','heb','hrv','hun','ind','ita',
-  'jpn','kor','lav','lit','nob','pol','por','ron',
-  'rus','slo','slv','spa','swe','tha','tur','ukr',
-  'vie','zhs','zht','zsm'
-]
-
 const list = ref<DataTypeOptionVO[]>([])
+const activeUnits = ref<DataUnitDefinitionVO[]>([])
+const referencedInactiveUnit = ref<DataUnitDefinitionVO | null>(null)
+const selectableUnits = computed(() => {
+  const units = [...activeUnits.value]
+  if (referencedInactiveUnit.value && !units.some(unit => unit.unitKey === referencedInactiveUnit.value?.unitKey)) {
+    units.push(referencedInactiveUnit.value)
+  }
+  return units
+})
 const loading = ref(false)
 const activeLoadingIds = ref(new Set<number>())
 const total = ref(0)
 const pageNum = ref(1)
 const pageSize = ref(50)
-
 const query = reactive<Partial<DataTypeOptionPageQueryDTO>>({ category: '', active: undefined, keyword: '', orderBy: 'id:asc' })
-
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
-
-const form = reactive<Partial<DataTypeOptionUpdateDTO> & { engShort?: string; zhsShort?: string }>({
-  id: undefined,
-  metricSymbol: '',
-  category: 'field',
-  valueCode: 0,
-  label: '',
-  unit: '',
-  iconUnicode: '',
-  defaultValue: '',
-  isActive: 1,
-  sortOrder: 1,
-  description: '',
-  engShort: '',
-  zhsShort: '',
-  iconRules: undefined,
-  dialMode: null,
-  dialMin: null,
-  dialMax: null,
-  dialGoalSource: null
-})
+const form = reactive(createEmptyDataTypeForm())
 
 const orderFieldMap: Record<string, string> = {
   valueCode: 'value_code',
@@ -96,20 +75,22 @@ const orderFieldMap: Record<string, string> = {
   sortOrder: 'sort_order',
 }
 
-function loadData() {
+async function loadData() {
   loading.value = true
-  const dto: DataTypeOptionPageQueryDTO = {
-    pageNum: pageNum.value,
-    pageSize: pageSize.value,
-    category: query.category || undefined,
-    active: typeof query.active === 'number' ? query.active : undefined,
-    keyword: query.keyword || undefined,
-    orderBy: (query as any).orderBy
-  }
-  pageDataTypeOptions(dto).then(res => {
+  try {
+    const res = await pageDataTypeOptions({
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      category: query.category || undefined,
+      active: typeof query.active === 'number' ? query.active : undefined,
+      keyword: query.keyword || undefined,
+      orderBy: query.orderBy,
+    })
     total.value = res.data?.total ?? 0
     list.value = res.data?.list ?? []
-  }).finally(() => { loading.value = false })
+  } finally {
+    loading.value = false
+  }
 }
 
 function handleSearch() {
@@ -128,58 +109,36 @@ function handleCurrentChange(page: number) {
 }
 
 function handleSortChange(payload: { prop: string; order: 'ascending' | 'descending' | null }) {
-  const { prop, order } = payload || ({} as any)
-  if (!order || !prop) {
-    ;(query as any).orderBy = 'id:asc'
+  if (!payload?.order || !payload.prop) {
+    query.orderBy = 'id:asc'
   } else {
-    const dir = order === 'ascending' ? 'asc' : 'desc'
-    const backendField = orderFieldMap[prop] || prop
-    ;(query as any).orderBy = `${backendField}:${dir},created_at:asc`
+    const direction = payload.order === 'ascending' ? 'asc' : 'desc'
+    query.orderBy = `${orderFieldMap[payload.prop] || payload.prop}:${direction},created_at:asc`
   }
   pageNum.value = 1
   loadData()
 }
 
+function resetForm(next = createEmptyDataTypeForm()) {
+  Object.assign(form, next)
+}
+
 function handleAdd() {
   dialogType.value = 'add'
-  Object.assign(form, {
-    id: undefined,
-    metricSymbol: '',
-    category: 'field',
-    valueCode: 0,
-    label: '',
-    unit: '',
-    iconUnicode: '',
-    defaultValue: '',
-    isActive: 1,
-    sortOrder: 1,
-    description: '',
-    engShort: '',
-    zhsShort: '',
-    iconRules: undefined,
-    dialMode: null,
-    dialMin: null,
-    dialMax: null,
-    dialGoalSource: null
-  })
+  referencedInactiveUnit.value = null
+  resetForm()
   dialogVisible.value = true
 }
 
-function handleEdit(row: DataTypeOptionVO) {
+async function handleEdit(row: DataTypeOptionVO) {
   dialogType.value = 'edit'
-  Object.assign(form, row)
-  const i18n = (row as any).labelI18n || {}
-  form.engShort = normalizeI18nValue(i18n.eng) || row.enLabel || row.label || ''
-  form.zhsShort = normalizeI18nValue(i18n.zhs) || row.labelCn || ''
+  referencedInactiveUnit.value = null
+  resetForm(cloneDataTypeForm(row))
+  if (!activeUnits.value.some(unit => unit.unitKey === row.unitKey)) {
+    const response = await listDataUnits()
+    referencedInactiveUnit.value = response.data?.find(unit => unit.unitKey === row.unitKey) ?? null
+  }
   dialogVisible.value = true
-}
-
-// saving handled by child dialog component
-
-function normalizeI18nValue(value: unknown): string {
-  if (typeof value === 'string') return value
-  if (value && typeof value === 'object') return String((value as any).short || '')
-  return ''
 }
 
 async function handleActiveChange(row: DataTypeOptionVO, value: number) {
@@ -198,13 +157,9 @@ async function handleActiveChange(row: DataTypeOptionVO, value: number) {
   }
 }
 
-function setActiveLoading(id: number, loading: boolean) {
+function setActiveLoading(id: number, pending: boolean) {
   const next = new Set(activeLoadingIds.value)
-  if (loading) {
-    next.add(id)
-  } else {
-    next.delete(id)
-  }
+  pending ? next.add(id) : next.delete(id)
   activeLoadingIds.value = next
 }
 
@@ -219,37 +174,26 @@ function handleDelete(row: DataTypeOptionVO) {
 
 async function loadCategories() {
   try {
-    const list = await enumStore.getEnumOptions(DATA_TYPE_CATEGORY_ENUM_NAME)
-    categories.value = Array.isArray(list)
-      ? list.map((it: any) => it?.value).filter((v: any) => typeof v === 'string')
+    const options = await enumStore.getEnumOptions(DATA_TYPE_CATEGORY_ENUM_NAME)
+    categories.value = Array.isArray(options)
+      ? options.map((item: any) => item?.value).filter((value: any) => typeof value === 'string')
       : []
   } catch {
     categories.value = []
   }
 }
 
+async function loadActiveUnits() {
+  const response = await listDataUnits(1)
+  activeUnits.value = response.data ?? []
+}
+
 onMounted(async () => {
-  await loadCategories()
+  await Promise.all([loadCategories(), loadActiveUnits()])
   loadData()
 })
 </script>
 
 <style scoped>
 .page { padding: 24px; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.filters { display: flex; gap: 12px; align-items: center; }
-.pagination { margin-top: 16px; text-align: right; }
-.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 24px; }
-.form-grid .full { grid-column: 1 / -1; }
-.i18n-summary { cursor: pointer; color: #409EFF; }
-.i18n-editor { max-width: 100%; }
-.i18n-table { width: 100%; border-collapse: collapse; }
-.i18n-table th, .i18n-table td { border: 1px solid #eee; padding: 2px 6px; font-size: 12px; }
-.i18n-table thead th { background: #fafafa; font-weight: 600; }
-.i18n-table .lang { white-space: nowrap; color: #666; }
-.i18n-table .text { word-break: break-word; }
-.i18n-table .ops { text-align: center; }
-.i18n-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
-.add-lang { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-.add-lang .hint { color: #999; font-size: 12px; }
 </style>

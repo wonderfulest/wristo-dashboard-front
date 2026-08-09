@@ -1,8 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 
 import {
   createEmptyDataTypeForm,
+  cloneDataTypeForm,
   normalizeDataTypePayload,
   normalizeUnitPayload,
   validateCatalogAliasOwnership,
@@ -10,6 +12,54 @@ import {
   validateLocalizedText,
   validateUnitForm,
 } from '../src/views/dashboard/data-options/dataCatalogForm.mjs'
+
+test('data item editor exposes separate canonical labels, unit selection, and resource names', async () => {
+  const [dialogSource, listSource, pageSource] = await Promise.all([
+    readFile(new URL('../src/views/dashboard/data-options/DataTypeOptionDialog.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/views/dashboard/data-options/DataTypeOptionsList.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/views/dashboard/data-options/DataTypeOptionsPage.vue', import.meta.url), 'utf8'),
+  ])
+
+  assert.match(dialogSource, /Connect IQ Settings Label/)
+  assert.match(dialogSource, /Watchface Data Label/)
+  assert.match(dialogSource, /form\.settingsLabel\.eng/)
+  assert.match(dialogSource, /form\.settingsLabel\.zhs/)
+  assert.match(dialogSource, /form\.label\.eng/)
+  assert.match(dialogSource, /form\.label\.zhs/)
+  assert.match(dialogSource, /form\.unitKey/)
+  assert.match(dialogSource, /selectedUnit/)
+  assert.match(listSource, /DataTypeSettingsLabel/)
+  assert.match(listSource, /DataTypeLabel/)
+  assert.match(pageSource, /listDataUnits\(1\)/)
+  assert.match(pageSource, /cloneDataTypeForm\(row\)/)
+  assert.doesNotMatch(pageSource, /labelCn|enLabel|displayLabel|labelI18n|engShort|zhsShort/)
+  assert.doesNotMatch(listSource, /DataOptionI18nPopover|displayLabel|labelI18n/)
+})
+
+test('editing a data item deep-clones canonical labels and icon rules', () => {
+  const source = {
+    id: 7,
+    metricSymbol: ':FIELD_TYPE_STEPS',
+    category: 'field',
+    valueCode: 1,
+    settingsLabel: { eng: 'Steps', zhs: '步数' },
+    label: { eng: 'STEPS', zhs: '步数' },
+    unitKey: 'none',
+    iconUnicode: '',
+    defaultValue: '0',
+    isActive: 1,
+    sortOrder: 1,
+    description: '',
+    iconRules: { type: 'enum', icons: { one: ':ICON_ONE' } },
+  }
+  const clone = cloneDataTypeForm(source)
+
+  assert.deepEqual(clone, source)
+  assert.notEqual(clone.settingsLabel, source.settingsLabel)
+  assert.notEqual(clone.label, source.label)
+  assert.notEqual(clone.iconRules, source.iconRules)
+  assert.notEqual(clone.iconRules.icons, source.iconRules.icons)
+})
 
 test('data item form owns two separate required label purposes', () => {
   const form = createEmptyDataTypeForm()
