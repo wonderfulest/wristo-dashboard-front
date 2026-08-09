@@ -230,9 +230,7 @@ function sortedEntries(value) {
 }
 
 function validateKey(value, path) {
-  return KEY_PATTERN.test(value) && value !== 'constructor' && value !== '__proto__'
-    ? null
-    : `${path} must match ^[a-z][a-z0-9_]*$`
+  return KEY_PATTERN.test(value) ? null : `${path} must match ^[a-z][a-z0-9_]*$`
 }
 
 function trim(value) {

@@ -148,9 +148,9 @@ test('unit validation rejects uppercase unit, variant, and default keys at exact
   )
 })
 
-test('unit normalization rejects dangerous variant keys without prototype pollution', () => {
+test('unit normalization rejects __proto__ without prototype pollution and accepts regex-valid constructor', () => {
   const dangerousProto = JSON.parse('{"__proto__":{"aliases":["km"],"label":{"eng":"km","zhs":"公里"}}}')
-  const dangerousConstructor = {
+  const validConstructor = {
     constructor: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } },
   }
   const base = {
@@ -165,10 +165,17 @@ test('unit normalization rejects dangerous variant keys without prototype pollut
     () => normalizeUnitPayload({ ...base, variants: dangerousProto }),
     { message: 'distance.variantKey must match ^[a-z][a-z0-9_]*$' },
   )
-  assert.throws(
-    () => normalizeUnitPayload({ ...base, variants: dangerousConstructor }),
-    { message: 'distance.variantKey must match ^[a-z][a-z0-9_]*$' },
-  )
+  const constructorPayload = normalizeUnitPayload({
+    ...base,
+    defaultVariant: 'constructor',
+    variants: validConstructor,
+  })
+  assert.equal(Object.getPrototypeOf(constructorPayload.variants), Object.prototype)
+  assert.equal(Object.hasOwn(constructorPayload.variants, 'constructor'), true)
+  assert.deepEqual(constructorPayload.variants.constructor, {
+    aliases: ['km'],
+    label: { eng: 'km', zhs: '公里' },
+  })
   assert.equal({}.polluted, undefined)
 })
 
