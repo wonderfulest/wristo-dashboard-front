@@ -43,7 +43,7 @@ export function normalizeDataTypePayload(form) {
     isActive: Number(form.isActive),
     sortOrder: Number(form.sortOrder),
     description: trim(form.description),
-    iconRules: form.iconRules,
+    iconRules: normalizeIconRules(form.iconRules),
     dialMode: form.dialMode ?? null,
     dialMin: form.dialMin ?? null,
     dialMax: form.dialMax ?? null,
@@ -76,14 +76,22 @@ export function validateDataTypeForm(form) {
 }
 
 export function normalizeUnitPayload(form) {
+  const validationError = validateUnitDefinition(form)
+  if (validationError) throw new Error(validationError)
+  const aliasError = validateCatalogAliasOwnership([form])
+  if (aliasError) throw new Error(aliasError)
+
   const unitKey = trim(form.unitKey)
-  const variants = {}
-  for (const [rawKey, rawVariant] of Object.entries(form.variants ?? {})) {
+  const variants = []
+  for (const [rawKey, rawVariant] of sortedEntries(form.variants)) {
     const variantKey = trim(rawKey)
-    variants[variantKey] = {
-      aliases: [...new Set((rawVariant?.aliases ?? []).map(alias => trim(alias).toLowerCase()))].sort(),
-      label: normalizeLocalizedText(rawVariant?.label),
-    }
+    variants.push([
+      variantKey,
+      {
+        aliases: [...new Set(rawVariant.aliases.map(alias => trim(alias).toLowerCase()))].sort(),
+        label: normalizeLocalizedText(rawVariant.label),
+      },
+    ])
   }
   return {
     ...(form.id === undefined || form.id === null ? {} : { id: Number(form.id) }),
@@ -92,7 +100,7 @@ export function normalizeUnitPayload(form) {
     defaultVariant: form.defaultVariant === null || trim(form.defaultVariant) === ''
       ? null
       : trim(form.defaultVariant),
-    variants: Object.fromEntries(Object.entries(variants).sort(([left], [right]) => left.localeCompare(right))),
+    variants: Object.fromEntries(variants),
     isActive: Number(form.isActive),
     sortOrder: Number(form.sortOrder),
     description: trim(form.description),
@@ -101,65 +109,92 @@ export function normalizeUnitPayload(form) {
 
 export function validateUnitForm(value) {
   const units = Array.isArray(value) ? value : [value]
-  const owners = new Map()
-
   for (const rawUnit of units) {
-    const rawUnitKey = trim(rawUnit?.unitKey)
-    const unitKeyError = validateKey(rawUnitKey, 'unitKey')
-    if (unitKeyError) return unitKeyError
-    if (!trim(rawUnit?.name)) return `${rawUnitKey}.name is required`
-    if (rawUnit?.isActive !== 0 && rawUnit?.isActive !== 1) return 'isActive must be 0 or 1'
-    if (!Number.isInteger(rawUnit?.sortOrder) || rawUnit.sortOrder < 0) {
-      return 'sortOrder must be nonnegative'
-    }
+    const error = validateUnitDefinition(rawUnit)
+    if (error) return error
+  }
+  return validateCatalogAliasOwnership(units)
+}
 
-    const rawVariants = rawUnit?.variants ?? {}
-    const rawDefault = rawUnit?.defaultVariant === null || rawUnit?.defaultVariant === undefined
-      ? null
-      : trim(rawUnit.defaultVariant)
-    if (rawUnitKey === 'none') {
-      if (Object.keys(rawVariants).length) return 'none.variants must be empty'
-      if (rawDefault) return 'none.defaultVariant must be null'
-      continue
-    }
-    if (rawUnit.isActive === 1 && Object.keys(rawVariants).length === 0) {
-      return `${rawUnitKey}.variants is required`
-    }
-
-    const normalizedVariantKeys = new Set()
-    for (const [rawVariantKey, variant] of Object.entries(rawVariants)) {
-      const variantKey = trim(rawVariantKey)
-      const variantKeyError = validateKey(variantKey, `${rawUnitKey}.variantKey`)
-      if (variantKeyError) return variantKeyError
-      if (normalizedVariantKeys.has(variantKey)) {
-        return `${rawUnitKey}.variantKey '${variantKey}' is duplicated after normalization`
-      }
-      normalizedVariantKeys.add(variantKey)
-      const path = `${rawUnitKey}.variants.${variantKey}`
-      if (!variant) return `${path} is required`
-      const labelError = validateLocalizedText(variant.label, `${path}.label`)
-      if (labelError) return labelError
-      if (!Array.isArray(variant.aliases) || variant.aliases.length === 0) {
-        return `${path}.aliases is required`
-      }
+export function validateCatalogAliasOwnership(value) {
+  const units = Array.isArray(value) ? value : [value]
+  const aliases = []
+  for (const unit of units) {
+    const shapeError = validateUnitDefinition(unit)
+    if (shapeError) return shapeError
+    const unitKey = trim(unit.unitKey)
+    for (const [rawVariantKey, variant] of sortedEntries(unit.variants)) {
+      const owner = `${unitKey}.${trim(rawVariantKey)}`
       for (const rawAlias of variant.aliases) {
-        const alias = trim(rawAlias).toLowerCase()
-        if (!alias) return `${path}.aliases must not contain blank values`
-        const owner = `${rawUnitKey}.${variantKey}`
-        const previous = owners.get(alias)
-        if (previous && previous !== owner) return `alias "${alias}" is used by ${previous} and ${owner}`
-        owners.set(alias, owner)
+        aliases.push({ alias: trim(rawAlias).toLowerCase(), owner })
       }
     }
+  }
+  aliases.sort((left, right) => left.owner.localeCompare(right.owner) || left.alias.localeCompare(right.alias))
+  const owners = new Map()
+  for (const current of aliases) {
+    const previous = owners.get(current.alias)
+    if (previous && previous !== current.owner) {
+      return `alias "${current.alias}" is used by ${previous} and ${current.owner}`
+    }
+    owners.set(current.alias, current.owner)
+  }
+  return null
+}
 
-    const defaultVariant = rawDefault
-    if (defaultVariant !== null) {
-      const defaultError = validateKey(defaultVariant, `${rawUnitKey}.defaultVariant`)
-      if (defaultError) return defaultError
+function validateUnitDefinition(rawUnit) {
+  if (!isPlainRecord(rawUnit)) return 'unit must be an object'
+  const unitKey = trim(rawUnit.unitKey)
+  const unitKeyError = validateKey(unitKey, 'unitKey')
+  if (unitKeyError) return unitKeyError
+  if (!trim(rawUnit.name)) return `${unitKey}.name is required`
+  if (rawUnit.isActive !== 0 && rawUnit.isActive !== 1) return 'isActive must be 0 or 1'
+  if (!Number.isInteger(rawUnit.sortOrder) || rawUnit.sortOrder < 0) return 'sortOrder must be nonnegative'
+  if (!isPlainRecord(rawUnit.variants)) return `${unitKey}.variants must be an object`
+
+  const rawDefault = rawUnit.defaultVariant === null || rawUnit.defaultVariant === undefined
+    ? null
+    : trim(rawUnit.defaultVariant)
+  if (unitKey === 'none') {
+    if (Object.keys(rawUnit.variants).length) return 'none.variants must be empty'
+    if (rawDefault) return 'none.defaultVariant must be null'
+    return null
+  }
+  if (rawUnit.isActive === 1 && Object.keys(rawUnit.variants).length === 0) {
+    return `${unitKey}.variants is required`
+  }
+
+  const variantKeys = new Set()
+  for (const [rawVariantKey, variant] of sortedEntries(rawUnit.variants)) {
+    const variantKey = trim(rawVariantKey)
+    const keyError = validateKey(variantKey, `${unitKey}.variantKey`)
+    if (keyError) return keyError
+    if (variantKeys.has(variantKey)) {
+      return `${unitKey}.variantKey '${variantKey}' is duplicated after normalization`
     }
-    if ((rawUnit.isActive === 1 || defaultVariant !== null) && !normalizedVariantKeys.has(defaultVariant)) {
-      return `${rawUnitKey}.defaultVariant must reference an existing variant`
+    variantKeys.add(variantKey)
+    const path = `${unitKey}.variants.${variantKey}`
+    if (variant === null || variant === undefined) return `${path} is required`
+    if (!isPlainRecord(variant)) return `${path} must be an object`
+    const labelError = validateLocalizedText(variant.label, `${path}.label`)
+    if (labelError) return labelError
+    if (variant.aliases === null || variant.aliases === undefined || variant.aliases.length === 0) {
+      return `${path}.aliases is required`
     }
+    if (!Array.isArray(variant.aliases)) return `${path}.aliases must be an array`
+    for (const alias of variant.aliases) {
+      if (typeof alias !== 'string' || !alias.trim()) {
+        return `${path}.aliases must not contain blank values`
+      }
+    }
+  }
+
+  if (rawDefault !== null) {
+    const defaultError = validateKey(rawDefault, `${unitKey}.defaultVariant`)
+    if (defaultError) return defaultError
+  }
+  if ((rawUnit.isActive === 1 || rawDefault !== null) && !variantKeys.has(rawDefault)) {
+    return `${unitKey}.defaultVariant must reference an existing variant`
   }
   return null
 }
@@ -168,8 +203,36 @@ function normalizeLocalizedText(value) {
   return { eng: trim(value?.eng), zhs: trim(value?.zhs) }
 }
 
+function normalizeIconRules(value) {
+  if (value === null || value === undefined) return value
+  const normalized = { type: value.type }
+  if (isPlainRecord(value.icons)) {
+    normalized.icons = Object.fromEntries(sortedEntries(value.icons))
+  }
+  if (Array.isArray(value.ranges)) {
+    normalized.ranges = value.ranges.map(range => ({
+      min: range?.min,
+      max: range?.max,
+      icon: range?.icon,
+    }))
+  }
+  return normalized
+}
+
+function isPlainRecord(value) {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
+  const prototype = Object.getPrototypeOf(value)
+  return prototype === Object.prototype || prototype === null
+}
+
+function sortedEntries(value) {
+  return Object.entries(value).sort(([left], [right]) => left.localeCompare(right))
+}
+
 function validateKey(value, path) {
-  return KEY_PATTERN.test(value) ? null : `${path} must match ^[a-z][a-z0-9_]*$`
+  return KEY_PATTERN.test(value) && value !== 'constructor' && value !== '__proto__'
+    ? null
+    : `${path} must match ^[a-z][a-z0-9_]*$`
 }
 
 function trim(value) {

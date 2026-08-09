@@ -8,7 +8,12 @@ export function createEmptyDataTypeForm(): DataTypeForm
 export function normalizeDataTypePayload(form: Partial<DataTypeForm>): DataTypeOptionCreateDTO | DataTypeOptionUpdateDTO
 export function validateLocalizedText(value: Partial<LocalizedText> | null | undefined, path: string): string | null
 export function validateDataTypeForm(form: Partial<DataTypeForm>): string | null
-/** Trims unit and variant keys without changing case; only aliases are lowercased. */
-export function normalizeUnitPayload(form: Partial<DataUnitForm>): DataUnitDefinitionCreateDTO | DataUnitDefinitionUpdateDTO
-/** Enforces the API key pattern after trimming and returns the API field path on failure. */
-export function validateUnitForm(form: Partial<DataUnitForm> | Partial<DataUnitForm>[]): string | null
+/**
+ * Accepts untrusted form input, trims keys without changing case, and lowercases only aliases.
+ * @throws Error with the exact API field-path message when the input shape or value is invalid.
+ */
+export function normalizeUnitPayload(form: unknown): DataUnitDefinitionCreateDTO | DataUnitDefinitionUpdateDTO
+/** Enforces input shape and API rules, returning the exact API field-path message on failure. */
+export function validateUnitForm(form: unknown): string | null
+/** Returns a deterministic conflict for valid unit input regardless of unit, variant, or alias order. */
+export function validateCatalogAliasOwnership(form: unknown): string | null

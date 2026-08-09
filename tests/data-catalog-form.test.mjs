@@ -5,6 +5,7 @@ import {
   createEmptyDataTypeForm,
   normalizeDataTypePayload,
   normalizeUnitPayload,
+  validateCatalogAliasOwnership,
   validateDataTypeForm,
   validateLocalizedText,
   validateUnitForm,
@@ -42,6 +43,30 @@ test('data item payload trims canonical labels and omits compatibility aliases',
   for (const key of ['enLabel', 'labelCn', 'displayLabel', 'labelI18n', 'unit', 'value']) {
     assert.equal(Object.hasOwn(payload, key), false)
   }
+})
+
+test('data item payload deep-copies icon rules without mutating the form', () => {
+  const form = {
+    ...createEmptyDataTypeForm(),
+    iconRules: {
+      type: 'numeric',
+      icons: { true: ':ICON_CHECK' },
+      ranges: [{ min: 0, max: 10, icon: ':ICON_LOW' }],
+    },
+  }
+
+  const payload = normalizeDataTypePayload(form)
+  assert.notEqual(payload.iconRules, form.iconRules)
+  assert.notEqual(payload.iconRules.icons, form.iconRules.icons)
+  assert.notEqual(payload.iconRules.ranges, form.iconRules.ranges)
+  assert.notEqual(payload.iconRules.ranges[0], form.iconRules.ranges[0])
+  payload.iconRules.icons.true = ':ICON_CHANGED'
+  payload.iconRules.ranges[0].icon = ':ICON_CHANGED'
+  assert.deepEqual(form.iconRules, {
+    type: 'numeric',
+    icons: { true: ':ICON_CHECK' },
+    ranges: [{ min: 0, max: 10, icon: ':ICON_LOW' }],
+  })
 })
 
 test('localized text reports the exact missing-language field path', () => {
@@ -123,6 +148,71 @@ test('unit validation rejects uppercase unit, variant, and default keys at exact
   )
 })
 
+test('unit normalization rejects dangerous variant keys without prototype pollution', () => {
+  const dangerousProto = JSON.parse('{"__proto__":{"aliases":["km"],"label":{"eng":"km","zhs":"公里"}}}')
+  const dangerousConstructor = {
+    constructor: { aliases: ['km'], label: { eng: 'km', zhs: '公里' } },
+  }
+  const base = {
+    unitKey: 'distance',
+    name: 'Distance',
+    defaultVariant: 'km',
+    isActive: 1,
+    sortOrder: 0,
+  }
+
+  assert.throws(
+    () => normalizeUnitPayload({ ...base, variants: dangerousProto }),
+    { message: 'distance.variantKey must match ^[a-z][a-z0-9_]*$' },
+  )
+  assert.throws(
+    () => normalizeUnitPayload({ ...base, variants: dangerousConstructor }),
+    { message: 'distance.variantKey must match ^[a-z][a-z0-9_]*$' },
+  )
+  assert.equal({}.polluted, undefined)
+})
+
+test('unit normalization reports malformed variant shapes instead of throwing implementation errors', () => {
+  const base = {
+    unitKey: 'distance',
+    name: 'Distance',
+    defaultVariant: 'km',
+    isActive: 1,
+    sortOrder: 0,
+  }
+
+  assert.throws(
+    () => normalizeUnitPayload({ ...base, variants: [] }),
+    { message: 'distance.variants must be an object' },
+  )
+  assert.throws(
+    () => normalizeUnitPayload({ ...base, variants: null }),
+    { message: 'distance.variants must be an object' },
+  )
+  assert.throws(
+    () => normalizeUnitPayload({ ...base, variants: { km: null } }),
+    { message: 'distance.variants.km is required' },
+  )
+  assert.throws(
+    () => normalizeUnitPayload({ ...base, variants: { km: [] } }),
+    { message: 'distance.variants.km must be an object' },
+  )
+  assert.throws(
+    () => normalizeUnitPayload({
+      ...base,
+      variants: { km: { aliases: null, label: { eng: 'km', zhs: '公里' } } },
+    }),
+    { message: 'distance.variants.km.aliases is required' },
+  )
+  assert.throws(
+    () => normalizeUnitPayload({
+      ...base,
+      variants: { km: { aliases: 'km', label: { eng: 'km', zhs: '公里' } } },
+    }),
+    { message: 'distance.variants.km.aliases must be an array' },
+  )
+})
+
 test('unit validation mirrors none and active default-variant rules with exact paths', () => {
   assert.equal(
     validateUnitForm({
@@ -175,12 +265,12 @@ test('unit validation requires localized labels and nonblank aliases at exact va
 })
 
 test('unit validation rejects aliases owned by two variants', () => {
-  const error = validateUnitForm([
+  const units = [
     {
       unitKey: 'distance',
       name: 'Distance',
       defaultVariant: 'm',
-      variants: { m: { aliases: ['m'], label: { eng: 'm', zhs: '米' } } },
+      variants: { m: { aliases: ['z', 'm'], label: { eng: 'm', zhs: '米' } } },
       isActive: 1,
       sortOrder: 0,
     },
@@ -188,11 +278,23 @@ test('unit validation rejects aliases owned by two variants', () => {
       unitKey: 'length',
       name: 'Length',
       defaultVariant: 'meter',
-      variants: { meter: { aliases: [' M '], label: { eng: 'm', zhs: '米' } } },
+      variants: { meter: { aliases: [' Z ', ' M '], label: { eng: 'm', zhs: '米' } } },
       isActive: 1,
       sortOrder: 1,
     },
-  ])
+  ]
 
-  assert.equal(error, 'alias "m" is used by distance.m and length.meter')
+  assert.equal(validateCatalogAliasOwnership(units), 'alias "m" is used by distance.m and length.meter')
+  const reversedUnits = [...units].reverse().map(unit => ({
+    ...unit,
+    variants: Object.fromEntries(Object.entries(unit.variants).reverse().map(([key, variant]) => [
+      key,
+      { ...variant, aliases: [...variant.aliases].reverse() },
+    ])),
+  }))
+  assert.equal(
+    validateCatalogAliasOwnership(reversedUnits),
+    'alias "m" is used by distance.m and length.meter',
+  )
+  assert.equal(validateUnitForm(units), 'alias "m" is used by distance.m and length.meter')
 })
