@@ -69,10 +69,8 @@
           <DataOptionIconRulesEditor v-model:enabled="switchIconRules" v-model="form.iconRules" />
         </el-form-item>
         <el-form-item label="Dial Mode" prop="dialMode" class="full">
-          <el-select v-model="form.dialMode" placeholder="Not Supported" clearable style="width: 220px">
-            <el-option label="Not Supported" :value="null" />
-            <el-option label="Goal" value="goal" />
-            <el-option label="Range" value="range" />
+          <el-select v-model="form.dialMode" placeholder="Not Supported" style="width: 220px">
+            <el-option v-for="option in availableDialModes" :key="option.label" :label="option.label" :value="option.value" />
           </el-select>
         </el-form-item>
         <el-form-item v-if="form.dialMode === 'goal'" label="Goal Source" prop="dialGoalSource" class="full">
@@ -123,7 +121,7 @@ import type { DataUnitDefinitionVO } from '@/types/data-unit-definition'
 import { createDataTypeOption, updateDataTypeOption } from '@/api/data-type-options'
 import DataOptionIconRulesEditor from './DataOptionIconRulesEditor.vue'
 import { normalizeDataTypePayload, validateDataTypeForm } from './dataCatalogForm.mjs'
-import { normalizeDialFields, validateDialFields } from './dialConfig.mjs'
+import { allowedDialMode, dialModeOptions, normalizeDialFields, validateDialFields } from './dialConfig.mjs'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -145,6 +143,10 @@ const switchIconRules = ref(!!props.form.iconRules)
 const saving = ref(false)
 const titleText = computed(() => props.type === 'add' ? 'Add Data Type Option' : 'Edit Data Type Option')
 const selectedUnit = computed(() => props.units.find(unit => unit.unitKey === props.form.unitKey))
+const availableDialModes = computed(() => dialModeOptions(props.form.metricSymbol).map(value => ({
+  value,
+  label: value === 'goal' ? 'Goal' : value === 'range' ? 'Range' : 'Not Supported',
+})))
 
 watch(() => props.visible, async value => {
   visibleLocal.value = value
@@ -176,6 +178,12 @@ watch(() => props.form.iconRules?.type, type => {
 watch(() => props.form.dialMode, mode => {
   if (mode === 'goal' && !props.form.dialGoalSource) props.form.dialGoalSource = 'garmin'
   Object.assign(props.form, normalizeDialFields(props.form))
+})
+watch(() => props.form.metricSymbol, symbol => {
+  const approvedMode = allowedDialMode(symbol)
+  if (props.form.dialMode && props.form.dialMode !== approvedMode) {
+    Object.assign(props.form, normalizeDialFields({ ...props.form, dialMode: null }))
+  }
 })
 
 const required = (message: string, trigger = 'blur') => [{ required: true, message, trigger }]

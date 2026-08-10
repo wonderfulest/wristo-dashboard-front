@@ -3,10 +3,25 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 
 import {
+  allowedDialMode,
+  dialModeOptions,
   dialSummary,
   normalizeDialFields,
   validateDialFields,
 } from '../src/views/dashboard/data-options/dialConfig.mjs'
+
+test('whitelist assigns one explicit dial mode to approved data only', () => {
+  assert.equal(allowedDialMode(':GOAL_TYPE_WEEKLY_ACTIVE_MINUTES'), 'goal')
+  assert.equal(allowedDialMode(':GOAL_TYPE_CALORIES'), null)
+  assert.equal(allowedDialMode(':FIELD_TYPE_WEATHER_HUMIDITY'), 'range')
+  assert.equal(allowedDialMode(':FIELD_TYPE_TEMPERATURE'), null)
+})
+
+test('editor only offers the approved mode plus not supported', () => {
+  assert.deepEqual(dialModeOptions(':GOAL_TYPE_STEPS'), [null, 'goal'])
+  assert.deepEqual(dialModeOptions(':FIELD_TYPE_WEATHER_HUMIDITY'), [null, 'range'])
+  assert.deepEqual(dialModeOptions(':FIELD_TYPE_TEMPERATURE'), [null])
+})
 
 test('not supported clears all dial metadata', () => {
   assert.deepEqual(
@@ -42,6 +57,21 @@ test('range requires finite ordered bounds', () => {
 
 test('goal requires a source', () => {
   assert.equal(validateDialFields({ dialMode: 'goal', dialGoalSource: null }), 'Goal source is required')
+})
+
+test('validation rejects fixed goals and mode mismatches', () => {
+  assert.equal(
+    validateDialFields({ metricSymbol: ':GOAL_TYPE_STEPS', dialMode: 'goal', dialGoalSource: 'fixed' }),
+    'Goal Dial requires Garmin goal source',
+  )
+  assert.equal(
+    validateDialFields({ metricSymbol: ':FIELD_TYPE_WEATHER_HUMIDITY', dialMode: 'goal', dialGoalSource: 'garmin' }),
+    'Data type is approved for Range Dial only',
+  )
+  assert.equal(
+    validateDialFields({ metricSymbol: ':FIELD_TYPE_TEMPERATURE', dialMode: 'range', dialMin: -20, dialMax: 50 }),
+    'Data type is not approved for Dial',
+  )
 })
 
 test('summary describes each dial mode', () => {

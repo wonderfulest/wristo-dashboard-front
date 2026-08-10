@@ -21,7 +21,7 @@ export interface IconRules {
 
 export type DataTypeCategory = 'field' | 'goal' | 'chart' | 'indicator' | 'date'
 export type DialMode = 'goal' | 'range' | null
-export type DialGoalSource = 'garmin' | 'fixed' | null
+export type DialGoalSource = 'garmin' | null
 
 export interface DataTypeOptionFields {
   metricSymbol: string
