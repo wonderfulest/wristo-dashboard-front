@@ -7,7 +7,26 @@ export interface FetchDesignReviewPageParams {
   designUid?: string
   name?: string
   appId?: number
-  populate?: string
+}
+
+export interface DesignReviewItem {
+  designUid: string
+  name: string
+  designStatus: string
+  createdAt: string | number
+  cover?: { url: string } | null
+  user?: { username: string } | null
+  product?: {
+    appId: number
+    garminImageUrl: string
+    garminStoreUrl: string
+    trialLasts: number
+    payment?: {
+      paymentMethodDesc: string
+      price: number
+      currency: string
+    } | null
+  } | null
 }
 
 // 管理端设计分页查询 DTO（支持是否模板等条件）

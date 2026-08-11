@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { getProduct, searchPublicProductPageV2 } from '@/api/products'
+import { searchApps } from '@/utils/appSearch'
 import type { Product, ProductBase } from '@/types/product'
 
 const props = withDefaults(defineProps<{
@@ -33,7 +34,7 @@ const props = withDefaults(defineProps<{
   width?: string,
   disabled?: boolean,
 }>(), {
-  placeholder: '搜索应用（按名称）',
+  placeholder: '搜索应用（App ID 或应用名）',
   width: '360px',
   disabled: false,
 })
@@ -72,11 +73,11 @@ const onRemote = (query: string) => {
   timer = window.setTimeout(async () => {
     loading.value = true
     try {
-      const res = await searchPublicProductPageV2(query, 1, 20)
-      if (res.code === 0 && res.data) {
-        options.value = res.data.list || []
-        await ensureSelectedOption(props.modelValue)
-      }
+      options.value = await searchApps(query, {
+        getByAppId: getProduct,
+        searchByName: searchPublicProductPageV2,
+      })
+      await ensureSelectedOption(props.modelValue)
     } finally {
       loading.value = false
     }

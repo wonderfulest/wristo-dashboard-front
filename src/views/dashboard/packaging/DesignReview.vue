@@ -100,7 +100,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils/date'
 import { fetchDesignReviewPage, approveDesign, approveDesignBatch, rejectDesignWithComment } from '@/api/design-review'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import type { Design } from '@/types/design'
+import type { DesignReviewItem } from '@/types/design'
 import UserSelect from '@/components/users/UserSelect.vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 
@@ -125,9 +125,8 @@ const fetchDesigns = async () => {
       name: searchName.value ? searchName.value : undefined,
       appId: searchAppId.value ? Number(searchAppId.value) : undefined,
       userId: typeof searchUserId.value === 'number' ? searchUserId.value : undefined,
-      designStatus: 'submitted',
-      populate: 'cover,product,payment,user'
-    }) as unknown as ApiResponse<PageResponse<Design>>
+      designStatus: 'submitted'
+    }) as unknown as ApiResponse<PageResponse<DesignReviewItem>>
     designs.value = resp.data?.list || []
     total.value = resp.data?.total || 0
   } catch (error) {

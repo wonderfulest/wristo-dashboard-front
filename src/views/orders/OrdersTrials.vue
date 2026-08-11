@@ -61,6 +61,28 @@
       </div>
     </el-card>
 
+    <el-card class="ranking-card" style="margin-top: 16px;">
+      <template #header>
+        <div class="card-header">
+          <div>
+            <span>激活账号排行</span>
+            <div class="card-description">统计已购买、Bundle 购买或订阅状态下，每个邮箱激活的不同应用数量</div>
+          </div>
+          <el-select v-model="rankingLimit" style="width: 120px" @change="fetchRanking">
+            <el-option v-for="limit in rankingLimitOptions" :key="limit" :label="`Top ${limit}`" :value="limit" />
+          </el-select>
+        </div>
+      </template>
+      <el-table :data="rankingRows" v-loading="rankingLoading" style="width: 100%">
+        <el-table-column label="排名" width="90" align="center">
+          <template #default="{ $index }">{{ $index + 1 }}</template>
+        </el-table-column>
+        <el-table-column prop="email" label="邮箱账号" min-width="260" />
+        <el-table-column prop="activatedAppCount" label="激活应用数量" min-width="160" align="right" />
+      </el-table>
+      <div v-if="!rankingLoading && rankingRows.length === 0" class="empty">暂无成功激活记录</div>
+    </el-card>
+
     <el-card class="ops-card" style="margin-top: 16px;">
       <template #header>
         <div class="card-header">
@@ -213,13 +235,25 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getTrialPage, backupTrialMonth, cleanupOldTrials, type TrialPageQueryDTO, type Trial } from '@/api/trial'
+import {
+  getTrialPage,
+  getTrialActivationEmailRanking,
+  backupTrialMonth,
+  cleanupOldTrials,
+  type TrialPageQueryDTO,
+  type Trial,
+  type TrialActivationEmailRanking
+} from '@/api/trial'
 import MobileRecordList from '@/components/common/MobileRecordList.vue'
 import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 
 const loading = ref(false)
 const total = ref(0)
 const rows = ref<Trial[]>([])
+const rankingLimitOptions = [10, 20, 50, 100] as const
+const rankingLimit = ref<(typeof rankingLimitOptions)[number]>(20)
+const rankingRows = ref<TrialActivationEmailRanking[]>([])
+const rankingLoading = ref(false)
 
 const backupMonth = ref('')
 const backupLoading = ref(false)
@@ -264,6 +298,18 @@ const fetchData = async () => {
     ElMessage.error(e?.msg || e?.message || '获取试用记录失败')
   } finally {
     loading.value = false
+  }
+}
+
+const fetchRanking = async () => {
+  rankingLoading.value = true
+  try {
+    const res = await getTrialActivationEmailRanking(rankingLimit.value)
+    rankingRows.value = res.data || []
+  } catch (e: any) {
+    ElMessage.error(e?.msg || e?.message || '获取激活账号排行失败')
+  } finally {
+    rankingLoading.value = false
   }
 }
 
@@ -389,6 +435,7 @@ const handleCleanupOld = async () => {
 
 onMounted(() => {
   fetchData()
+  fetchRanking()
 })
 </script>
 
@@ -406,8 +453,16 @@ onMounted(() => {
 
 .search-card,
 .result-card,
-.ops-card {
+.ops-card,
+.ranking-card {
   margin-bottom: 16px;
+}
+
+.card-description {
+  margin-top: 4px;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+  font-weight: 400;
 }
 
 .card-header {

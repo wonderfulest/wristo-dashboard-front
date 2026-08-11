@@ -3,7 +3,7 @@ import type { ApiResponse } from '@/types/api'
 
 const PREFIX = '/admin/products'
 
-// 清理历史 release 压缩包
+// 删除发布时间已满 15 天的 release S3 压缩包并清空包信息
 export const cleanRelease = (): Promise<ApiResponse<boolean>> => {
   return instance.post(`${PREFIX}/release/clean`)
 }

@@ -34,6 +34,11 @@ export interface TrialPageQueryDTO {
   status?: number
 }
 
+export interface TrialActivationEmailRanking {
+  email: string
+  activatedAppCount: number
+}
+
 export const getTrialById = (id: number): Promise<ApiResponse<Trial>> => {
   return request.get(`/admin/trials/${id}`)
 }
@@ -42,6 +47,12 @@ export const getTrialPage = (
   data: TrialPageQueryDTO
 ): Promise<ApiResponse<PageResponse<Trial>>> => {
   return request.post('/admin/trials/page', data)
+}
+
+export const getTrialActivationEmailRanking = (
+  limit: 10 | 20 | 50 | 100
+): Promise<ApiResponse<TrialActivationEmailRanking[]>> => {
+  return request.get('/admin/trials/activation-email-ranking', { params: { limit } })
 }
 
 export const backupTrialMonth = (month: string): Promise<ApiResponse<any>> => {

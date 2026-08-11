@@ -38,6 +38,7 @@
             :loading="bundlesLoading"
             placeholder="选择已启用 Bundle"
             no-data-text="暂无已启用 Bundle"
+            popper-class="bundle-select-dropdown"
             @visible-change="handleBundleDropdownVisible"
           >
             <el-option
@@ -366,6 +367,13 @@ const openOrderHistory = () => {
   margin-top: 4px;
   font-size: 12px;
   color: #909399;
+}
+
+:global(.bundle-select-dropdown .el-select-dropdown__item) {
+  height: auto;
+  min-height: 34px;
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
 .result-header {

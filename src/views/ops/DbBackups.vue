@@ -3,12 +3,39 @@
     <div class="header">
       <div style="display:flex; gap:12px; align-items:center;">
         <el-input-number v-model="limit" :min="1" :max="200" :step="5" :controls="false" style="width: 120px" />
-        <el-button @click="fetchRecent" :loading="loading">刷新</el-button>
+        <el-button @click="refreshCurrent" :loading="loading">刷新</el-button>
         <el-button type="primary" @click="openStartDialog">手动开启备份</el-button>
       </div>
     </div>
 
-    <el-table :data="jobs" v-loading="loading" style="width:100%">
+    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+      <el-tab-pane label="可用备份" name="available">
+        <el-alert
+          title="此列表直接读取 S3，仅展示当前实际可用于恢复的备份文件。"
+          type="info"
+          :closable="false"
+          show-icon
+          style="margin-bottom: 12px"
+        />
+        <el-table :data="files" v-loading="loading" style="width:100%">
+          <el-table-column prop="fileName" label="文件名" min-width="320" />
+          <el-table-column label="大小" width="140">
+            <template #default="{ row }">{{ formatFileSize(row.size) }}</template>
+          </el-table-column>
+          <el-table-column label="S3 更新时间" min-width="220">
+            <template #default="{ row }">{{ formatDateTime(row.lastModified) }}</template>
+          </el-table-column>
+          <el-table-column prop="key" label="S3 Key" min-width="320" show-overflow-tooltip />
+          <el-table-column label="操作" width="120" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link :loading="downloadingKey === row.key" @click="downloadBackup(row)">下载</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
+
+      <el-tab-pane label="执行记录" name="history">
+        <el-table :data="jobs" v-loading="loading" style="width:100%">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="类型" width="140">
         <template #default="{ row }">
@@ -54,7 +81,9 @@
           <el-button type="primary" link @click="viewDetails(row)">详情</el-button>
         </template>
       </el-table-column>
-    </el-table>
+        </el-table>
+      </el-tab-pane>
+    </el-tabs>
 
     <el-drawer v-model="detailVisible" title="备份详情" size="50%">
       <div v-if="current" class="detail">
@@ -120,14 +149,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getRecentDbBackups, startDbBackup, getDbBackup } from '@/api/ops-db'
-import type { DbBackupJob, DbBackupStartDTO } from '@/types/ops'
+import { getAvailableDbBackups, getDbBackupDownloadUrl, getRecentDbBackups, startDbBackup, getDbBackup } from '@/api/ops-db'
+import type { DbBackupFile, DbBackupJob, DbBackupStartDTO } from '@/types/ops'
 import { formatDateTime } from '@/utils/date'
 import { useUserStore } from '@/store/user'
 
 const loading = ref(false)
+const activeTab = ref<'available' | 'history'>('available')
+const files = ref<DbBackupFile[]>([])
 const jobs = ref<DbBackupJob[]>([])
 const limit = ref(7)
+const downloadingKey = ref('')
 
 const detailVisible = ref(false)
 const current = ref<DbBackupJob | null>(null)
@@ -178,6 +210,46 @@ const fetchRecent = async () => {
   }
 }
 
+const fetchAvailable = async () => {
+  loading.value = true
+  try {
+    const res = await getAvailableDbBackups(limit.value)
+    files.value = res.data || []
+  } catch (e) {
+    ElMessage.error('获取 S3 可用备份失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const refreshCurrent = () => activeTab.value === 'available' ? fetchAvailable() : fetchRecent()
+
+const handleTabChange = () => refreshCurrent()
+
+const formatFileSize = (size: number): string => {
+  if (!Number.isFinite(size) || size < 0) return '-'
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  if (size < 1024 * 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`
+  return `${(size / 1024 / 1024 / 1024).toFixed(1)} GB`
+}
+
+const downloadBackup = async (file: DbBackupFile) => {
+  downloadingKey.value = file.key
+  try {
+    const res = await getDbBackupDownloadUrl(file.key)
+    if (!res.data?.url) {
+      ElMessage.error('未获取到下载地址')
+      return
+    }
+    window.location.assign(res.data.url)
+  } catch (e) {
+    ElMessage.error('获取备份下载地址失败')
+  } finally {
+    downloadingKey.value = ''
+  }
+}
+
 const viewDetails = async (row: DbBackupJob) => {
   try {
     const res = await getDbBackup(row.id)
@@ -215,7 +287,7 @@ const submitStart = async () => {
   }
 }
 
-onMounted(fetchRecent)
+onMounted(fetchAvailable)
 </script>
 
 <style scoped>

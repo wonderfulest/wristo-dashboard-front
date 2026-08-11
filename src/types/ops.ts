@@ -23,6 +23,19 @@ export interface DbBackupJob {
   isDeleted: number
 }
 
+export interface DbBackupFile {
+  key: string
+  fileName: string
+  size: number
+  lastModified: string
+  eTag?: string
+}
+
+export interface DbBackupDownload {
+  url: string
+  expiresInSeconds: number
+}
+
 // ---------------- Global Config ----------------
 export type GlobalConfigCategoryCode = 'audit' | 'frontend' | 'business' | 'system' | 'thirdparty'
 

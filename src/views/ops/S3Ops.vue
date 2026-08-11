@@ -7,11 +7,11 @@
           confirm-button-text="确定"
           cancel-button-text="取消"
           icon-color="var(--el-color-warning)"
-          title="确认清理历史 release 压缩包吗？此操作不可撤销。"
+          title="确认删除发布时间已满 15 天的 release S3 压缩包并清空包信息吗？此操作不可撤销。"
           @confirm="onClean"
         >
           <template #reference>
-            <el-button type="danger" :loading="cleaning">清理历史 release 压缩包</el-button>
+            <el-button type="danger" :loading="cleaning">清理 15 天以上的 release 压缩包</el-button>
           </template>
         </el-popconfirm>
         <el-button @click="refreshStatus" :loading="checking">刷新状态</el-button>
@@ -60,7 +60,7 @@ const onClean = async () => {
     if (res.data === true) {
       status.value = { type: 'success', text: '已清理' }
       lastTime.value = new Date().toISOString().replace('T', ' ').slice(0, 19)
-      lastMsg.value = '历史 release 压缩包已清理'
+      lastMsg.value = '15 天以上的 release S3 压缩包及包信息已清理'
       ElMessage.success('清理成功')
     } else {
       status.value = { type: 'info', text: '无变更或未清理' }

@@ -1,9 +1,9 @@
 import instance from '@/config/axios'
 import type { ApiResponse, PageResponse } from '@/types/api'
-import type { FetchDesignReviewPageParams, Design } from '@/types/design'
+import type { FetchDesignReviewPageParams, DesignReviewItem } from '@/types/design'
 
 // 获取设计审核列表
-export function fetchDesignReviewPage(params: FetchDesignReviewPageParams): Promise<ApiResponse<PageResponse<Design>>> {
+export function fetchDesignReviewPage(params: FetchDesignReviewPageParams): Promise<ApiResponse<PageResponse<DesignReviewItem>>> {
   return instance.get('/admin/design/page/review', { params })
 }
 
