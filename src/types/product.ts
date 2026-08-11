@@ -155,6 +155,9 @@ export interface ProductPackagingLogVO {
   lastBuildLogPath?: string | null
   createdAt: number
   updatedAt: number
+  processingStartedAt?: string | number | null
+  processingFinishedAt?: string | number | null
+  processingDurationMs?: number | null
   version: number
   isDeleted: number
   isActive: number

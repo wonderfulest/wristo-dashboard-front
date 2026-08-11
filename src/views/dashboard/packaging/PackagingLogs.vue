@@ -73,6 +73,11 @@
           <StatusTag :status="row.packagingStatus" />
         </template>
       </el-table-column>
+      <el-table-column label="处理时长" width="140">
+        <template #default="{ row }">
+          {{ formatProcessingDuration(row.processingDurationMs, row.processingStartedAt) }}
+        </template>
+      </el-table-column>
       <el-table-column label="错误信息" min-width="200">
         <template #default="{ row }">
           <el-tooltip v-if="row.errorMessage" :content="row.errorMessage" placement="top">
@@ -156,6 +161,15 @@
           <el-descriptions-item label="价格">{{ selectedLog.product?.price != null ? `$${selectedLog.product.price}` : '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间" :span="2">{{ formatDateTime(selectedLog.createdAt) }}</el-descriptions-item>
           <el-descriptions-item label="更新时间" :span="2">{{ formatDateTime(selectedLog.updatedAt) }}</el-descriptions-item>
+          <el-descriptions-item label="开始处理" :span="2">
+            {{ selectedLog.processingStartedAt ? formatDateTime(selectedLog.processingStartedAt) : '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="结束处理" :span="2">
+            {{ selectedLog.processingFinishedAt ? formatDateTime(selectedLog.processingFinishedAt) : '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="处理时长" :span="2">
+            {{ formatProcessingDuration(selectedLog.processingDurationMs, selectedLog.processingStartedAt) }}
+          </el-descriptions-item>
           <el-descriptions-item label="版本">{{ selectedLog.version }}</el-descriptions-item>
           <el-descriptions-item label="是否删除">{{ selectedLog.isDeleted === 1 ? '是' : '否' }}</el-descriptions-item>
           <el-descriptions-item label="是否激活">{{ selectedLog.isActive === 1 ? '是' : '否' }}</el-descriptions-item>
@@ -265,6 +279,7 @@ import type { ProductPackagingLogVO } from '@/types/product'
 import { getPackagingStatusOptions, formatPackagingStatusArray } from '@/utils/status'
 import { PACKAGING_STATUS } from '@/types/product'
 import { formatDateTime } from '@/utils/date'
+import { formatProcessingDuration } from '@/utils/duration'
 import StatusTag from '@/components/StatusTag.vue'
 import { rejectDesignWithComment } from '@/api/design-review'
 import UserSelect from '@/components/users/UserSelect.vue'
