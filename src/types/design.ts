@@ -35,6 +35,7 @@ export interface DesignPageQueryDTO {
   pageSize: number
   orderBy?: string
   designStatus?: string
+  designUid?: string
   keyword?: string
   userId?: number
   isTemplate?: number

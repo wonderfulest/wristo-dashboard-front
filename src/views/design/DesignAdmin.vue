@@ -2,13 +2,7 @@
   <div class="design-admin-container">
     <div class="header">
       <div style="display: flex; gap: 12px; align-items: center;">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索设计名 / AppId / Design UID"
-          clearable
-          style="width: 320px"
-          @keyup.enter.native="handleSearch"
-        />
+        <DesignSearchSelect v-model="searchDesignUid" width="320px" />
         <UserSelect
           v-model="searchUserId"
           placeholder="按设计师搜索"
@@ -143,6 +137,7 @@ import type { ApiResponse, PageResponse } from '@/types/api'
 import { fetchDesignDetail, fetchDesignPage, updateDesignTemplateFlag } from '@/api/design-admin'
 import UserSelect from '@/components/users/UserSelect.vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
+import DesignSearchSelect from '@/components/common/DesignSearchSelect.vue'
 
 const designs = ref<Design[]>([])
 const loading = ref(false)
@@ -150,7 +145,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
-const searchKeyword = ref('')
+const searchDesignUid = ref<string | undefined>(undefined)
 const searchUserId = ref<number | undefined>(undefined)
 const searchIsTemplate = ref<number | undefined>(undefined)
 const sortOrder = ref('created_at:desc')
@@ -165,7 +160,7 @@ const fetchDesigns = async () => {
       pageNum: currentPage.value,
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
-      keyword: searchKeyword.value || undefined,
+      designUid: searchDesignUid.value || undefined,
       userId: searchUserId.value,
       isTemplate: searchIsTemplate.value,
       populate: 'user'
@@ -205,7 +200,6 @@ const openDetail = async (row: Design) => {
 const toProductInfoProduct = (product: Design['product']) => product as any
 
 const handleSearch = () => {
-  searchKeyword.value = searchKeyword.value.trim()
   currentPage.value = 1
   fetchDesigns()
 }

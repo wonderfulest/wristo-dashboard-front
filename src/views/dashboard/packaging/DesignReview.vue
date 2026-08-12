@@ -2,20 +2,7 @@
   <div class="design-review-container">
     <div class="header">
       <div style="display: flex; gap: 12px; align-items: center;">
-        <el-input
-          v-model="searchName"
-          placeholder="按设计名称搜索"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-input
-          v-model="searchAppId"
-          placeholder="按 AppId 搜索"
-          clearable
-          style="width: 180px"
-          @keyup.enter.native="handleSearch"
-        />
+        <DesignSearchSelect v-model="searchDesignUid" width="320px" />
         <UserSelect
           v-model="searchUserId"
           :role-authorities="['ROLE_DESIGNER']"
@@ -103,6 +90,7 @@ import type { ApiResponse, PageResponse } from '@/types/api'
 import type { DesignReviewItem } from '@/types/design'
 import UserSelect from '@/components/users/UserSelect.vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
+import DesignSearchSelect from '@/components/common/DesignSearchSelect.vue'
 
 const designs = ref<any[]>([])
 const multipleSelection = ref<any[]>([])
@@ -110,8 +98,7 @@ const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-const searchName = ref('')
-const searchAppId = ref('')
+const searchDesignUid = ref<string | undefined>(undefined)
 const searchUserId = ref<number | undefined>(undefined)
 const sortOrder = ref('created_at:desc')
 
@@ -122,8 +109,7 @@ const fetchDesigns = async () => {
       pageNum: currentPage.value,
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
-      name: searchName.value ? searchName.value : undefined,
-      appId: searchAppId.value ? Number(searchAppId.value) : undefined,
+      designUid: searchDesignUid.value || undefined,
       userId: typeof searchUserId.value === 'number' ? searchUserId.value : undefined,
       designStatus: 'submitted'
     }) as unknown as ApiResponse<PageResponse<DesignReviewItem>>
@@ -173,12 +159,6 @@ const handleBatchApprove = async () => {
 }
 
 const handleSearch = () => {
-  const appId = searchAppId.value.trim()
-  if (appId && (!/^\d+$/.test(appId) || Number(appId) <= 0)) {
-    ElMessage.warning('请输入有效的 AppId')
-    return
-  }
-  searchAppId.value = appId
   currentPage.value = 1
   fetchDesigns()
 }
