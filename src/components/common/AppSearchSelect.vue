@@ -11,6 +11,7 @@
     :loading="loading"
     :style="{ width }"
     :disabled="disabled"
+    :size="size"
     clearable
   >
     <el-option
@@ -33,10 +34,12 @@ const props = withDefaults(defineProps<{
   placeholder?: string,
   width?: string,
   disabled?: boolean,
+  size?: 'large' | 'default' | 'small',
 }>(), {
   placeholder: '搜索应用（App ID 或应用名）',
   width: '360px',
   disabled: false,
+  size: 'default',
 })
 
 const options = ref<Array<ProductBase | Product>>([])

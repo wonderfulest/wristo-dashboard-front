@@ -5,7 +5,6 @@
         <AppSearchSelect
           v-model="appId"
           width="360px"
-          placeholder="搜索应用（按名称）"
           @selected="onSelected"
         />
         <el-date-picker

@@ -24,7 +24,7 @@
         size="small"
       />
 
-      <el-input v-model.number="appId" placeholder="应用ID(可选)" clearable size="small" style="width: 180px" />
+      <AppSearchSelect v-model="appId" width="240px" size="small" />
 
       <el-button type="primary" size="small" :loading="funnelLoading" @click="fetchFunnel">查询</el-button>
       
@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { getFunnel } from '@/api/purchase'
 import type { AppFunnelVO, SalesQueryDTO } from '@/types/api'
 import {

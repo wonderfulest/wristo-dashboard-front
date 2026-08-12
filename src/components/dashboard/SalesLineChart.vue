@@ -26,12 +26,10 @@
         :disabled="loading"
       />
 
-      <el-input
-        v-model.number="appId"
-        placeholder="应用ID(可选)"
-        clearable
+      <AppSearchSelect
+        v-model="appId"
+        width="240px"
         size="small"
-        style="width: 180px"
         :disabled="loading"
       />
 
@@ -51,6 +49,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { getSales } from '@/api/purchase'
 import type { DailySalesItemVO, SalesQueryDTO } from '@/types/api'
 import { buildRecentDayRange, buildSelectedDayRange } from './funnelRange.mjs'

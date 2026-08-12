@@ -10,7 +10,6 @@
       <span class="label">选择应用：</span>
       <AppSearchSelect
         v-model="selectedAppId"
-        placeholder="搜索应用（按名称）"
         width="420px"
         @selected="handleProductSelected"
       />
