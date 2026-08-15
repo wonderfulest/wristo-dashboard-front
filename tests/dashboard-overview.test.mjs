@@ -68,14 +68,29 @@ test('formatDashboardMetric uses dashboard-friendly number formats', () => {
   assert.equal(formatDashboardMetric('purchaseRate', null), '-')
 })
 
-test('dashboard wires one filter to overview, sales and funnel sections', async () => {
+test('dashboard sections own independent complete filters', async () => {
   const source = await readFile(new URL('../src/views/dashboard/Dashboard.vue', import.meta.url), 'utf8')
+  const overview = await readFile(new URL('../src/components/dashboard/BusinessOverview.vue', import.meta.url), 'utf8')
+  const sales = await readFile(new URL('../src/components/dashboard/SalesLineChart.vue', import.meta.url), 'utf8')
+  const funnel = await readFile(new URL('../src/components/dashboard/FunnelAnalytics.vue', import.meta.url), 'utf8')
+  const filter = await readFile(new URL('../src/components/dashboard/DashboardSectionFilter.vue', import.meta.url), 'utf8')
 
-  assert.match(source, /DashboardFilterBar/)
-  assert.match(source, /BusinessOverview/)
+  assert.doesNotMatch(source, /dashboardFilter/)
+  assert.match(source, /<DashboardFilterBar\s*\/>/)
+  assert.match(source, /<BusinessOverview\s*\/>/)
+  assert.match(source, /<SalesLineChart\s*\/>/)
+  assert.match(source, /<FunnelAnalytics\s*\/>/)
   assert.match(source, /OperationsInbox/)
-  assert.match(source, /:filter="dashboardFilter"/)
-  assert.match(source, /@metrics-change="handleMetricsChange"/)
+  for (const component of [overview, sales, funnel]) {
+    assert.match(component, /DashboardSectionFilter/)
+    assert.match(component, /ref<DashboardFilter>/)
+  }
+  assert.match(filter, />当日</)
+  assert.match(filter, />昨天</)
+  assert.match(filter, />前天</)
+  assert.match(filter, />近三天</)
+  assert.match(filter, /AppSearchSelect/)
+  assert.match(filter, />刷新数据</)
 })
 
 test('review time action exposes all three operational steps', async () => {

@@ -1,33 +1,11 @@
 <template>
   <div class="dashboard-content">
-    <h3 class="section-title">转化分析</h3>
+    <div class="section-heading">
+      <h3 class="section-title">转化分析</h3>
+      <DashboardSectionFilter v-model="filter" :loading="funnelLoading" />
+    </div>
 
-    <div v-if="!filter" class="funnel-toolbar">
-      <el-radio-group v-model="rangeType" size="small" @change="handleRangeTypeChange">
-        <el-radio-button label="today">当天</el-radio-button>
-        <el-radio-button label="yesterday">昨天</el-radio-button>
-        <el-radio-button label="dayBeforeYesterday">前天</el-radio-button>
-        <el-radio-button label="3d">近3天</el-radio-button>
-        <el-radio-button label="7d">近一周</el-radio-button>
-        <el-radio-button label="30d">近一月</el-radio-button>
-        <el-radio-button label="custom">自定义</el-radio-button>
-      </el-radio-group>
-
-      <el-date-picker
-        v-if="rangeType === 'custom'"
-        v-model="dateRange"
-        type="daterange"
-        range-separator="-"
-        start-placeholder="开始时间"
-        end-placeholder="结束时间"
-        value-format="YYYY-MM-DD"
-        size="small"
-      />
-
-      <AppSearchSelect v-model="appId" width="240px" size="small" />
-
-      <el-button type="primary" size="small" :loading="funnelLoading" @click="fetchFunnel">查询</el-button>
-      
+    <div class="funnel-toolbar">
       <div class="step-toggle">
         <span class="toggle-label">显示层级：</span>
         <el-checkbox
@@ -73,28 +51,18 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
-import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
+import DashboardSectionFilter from './DashboardSectionFilter.vue'
 import { getFunnel } from '@/api/purchase'
 import type { AppFunnelVO, SalesQueryDTO } from '@/types/api'
-import {
-  buildCompletedDayRange,
-  buildCurrentDayRange,
-  buildHistoricalDayRange,
-  buildSelectedDayRange,
-} from './funnelRange.mjs'
+import { buildDashboardRange } from './dashboardOverview.mjs'
 import type { DashboardFilter } from './dashboardTypes'
 
-const props = defineProps<{ filter?: DashboardFilter }>()
-
 // ===== Funnel state & methods =====
-type RangeType = 'today' | 'yesterday' | 'dayBeforeYesterday' | '3d' | '7d' | '30d' | 'custom'
-
 const funnel = ref<AppFunnelVO | null>(null)
 const funnelLoading = ref(false)
 const funnelError = ref<string | null>(null)
-const rangeType = ref<RangeType>('7d')
-const dateRange = ref<[string, string] | null>(null)
-const appId = ref<number | null>(null)
+const initialRange = buildDashboardRange('7d')
+const filter = ref<DashboardFilter>({ rangeType: '7d', startDate: initialRange.startDate, endDate: initialRange.endDate, appId: null })
 
 const formatNumber = (n: number | undefined) => {
   if (n === undefined || n === null) return '0'
@@ -107,50 +75,17 @@ const formatPercent = (fromVal?: number, toVal?: number) => {
   return pct.toFixed(1) + '%'
 }
 
-const displayPeriod = ref('')
-const rangeDays = { '3d': 3, '7d': 7, '30d': 30 } as const
-const historicalDayOffsets = { yesterday: 1, dayBeforeYesterday: 2 } as const
-
-const applyRangeByType = () => {
-  if (rangeType.value === 'custom') {
-    if (!dateRange.value) return
-    displayPeriod.value = buildSelectedDayRange(dateRange.value[0], dateRange.value[1]).displayPeriod
-    return
-  }
-  if (rangeType.value === 'today') {
-    const range = buildCurrentDayRange()
-    dateRange.value = [range.startDate, range.endDate]
-    displayPeriod.value = range.displayPeriod
-    return
-  }
-  if (rangeType.value === 'yesterday' || rangeType.value === 'dayBeforeYesterday') {
-    const range = buildHistoricalDayRange(historicalDayOffsets[rangeType.value])
-    dateRange.value = [range.startDate, range.endDate]
-    displayPeriod.value = range.displayPeriod
-    return
-  }
-  const range = buildCompletedDayRange(rangeDays[rangeType.value])
-  dateRange.value = [range.startDate, range.endDate]
-  displayPeriod.value = range.displayPeriod
-}
-
-const handleRangeTypeChange = () => { applyRangeByType(); fetchFunnel() }
+const displayPeriod = ref(initialRange.displayPeriod)
 
 const fetchFunnel = async () => {
   try {
     funnelLoading.value = true
     funnelError.value = null
-    if (props.filter) {
-      dateRange.value = [props.filter.startDate, props.filter.endDate]
-      displayPeriod.value = `${props.filter.startDate} 至 ${props.filter.endDate}`
-      appId.value = props.filter.appId
-    } else if (rangeType.value === 'today' || !dateRange.value) applyRangeByType()
-    if (!dateRange.value) { funnelError.value = '请选择时间范围'; return }
-    const appIdVal = appId.value != null && !Number.isNaN(appId.value) ? appId.value : null
-    const toDate = (s: string) => s?.split(' ')[0] || s
+    displayPeriod.value = `${filter.value.startDate} 至 ${filter.value.endDate}`
+    const appIdVal = filter.value.appId != null && !Number.isNaN(filter.value.appId) ? filter.value.appId : null
     const dto: SalesQueryDTO = {
-      startDate: toDate(dateRange.value[0]),
-      endDate: toDate(dateRange.value[1]),
+      startDate: filter.value.startDate,
+      endDate: filter.value.endDate,
       appId: appIdVal
     }
     const res = await getFunnel(dto)
@@ -259,17 +194,9 @@ const updateFunnelChart = async () => {
 }
 
 watch(funnel, () => updateFunnelChart())
-watch(() => props.filter, fetchFunnel, { deep: true })
+watch(filter, fetchFunnel, { deep: true })
 
-// Auto-fetch when using custom range and user changes dates
-watch(dateRange, (val) => {
-  if (rangeType.value === 'custom' && val && val[0] && val[1]) {
-    applyRangeByType()
-    fetchFunnel()
-  }
-})
-
-onMounted(() => { applyRangeByType(); fetchFunnel(); nextTick(() => initFunnelChart()) })
+onMounted(() => { fetchFunnel(); nextTick(() => initFunnelChart()) })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
@@ -279,7 +206,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .dashboard-content { margin-top: 32px; }
-.section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 16px 0; text-align: left; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px 0 12px; }
+.section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 0; text-align: left; }
 .funnel-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .funnel-header { display: flex; justify-content: space-between; font-size: 12px; color: #6c757d; }
 .funnel-chart { width: 100%; height: 360px; margin-bottom: 12px; }
@@ -294,6 +222,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
   .dashboard-content { margin-top: 18px; }
+  .section-heading { align-items: stretch; flex-direction: column; }
   .funnel-toolbar,
   .step-toggle {
     align-items: stretch;

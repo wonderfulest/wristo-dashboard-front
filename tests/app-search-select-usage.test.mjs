@@ -5,18 +5,21 @@ import { readFile } from 'node:fs/promises'
 const readSource = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8')
 
 test('dashboard 单应用统计筛选统一使用 AppSearchSelect', async () => {
-  const files = [
+  const filter = await readSource('src/components/dashboard/DashboardSectionFilter.vue')
+  assert.match(filter, /<AppSearchSelect\b[^>]*v-model="appId"/s)
+  assert.match(filter, /<AppSearchSelect\b[^>]*size="small"/s)
+  assert.match(filter, /import AppSearchSelect from '@\/components\/common\/AppSearchSelect\.vue'/)
+  assert.doesNotMatch(filter, /placeholder="应用ID\(可选\)"/)
+
+  const consumers = [
+    'src/components/dashboard/BusinessOverview.vue',
     'src/components/dashboard/SalesLineChart.vue',
     'src/components/dashboard/FunnelAnalytics.vue',
   ]
 
-  for (const file of files) {
+  for (const file of consumers) {
     const source = await readSource(file)
-
-    assert.match(source, /<AppSearchSelect\b[^>]*v-model="appId"/s, file)
-    assert.match(source, /<AppSearchSelect\b[^>]*size="small"/s, file)
-    assert.match(source, /import AppSearchSelect from '@\/components\/common\/AppSearchSelect\.vue'/, file)
-    assert.doesNotMatch(source, /placeholder="应用ID\(可选\)"/, file)
+    assert.match(source, /<DashboardSectionFilter\b[^>]*v-model="filter"/s, file)
   }
 })
 

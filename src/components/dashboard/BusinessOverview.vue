@@ -2,8 +2,9 @@
   <section class="overview-section" v-loading="loading">
     <div class="section-heading">
       <div><span class="section-kicker">PERFORMANCE</span><h2>经营概览</h2></div>
-      <span class="period">{{ filter.startDate }} 至 {{ filter.endDate }}</span>
+      <DashboardSectionFilter v-model="filter" :loading="loading" />
     </div>
+    <span class="period">统计周期：{{ filter.startDate }} 至 {{ filter.endDate }}</span>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <div class="metric-grid">
       <article v-for="item in cards" :key="item.key" class="metric-card" :class="`metric-card--${item.tone}`">
@@ -18,12 +19,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { getFunnel, getSales } from '@/api/purchase'
-import { calculateBusinessMetrics, formatDashboardMetric } from './dashboardOverview.mjs'
+import DashboardSectionFilter from './DashboardSectionFilter.vue'
+import { buildDashboardRange, calculateBusinessMetrics, formatDashboardMetric } from './dashboardOverview.mjs'
 import type { DashboardMetrics } from './dashboardOverview.mjs'
 import type { DashboardFilter } from './dashboardTypes'
 
-const props = defineProps<{ filter: DashboardFilter }>()
 const emit = defineEmits<{ (event: 'metrics-change', value: DashboardMetrics): void }>()
+const initialRange = buildDashboardRange('7d')
+const filter = ref<DashboardFilter>({ rangeType: '7d', startDate: initialRange.startDate, endDate: initialRange.endDate, appId: null })
 const loading = ref(false)
 const error = ref('')
 const metrics = ref<DashboardMetrics>(calculateBusinessMetrics())
@@ -35,9 +38,9 @@ const cards = [
 ]
 
 const query = computed(() => ({
-  startDate: props.filter.startDate,
-  endDate: props.filter.endDate,
-  ...(props.filter.appId ? { appId: props.filter.appId } : {}),
+  startDate: filter.value.startDate,
+  endDate: filter.value.endDate,
+  ...(filter.value.appId ? { appId: filter.value.appId } : {}),
 }))
 
 const fetchMetrics = async () => {
@@ -54,12 +57,12 @@ const fetchMetrics = async () => {
   }
 }
 
-watch(() => props.filter, fetchMetrics, { deep: true, immediate: true })
+watch(filter, fetchMetrics, { deep: true, immediate: true })
 </script>
 
 <style scoped>
 .overview-section { margin-top: 18px; }
-.section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 10px; }
+.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
 .section-kicker { color: #809088; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
 h2 { margin: 2px 0 0; color: #1d3027; font-size: 18px; }
 .period { color: #819087; font-size: 12px; }

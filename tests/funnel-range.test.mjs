@@ -68,19 +68,21 @@ test('historical single-day range is included in the TypeScript declaration', as
   )
 })
 
-test('dashboard funnel exposes yesterday and day-before-yesterday options', async () => {
+test('dashboard section filter exposes yesterday and day-before-yesterday options', async () => {
   const funnel = await readFile(new URL('../src/components/dashboard/FunnelAnalytics.vue', import.meta.url), 'utf8')
-  assert.match(funnel, /<el-radio-button label="yesterday">昨天<\/el-radio-button>/)
-  assert.match(funnel, /<el-radio-button label="dayBeforeYesterday">前天<\/el-radio-button>/)
-  assert.doesNotMatch(funnel, />近1天<\/el-radio-button>/)
-  assert.match(funnel, /buildHistoricalDayRange\(historicalDayOffsets\[rangeType\.value\]\)/)
+  const filter = await readFile(new URL('../src/components/dashboard/DashboardSectionFilter.vue', import.meta.url), 'utf8')
+  assert.match(funnel, /DashboardSectionFilter/)
+  assert.match(filter, /<el-radio-button label="yesterday">昨天<\/el-radio-button>/)
+  assert.match(filter, /<el-radio-button label="dayBeforeYesterday">前天<\/el-radio-button>/)
+  assert.doesNotMatch(filter, />近1天<\/el-radio-button>/)
+  assert.match(filter, /buildDashboardRange\(rangeType\.value\)/)
 })
 
-test('dashboard exposes today conversion option and uses current-day ranges', async () => {
+test('dashboard sections expose today and use the shared dashboard range', async () => {
   const funnel = await readFile(new URL('../src/components/dashboard/FunnelAnalytics.vue', import.meta.url), 'utf8')
   const sales = await readFile(new URL('../src/components/dashboard/SalesLineChart.vue', import.meta.url), 'utf8')
-  assert.match(funnel, /<el-radio-button label="today">当天<\/el-radio-button>/)
-  assert.match(funnel, /buildCurrentDayRange/)
-  assert.match(funnel, /rangeType\.value === 'today' \|\| !dateRange\.value/)
-  assert.match(sales, /buildRecentDayRange/)
+  const filter = await readFile(new URL('../src/components/dashboard/DashboardSectionFilter.vue', import.meta.url), 'utf8')
+  assert.match(filter, /<el-radio-button label="today">当日<\/el-radio-button>/)
+  assert.match(funnel, /buildDashboardRange/)
+  assert.match(sales, /buildDashboardRange/)
 })

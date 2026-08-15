@@ -1,39 +1,12 @@
 <template>
   <div class="dashboard-content">
-    <h3 class="section-title">销售趋势</h3>
+    <div class="section-heading">
+      <h3 class="section-title">销售趋势</h3>
+      <DashboardSectionFilter v-model="filter" :loading="loading" />
+    </div>
 
     <div v-if="error" class="error-message">
       <p>获取销售折线图失败：{{ error }}</p>
-    </div>
-
-    <div v-if="!filter" class="filters">
-      <el-radio-group v-model="rangeType" size="small" @change="handleRangeTypeChange">
-        <el-radio-button label="7d">近一周</el-radio-button>
-        <el-radio-button label="15d">近半月</el-radio-button>
-        <el-radio-button label="30d">近一月</el-radio-button>
-        <el-radio-button label="60d">近两月</el-radio-button>
-        <el-radio-button label="custom">自定义</el-radio-button>
-      </el-radio-group>
-
-      <el-date-picker
-        v-if="rangeType === 'custom'"
-        v-model="dateRange"
-        type="daterange"
-        range-separator="-"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
-        size="small"
-        :disabled="loading"
-      />
-
-      <AppSearchSelect
-        v-model="appId"
-        width="240px"
-        size="small"
-        :disabled="loading"
-      />
-
-      <el-button type="primary" size="small" :loading="loading" @click="handleQuery">查询</el-button>
     </div>
 
     <el-card shadow="never" :body-style="{ padding: '12px 12px 4px 12px' }" v-loading="loading">
@@ -49,59 +22,28 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
-import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
+import DashboardSectionFilter from './DashboardSectionFilter.vue'
 import { getSales } from '@/api/purchase'
 import type { DailySalesItemVO, SalesQueryDTO } from '@/types/api'
-import { buildRecentDayRange, buildSelectedDayRange } from './funnelRange.mjs'
+import { buildDashboardRange } from './dashboardOverview.mjs'
 import type { DashboardFilter } from './dashboardTypes'
-
-const props = defineProps<{ filter?: DashboardFilter }>()
 
 const loading = ref(false)
 const error = ref<string | null>(null)
 const items = ref<DailySalesItemVO[]>([])
 
-// date range and quick ranges
-type Range = [Date, Date]
-const rangeType = ref<'7d'|'15d'|'30d'|'60d'|'custom'>('60d')
-const rangeDays = { '7d': 7, '15d': 15, '30d': 30, '60d': 60 } as const
-const initialRange = buildRecentDayRange(60)
-const dateRange = ref<Range>([new Date(`${initialRange.startDate}T00:00:00`), new Date(`${initialRange.endDate}T00:00:00`)])
+const initialRange = buildDashboardRange('7d')
+const filter = ref<DashboardFilter>({ rangeType: '7d', startDate: initialRange.startDate, endDate: initialRange.endDate, appId: null })
 const displayPeriod = ref(initialRange.displayPeriod)
-const appId = ref<number | null>(null)
-
-const handleRangeTypeChange = async () => {
-  if (rangeType.value !== 'custom') {
-    const range = buildRecentDayRange(rangeDays[rangeType.value])
-    dateRange.value = [new Date(`${range.startDate}T00:00:00`), new Date(`${range.endDate}T00:00:00`)]
-    displayPeriod.value = range.displayPeriod
-  }
-  await handleQuery()
-}
-
-const handleQuery = async () => {
-  await fetchSales(buildDto())
-}
 
 const buildDto = (): SalesQueryDTO => {
-  if (props.filter) {
-    return {
-      startDate: props.filter.startDate,
-      endDate: props.filter.endDate,
-      ...(props.filter.appId ? { appId: props.filter.appId } : {}),
-    }
-  }
-  const [s, e] = dateRange.value
-  const range = rangeType.value === 'custom'
-    ? buildSelectedDayRange(s, e)
-    : buildRecentDayRange(rangeDays[rangeType.value])
-  displayPeriod.value = range.displayPeriod
+  displayPeriod.value = `${filter.value.startDate} 至 ${filter.value.endDate}`
   const dto: SalesQueryDTO = {
-    startDate: range.startDate,
-    endDate: range.endDate
+    startDate: filter.value.startDate,
+    endDate: filter.value.endDate,
   }
-  if (appId.value !== null && Number.isFinite(appId.value) && (appId.value as number) > 0) {
-    dto.appId = appId.value
+  if (filter.value.appId !== null && Number.isFinite(filter.value.appId) && filter.value.appId > 0) {
+    dto.appId = filter.value.appId
   }
   return dto
 }
@@ -257,8 +199,7 @@ onMounted(async () => {
 })
 
 watch(items, () => updateChart())
-watch(() => props.filter, () => fetchSales(buildDto()), { deep: true })
-// only fetch when clicking the query button
+watch(filter, () => fetchSales(buildDto()), { deep: true })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
@@ -271,15 +212,16 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .dashboard-content { margin-top: 32px; }
-.section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 16px 0; text-align: left; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px 0 12px; }
+.section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 0; text-align: left; }
 .error-message { background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 16px; margin: 24px 0; color: #721c24; }
-.filters { margin: 8px 0 12px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .funnel-header { display: flex; justify-content: space-between; font-size: 12px; color: #6c757d; }
 .app-id-input { width: 180px; }
 .line-chart { width: 100%; height: 320px; }
 
 @media (max-width: 768px) {
   .dashboard-content { margin-top: 18px; }
+  .section-heading { align-items: stretch; flex-direction: column; }
   .line-chart { height: 300px; min-height: 300px; }
 }
 </style>
