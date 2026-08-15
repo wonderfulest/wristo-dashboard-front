@@ -7,6 +7,10 @@
     </div>
     <div class="control-fields">
       <el-radio-group v-model="rangeType" size="small" @change="applyQuickRange">
+        <el-radio-button label="today">当日</el-radio-button>
+        <el-radio-button label="yesterday">昨天</el-radio-button>
+        <el-radio-button label="dayBeforeYesterday">前天</el-radio-button>
+        <el-radio-button label="3d">近三天</el-radio-button>
         <el-radio-button label="7d">近 7 天</el-radio-button>
         <el-radio-button label="30d">近 30 天</el-radio-button>
         <el-radio-button label="custom">自定义</el-radio-button>

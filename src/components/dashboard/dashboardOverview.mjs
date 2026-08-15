@@ -3,9 +3,14 @@ const pad = (value) => String(value).padStart(2, '0')
 const formatDate = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 
 export const buildDashboardRange = (rangeType = '7d', now = new Date()) => {
-  const days = Number.parseInt(rangeType, 10) || 7
   const end = new Date(now)
   end.setHours(0, 0, 0, 0)
+  const dayOffsets = { today: 0, yesterday: 1, dayBeforeYesterday: 2 }
+  const dayOffset = dayOffsets[rangeType]
+  if (dayOffset !== undefined) {
+    end.setDate(end.getDate() - dayOffset)
+  }
+  const days = dayOffset !== undefined ? 1 : Number.parseInt(rangeType, 10) || 7
   const start = new Date(end)
   start.setDate(end.getDate() - days + 1)
   const startDate = formatDate(start)

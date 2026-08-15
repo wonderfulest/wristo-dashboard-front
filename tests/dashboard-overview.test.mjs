@@ -18,6 +18,23 @@ test('buildDashboardRange returns inclusive recent calendar days', () => {
   })
 })
 
+test('buildDashboardRange supports dashboard single-day and three-day shortcuts', () => {
+  const now = new Date('2026-08-13T12:00:00')
+
+  assert.deepEqual(buildDashboardRange('today', now), {
+    startDate: '2026-08-13', endDate: '2026-08-13', displayPeriod: '2026-08-13 至 2026-08-13',
+  })
+  assert.deepEqual(buildDashboardRange('yesterday', now), {
+    startDate: '2026-08-12', endDate: '2026-08-12', displayPeriod: '2026-08-12 至 2026-08-12',
+  })
+  assert.deepEqual(buildDashboardRange('dayBeforeYesterday', now), {
+    startDate: '2026-08-11', endDate: '2026-08-11', displayPeriod: '2026-08-11 至 2026-08-11',
+  })
+  assert.deepEqual(buildDashboardRange('3d', now), {
+    startDate: '2026-08-11', endDate: '2026-08-13', displayPeriod: '2026-08-11 至 2026-08-13',
+  })
+})
+
 test('calculateBusinessMetrics aggregates cents and counts without inventing comparison data', () => {
   const metrics = calculateBusinessMetrics(
     [
