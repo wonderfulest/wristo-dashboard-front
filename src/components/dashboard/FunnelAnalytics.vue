@@ -2,7 +2,7 @@
   <div class="dashboard-content">
     <h3 class="section-title">转化分析</h3>
 
-    <div class="funnel-toolbar">
+    <div v-if="!filter" class="funnel-toolbar">
       <el-radio-group v-model="rangeType" size="small" @change="handleRangeTypeChange">
         <el-radio-button label="today">当天</el-radio-button>
         <el-radio-button label="yesterday">昨天</el-radio-button>
@@ -82,6 +82,9 @@ import {
   buildHistoricalDayRange,
   buildSelectedDayRange,
 } from './funnelRange.mjs'
+import type { DashboardFilter } from './dashboardTypes'
+
+const props = defineProps<{ filter?: DashboardFilter }>()
 
 // ===== Funnel state & methods =====
 type RangeType = 'today' | 'yesterday' | 'dayBeforeYesterday' | '3d' | '7d' | '30d' | 'custom'
@@ -137,7 +140,11 @@ const fetchFunnel = async () => {
   try {
     funnelLoading.value = true
     funnelError.value = null
-    if (rangeType.value === 'today' || !dateRange.value) applyRangeByType()
+    if (props.filter) {
+      dateRange.value = [props.filter.startDate, props.filter.endDate]
+      displayPeriod.value = `${props.filter.startDate} 至 ${props.filter.endDate}`
+      appId.value = props.filter.appId
+    } else if (rangeType.value === 'today' || !dateRange.value) applyRangeByType()
     if (!dateRange.value) { funnelError.value = '请选择时间范围'; return }
     const appIdVal = appId.value != null && !Number.isNaN(appId.value) ? appId.value : null
     const toDate = (s: string) => s?.split(' ')[0] || s
@@ -252,6 +259,7 @@ const updateFunnelChart = async () => {
 }
 
 watch(funnel, () => updateFunnelChart())
+watch(() => props.filter, fetchFunnel, { deep: true })
 
 // Auto-fetch when using custom range and user changes dates
 watch(dateRange, (val) => {

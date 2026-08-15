@@ -6,7 +6,7 @@
       <p>获取销售折线图失败：{{ error }}</p>
     </div>
 
-    <div class="filters">
+    <div v-if="!filter" class="filters">
       <el-radio-group v-model="rangeType" size="small" @change="handleRangeTypeChange">
         <el-radio-button label="7d">近一周</el-radio-button>
         <el-radio-button label="15d">近半月</el-radio-button>
@@ -53,6 +53,9 @@ import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { getSales } from '@/api/purchase'
 import type { DailySalesItemVO, SalesQueryDTO } from '@/types/api'
 import { buildRecentDayRange, buildSelectedDayRange } from './funnelRange.mjs'
+import type { DashboardFilter } from './dashboardTypes'
+
+const props = defineProps<{ filter?: DashboardFilter }>()
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -81,6 +84,13 @@ const handleQuery = async () => {
 }
 
 const buildDto = (): SalesQueryDTO => {
+  if (props.filter) {
+    return {
+      startDate: props.filter.startDate,
+      endDate: props.filter.endDate,
+      ...(props.filter.appId ? { appId: props.filter.appId } : {}),
+    }
+  }
   const [s, e] = dateRange.value
   const range = rangeType.value === 'custom'
     ? buildSelectedDayRange(s, e)
@@ -247,6 +257,7 @@ onMounted(async () => {
 })
 
 watch(items, () => updateChart())
+watch(() => props.filter, () => fetchSales(buildDto()), { deep: true })
 // only fetch when clicking the query button
 
 onBeforeUnmount(() => {

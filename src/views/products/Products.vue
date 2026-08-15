@@ -163,6 +163,11 @@
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
+      <el-table-column prop="lastGoLive" label="上线时间" width="120">
+        <template #default="{ row }">
+          {{ formatProductGoLive(row.lastGoLive, formatDate) }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="440" fixed="right">
         <template #default="{ row }">
           <div style="display: flex; gap: 8px;">
@@ -245,6 +250,10 @@
                 <div class="mobile-field">
                   <div class="mobile-field-label">创建时间</div>
                   <div class="mobile-field-value">{{ row.createdAt ? formatDate(row.createdAt) : '-' }}</div>
+                </div>
+                <div class="mobile-field">
+                  <div class="mobile-field-label">上线时间</div>
+                  <div class="mobile-field-value">{{ formatProductGoLive(row.lastGoLive, formatDate) }}</div>
                 </div>
               </div>
               <div class="product-mobile-categories">
@@ -715,6 +724,7 @@ import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import MobileRecordList from '@/components/common/MobileRecordList.vue'
 import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 import { formatDate } from '@/utils/date'
+import { formatProductGoLive } from './productDisplay.mjs'
 import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, manageCategoryForAllProducts } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'

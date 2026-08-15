@@ -17,6 +17,12 @@
       </div>
 
       <div class="actions">
+        <div class="operation-steps" aria-label="刷新审核时间执行步骤">
+          <div v-for="(step, index) in refreshSteps" :key="step.label" class="operation-step" :class="`is-${step.status}`">
+            <span class="step-index">{{ step.status === 'success' ? '✓' : step.status === 'failed' ? '!' : index + 1 }}</span>
+            <div><strong>{{ step.label }}</strong><small>{{ step.description }}</small></div>
+          </div>
+        </div>
         <div class="refresh">
           <el-button class="circle-btn" type="primary" :loading="refreshing" @click="onRefreshNow">
             刷新为当前时间
@@ -44,7 +50,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { getReviewTime, setReviewTime, refreshReviewTime } from '@/api/config'
 import type { GlobalConfig } from '@/types/ops'
 import { formatDateTime } from '@/utils/date'
@@ -61,6 +67,25 @@ const loading = ref(false)
 const saving = ref(false)
 const refreshing = ref(false)
 const setInput = ref<string>('')
+type StepStatus = 'pending' | 'running' | 'success' | 'failed'
+const refreshSteps = ref([
+  { label: 'Bundle 关系预处理', description: `同步 Bundle #${BUNDLE_ID} 的产品关系`, status: 'pending' as StepStatus },
+  { label: '更新审核时间', description: '将作品展示审核时间更新为当前时间', status: 'pending' as StepStatus },
+  { label: '重建搜索索引', description: '清理并全量重建应用搜索索引', status: 'pending' as StepStatus },
+])
+
+const resetRefreshSteps = () => refreshSteps.value.forEach(step => { step.status = 'pending' })
+const runRefreshStep = async (index: number, task: () => Promise<unknown>) => {
+  refreshSteps.value[index].status = 'running'
+  try {
+    const result = await task()
+    refreshSteps.value[index].status = 'success'
+    return result
+  } catch (error) {
+    refreshSteps.value[index].status = 'failed'
+    throw error
+  }
+}
 
 const nowString = (): string => {
   const d = new Date()
@@ -89,11 +114,20 @@ const fetchCurrent = async () => {
 }
 
 const onRefreshNow = async () => {
-  refreshing.value = true
   try {
-    await insertBundleProductRelations(BUNDLE_ID)
-    const res = await refreshReviewTime()
-    void rebuildAll(true).catch(() => undefined)
+    await ElMessageBox.confirm(
+      '该操作会依次同步 Bundle 产品关系、更新审核时间，并全量重建搜索索引。确认继续吗？',
+      '确认刷新作品展示',
+      { confirmButtonText: '执行三步刷新', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  refreshing.value = true
+  resetRefreshSteps()
+  try {
+    await runRefreshStep(0, () => insertBundleProductRelations(BUNDLE_ID))
+    const res = await runRefreshStep(1, refreshReviewTime) as Awaited<ReturnType<typeof refreshReviewTime>>
     if (res?.data?.configValue) {
       reviewTime.value = res.data.configValue
       setInput.value = reviewTime.value
@@ -101,10 +135,11 @@ const onRefreshNow = async () => {
     } else {
       await fetchCurrent()
     }
+    await runRefreshStep(2, () => rebuildAll(true))
     emit('updated', current.value)
-    ElMessage.success('已刷新为当前时间')
+    ElMessage.success('三步刷新已全部完成')
   } catch (e) {
-    // 错误由拦截器提示
+    ElMessage.error('刷新未全部完成，请查看失败步骤后重试')
   } finally {
     refreshing.value = false
   }
@@ -137,7 +172,13 @@ onMounted(fetchCurrent)
 .current-box .label { color: var(--el-text-color-secondary); }
 .current-box .value { font-size: 20px; font-weight: 600; }
 .current-box .meta { display: flex; gap: 16px; color: var(--el-text-color-secondary); font-size: 12px; }
-.actions { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+.actions { display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
+.operation-steps { display: grid; gap: 8px; }
+.operation-step { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid #e5ebe8; border-radius: 10px; background: #fafcfb; }
+.operation-step .step-index { display: grid; width: 25px; height: 25px; flex: 0 0 25px; place-items: center; border-radius: 50%; background: #e7eeea; color: #607069; font-size: 12px; font-weight: 800; }
+.operation-step div { display: flex; min-width: 0; flex-direction: column; }.operation-step strong { color: #34473e; font-size: 13px; }.operation-step small { color: #8a9790; font-size: 11px; }
+.operation-step.is-running { border-color: #8fcdb0; background: #f1faf5; }.operation-step.is-running .step-index { background: #15915f; color: #fff; }
+.operation-step.is-success .step-index { background: #15915f; color: #fff; }.operation-step.is-failed { border-color: #e8a8a1; background: #fff7f6; }.operation-step.is-failed .step-index { background: #c94f43; color: #fff; }
 .refresh { display: flex; justify-content: center; }
 .circle-btn { width: 160px; height: 160px; border-radius: 50%; font-size: 16px; font-weight: 600; }
 .manual-set { display: flex; align-items: center; gap: 12px; }
