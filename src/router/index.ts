@@ -64,6 +64,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/ops/platform-versions',
+      name: 'PlatformVersions',
+      component: () => import('@/views/ops/PlatformVersions.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/ops/s3-ops',
       name: 'S3Ops',
       component: () => import('@/views/ops/S3Ops.vue'),
