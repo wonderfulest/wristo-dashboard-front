@@ -1,6 +1,6 @@
 const KEY_PATTERN = /^[a-z][a-z0-9_]*$/
 const SYMBOL_PATTERN = /^:[A-Z][A-Z0-9_]*$/
-const CATEGORIES = new Set(['field', 'goal', 'chart', 'indicator', 'date'])
+const CATEGORIES = new Set(['field', 'goal', 'chart', 'indicator', 'date', 'date_cn'])
 
 export function createEmptyDataTypeForm() {
   return {
