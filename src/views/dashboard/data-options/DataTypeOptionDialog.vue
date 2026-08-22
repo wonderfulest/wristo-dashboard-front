@@ -86,6 +86,11 @@
             <el-input-number v-model="form.dialMax" controls-position="right" />
           </el-form-item>
         </template>
+        <el-form-item v-if="form.dialMode === 'direction'" label="Direction Unit" prop="dialDirectionUnit" class="full">
+          <el-select v-model="form.dialDirectionUnit" style="width: 220px">
+            <el-option label="Degree" value="degree" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="Active" prop="isActive">
           <el-switch v-model="switchActive" />
         </el-form-item>
@@ -145,7 +150,7 @@ const titleText = computed(() => props.type === 'add' ? 'Add Data Type Option' :
 const selectedUnit = computed(() => props.units.find(unit => unit.unitKey === props.form.unitKey))
 const availableDialModes = computed(() => dialModeOptions(props.form.metricSymbol).map(value => ({
   value,
-  label: value === 'goal' ? 'Goal' : value === 'range' ? 'Range' : 'Not Supported',
+  label: value === 'goal' ? 'Goal' : value === 'range' ? 'Range' : value === 'direction' ? 'Direction' : 'Not Supported',
 })))
 
 watch(() => props.visible, async value => {
@@ -177,6 +182,7 @@ watch(() => props.form.iconRules?.type, type => {
 })
 watch(() => props.form.dialMode, mode => {
   if (mode === 'goal' && !props.form.dialGoalSource) props.form.dialGoalSource = 'garmin'
+  if (mode === 'direction' && !props.form.dialDirectionUnit) props.form.dialDirectionUnit = 'degree'
   Object.assign(props.form, normalizeDialFields(props.form))
 })
 watch(() => props.form.metricSymbol, symbol => {

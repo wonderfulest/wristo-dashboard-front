@@ -1,5 +1,6 @@
-export type DialMode = 'goal' | 'range' | null
+export type DialMode = 'goal' | 'range' | 'direction' | null
 export type DialGoalSource = 'garmin' | null
+export type DialDirectionUnit = 'degree' | null
 
 export interface DialFields {
   metricSymbol?: string
@@ -7,6 +8,7 @@ export interface DialFields {
   dialMin?: number | null
   dialMax?: number | null
   dialGoalSource?: DialGoalSource
+  dialDirectionUnit?: DialDirectionUnit
 }
 
 export function allowedDialMode(metricSymbol: unknown): Exclude<DialMode, null> | null

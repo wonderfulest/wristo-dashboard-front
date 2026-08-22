@@ -17,6 +17,11 @@
           <el-option label="系统素材" value="true" />
           <el-option label="用户素材" value="false" />
         </el-select>
+        <el-select v-model="queryIsShared" placeholder="是否共享" clearable style="width: 140px" @change="handleSearch">
+          <el-option label="全部" value="" />
+          <el-option label="共享素材" value="true" />
+          <el-option label="私有素材" value="false" />
+        </el-select>
         <el-select v-model="queryIsActive" placeholder="启用状态" clearable style="width: 140px" @change="handleSearch">
           <el-option label="全部" value="" />
           <el-option label="启用" value="true" />
@@ -87,6 +92,12 @@
           />
         </template>
       </el-table-column>
+      <el-table-column label="共享素材" width="100">
+        <template #default="{ row }">
+          <el-tag v-if="row.isShared" type="success" size="small">已共享</el-tag>
+          <el-tag v-else type="info" size="small">私有</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="启用" width="80">
         <template #default="{ row }">
           <el-switch
@@ -143,6 +154,7 @@ import { useEnumStore, ANALOG_ASSET_TYPE_ENUM_NAME } from '@/store/common'
 import type { AnalogAssetVO, AnalogAssetType } from '@/types/analog-asset'
 import AnalogAssetEditDialog from './components/AnalogAssetEditDialog.vue'
 import UserSelect from '@/components/users/UserSelect.vue'
+import { buildAnalogAssetPageQuery } from './analogAssetPageQuery.mjs'
 
 // List state
 const loading = ref(false)
@@ -165,6 +177,7 @@ const analogAssetTypeOptions = computed<{ value: AnalogAssetType; label: string 
 const queryType = ref<AnalogAssetType | ''>('')
 const queryUserId = ref<number | undefined>(undefined)
 const queryIsSystem = ref<'true' | 'false' | ''>('')
+const queryIsShared = ref<'true' | 'false' | ''>('')
 const queryIsActive = ref<'true' | 'false' | ''>('')
 const sortOrder = ref('updatedAt:desc')
 
@@ -181,15 +194,16 @@ const getTypeLabel = (type: AnalogAssetType) => {
 const fetchPage = async () => {
   loading.value = true
   try {
-    const res = await pageAnalogAsset({
+    const res = await pageAnalogAsset(buildAnalogAssetPageQuery({
       pageNum: pageNum.value,
       pageSize: pageSize.value,
-      analogAssetType: queryType.value || undefined,
+      analogAssetType: queryType.value,
       userId: queryUserId.value,
-      isSystem: queryIsSystem.value === '' ? undefined : queryIsSystem.value === 'true',
-      isActive: queryIsActive.value === '' ? undefined : queryIsActive.value === 'true',
+      isSystem: queryIsSystem.value,
+      isShared: queryIsShared.value,
+      isActive: queryIsActive.value,
       orderBy: sortOrder.value
-    })
+    }))
     if (res.code === 0 && res.data) {
       list.value = res.data.list || []
       total.value = res.data.total || 0
@@ -231,6 +245,7 @@ const handleReset = () => {
   queryType.value = ''
   queryUserId.value = undefined
   queryIsSystem.value = ''
+  queryIsShared.value = ''
   queryIsActive.value = ''
   sortOrder.value = 'id:desc'
   pageNum.value = 1

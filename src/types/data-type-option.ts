@@ -20,8 +20,9 @@ export interface IconRules {
 }
 
 export type DataTypeCategory = 'field' | 'goal' | 'chart' | 'indicator' | 'date'
-export type DialMode = 'goal' | 'range' | null
+export type DialMode = 'goal' | 'range' | 'direction' | null
 export type DialGoalSource = 'garmin' | null
+export type DialDirectionUnit = 'degree' | null
 
 export interface DataTypeOptionFields {
   metricSymbol: string
@@ -41,6 +42,7 @@ export interface DataTypeOptionFields {
   dialMin?: number | null
   dialMax?: number | null
   dialGoalSource?: DialGoalSource
+  dialDirectionUnit?: DialDirectionUnit
 }
 
 export interface DataTypeOptionVO extends DataTypeOptionFields {

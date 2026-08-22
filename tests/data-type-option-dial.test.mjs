@@ -14,33 +14,49 @@ test('whitelist assigns one explicit dial mode to approved data only', () => {
   assert.equal(allowedDialMode(':GOAL_TYPE_WEEKLY_ACTIVE_MINUTES'), 'goal')
   assert.equal(allowedDialMode(':GOAL_TYPE_CALORIES'), null)
   assert.equal(allowedDialMode(':FIELD_TYPE_WEATHER_HUMIDITY'), 'range')
-  assert.equal(allowedDialMode(':FIELD_TYPE_TEMPERATURE'), null)
+  assert.equal(allowedDialMode(':FIELD_TYPE_TEMPERATURE'), 'range')
+  assert.equal(allowedDialMode(':FIELD_TYPE_SENSOR_PRESSURE'), 'range')
+  assert.equal(allowedDialMode(':FIELD_TYPE_WEATHER_WIND_DIRECTION'), 'direction')
 })
 
 test('editor only offers the approved mode plus not supported', () => {
   assert.deepEqual(dialModeOptions(':GOAL_TYPE_STEPS'), [null, 'goal'])
   assert.deepEqual(dialModeOptions(':FIELD_TYPE_WEATHER_HUMIDITY'), [null, 'range'])
-  assert.deepEqual(dialModeOptions(':FIELD_TYPE_TEMPERATURE'), [null])
+  assert.deepEqual(dialModeOptions(':FIELD_TYPE_TEMPERATURE'), [null, 'range'])
+  assert.deepEqual(dialModeOptions(':FIELD_TYPE_WEATHER_WIND_DIRECTION'), [null, 'direction'])
 })
 
 test('not supported clears all dial metadata', () => {
   assert.deepEqual(
     normalizeDialFields({ dialMode: null, dialMin: 0, dialMax: 100, dialGoalSource: 'garmin' }),
-    { dialMode: null, dialMin: null, dialMax: null, dialGoalSource: null },
+    { dialMode: null, dialMin: null, dialMax: null, dialGoalSource: null, dialDirectionUnit: null },
   )
 })
 
 test('goal keeps source and clears range bounds', () => {
   assert.deepEqual(
     normalizeDialFields({ dialMode: 'goal', dialMin: 0, dialMax: 100, dialGoalSource: 'garmin' }),
-    { dialMode: 'goal', dialMin: null, dialMax: null, dialGoalSource: 'garmin' },
+    { dialMode: 'goal', dialMin: null, dialMax: null, dialGoalSource: 'garmin', dialDirectionUnit: null },
   )
 })
 
 test('range keeps zero minimum and clears goal source', () => {
   assert.deepEqual(
     normalizeDialFields({ dialMode: 'range', dialMin: 0, dialMax: 100, dialGoalSource: 'garmin' }),
-    { dialMode: 'range', dialMin: 0, dialMax: 100, dialGoalSource: null },
+    { dialMode: 'range', dialMin: 0, dialMax: 100, dialGoalSource: null, dialDirectionUnit: null },
+  )
+})
+
+test('direction keeps degree unit and clears goal and range metadata', () => {
+  assert.deepEqual(
+    normalizeDialFields({
+      dialMode: 'direction', dialMin: 0, dialMax: 360,
+      dialGoalSource: 'garmin', dialDirectionUnit: 'degree',
+    }),
+    {
+      dialMode: 'direction', dialMin: null, dialMax: null,
+      dialGoalSource: null, dialDirectionUnit: 'degree',
+    },
   )
 })
 
@@ -69,14 +85,28 @@ test('validation rejects fixed goals and mode mismatches', () => {
     'Data type is approved for Range Dial only',
   )
   assert.equal(
-    validateDialFields({ metricSymbol: ':FIELD_TYPE_TEMPERATURE', dialMode: 'range', dialMin: -20, dialMax: 50 }),
+    validateDialFields({ metricSymbol: ':FIELD_TYPE_FEELS_LIKE_TEMPERATURE', dialMode: 'range', dialMin: -20, dialMax: 50 }),
     'Data type is not approved for Dial',
+  )
+  assert.equal(
+    validateDialFields({ metricSymbol: ':FIELD_TYPE_WEATHER_WIND_DIRECTION', dialMode: 'range', dialMin: 0, dialMax: 360 }),
+    'Data type is approved for Direction Dial only',
+  )
+})
+
+test('direction requires degree unit', () => {
+  assert.equal(
+    validateDialFields({
+      metricSymbol: ':FIELD_TYPE_WEATHER_WIND_DIRECTION', dialMode: 'direction', dialDirectionUnit: null,
+    }),
+    'Direction Dial requires degree unit',
   )
 })
 
 test('summary describes each dial mode', () => {
   assert.equal(dialSummary({ dialMode: 'goal', dialGoalSource: 'garmin' }), 'Goal · Garmin')
   assert.equal(dialSummary({ dialMode: 'range', dialMin: 0, dialMax: 100 }), 'Range · 0–100')
+  assert.equal(dialSummary({ dialMode: 'direction', dialDirectionUnit: 'degree' }), 'Direction · Degree')
   assert.equal(dialSummary({ dialMode: null }), '—')
 })
 
@@ -88,6 +118,8 @@ test('dashboard dialog exposes dial mode and conditional fields', async () => {
   assert.match(source, /v-model="form\.dialMode"/)
   assert.match(source, /form\.dialMode === 'goal'/)
   assert.match(source, /form\.dialMode === 'range'/)
+  assert.match(source, /form\.dialMode === 'direction'/)
+  assert.match(source, /form\.dialDirectionUnit/)
   assert.match(source, /normalizeDialFields/)
   assert.match(source, /validateDialFields/)
 })

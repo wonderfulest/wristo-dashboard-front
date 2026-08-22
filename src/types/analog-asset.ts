@@ -28,6 +28,7 @@ export interface AnalogAssetVO {
   fileId: number
   userId: number
   isSystem: boolean
+  isShared: boolean
   isDeleted: boolean
   version: number
   isActive: boolean
@@ -43,6 +44,7 @@ export interface AnalogAssetCreateDTO {
   analogAssetType: AnalogAssetType
   fileId: number
   isSystem?: boolean
+  isShared?: boolean
   isDeleted?: boolean
   isActive?: boolean
 }
@@ -55,6 +57,7 @@ export interface AnalogAssetUpdateDTO {
   analogAssetType?: AnalogAssetType
   fileId?: number
   isSystem?: boolean
+  isShared?: boolean
   isDeleted?: boolean
   isActive?: boolean
 }
@@ -65,6 +68,7 @@ export interface AnalogAssetUpdateDTO {
 export interface AnalogAssetPageQueryDTO extends PageQueryDTO {
   analogAssetType?: AnalogAssetType
   isSystem?: boolean
+  isShared?: boolean
   isActive?: boolean
   userId?: number
 }

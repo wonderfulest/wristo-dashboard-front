@@ -22,6 +22,7 @@ export function createEmptyDataTypeForm() {
     dialMin: null,
     dialMax: null,
     dialGoalSource: null,
+    dialDirectionUnit: null,
   }
 }
 
@@ -69,6 +70,7 @@ export function normalizeDataTypePayload(form) {
     dialMin: form.dialMin ?? null,
     dialMax: form.dialMax ?? null,
     dialGoalSource: form.dialGoalSource ?? null,
+    dialDirectionUnit: form.dialDirectionUnit ?? null,
   }
   if (form.id !== undefined && form.id !== null) payload.id = Number(form.id)
   return payload
