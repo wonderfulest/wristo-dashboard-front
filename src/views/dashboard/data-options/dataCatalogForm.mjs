@@ -9,7 +9,7 @@ export function createEmptyDataTypeForm() {
     category: 'field',
     valueCode: 0,
     settingsLabel: { eng: '', zhs: '' },
-    label: { eng: '', zhs: '' },
+    label: { eng: { short: '', medium: '', long: '' }, zhs: '' },
     unitKey: 'none',
     iconUnicode: '',
     defaultValue: '',
@@ -31,7 +31,7 @@ export function cloneDataTypeForm(value) {
     ...value,
     systemDefault: Number(value?.systemDefault ?? 0),
     settingsLabel: normalizeLocalizedText(value?.settingsLabel),
-    label: normalizeLocalizedText(value?.label),
+    label: normalizeDataLabel(value?.label),
     iconRules: normalizeIconRules(value?.iconRules),
   }
 }
@@ -57,7 +57,7 @@ export function normalizeDataTypePayload(form) {
     category: form.category,
     valueCode: Number(form.valueCode),
     settingsLabel: normalizeLocalizedText(form.settingsLabel),
-    label: normalizeLocalizedText(form.label),
+    label: normalizeDataLabel(form.label),
     unitKey: trim(form.unitKey),
     iconUnicode: trim(form.iconUnicode),
     defaultValue: trim(form.defaultValue),
@@ -80,7 +80,7 @@ export function validateDataTypeForm(form) {
   const normalized = normalizeDataTypePayload(form)
   const settingsError = validateLocalizedText(normalized.settingsLabel, 'settingsLabel')
   if (settingsError) return settingsError
-  const labelError = validateLocalizedText(normalized.label, 'label')
+  const labelError = validateDataLabel(normalized.label)
   if (labelError) return labelError
   if (!Number.isInteger(normalized.valueCode) || normalized.valueCode < 0) {
     return 'valueCode must be nonnegative'
@@ -97,6 +97,26 @@ export function validateDataTypeForm(form) {
   if (!Number.isInteger(normalized.sortOrder) || normalized.sortOrder < 0) {
     return 'sortOrder must be nonnegative'
   }
+  return null
+}
+
+function normalizeDataLabel(value) {
+  return {
+    eng: {
+      short: trim(value?.eng?.short),
+      medium: trim(value?.eng?.medium),
+      long: trim(value?.eng?.long),
+    },
+    zhs: trim(value?.zhs),
+  }
+}
+
+function validateDataLabel(value) {
+  for (const [key, min, max] of [['short', 1, 4], ['medium', 5, 8], ['long', 9, 12]]) {
+    const length = Array.from(value?.eng?.[key] ?? '').length
+    if (length < min || length > max) return `label.eng.${key} must contain ${min}-${max} characters`
+  }
+  if (!value?.zhs) return 'label.zhs is required'
   return null
 }
 

@@ -31,8 +31,14 @@
           <h3>Watchface Data Label</h3>
           <p>Rendered as the data-item label on the watchface.</p>
           <div class="label-fields">
-            <el-form-item label="English" prop="label.eng">
-              <el-input v-model="form.label.eng" />
+            <el-form-item label="Short (1–4)" prop="label.eng.short">
+              <el-input v-model="form.label.eng.short" maxlength="4" show-word-limit />
+            </el-form-item>
+            <el-form-item label="Medium (5–8)" prop="label.eng.medium">
+              <el-input v-model="form.label.eng.medium" maxlength="8" show-word-limit />
+            </el-form-item>
+            <el-form-item label="Long (9–12)" prop="label.eng.long">
+              <el-input v-model="form.label.eng.long" maxlength="12" show-word-limit />
             </el-form-item>
             <el-form-item label="简体中文" prop="label.zhs">
               <el-input v-model="form.label.zhs" />
@@ -199,7 +205,9 @@ const rules = {
   valueCode: required('Value code required', 'change'),
   'settingsLabel.eng': required('Connect IQ English label required'),
   'settingsLabel.zhs': required('Connect IQ 简体中文标签必填'),
-  'label.eng': required('Watchface English label required'),
+  'label.eng.short': required('Short English label required'),
+  'label.eng.medium': required('Medium English label required'),
+  'label.eng.long': required('Long English label required'),
   'label.zhs': required('Watchface 简体中文标签必填'),
   unitKey: required('Unit required', 'change'),
 }

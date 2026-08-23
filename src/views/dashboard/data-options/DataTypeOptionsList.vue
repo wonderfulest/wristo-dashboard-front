@@ -10,9 +10,11 @@
           <div class="secondary">{{ row.settingsLabel.zhs }}</div>
         </template>
       </el-table-column>
-      <el-table-column label="Watchface Data Label" min-width="180">
+      <el-table-column label="Watchface Data Labels" min-width="220">
         <template #default="{ row }">
-          <div>{{ row.label.eng }}</div>
+          <div>Short (1–4): {{ row.label.eng.short }}</div>
+          <div>Medium (5–8): {{ row.label.eng.medium }}</div>
+          <div>Long (9–12): {{ row.label.eng.long }}</div>
           <div class="secondary">{{ row.label.zhs }}</div>
         </template>
       </el-table-column>

@@ -25,7 +25,12 @@ test('data item editor exposes separate canonical labels, unit selection, and re
   assert.match(dialogSource, /Watchface Data Label/)
   assert.match(dialogSource, /form\.settingsLabel\.eng/)
   assert.match(dialogSource, /form\.settingsLabel\.zhs/)
-  assert.match(dialogSource, /form\.label\.eng/)
+  assert.match(dialogSource, /form\.label\.eng\.short/)
+  assert.match(dialogSource, /Short \(1–4\)/)
+  assert.match(dialogSource, /form\.label\.eng\.medium/)
+  assert.match(dialogSource, /Medium \(5–8\)/)
+  assert.match(dialogSource, /form\.label\.eng\.long/)
+  assert.match(dialogSource, /Long \(9–12\)/)
   assert.match(dialogSource, /form\.label\.zhs/)
   assert.match(dialogSource, /form\.unitKey/)
   assert.match(dialogSource, /selectedUnit/)
@@ -71,7 +76,7 @@ test('editing a data item deep-clones canonical labels and icon rules', () => {
     category: 'field',
     valueCode: 1,
     settingsLabel: { eng: 'Steps', zhs: '步数' },
-    label: { eng: 'STEPS', zhs: '步数' },
+    label: { eng: { short: 'Stp', medium: 'Steps', long: 'Daily Steps' }, zhs: '步数' },
     unitKey: 'none',
     iconUnicode: '',
     defaultValue: '0',
@@ -82,9 +87,10 @@ test('editing a data item deep-clones canonical labels and icon rules', () => {
   }
   const clone = cloneDataTypeForm(source)
 
-  assert.deepEqual(clone, source)
+  assert.deepEqual(clone, { ...source, systemDefault: 0 })
   assert.notEqual(clone.settingsLabel, source.settingsLabel)
   assert.notEqual(clone.label, source.label)
+  assert.notEqual(clone.label.eng, source.label.eng)
   assert.notEqual(clone.iconRules, source.iconRules)
   assert.notEqual(clone.iconRules.icons, source.iconRules.icons)
 })
@@ -93,7 +99,7 @@ test('data item form owns two separate required label purposes', () => {
   const form = createEmptyDataTypeForm()
 
   assert.deepEqual(form.settingsLabel, { eng: '', zhs: '' })
-  assert.deepEqual(form.label, { eng: '', zhs: '' })
+  assert.deepEqual(form.label, { eng: { short: '', medium: '', long: '' }, zhs: '' })
   assert.equal(form.unitKey, 'none')
 })
 
@@ -104,7 +110,7 @@ test('data item payload trims canonical labels and omits compatibility aliases',
     category: 'field',
     valueCode: 1,
     settingsLabel: { eng: ' Steps ', zhs: ' 步数 ' },
-    label: { eng: ' STEPS ', zhs: ' 步数 ' },
+    label: { eng: { short: ' Stp ', medium: ' Steps ', long: ' Daily Steps ' }, zhs: ' 步数 ' },
     unitKey: ' none ',
     enLabel: 'legacy',
     labelCn: '旧值',
@@ -115,7 +121,7 @@ test('data item payload trims canonical labels and omits compatibility aliases',
   })
 
   assert.deepEqual(payload.settingsLabel, { eng: 'Steps', zhs: '步数' })
-  assert.deepEqual(payload.label, { eng: 'STEPS', zhs: '步数' })
+  assert.deepEqual(payload.label, { eng: { short: 'Stp', medium: 'Steps', long: 'Daily Steps' }, zhs: '步数' })
   assert.equal(payload.metricSymbol, ':FIELD_TYPE_STEPS')
   assert.equal(payload.unitKey, 'none')
   for (const key of ['enLabel', 'labelCn', 'displayLabel', 'labelI18n', 'unit', 'value']) {
@@ -159,10 +165,10 @@ test('data item validation requires both label purposes and strict symbol and un
     category: 'field',
     valueCode: 1,
     settingsLabel: { eng: 'Steps', zhs: '步数' },
-    label: { eng: 'STEPS', zhs: '步数' },
+    label: { eng: { short: 'Stp', medium: 'Steps', long: 'Daily Steps' }, zhs: '步数' },
   }
 
-  assert.equal(validateDataTypeForm({ ...base, label: { eng: '', zhs: '步数' } }), 'label.eng is required')
+  assert.equal(validateDataTypeForm({ ...base, label: { eng: { short: '', medium: 'Steps', long: 'Daily Steps' }, zhs: '步数' } }), 'label.eng.short must contain 1-4 characters')
   assert.equal(
     validateDataTypeForm({ ...base, metricSymbol: ':field' }),
     'metricSymbol must match ^:[A-Z][A-Z0-9_]*$',
@@ -392,4 +398,19 @@ test('unit validation rejects aliases owned by two variants', () => {
     'alias "m" is used by distance.m and length.meter',
   )
   assert.equal(validateUnitForm(units), 'alias "m" is used by distance.m and length.meter')
+})
+
+test('normalizes and validates the three exact English watchface label bands', () => {
+  const form = createEmptyDataTypeForm()
+  form.settingsLabel = { eng: 'Heart Rate', zhs: '心率' }
+  form.label = { eng: { short: ' HR ', medium: ' Heart ', long: ' Heart Rate ' }, zhs: ' 心率 ' }
+  form.metricSymbol = ':FIELD_TYPE_HEART_RATE'
+
+  const payload = normalizeDataTypePayload(form)
+  assert.deepEqual(payload.label, {
+    eng: { short: 'HR', medium: 'Heart', long: 'Heart Rate' },
+    zhs: '心率',
+  })
+  assert.equal(validateDataTypeForm(form), null)
+  assert.equal(validateDataTypeForm({ ...form, label: { ...form.label, eng: { ...form.label.eng, medium: 'Rate' } } }), 'label.eng.medium must contain 5-8 characters')
 })

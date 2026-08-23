@@ -5,6 +5,11 @@ export interface LocalizedText {
   zhs: string
 }
 
+export interface DataLabel {
+  eng: { short: string; medium: string; long: string }
+  zhs: string
+}
+
 export type IconRuleType = 'boolean' | 'numeric' | 'enum'
 
 export interface IconRange {
@@ -29,7 +34,7 @@ export interface DataTypeOptionFields {
   category: DataTypeCategory
   valueCode: number
   settingsLabel: LocalizedText
-  label: LocalizedText
+  label: DataLabel
   unitKey: string
   iconUnicode: string
   defaultValue: string
