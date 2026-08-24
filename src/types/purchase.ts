@@ -33,6 +33,9 @@ export interface PurchaseRecordVO {
   creditToBalance: number
   status: number
   inPayout: number
+  commissionEnabled?: boolean
+  giftAmountCny?: number | null
+  giftExchangeRate?: number | null
   statusDesc: string
   createdAt: string
   updatedAt: string
@@ -60,4 +63,7 @@ export interface GiftEntitlementRequest {
   bundleId?: number | null
   channel: GiftEntitlementChannel
   externalOrderId?: string | null
+  commissionEnabled: boolean
+  giftAmountCny?: number | null
+  giftExchangeRate?: number | null
 }

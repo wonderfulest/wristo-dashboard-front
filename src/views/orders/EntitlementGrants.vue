@@ -2,7 +2,7 @@
   <div class="grant-page">
     <div class="page-header">
       <div>
-        <p>为外部渠道订单创建不参与分佣的购买记录。</p>
+        <p>为外部渠道订单创建购买记录，并选择是否计入商家分佣。</p>
       </div>
     </div>
 
@@ -78,6 +78,45 @@
           <el-input v-model.trim="form.externalOrderId" placeholder="可选，用于追踪外部平台订单" clearable />
         </el-form-item>
 
+        <el-form-item label="商家分佣" required>
+          <el-radio-group v-model="form.commissionEnabled">
+            <el-radio-button :label="false">不分佣</el-radio-button>
+            <el-radio-button :label="true">分佣</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+
+        <template v-if="form.commissionEnabled">
+          <el-form-item label="国内售价总价" required>
+            <el-input-number
+              v-model="form.giftAmountCny"
+              :min="0.01"
+              :precision="2"
+              :step="1"
+              controls-position="right"
+              class="full-input"
+            />
+            <span class="field-unit">CNY</span>
+          </el-form-item>
+
+          <el-form-item label="汇率" required>
+            <el-input-number
+              v-model="form.giftExchangeRate"
+              :min="0.000001"
+              :precision="6"
+              :step="0.1"
+              controls-position="right"
+              class="full-input"
+            />
+            <span class="field-unit">CNY / USD</span>
+          </el-form-item>
+
+          <el-form-item label="预计商家收益">
+            <strong class="commission-preview">
+              {{ commissionUsd === null ? '-' : `$${commissionUsd.toFixed(2)} USD` }}
+            </strong>
+          </el-form-item>
+        </template>
+
         <el-form-item>
           <el-button type="primary" :loading="submitting" @click="submitGrant">创建赠送记录</el-button>
           <el-button @click="resetForm">重置</el-button>
@@ -98,7 +137,10 @@
         <el-descriptions-item label="邮箱">{{ result.email }}</el-descriptions-item>
         <el-descriptions-item label="Payment">{{ result.paymentMethod }}</el-descriptions-item>
         <el-descriptions-item label="Origin">{{ result.origin }}</el-descriptions-item>
-        <el-descriptions-item label="In Payout">{{ result.inPayout === 1 ? 'No commission' : result.inPayout }}</el-descriptions-item>
+        <el-descriptions-item label="Commission">{{ result.commissionEnabled ? 'Commissioned' : 'No commission' }}</el-descriptions-item>
+        <el-descriptions-item v-if="result.commissionEnabled" label="CNY Total">¥{{ formatCurrency(result.giftAmountCny) }}</el-descriptions-item>
+        <el-descriptions-item v-if="result.commissionEnabled" label="Exchange Rate">{{ result.giftExchangeRate }} CNY/USD</el-descriptions-item>
+        <el-descriptions-item v-if="result.commissionEnabled" label="Merchant Earnings">${{ formatCurrency(result.earnings / 100) }} USD</el-descriptions-item>
         <el-descriptions-item label="App ID">{{ result.appId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="Bundle ID">{{ result.bundleId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="Product" :span="2">{{ result.product?.name || result.bundle?.bundleName || '-' }}</el-descriptions-item>
@@ -116,6 +158,7 @@ import type { FormInstance } from 'element-plus'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { fetchAdminBundlePage } from '@/api/bundles'
 import { giftEntitlement } from '@/api/purchase'
+import { calculateGiftCommissionUsd } from './giftEntitlementCommission.mjs'
 import type { Bundle } from '@/types/bundle'
 import type { GiftEntitlementChannel, GiftEntitlementTargetType, PurchaseRecordVO } from '@/types/api'
 
@@ -126,6 +169,9 @@ interface GrantForm {
   bundleId: number | null | undefined
   channel: GiftEntitlementChannel
   externalOrderId: string
+  commissionEnabled: boolean
+  giftAmountCny: number | null
+  giftExchangeRate: number
 }
 
 const router = useRouter()
@@ -143,6 +189,9 @@ const form = reactive<GrantForm>({
   bundleId: null,
   channel: 'taobao',
   externalOrderId: '',
+  commissionEnabled: false,
+  giftAmountCny: null,
+  giftExchangeRate: 6.5,
 })
 
 const handleTargetTypeChange = () => {
@@ -160,8 +209,15 @@ const validateForm = (): string | null => {
   if (form.targetType === 'APP' && !form.appId) return '请选择应用 ID'
   if (form.targetType === 'BUNDLE' && !form.bundleId) return '请选择 Bundle'
   if (!form.channel) return '请选择赠送渠道'
+  if (form.commissionEnabled && (!form.giftAmountCny || form.giftAmountCny <= 0)) return '请输入大于 0 的国内售价总价'
+  if (form.commissionEnabled && (!form.giftExchangeRate || form.giftExchangeRate <= 0)) return '请输入大于 0 的汇率'
   return null
 }
+
+const commissionUsd = computed(() => {
+  if (!form.commissionEnabled) return null
+  return calculateGiftCommissionUsd(form.giftAmountCny, form.giftExchangeRate)
+})
 
 const selectedBundle = computed(() => {
   return activeBundles.value.find((bundle) => bundle.bundleId === form.bundleId) || null
@@ -178,7 +234,7 @@ const designerName = (bundle: Bundle) => {
   return bundle.user?.nickname || bundle.user?.username || bundle.user?.email || `用户 ${bundle.userId || '-'}`
 }
 
-const formatCurrency = (value?: number) => {
+const formatCurrency = (value?: number | null) => {
   const n = Number(value ?? 0)
   return Number.isFinite(n) ? n.toFixed(2) : '0.00'
 }
@@ -241,8 +297,11 @@ const submitGrant = async () => {
   }
 
   try {
+    const commissionNotice = form.commissionEnabled
+      ? `将按 ¥${formatCurrency(form.giftAmountCny ?? 0)} ÷ ${form.giftExchangeRate} = $${formatCurrency(commissionUsd.value ?? 0)} USD 计入商家收益，并展示在商家后台。`
+      : '该购买记录不会计入商家分佣，也不会展示在商家后台。'
     await ElMessageBox.confirm(
-      `确认给 ${form.email} 赠送 ${targetLabel()} 权益？该购买记录不会进入商家/设计师分佣。`,
+      `确认给 ${form.email} 赠送 ${targetLabel()} 权益？${commissionNotice}`,
       '确认赠送权益',
       {
         confirmButtonText: '确认创建',
@@ -259,6 +318,9 @@ const submitGrant = async () => {
       bundleId: form.targetType === 'BUNDLE' ? form.bundleId : null,
       channel: form.channel,
       externalOrderId: form.externalOrderId || null,
+      commissionEnabled: form.commissionEnabled,
+      giftAmountCny: form.commissionEnabled ? form.giftAmountCny : null,
+      giftExchangeRate: form.commissionEnabled ? form.giftExchangeRate : null,
     })
     if (res.code === 0 && res.data) {
       result.value = res.data
@@ -281,6 +343,9 @@ const resetForm = () => {
   form.bundleId = null
   form.channel = 'taobao'
   form.externalOrderId = ''
+  form.commissionEnabled = false
+  form.giftAmountCny = null
+  form.giftExchangeRate = 6.5
   result.value = null
   formRef.value?.clearValidate()
 }
@@ -338,6 +403,16 @@ const openOrderHistory = () => {
 
 .full-input {
   width: 100%;
+}
+
+.field-unit {
+  margin-top: 4px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.commission-preview {
+  color: #16a34a;
 }
 
 .bundle-option {

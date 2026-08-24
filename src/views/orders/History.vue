@@ -266,6 +266,7 @@ import MobileRecordList from '@/components/common/MobileRecordList.vue'
 import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 import { getPurchaseRecordPageList } from '@/api/purchase'
 import type { PurchaseRecordVO, PurchaseRecordPageQueryDTO, PageResponse } from '@/types/api'
+import { formatGiftPayoutStatus } from './giftEntitlementCommission.mjs'
 import { formatCountry } from '@/utils/country'
 
 const purchaseRecords = ref<PurchaseRecordVO[]>([])
@@ -370,7 +371,7 @@ const paymentTagStyle = (method?: string | null) => {
 
 const formatInPayout = (record: PurchaseRecordVO | null): string => {
   if (!record) return '-'
-  if ((record.paymentMethod || '').toLowerCase() === 'gift') return 'No commission'
+  if ((record.paymentMethod || '').toLowerCase() === 'gift') return formatGiftPayoutStatus(record)
   return record.inPayout === 1 ? 'Yes' : 'No'
 }
 
