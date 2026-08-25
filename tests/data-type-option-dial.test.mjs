@@ -16,6 +16,8 @@ test('whitelist assigns one explicit dial mode to approved data only', () => {
   assert.equal(allowedDialMode(':FIELD_TYPE_WEATHER_HUMIDITY'), 'range')
   assert.equal(allowedDialMode(':FIELD_TYPE_TEMPERATURE'), 'range')
   assert.equal(allowedDialMode(':FIELD_TYPE_SENSOR_PRESSURE'), 'range')
+  assert.equal(allowedDialMode(':FIELD_TYPE_MOVE_BAR_LEVEL'), 'range')
+  assert.equal(allowedDialMode(':FIELD_TYPE_HEART_RATE_ZONE'), 'range')
   assert.equal(allowedDialMode(':FIELD_TYPE_WEATHER_WIND_DIRECTION'), 'direction')
 })
 
