@@ -7,3 +7,8 @@ export function formatGiftPayoutStatus(record: {
   commissionEnabled?: boolean
   inPayout: number
 }): 'No commission' | 'Yes' | 'No'
+
+export function validateGiftPaymentMethod(
+  commissionEnabled: boolean,
+  paymentMethod?: string | null,
+): string | null

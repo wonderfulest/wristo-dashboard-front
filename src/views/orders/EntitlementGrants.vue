@@ -65,11 +65,12 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="赠送渠道" required>
+        <el-form-item label="渠道" required>
           <el-select v-model="form.channel" placeholder="选择渠道" class="full-input">
             <el-option label="淘宝" value="taobao" />
             <el-option label="小红书" value="xiaohongshu" />
             <el-option label="闲鱼" value="xianyu" />
+            <el-option label="国内网站" value="wristo_cn" />
             <el-option label="Other" value="other" />
           </el-select>
         </el-form-item>
@@ -86,6 +87,14 @@
         </el-form-item>
 
         <template v-if="form.commissionEnabled">
+          <el-form-item label="支付方式" required>
+            <el-select v-model="form.paymentMethod" placeholder="选择支付方式" class="full-input">
+              <el-option label="支付宝" value="alipay" />
+              <el-option label="微信" value="wechat" />
+              <el-option label="其他" value="other" />
+            </el-select>
+          </el-form-item>
+
           <el-form-item label="国内售价总价" required>
             <el-input-number
               v-model="form.giftAmountCny"
@@ -158,9 +167,14 @@ import type { FormInstance } from 'element-plus'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { fetchAdminBundlePage } from '@/api/bundles'
 import { giftEntitlement } from '@/api/purchase'
-import { calculateGiftCommissionUsd } from './giftEntitlementCommission.mjs'
+import { calculateGiftCommissionUsd, validateGiftPaymentMethod } from './giftEntitlementCommission.mjs'
 import type { Bundle } from '@/types/bundle'
-import type { GiftEntitlementChannel, GiftEntitlementTargetType, PurchaseRecordVO } from '@/types/api'
+import type {
+  GiftEntitlementChannel,
+  GiftEntitlementPaymentMethod,
+  GiftEntitlementTargetType,
+  PurchaseRecordVO,
+} from '@/types/api'
 
 interface GrantForm {
   email: string
@@ -170,6 +184,7 @@ interface GrantForm {
   channel: GiftEntitlementChannel
   externalOrderId: string
   commissionEnabled: boolean
+  paymentMethod: GiftEntitlementPaymentMethod | null
   giftAmountCny: number | null
   giftExchangeRate: number
 }
@@ -187,9 +202,10 @@ const form = reactive<GrantForm>({
   targetType: 'APP',
   appId: null,
   bundleId: null,
-  channel: 'taobao',
+  channel: 'wristo_cn',
   externalOrderId: '',
   commissionEnabled: false,
+  paymentMethod: null,
   giftAmountCny: null,
   giftExchangeRate: 6.5,
 })
@@ -208,7 +224,9 @@ const validateForm = (): string | null => {
   if (!form.email || !form.email.includes('@')) return '请输入有效邮箱'
   if (form.targetType === 'APP' && !form.appId) return '请选择应用 ID'
   if (form.targetType === 'BUNDLE' && !form.bundleId) return '请选择 Bundle'
-  if (!form.channel) return '请选择赠送渠道'
+  if (!form.channel) return '请选择渠道'
+  const paymentMethodError = validateGiftPaymentMethod(form.commissionEnabled, form.paymentMethod)
+  if (paymentMethodError) return paymentMethodError
   if (form.commissionEnabled && (!form.giftAmountCny || form.giftAmountCny <= 0)) return '请输入大于 0 的国内售价总价'
   if (form.commissionEnabled && (!form.giftExchangeRate || form.giftExchangeRate <= 0)) return '请输入大于 0 的汇率'
   return null
@@ -319,6 +337,7 @@ const submitGrant = async () => {
       channel: form.channel,
       externalOrderId: form.externalOrderId || null,
       commissionEnabled: form.commissionEnabled,
+      paymentMethod: form.commissionEnabled ? form.paymentMethod : null,
       giftAmountCny: form.commissionEnabled ? form.giftAmountCny : null,
       giftExchangeRate: form.commissionEnabled ? form.giftExchangeRate : null,
     })
@@ -341,9 +360,10 @@ const resetForm = () => {
   form.targetType = 'APP'
   form.appId = null
   form.bundleId = null
-  form.channel = 'taobao'
+  form.channel = 'wristo_cn'
   form.externalOrderId = ''
   form.commissionEnabled = false
+  form.paymentMethod = null
   form.giftAmountCny = null
   form.giftExchangeRate = 6.5
   result.value = null

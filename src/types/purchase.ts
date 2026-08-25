@@ -54,7 +54,8 @@ export interface PurchaseRecordPageQueryDTO {
 }
 
 export type GiftEntitlementTargetType = 'APP' | 'BUNDLE'
-export type GiftEntitlementChannel = 'taobao' | 'xiaohongshu' | 'xianyu' | 'other'
+export type GiftEntitlementChannel = 'taobao' | 'xiaohongshu' | 'xianyu' | 'wristo_cn' | 'other'
+export type GiftEntitlementPaymentMethod = 'alipay' | 'wechat' | 'other'
 
 export interface GiftEntitlementRequest {
   email: string
@@ -62,6 +63,7 @@ export interface GiftEntitlementRequest {
   appId?: number | null
   bundleId?: number | null
   channel: GiftEntitlementChannel
+  paymentMethod?: GiftEntitlementPaymentMethod | null
   externalOrderId?: string | null
   commissionEnabled: boolean
   giftAmountCny?: number | null

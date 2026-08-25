@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import * as commissionUtils from '../src/views/orders/giftEntitlementCommission.mjs'
 
-const { calculateGiftCommissionUsd } = commissionUtils
+const { calculateGiftCommissionUsd, validateGiftPaymentMethod } = commissionUtils
 
 test('gift commission preview converts CNY total with the entered CNY per USD rate', () => {
   assert.equal(calculateGiftCommissionUsd(65, 6.5), 10)
@@ -20,4 +20,13 @@ test('gift order payout label distinguishes commissioned and non-commissioned re
   assert.equal(commissionUtils.formatGiftPayoutStatus({ commissionEnabled: false, inPayout: 1 }), 'No commission')
   assert.equal(commissionUtils.formatGiftPayoutStatus({ commissionEnabled: true, inPayout: 1 }), 'Yes')
   assert.equal(commissionUtils.formatGiftPayoutStatus({ commissionEnabled: true, inPayout: 0 }), 'No')
+})
+
+test('commissioned gift requires one of the supported payment methods', () => {
+  assert.equal(validateGiftPaymentMethod(true, null), '请选择支付方式')
+  assert.equal(validateGiftPaymentMethod(true, 'gift'), '请选择有效的支付方式')
+  assert.equal(validateGiftPaymentMethod(true, 'alipay'), null)
+  assert.equal(validateGiftPaymentMethod(true, 'wechat'), null)
+  assert.equal(validateGiftPaymentMethod(true, 'other'), null)
+  assert.equal(validateGiftPaymentMethod(false, null), null)
 })
