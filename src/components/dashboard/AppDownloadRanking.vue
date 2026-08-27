@@ -16,20 +16,30 @@
 
     <div class="table-scroll" role="region" aria-label="应用下载量排行榜，可横向滚动" tabindex="0">
       <el-table v-loading="loading" :data="items" border style="width: 100%" empty-text="No data">
-        <el-table-column label="排名" width="90" align="center">
+        <el-table-column label="排名" width="72" align="center">
           <template #default="{ $index }">
             {{ (pageNum - 1) * pageSize + $index + 1 }}
           </template>
         </el-table-column>
-        <el-table-column label="应用" min-width="240">
+        <el-table-column label="应用" width="320">
           <template #default="{ row }">
-            <div class="app-cell">
-              <img v-if="row.app?.garminImageUrl" :src="row.app.garminImageUrl" alt="" class="app-thumb" />
+            <a
+              class="app-cell app-link"
+              :href="row.app?.garminStoreUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                v-if="row.app?.garminImageUrl"
+                :src="row.app.garminImageUrl"
+                :alt="row.app?.name || `App #${row.appId}`"
+                class="app-thumb"
+              />
               <div class="app-info">
                 <div class="app-name">{{ row.app?.name || 'App #' + row.appId }}</div>
                 <div class="app-sub">ID: {{ row.appId }}</div>
               </div>
-            </div>
+            </a>
           </template>
         </el-table-column>
         <el-table-column label="下载量" width="140" align="right">
@@ -122,7 +132,10 @@ onMounted(fetchPage)
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 16px 0; text-align: left; }
 .app-cell { display: flex; align-items: center; gap: 12px; }
-.app-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid #e9ecef; }
+.app-link { color: inherit; text-decoration: none; }
+.app-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid #e9ecef; transition: transform 0.2s ease, box-shadow 0.2s ease; transform-origin: center; }
+.app-link:hover .app-thumb { transform: scale(1.35); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2); }
+.app-link:hover .app-name { color: var(--el-color-primary); }
 .app-info { display: flex; flex-direction: column; }
 .app-name { font-weight: 600; color: #212529; }
 .app-sub { font-size: 12px; color: #6c757d; }
