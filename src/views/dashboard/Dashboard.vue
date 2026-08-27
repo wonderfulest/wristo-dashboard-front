@@ -19,6 +19,9 @@
 
       <!-- 应用销售总计（分页） -->
       <AppSalesSummary />
+
+      <!-- 应用下载量 Top 排序（分页） -->
+      <AppDownloadRanking />
     </div>
   </div>
 </template>
@@ -27,6 +30,7 @@
 import ReviewTimeControl from '@/components/dashboard/ReviewTimeControl.vue'
 import FunnelAnalytics from '@/components/dashboard/FunnelAnalytics.vue'
 import AppSalesSummary from '@/components/dashboard/AppSalesSummary.vue'
+import AppDownloadRanking from '@/components/dashboard/AppDownloadRanking.vue'
 import SalesLineChart from '@/components/dashboard/SalesLineChart.vue'
 import DeviceOrderSummary from '@/components/dashboard/DeviceOrderSummary.vue'
 import CountryOrderDistribution from '@/components/dashboard/CountryOrderDistribution.vue'

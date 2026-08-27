@@ -1,6 +1,14 @@
 <template>
   <div class="dashboard-content">
-    <h3 class="section-title">应用销售总计</h3>
+    <div class="section-heading">
+      <h3 class="section-title">应用销售总计</h3>
+      <DashboardSectionFilter
+        v-model="filter"
+        :loading="summaryLoading"
+        :show-app="false"
+        @update:model-value="handleFilterChange"
+      />
+    </div>
 
     <div v-if="summaryError" class="error-message">
       <p>获取应用销售总计失败：{{ summaryError }}</p>
@@ -49,6 +57,17 @@
 import { ref, onMounted } from 'vue'
 import { getAppSalesSummaryPage } from '@/api/purchase'
 import type { AppSalesSummaryVO, AppSalesSummaryPageQueryDTO } from '@/types/api'
+import DashboardSectionFilter from './DashboardSectionFilter.vue'
+import { buildDashboardRange } from './dashboardOverview.mjs'
+import type { DashboardFilter } from './dashboardTypes'
+
+const initialRange = buildDashboardRange('30d')
+const filter = ref<DashboardFilter>({
+  rangeType: '30d',
+  startDate: initialRange.startDate,
+  endDate: initialRange.endDate,
+  appId: null,
+})
 
 const summaryList = ref<AppSalesSummaryVO[]>([])
 const summaryLoading = ref(false)
@@ -67,7 +86,9 @@ const fetchSummaryPage = async () => {
     summaryError.value = null
     const dto: AppSalesSummaryPageQueryDTO = {
       pageNum: summaryPageNum.value,
-      pageSize: summaryPageSize.value
+      pageSize: summaryPageSize.value,
+      startDate: filter.value.startDate,
+      endDate: filter.value.endDate,
     }
     const res = await getAppSalesSummaryPage(dto)
     if (res.code === 0 && res.data) {
@@ -95,11 +116,17 @@ const handleSummarySizeChange = (size: number) => {
   fetchSummaryPage()
 }
 
+const handleFilterChange = () => {
+  summaryPageNum.value = 1
+  fetchSummaryPage()
+}
+
 onMounted(fetchSummaryPage)
 </script>
 
 <style scoped>
 .dashboard-content { margin-top: 32px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 16px 0; text-align: left; }
 .app-cell { display: flex; align-items: center; gap: 12px; }
 .app-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid #e9ecef; }
@@ -108,4 +135,5 @@ onMounted(fetchSummaryPage)
 .app-sub { font-size: 12px; color: #6c757d; }
 .table-footer { display: flex; justify-content: flex-end; padding: 12px 0; }
 .error-message { background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 16px; margin: 24px 0; color: #721c24; }
+@media (max-width: 768px) { .section-heading { align-items: stretch; flex-direction: column; } }
 </style>

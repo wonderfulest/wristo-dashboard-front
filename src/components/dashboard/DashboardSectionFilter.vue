@@ -23,6 +23,7 @@
       @change="emitFilter"
     />
     <AppSearchSelect
+      v-if="showApp"
       v-model="appId"
       width="240px"
       size="small"
@@ -39,7 +40,13 @@ import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { buildDashboardRange } from './dashboardOverview.mjs'
 import type { DashboardFilter } from './dashboardTypes'
 
-const props = defineProps<{ modelValue: DashboardFilter; loading?: boolean }>()
+const props = withDefaults(defineProps<{
+  modelValue: DashboardFilter
+  loading?: boolean
+  showApp?: boolean
+}>(), {
+  showApp: true,
+})
 const emit = defineEmits<{ (event: 'update:modelValue', value: DashboardFilter): void }>()
 const rangeType = ref<DashboardFilter['rangeType']>(props.modelValue.rangeType)
 const dateRange = ref<[string, string]>([props.modelValue.startDate, props.modelValue.endDate])

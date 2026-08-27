@@ -7,6 +7,7 @@ import type {
   PurchaseRecordVO,
   AppSalesSummaryPageQueryDTO,
   AppSalesSummaryVO,
+  AppDownloadSummaryVO,
   SalesQueryDTO,
   AppFunnelVO,
   DailySalesItemVO,
@@ -28,6 +29,12 @@ export const getAppSalesSummaryPage = async (
   dto: AppSalesSummaryPageQueryDTO
 ): Promise<ApiResponse<PageResponse<AppSalesSummaryVO>>> => {
   return instance.post('/admin/purchases/app/summary/page?populate=product', dto)
+}
+
+export const getAppDownloadSummaryPage = async (
+  dto: AppSalesSummaryPageQueryDTO
+): Promise<ApiResponse<PageResponse<AppDownloadSummaryVO>>> => {
+  return instance.post('/admin/purchases/app/downloads/page?populate=product', dto)
 }
 
 export const getFunnel = async (dto: SalesQueryDTO): Promise<ApiResponse<AppFunnelVO>> => {

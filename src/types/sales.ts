@@ -25,6 +25,14 @@ export interface AppSalesSummaryPageQueryDTO {
   pageNum: number
   pageSize: number
   userId?: number
+  startDate: string
+  endDate: string
+}
+
+export interface AppDownloadSummaryVO {
+  appId: number
+  downloadCount: number
+  app: ProductBase | null
 }
 
 export interface DeviceOrderStatsVO {
