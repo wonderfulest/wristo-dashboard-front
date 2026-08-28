@@ -2,6 +2,12 @@
   <div class="dashboard">
     <DashboardFilterBar />
     <BusinessOverview />
+    <LaunchOperationsRecommendation />
+    <LaunchCohortContribution />
+    <LaunchLifecycleChart />
+    <LaunchMarginalRevenue />
+    <CategoryValueMatrix />
+    <DesignerValueMatrix />
     <OperationsInbox />
     <ReviewTimeControl />
     <div class="dashboard-content">
@@ -37,6 +43,12 @@ import CountryOrderDistribution from '@/components/dashboard/CountryOrderDistrib
 import DashboardFilterBar from '@/components/dashboard/DashboardFilterBar.vue'
 import BusinessOverview from '@/components/dashboard/BusinessOverview.vue'
 import OperationsInbox from '@/components/dashboard/OperationsInbox.vue'
+import LaunchOperationsRecommendation from '@/components/dashboard/LaunchOperationsRecommendation.vue'
+import LaunchCohortContribution from '@/components/dashboard/LaunchCohortContribution.vue'
+import LaunchLifecycleChart from '@/components/dashboard/LaunchLifecycleChart.vue'
+import LaunchMarginalRevenue from '@/components/dashboard/LaunchMarginalRevenue.vue'
+import CategoryValueMatrix from '@/components/dashboard/CategoryValueMatrix.vue'
+import DesignerValueMatrix from '@/components/dashboard/DesignerValueMatrix.vue'
 </script>
 
 <style scoped>
