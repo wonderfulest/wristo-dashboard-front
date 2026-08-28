@@ -2,9 +2,12 @@
   <section class="analytics-section" v-loading="loading">
     <header class="analytics-heading">
       <div><span class="section-kicker">LAUNCH PLAN</span><h2>今日经营建议</h2></div>
-      <el-button size="small" type="primary" @click="load">刷新模型</el-button>
+      <el-button size="small" type="primary" :loading="training" :disabled="training" @click="train">
+        {{ training ? '训练中' : '立即训练' }}
+      </el-button>
     </header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-alert v-else-if="training" title="模型正在后台训练，完成后将自动刷新" type="info" :closable="false" show-icon />
     <template v-else-if="response">
       <div class="model-meta">
         <el-tag :type="response.status === 'READY' ? 'success' : 'warning'">{{ modelStatusLabel(response) }}</el-tag>
@@ -40,13 +43,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { getLaunchRecommendation } from '@/api/launch-analytics'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { getLaunchAnalyticsTrainingStatus, getLaunchRecommendation, trainLaunchAnalytics } from '@/api/launch-analytics'
 import type { AnalyticsResponse, LaunchOperationsRecommendation } from '@/types/launch-analytics'
 import { formatUsdCents, modelStatusLabel, recommendationRangeLabel } from './launchAnalyticsUtils.mjs'
 
+const emit = defineEmits<{ trained: [] }>()
 const loading = ref(false)
+const training = ref(false)
 const error = ref('')
+let pollTimer: ReturnType<typeof setTimeout> | undefined
 const response = ref<AnalyticsResponse<LaunchOperationsRecommendation> | null>(null)
 const recommendation = computed(() => response.value?.data?.recommendation ?? null)
 const quotas = computed(() => response.value?.data?.quotaAllocation?.quotas ?? [])
@@ -63,7 +69,43 @@ const load = async () => {
   catch { error.value = '经营建议暂时无法加载，请稍后重试' }
   finally { loading.value = false }
 }
-onMounted(load)
+const finishTraining = async () => {
+  await load()
+  emit('trained')
+}
+const pollTraining = async () => {
+  try {
+    const result = await getLaunchAnalyticsTrainingStatus()
+    training.value = Boolean(result.data?.running)
+    if (training.value) {
+      pollTimer = setTimeout(pollTraining, 1500)
+    } else if (result.data?.status === 'SUCCESS') {
+      await finishTraining()
+    } else if (result.data?.status === 'FAILED') {
+      error.value = result.data.failureReason || '模型训练失败，请检查服务日志'
+    }
+  } catch {
+    training.value = false
+    error.value = '无法获取模型训练状态，请稍后重试'
+  }
+}
+const train = async () => {
+  error.value = ''
+  try {
+    const result = await trainLaunchAnalytics()
+    training.value = Boolean(result.data?.running)
+    if (training.value) pollTimer = setTimeout(pollTraining, 500)
+    else if (result.data?.status === 'SUCCESS') await finishTraining()
+    else if (result.data?.status === 'FAILED') error.value = result.data.failureReason || '模型训练失败，请检查服务日志'
+  } catch {
+    error.value = '模型训练任务提交失败，请稍后重试'
+  }
+}
+onMounted(async () => {
+  await load()
+  await pollTraining()
+})
+onBeforeUnmount(() => { if (pollTimer) clearTimeout(pollTimer) })
 </script>
 
 <style scoped>

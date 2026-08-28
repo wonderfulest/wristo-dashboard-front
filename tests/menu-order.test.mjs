@@ -29,6 +29,14 @@ test('顶部菜单按业务流程组织', () => {
 })
 
 test('各业务域使用稳定的二级分组顺序', () => {
+  assert.deepEqual(getDirectChildKeys('home'), [
+    'dashboard-overview',
+    'dashboard-sales',
+    'dashboard-launch',
+    'dashboard-value',
+    'tickets',
+    'contact-us',
+  ])
   assert.deepEqual(getDirectChildKeys('content-production'), [
     'design-management',
     'asset-resources',

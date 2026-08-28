@@ -71,7 +71,7 @@ type StepStatus = 'pending' | 'running' | 'success' | 'failed'
 const refreshSteps = ref([
   { label: 'Bundle 关系预处理', description: `同步 Bundle #${BUNDLE_ID} 的产品关系`, status: 'pending' as StepStatus },
   { label: '更新审核时间', description: '将作品展示审核时间更新为当前时间', status: 'pending' as StepStatus },
-  { label: '重建搜索索引', description: '清理并全量重建应用搜索索引', status: 'pending' as StepStatus },
+  { label: '重建搜索索引', description: '提交后台重建任务，不等待重建完成', status: 'pending' as StepStatus },
 ])
 
 const resetRefreshSteps = () => refreshSteps.value.forEach(step => { step.status = 'pending' })
@@ -135,9 +135,9 @@ const onRefreshNow = async () => {
     } else {
       await fetchCurrent()
     }
-    await runRefreshStep(2, () => rebuildAll(true))
+    const rebuildRes = await runRefreshStep(2, () => rebuildAll(true)) as Awaited<ReturnType<typeof rebuildAll>>
     emit('updated', current.value)
-    ElMessage.success('三步刷新已全部完成')
+    ElMessage.success(rebuildRes.data?.message || '索引重建已提交后台执行')
   } catch (e) {
     ElMessage.error('刷新未全部完成，请查看失败步骤后重试')
   } finally {

@@ -1,15 +1,23 @@
 <template>
-  <section class="overview-section" v-loading="loading">
+  <section class="output-section" v-loading="loading">
     <div class="section-heading">
-      <div><span class="section-kicker">PERFORMANCE</span><h2>经营概览</h2></div>
-      <DashboardSectionFilter v-model="filter" :loading="loading" />
+      <div><span class="section-kicker">DESIGN OUTPUT</span><h2>设计产出</h2></div>
+      <DashboardSectionFilter v-model="filter" :loading="loading" :show-app="false" />
     </div>
-    <span class="period">统计周期：{{ filter.startDate }} 至 {{ filter.endDate }}</span>
+    <span class="period">统计周期：{{ filter.startDate }} 至 {{ filter.endDate }}（北京时间）</span>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-alert
+      v-else-if="stats.estimatedHistory"
+      class="history-alert"
+      title="该时段包含历史估算数据：提交审核和审核通过时间由原状态及最后更新时间回填。"
+      type="warning"
+      :closable="false"
+      show-icon
+    />
     <div class="metric-grid">
       <article v-for="item in cards" :key="item.key" class="metric-card" :class="`metric-card--${item.tone}`">
         <span class="metric-label">{{ item.label }}</span>
-        <strong>{{ formatDashboardMetric(item.key, metrics[item.key]) }}</strong>
+        <strong>{{ Number(stats[item.key] || 0).toLocaleString('zh-CN') }}</strong>
         <span class="metric-note">{{ item.note }}</span>
       </article>
     </div>
@@ -17,55 +25,56 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { getFunnel, getSales } from '@/api/purchase'
+import { ref, watch } from 'vue'
+import { getDesignOutputStats, type DesignOutputStats } from '@/api/design-output-analytics'
 import DashboardSectionFilter from './DashboardSectionFilter.vue'
-import { buildDashboardRange, calculateBusinessMetrics, formatDashboardMetric } from './dashboardOverview.mjs'
-import type { DashboardMetrics } from './dashboardOverview.mjs'
+import { buildDashboardRange } from './dashboardOverview.mjs'
 import type { DashboardFilter } from './dashboardTypes'
 
-const emit = defineEmits<{ (event: 'metrics-change', value: DashboardMetrics): void }>()
 const initialRange = buildDashboardRange('7d')
 const filter = ref<DashboardFilter>({ rangeType: '7d', startDate: initialRange.startDate, endDate: initialRange.endDate, appId: null })
 const loading = ref(false)
 const error = ref('')
-const metrics = ref<DashboardMetrics>(calculateBusinessMetrics())
+const stats = ref<DesignOutputStats>({
+  startDate: initialRange.startDate,
+  endDate: initialRange.endDate,
+  createdDesigns: 0,
+  submittedDesigns: 0,
+  approvedDesigns: 0,
+  launchedDesigns: 0,
+  estimatedHistory: false,
+})
 const cards = [
-  { key: 'revenue' as const, label: '销售收入', note: '统计周期内已记录收入', tone: 'green' },
-  { key: 'orders' as const, label: '订单数', note: '仅统计产生销售收入的订单', tone: 'blue' },
-  { key: 'downloads' as const, label: '下载量', note: '所选应用或全部应用', tone: 'amber' },
-  { key: 'purchaseRate' as const, label: '下载 → 购买', note: '应用购买与套餐购买合计', tone: 'coral' },
+  { key: 'createdDesigns' as const, label: '新增设计数量', note: '首次创建的去重设计数', tone: 'green' },
+  { key: 'submittedDesigns' as const, label: '提交审核数量', note: '首次提交审核的去重设计数', tone: 'blue' },
+  { key: 'approvedDesigns' as const, label: '审核通过数量', note: '首次审核通过的去重设计数', tone: 'amber' },
+  { key: 'launchedDesigns' as const, label: '上线数量', note: '首次上线的去重设计数', tone: 'coral' },
 ]
 
-const query = computed(() => ({
-  startDate: filter.value.startDate,
-  endDate: filter.value.endDate,
-  ...(filter.value.appId ? { appId: filter.value.appId } : {}),
-}))
-
-const fetchMetrics = async () => {
+const fetchStats = async () => {
   loading.value = true
   error.value = ''
   try {
-    const [sales, funnel] = await Promise.all([getSales(query.value), getFunnel(query.value)])
-    metrics.value = calculateBusinessMetrics(sales.data || [], funnel.data || null)
-    emit('metrics-change', metrics.value)
+    const response = await getDesignOutputStats({ startDate: filter.value.startDate, endDate: filter.value.endDate })
+    if (!response.data) throw new Error('missing design output statistics')
+    stats.value = response.data
   } catch {
-    error.value = '经营指标暂时无法加载，请稍后重试'
+    error.value = '设计产出指标暂时无法加载，请稍后重试'
   } finally {
     loading.value = false
   }
 }
 
-watch(filter, fetchMetrics, { deep: true, immediate: true })
+watch(filter, fetchStats, { deep: true, immediate: true })
 </script>
 
 <style scoped>
-.overview-section { margin-top: 18px; }
+.output-section { margin-top: 18px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
 .section-kicker { color: #809088; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
 h2 { margin: 2px 0 0; color: #1d3027; font-size: 18px; }
 .period { color: #819087; font-size: 12px; }
+.history-alert { margin-top: 10px; }
 .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
 .metric-card { position: relative; overflow: hidden; display: flex; min-height: 116px; padding: 18px; flex-direction: column; border: 1px solid #e3eae6; border-radius: 14px; background: #fff; box-sizing: border-box; }
 .metric-card::after { content: ''; position: absolute; top: 0; right: 0; width: 72px; height: 4px; background: var(--accent); }

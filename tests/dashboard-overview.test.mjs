@@ -68,8 +68,9 @@ test('formatDashboardMetric uses dashboard-friendly number formats', () => {
   assert.equal(formatDashboardMetric('purchaseRate', null), '-')
 })
 
-test('dashboard sections own independent complete filters', async () => {
+test('dashboard overview and sales pages separate operational and sales sections', async () => {
   const source = await readFile(new URL('../src/views/dashboard/Dashboard.vue', import.meta.url), 'utf8')
+  const salesPage = await readFile(new URL('../src/views/dashboard/SalesAnalytics.vue', import.meta.url), 'utf8')
   const overview = await readFile(new URL('../src/components/dashboard/BusinessOverview.vue', import.meta.url), 'utf8')
   const sales = await readFile(new URL('../src/components/dashboard/SalesLineChart.vue', import.meta.url), 'utf8')
   const funnel = await readFile(new URL('../src/components/dashboard/FunnelAnalytics.vue', import.meta.url), 'utf8')
@@ -78,9 +79,13 @@ test('dashboard sections own independent complete filters', async () => {
   assert.doesNotMatch(source, /dashboardFilter/)
   assert.match(source, /<DashboardFilterBar\s*\/>/)
   assert.match(source, /<BusinessOverview\s*\/>/)
-  assert.match(source, /<SalesLineChart\s*\/>/)
-  assert.match(source, /<FunnelAnalytics\s*\/>/)
   assert.match(source, /OperationsInbox/)
+  assert.doesNotMatch(source, /SalesLineChart|FunnelAnalytics|LaunchOperationsRecommendation|CategoryValueMatrix/)
+  assert.match(salesPage, /<SalesLineChart\s*\/>/)
+  assert.match(salesPage, /<FunnelAnalytics\s*\/>/)
+  for (const component of ['DeviceOrderSummary', 'CountryOrderDistribution', 'AppSalesSummary', 'AppDownloadRanking']) {
+    assert.match(salesPage, new RegExp(`<${component}\\s*/>`))
+  }
   for (const component of [overview, sales, funnel]) {
     assert.match(component, /DashboardSectionFilter/)
     assert.match(component, /ref<DashboardFilter>/)
@@ -99,5 +104,6 @@ test('review time action exposes all three operational steps', async () => {
   assert.match(source, /Bundle 关系预处理/)
   assert.match(source, /更新审核时间/)
   assert.match(source, /重建搜索索引/)
-  assert.doesNotMatch(source, /void rebuildAll\(true\)\.catch\(\(\) => undefined\)/)
+  assert.match(source, /提交后台重建任务/)
+  assert.match(source, /索引重建已提交后台执行/)
 })

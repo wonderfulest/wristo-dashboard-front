@@ -8,9 +8,18 @@ import type {
   DesignerValue,
   LaunchRecommendation, LaunchOperationsRecommendation,
   LifecycleCurve,
+  LaunchSalesInsights,
 } from '@/types/launch-analytics'
 
 const BASE = '/admin/analytics/launch'
+
+export interface AnalyticsTrainingStatus {
+  accepted: boolean
+  running: boolean
+  status: 'IDLE' | 'TRAINING' | 'SUCCESS' | 'FAILED'
+  modelVersion?: string | null
+  failureReason?: string | null
+}
 
 const get = <T>(path: string, params: AnalyticsQuery = {}): Promise<ApiResponse<AnalyticsResponse<T>>> =>
   instance.get(`${BASE}${path}`, { params: { timezone: 'UTC', ...params } })
@@ -27,8 +36,17 @@ export const getLaunchLifecycle = (params?: AnalyticsQuery) =>
 export const getLaunchMarginalRevenue = (params?: AnalyticsQuery) =>
   get<LaunchRecommendation>('/marginal-revenue', params)
 
+export const getLaunchSalesInsights = (params?: AnalyticsQuery) =>
+  get<LaunchSalesInsights>('/sales-insights', params)
+
 export const getCategoryValues = (params?: AnalyticsQuery) =>
   get<CategoryValue[]>('/categories', params)
 
 export const getDesignerValues = (params?: AnalyticsQuery) =>
   get<DesignerValue[]>('/designers', params)
+
+export const trainLaunchAnalytics = (): Promise<ApiResponse<AnalyticsTrainingStatus>> =>
+  instance.post(`${BASE}/train`)
+
+export const getLaunchAnalyticsTrainingStatus = (): Promise<ApiResponse<AnalyticsTrainingStatus>> =>
+  instance.get(`${BASE}/train/status`)

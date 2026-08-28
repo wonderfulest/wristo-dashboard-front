@@ -69,7 +69,10 @@ export const topMenus: TopMenuGroup[] = [
     icon: 'House',
     basePaths: ['/dashboard', '/tickets', '/contact-us'],
     children: [
-      { key: 'dashboard', title: '业务仪表盘', icon: 'DataBoard', path: '/dashboard' },
+      { key: 'dashboard-overview', title: '业务概览', icon: 'DataBoard', path: '/dashboard' },
+      { key: 'dashboard-sales', title: '销售分析', icon: 'TrendCharts', path: '/dashboard/sales' },
+      { key: 'dashboard-launch', title: '上线策略', icon: 'Promotion', path: '/dashboard/launch' },
+      { key: 'dashboard-value', title: '价值分析', icon: 'Histogram', path: '/dashboard/value' },
       { key: 'tickets', title: '工单管理', icon: 'Tickets', path: '/tickets' },
       { key: 'contact-us', title: '用户反馈', icon: 'ChatDotRound', path: '/contact-us' },
     ],

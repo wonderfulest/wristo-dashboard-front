@@ -152,6 +152,24 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/dashboard/sales',
+      name: 'DashboardSales',
+      component: () => import('@/views/dashboard/SalesAnalytics.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/dashboard/launch',
+      name: 'DashboardLaunch',
+      component: () => import('@/views/dashboard/LaunchStrategy.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/dashboard/value',
+      name: 'DashboardValue',
+      component: () => import('@/views/dashboard/ValueAnalytics.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/packaging/design-review',
       name: 'DesignReview',
       component: () => import('@/views/dashboard/packaging/DesignReview.vue'),

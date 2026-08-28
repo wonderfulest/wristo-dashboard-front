@@ -109,3 +109,52 @@ export interface DesignerValue {
   firstLaunchSuccessRate: number
   stabilityScore: number
 }
+
+export interface LaunchWindowMetrics {
+  completedLaunchCount: number
+  directOrders: number
+  bundleOrders: number
+  netRevenueCents: number
+  refundCents: number
+  newProductContributionRate: number
+  averageOrders: number
+  averageNetRevenueCents: number
+}
+
+export interface LaunchSalesTrendPoint {
+  period: string
+  launchCount: number
+  orders7Days: number
+  orders30Days: number
+  netRevenue7DaysCents: number
+  netRevenue30DaysCents: number
+}
+
+export interface LaunchDimensionGroup {
+  key: string
+  label: string
+  launchCount: number
+  directOrders: number
+  bundleOrders: number
+  netRevenueCents: number
+  refundCents: number
+  averageNetRevenueCents: number
+}
+
+export interface LaunchDimensionBreakdown {
+  dimension: 'DESIGNER' | 'CATEGORY' | 'PRICE' | 'LANGUAGE' | 'DEVICE_COVERAGE'
+  label: string
+  groups: LaunchDimensionGroup[]
+}
+
+export interface LaunchSalesInsights {
+  launchCount: number
+  first7Days: LaunchWindowMetrics
+  first30Days: LaunchWindowMetrics
+  correlation7Days: number | null
+  correlation30Days: number | null
+  partial: boolean
+  estimatedHistory: boolean
+  trend: LaunchSalesTrendPoint[]
+  dimensions: LaunchDimensionBreakdown[]
+}

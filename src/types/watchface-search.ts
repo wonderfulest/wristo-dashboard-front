@@ -1,4 +1,6 @@
 export interface WatchfaceSearchRebuildVO {
+  accepted?: boolean
+  running?: boolean
   cleared?: boolean
   total?: number
   indexed?: number
@@ -6,6 +8,7 @@ export interface WatchfaceSearchRebuildVO {
 }
 
 export interface WatchfaceSearchStatusVO {
+  rebuilding?: boolean
   indexName?: string
   docCount?: number
   lastRebuildTime?: string

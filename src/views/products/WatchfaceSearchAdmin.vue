@@ -25,6 +25,11 @@
           <el-descriptions-item label="文档数">{{ status.docCount ?? '-' }}</el-descriptions-item>
           <el-descriptions-item label="最近重建时间">{{ status.lastRebuildTime || '-' }}</el-descriptions-item>
           <el-descriptions-item label="健康状态">{{ status.health || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="重建任务">
+            <el-tag :type="status.rebuilding ? 'warning' : 'success'">
+              {{ status.rebuilding ? '后台执行中' : '空闲' }}
+            </el-tag>
+          </el-descriptions-item>
         </el-descriptions>
       </div>
     </div>

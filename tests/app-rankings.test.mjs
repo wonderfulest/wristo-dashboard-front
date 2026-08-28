@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 const salesSource = readFileSync(new URL('../src/components/dashboard/AppSalesSummary.vue', import.meta.url), 'utf8')
-const dashboardSource = readFileSync(new URL('../src/views/dashboard/Dashboard.vue', import.meta.url), 'utf8')
+const salesPageSource = readFileSync(new URL('../src/views/dashboard/SalesAnalytics.vue', import.meta.url), 'utf8')
 const filterSource = readFileSync(new URL('../src/components/dashboard/DashboardSectionFilter.vue', import.meta.url), 'utf8')
 const downloadsSource = readFileSync(
   new URL('../src/components/dashboard/AppDownloadRanking.vue', import.meta.url),
@@ -22,9 +22,9 @@ test('app sales summary has its own 30-day time filter and sends both dates', ()
   assert.match(salesSource, /endDate:\s*filter\.value\.endDate/)
 })
 
-test('dashboard mounts an independent app download ranking', () => {
-  assert.match(dashboardSource, /import AppDownloadRanking/)
-  assert.match(dashboardSource, /<AppDownloadRanking\s*\/>/)
+test('sales analytics page mounts an independent app download ranking', () => {
+  assert.match(salesPageSource, /import AppDownloadRanking/)
+  assert.match(salesPageSource, /<AppDownloadRanking\s*\/>/)
 })
 
 test('download ranking component uses a 30-day filter and paginated download endpoint', () => {
