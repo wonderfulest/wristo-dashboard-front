@@ -19,7 +19,7 @@ export interface AnalyticsResponse<T> {
 }
 
 export interface LaunchRecommendation {
-  status: 'READY' | 'EVIDENCE_INSUFFICIENT'
+  status: 'READY' | 'EVIDENCE_INSUFFICIENT' | 'LOW_CONFIDENCE_FALLBACK'
   recommendedMinLaunches: number | null
   recommendedMaxLaunches: number | null
   predictedRevenueCents: number

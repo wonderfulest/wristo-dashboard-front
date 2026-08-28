@@ -15,6 +15,13 @@
         <span>样本量：{{ response.sampleSize.toLocaleString() }}</span>
         <span>生成时间：{{ formatTime(response.generatedAt) }}</span>
       </div>
+      <el-alert
+        v-if="isFallbackRecommendation"
+        title="低置信度兜底建议：按最近 60 天实际上线日均值生成，仅供排期参考"
+        type="warning"
+        :closable="false"
+        show-icon
+      />
       <div class="recommendation-grid">
         <article class="primary-card">
           <span>建议上线量</span>
@@ -55,6 +62,7 @@ const error = ref('')
 let pollTimer: ReturnType<typeof setTimeout> | undefined
 const response = ref<AnalyticsResponse<LaunchOperationsRecommendation> | null>(null)
 const recommendation = computed(() => response.value?.data?.recommendation ?? null)
+const isFallbackRecommendation = computed(() => recommendation.value?.status === 'LOW_CONFIDENCE_FALLBACK')
 const quotas = computed(() => response.value?.data?.quotaAllocation?.quotas ?? [])
 const formatPercent = (value?: number | null) => value == null ? '—' : `${(value * 100).toFixed(1)}%`
 const formatTime = (value?: string) => value ? value.replace('T', ' ').slice(0, 16) : '—'

@@ -28,6 +28,7 @@ test('recommendation and cohort sections expose operational evidence and revenue
   assert.match(recommendation, /trainLaunchAnalytics/)
   assert.match(recommendation, /getLaunchAnalyticsTrainingStatus/)
   assert.match(recommendation, /训练中/)
+  assert.match(recommendation, /低置信度兜底建议/)
   assert.match(recommendation, /emit\('trained'\)/)
   assert.doesNotMatch(recommendation, /@click="load">刷新模型/)
   assert.match(recommendation, /首发 \{\{ quota\.firstLaunchQuota \}\} \/ 重新上线/)
