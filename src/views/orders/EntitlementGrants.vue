@@ -25,8 +25,27 @@
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item v-if="form.targetType === 'APP'" label="应用 ID" required>
+        <el-form-item v-if="form.targetType === 'APP'" label="赠送方式" required>
+          <el-radio-group v-model="form.grantMethod" @change="handleGrantMethodChange">
+            <el-radio-button label="APP_ID">选择应用</el-radio-button>
+            <el-radio-button label="ACTIVATION_CODE">通过激活码赠送</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item v-if="form.targetType === 'APP' && form.grantMethod === 'APP_ID'" label="应用 ID" required>
           <AppSearchSelect v-model="form.appId" :width="'100%'" />
+        </el-form-item>
+
+        <el-form-item v-else-if="form.targetType === 'APP'" label="六位激活码" required>
+          <el-input
+            v-model.trim="form.activationCode"
+            class="full-input"
+            maxlength="6"
+            inputmode="numeric"
+            placeholder="输入手表显示的六位激活码"
+            clearable
+          />
+          <div class="field-help">将自动识别应用、绑定到该邮箱并直接激活。</div>
         </el-form-item>
 
         <el-form-item v-else label="Bundle" required>
@@ -168,6 +187,7 @@ import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { fetchAdminBundlePage } from '@/api/bundles'
 import { giftEntitlement } from '@/api/purchase'
 import { calculateGiftCommissionUsd, validateGiftPaymentMethod } from './giftEntitlementCommission.mjs'
+import { buildGiftTargetPayload, validateGiftTarget } from './giftEntitlementGrant.mjs'
 import type { Bundle } from '@/types/bundle'
 import type {
   GiftEntitlementChannel,
@@ -180,6 +200,8 @@ interface GrantForm {
   email: string
   targetType: GiftEntitlementTargetType
   appId: number | null | undefined
+  grantMethod: 'APP_ID' | 'ACTIVATION_CODE'
+  activationCode: string
   bundleId: number | null | undefined
   channel: GiftEntitlementChannel
   externalOrderId: string
@@ -201,6 +223,8 @@ const form = reactive<GrantForm>({
   email: '',
   targetType: 'APP',
   appId: null,
+  grantMethod: 'APP_ID',
+  activationCode: '',
   bundleId: null,
   channel: 'wristo_cn',
   externalOrderId: '',
@@ -216,14 +240,30 @@ const handleTargetTypeChange = () => {
     form.bundleId = null
   } else {
     form.appId = null
+    form.activationCode = ''
     loadActiveBundles()
+  }
+}
+
+const handleGrantMethodChange = () => {
+  result.value = null
+  if (form.grantMethod === 'APP_ID') {
+    form.activationCode = ''
+  } else {
+    form.appId = null
   }
 }
 
 const validateForm = (): string | null => {
   if (!form.email || !form.email.includes('@')) return '请输入有效邮箱'
-  if (form.targetType === 'APP' && !form.appId) return '请选择应用 ID'
-  if (form.targetType === 'BUNDLE' && !form.bundleId) return '请选择 Bundle'
+  const targetError = validateGiftTarget(
+    form.targetType,
+    form.grantMethod,
+    form.appId,
+    form.bundleId,
+    form.activationCode
+  )
+  if (targetError) return targetError
   if (!form.channel) return '请选择渠道'
   const paymentMethodError = validateGiftPaymentMethod(form.commissionEnabled, form.paymentMethod)
   if (paymentMethodError) return paymentMethodError
@@ -242,6 +282,9 @@ const selectedBundle = computed(() => {
 })
 
 const targetLabel = () => {
+  if (form.targetType === 'APP' && form.grantMethod === 'ACTIVATION_CODE') {
+    return `激活码 ${form.activationCode} 对应的应用（绑定邮箱并直接激活）`
+  }
   if (form.targetType === 'APP') return `应用 ${form.appId}`
   const bundle = selectedBundle.value
   if (!bundle) return `Bundle ${form.bundleId}`
@@ -329,11 +372,17 @@ const submitGrant = async () => {
       }
     )
     submitting.value = true
+    const targetPayload = buildGiftTargetPayload(
+      form.targetType,
+      form.grantMethod,
+      form.appId,
+      form.bundleId,
+      form.activationCode
+    )
     const res = await giftEntitlement({
       email: form.email,
       targetType: form.targetType,
-      appId: form.targetType === 'APP' ? form.appId : null,
-      bundleId: form.targetType === 'BUNDLE' ? form.bundleId : null,
+      ...targetPayload,
       channel: form.channel,
       externalOrderId: form.externalOrderId || null,
       commissionEnabled: form.commissionEnabled,
@@ -359,6 +408,8 @@ const resetForm = () => {
   form.email = ''
   form.targetType = 'APP'
   form.appId = null
+  form.grantMethod = 'APP_ID'
+  form.activationCode = ''
   form.bundleId = null
   form.channel = 'wristo_cn'
   form.externalOrderId = ''
@@ -429,6 +480,13 @@ const openOrderHistory = () => {
   margin-top: 4px;
   color: #909399;
   font-size: 12px;
+}
+
+.field-help {
+  margin-top: 6px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .commission-preview {

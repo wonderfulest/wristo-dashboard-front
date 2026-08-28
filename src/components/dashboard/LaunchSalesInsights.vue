@@ -64,6 +64,7 @@ import DashboardSectionFilter from './DashboardSectionFilter.vue'
 import { buildDashboardRange } from './dashboardOverview.mjs'
 import type { DashboardFilter } from './dashboardTypes'
 import type { LaunchSalesInsights } from '@/types/launch-analytics'
+import { buildBottomLineChartLayout } from './dashboardChartOptions.mjs'
 
 const initialRange = buildDashboardRange('30d')
 const filter = ref<DashboardFilter>({ rangeType:'30d', startDate:initialRange.startDate, endDate:initialRange.endDate, appId:null })
@@ -81,7 +82,7 @@ const metricRows=(metrics:LaunchSalesInsights['first7Days'])=>[
 ]
 const windows=computed(()=>data.value?[{label:'首发 7 天',metrics:metricRows(data.value.first7Days)},{label:'首发 30 天',metrics:metricRows(data.value.first30Days)}]:[])
 const dimensionRows=computed(()=>data.value?.dimensions.find(item=>item.dimension===selectedDimension.value)?.groups??[])
-const renderChart=async()=>{await nextTick();if(!chartElement.value||!data.value)return;chart ||= echarts.init(chartElement.value);const points=data.value.trend;chart.setOption({tooltip:{trigger:'axis'},legend:{data:['上线数量','后续 7 天销量','后续 30 天销量']},grid:{left:50,right:30,top:45,bottom:38},xAxis:{type:'category',data:points.map(p=>p.period)},yAxis:[{type:'value',name:'上线数'},{type:'value',name:'销量'}],series:[{name:'上线数量',type:'bar',data:points.map(p=>p.launchCount),itemStyle:{color:'#72a88f'}},{name:'后续 7 天销量',type:'line',yAxisIndex:1,data:points.map(p=>p.orders7Days),smooth:true,lineStyle:{color:'#3278c8'}},{name:'后续 30 天销量',type:'line',yAxisIndex:1,data:points.map(p=>p.orders30Days),smooth:true,lineStyle:{color:'#d79221'}}]})}
+const renderChart=async()=>{await nextTick();if(!chartElement.value||!data.value)return;chart ||= echarts.init(chartElement.value);const points=data.value.trend;const layout=buildBottomLineChartLayout();chart.setOption({tooltip:{trigger:'axis'},legend:{...layout.legend,data:['上线数量','后续 7 天销量','后续 30 天销量']},grid:{left:50,right:30,top:45,...layout.grid},xAxis:{type:'category',data:points.map(p=>p.period)},yAxis:[{type:'value',name:'上线数',min:layout.yAxisMin},{type:'value',name:'销量',min:layout.yAxisMin}],series:[{name:'上线数量',type:'bar',data:points.map(p=>p.launchCount),itemStyle:{color:'#72a88f'}},{name:'后续 7 天销量',type:'line',yAxisIndex:1,data:points.map(p=>p.orders7Days),smooth:true,lineStyle:{color:'#3278c8'}},{name:'后续 30 天销量',type:'line',yAxisIndex:1,data:points.map(p=>p.orders30Days),smooth:true,lineStyle:{color:'#d79221'}}]})}
 const load=async()=>{loading.value=true;error.value='';try{data.value=(await getLaunchSalesInsights({from:filter.value.startDate,to:filter.value.endDate})).data?.data??null;await renderChart()}catch{error.value='上线销量分析暂时无法加载'}finally{loading.value=false}}
 watch(filter,load,{deep:true,immediate:true});const resize=()=>chart?.resize();onMounted(()=>window.addEventListener('resize',resize));onBeforeUnmount(()=>{window.removeEventListener('resize',resize);chart?.dispose()})
 </script>

@@ -61,6 +61,7 @@ export interface GiftEntitlementRequest {
   email: string
   targetType: GiftEntitlementTargetType
   appId?: number | null
+  activationCode?: string | null
   bundleId?: number | null
   channel: GiftEntitlementChannel
   paymentMethod?: GiftEntitlementPaymentMethod | null
