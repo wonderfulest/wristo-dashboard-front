@@ -28,16 +28,16 @@
 import { ref, watch } from 'vue'
 import { getDesignOutputStats, type DesignOutputStats } from '@/api/design-output-analytics'
 import DashboardSectionFilter from './DashboardSectionFilter.vue'
-import { buildDashboardRange } from './dashboardOverview.mjs'
+import { buildDesignOutputFilter } from './dashboardOverview.mjs'
 import type { DashboardFilter } from './dashboardTypes'
 
-const initialRange = buildDashboardRange('7d')
-const filter = ref<DashboardFilter>({ rangeType: '7d', startDate: initialRange.startDate, endDate: initialRange.endDate, appId: null })
+const initialFilter = buildDesignOutputFilter()
+const filter = ref<DashboardFilter>(initialFilter)
 const loading = ref(false)
 const error = ref('')
 const stats = ref<DesignOutputStats>({
-  startDate: initialRange.startDate,
-  endDate: initialRange.endDate,
+  startDate: initialFilter.startDate,
+  endDate: initialFilter.endDate,
   createdDesigns: 0,
   submittedDesigns: 0,
   approvedDesigns: 0,

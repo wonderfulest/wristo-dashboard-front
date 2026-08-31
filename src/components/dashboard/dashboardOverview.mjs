@@ -18,6 +18,11 @@ export const buildDashboardRange = (rangeType = '7d', now = new Date()) => {
   return { startDate, endDate, displayPeriod: `${startDate} 至 ${endDate}` }
 }
 
+export const buildDesignOutputFilter = (now = new Date()) => {
+  const range = buildDashboardRange('today', now)
+  return { rangeType: 'today', startDate: range.startDate, endDate: range.endDate, appId: null }
+}
+
 export const calculateBusinessMetrics = (sales = [], funnel = null) => {
   const totals = sales.reduce((result, item) => ({
     revenue: result.revenue + (Number(item?.earnings) || 0) / 100,

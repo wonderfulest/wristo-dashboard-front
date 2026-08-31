@@ -14,5 +14,6 @@ export interface DashboardMetrics {
 }
 
 export function buildDashboardRange(rangeType?: string, now?: Date): DashboardRange
+export function buildDesignOutputFilter(now?: Date): import('./dashboardTypes').DashboardFilter
 export function calculateBusinessMetrics(sales?: DailySalesItemVO[], funnel?: Partial<AppFunnelVO> | null): DashboardMetrics
 export function formatDashboardMetric(key: keyof DashboardMetrics, value: number | null): string

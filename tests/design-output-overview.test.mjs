@@ -1,6 +1,16 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
+import { buildDesignOutputFilter } from '../src/components/dashboard/dashboardOverview.mjs'
+
+test('design output defaults to the current calendar day', () => {
+  assert.deepEqual(buildDesignOutputFilter(new Date('2026-08-31T12:00:00')), {
+    rangeType: 'today',
+    startDate: '2026-08-31',
+    endDate: '2026-08-31',
+    appId: null,
+  })
+})
 
 test('dashboard exposes design output metrics with the shared date-range choices', async () => {
   const dashboard = await readFile(new URL('../src/views/dashboard/Dashboard.vue', import.meta.url), 'utf8')
