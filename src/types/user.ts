@@ -74,6 +74,7 @@ export interface UserMchUpdateDTO {
   payoutMethod?: string
   payoutAccount?: string
   bannerImageId?: number
+  slug?: string
   slogan?: string
   facebookUrl?: string
   instagramUrl?: string
@@ -86,6 +87,7 @@ export interface MchUserVO extends UserInfo {
   payoutMethod?: string | null
   payoutAccount?: string | null
   bannerImageId?: number | null
+  slug?: string | null
   bannerImage?: ImageVO | null
   slogan?: string | null
   facebookUrl?: string | null

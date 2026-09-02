@@ -117,6 +117,10 @@
           <el-input v-model="editForm.nickname" placeholder="昵称" />
         </el-form-item>
 
+        <el-form-item label="品牌 Slug" prop="slug">
+          <el-input v-model="editForm.slug" placeholder="系统自动生成，可由管理员修改" />
+        </el-form-item>
+
         <el-form-item label="Banner" prop="bannerImageId">
           <ImageUpload
             v-model="editForm.bannerImageId"
@@ -256,6 +260,7 @@ const editForm = ref({
   id: 0,
   username: '',
   nickname: '',
+  slug: '',
   status: 1,
   payoutMethod: '',
   payoutAccount: '',
@@ -305,6 +310,7 @@ const openEdit = async (row: any) => {
       id: Number(r.id),
       username: r.username || '',
       nickname: (r.nickname || '') as any,
+      slug: (r.slug || '') as any,
       status: (r.status ?? 1) as any,
       payoutMethod: (r.payoutMethod || '') as any,
       payoutAccount: (r.payoutAccount || '') as any,
@@ -333,6 +339,7 @@ const handleEditSubmit = async () => {
       const dto: UserMchUpdateDTO = {
         username: editForm.value.username,
         nickname: editForm.value.nickname,
+        slug: editForm.value.slug,
         status: editForm.value.status,
         payoutMethod: editForm.value.payoutMethod,
         payoutAccount: editForm.value.payoutAccount,
