@@ -10,6 +10,8 @@ export interface DailySalesItemVO {
   downloads: number
   /** 当日收益 */
   earnings: number
+  /** 当日首次上线的去重设计数 */
+  launchCount: number
 }
 
 // ===== App Sales Summary =====
