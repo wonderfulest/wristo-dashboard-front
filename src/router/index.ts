@@ -164,6 +164,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/dashboard/activations',
+      name: 'DashboardActivations',
+      component: () => import('@/views/dashboard/ActivationAnalytics.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/dashboard/activations/user',
+      name: 'ActivationUserDetail',
+      component: () => import('@/views/dashboard/ActivationUserDetail.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/dashboard/value',
       name: 'DashboardValue',
       component: () => import('@/views/dashboard/ValueAnalytics.vue'),

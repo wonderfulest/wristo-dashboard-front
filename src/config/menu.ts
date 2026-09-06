@@ -71,6 +71,8 @@ export const topMenus: TopMenuGroup[] = [
     children: [
       { key: 'dashboard-overview', title: '业务概览', icon: 'DataBoard', path: '/dashboard' },
       { key: 'dashboard-sales', title: '销售分析', icon: 'TrendCharts', path: '/dashboard/sales' },
+      { key: 'dashboard-activations', title: '激活分析', icon: 'Histogram', path: '/dashboard/activations' },
+      { key: 'activation-user-detail', title: '邮箱激活详情', icon: 'User', path: '/dashboard/activations/user' },
       { key: 'dashboard-launch', title: '上线策略', icon: 'Promotion', path: '/dashboard/launch' },
       { key: 'dashboard-value', title: '价值分析', icon: 'Histogram', path: '/dashboard/value' },
       { key: 'tickets', title: '工单管理', icon: 'Tickets', path: '/tickets' },
