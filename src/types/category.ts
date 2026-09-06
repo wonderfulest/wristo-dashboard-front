@@ -37,6 +37,7 @@ export interface CreateCategoryDto {
 export type ProductTagGroup = 'style' | 'function' | 'scene' | 'seasonal' | 'device' | 'meta' | string
 
 export interface ProductTag {
+  nameZh?: string | null
   id: number
   name: string
   slug: string
@@ -67,10 +68,19 @@ export interface ProductTagPageData {
 }
 
 export interface ProductTagMutationPayload {
+  nameZh?: string
   name: string
   slug: string
   tagGroup: string
   sort?: number
   status?: number
   description?: string
+}
+
+export interface ProductTagMergePreview {
+  source: ProductTag
+  target: ProductTag
+  affectedProductCount: number
+  overlapProductCount: number
+  confirmationToken: string
 }

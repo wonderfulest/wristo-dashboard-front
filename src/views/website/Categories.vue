@@ -66,7 +66,7 @@
 
       <el-tab-pane label="标签" name="tags">
         <div class="tag-toolbar">
-          <el-input v-model.trim="tagQuery.keyword" clearable placeholder="搜索标签名称或 slug" style="width: 240px" @keyup.enter="fetchTags" />
+          <el-input v-model.trim="tagQuery.keyword" clearable placeholder="搜索中英文名称或 slug" style="width: 240px" @keyup.enter="fetchTags" />
           <el-select v-model="tagQuery.tagGroup" clearable placeholder="标签组" style="width: 160px" @change="fetchTags">
             <el-option v-for="group in tagGroups" :key="group.value" :label="group.label" :value="group.value" />
           </el-select>
@@ -77,7 +77,9 @@
           <el-button @click="fetchTags">刷新</el-button>
         </div>
 
+        <el-alert title="标签由统一词库维护。Slug 和分组创建后固定；停用标签会从产品展示与可选词库中隐藏。" type="info" :closable="false" style="margin-bottom: 12px" />
         <el-table :data="tags" style="width: 100%" v-loading="tagLoading">
+          <el-table-column prop="nameZh" label="中文名称" min-width="120" />
           <el-table-column prop="name" label="标签" min-width="180">
             <template #default="{ row }">
               <div class="name-cell">
@@ -109,6 +111,7 @@
           <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link @click="handleEditTag(row)">编辑</el-button>
+              <el-button type="warning" link @click="handleMergeTag(row)">合并</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -169,13 +172,16 @@
     <el-dialog v-model="tagDialogVisible" :title="tagDialogType === 'add' ? '新增标签' : '编辑标签'" width="520px">
       <el-form ref="tagFormRef" :model="tagForm" :rules="tagRules" label-width="90px">
         <el-form-item label="名称" prop="name">
-          <el-input v-model="tagForm.name" placeholder="AMOLED" />
+          <el-input v-model.trim="tagForm.name" maxlength="100" placeholder="AMOLED" />
+        </el-form-item>
+        <el-form-item label="中文名称">
+          <el-input v-model.trim="tagForm.nameZh" maxlength="100" placeholder="选填，如：极简" />
         </el-form-item>
         <el-form-item label="Slug" prop="slug">
-          <el-input v-model="tagForm.slug" placeholder="amoled" />
+          <el-input v-model.trim="tagForm.slug" maxlength="100" :disabled="tagDialogType === 'edit'" placeholder="amoled" />
         </el-form-item>
         <el-form-item label="标签组" prop="tagGroup">
-          <el-select v-model="tagForm.tagGroup" style="width: 100%">
+          <el-select v-model="tagForm.tagGroup" :disabled="tagDialogType === 'edit'" style="width: 100%">
             <el-option v-for="group in tagGroups" :key="group.value" :label="group.label" :value="group.value" />
           </el-select>
         </el-form-item>
@@ -194,6 +200,33 @@
         <el-button type="primary" @click="handleSubmitTag">保存</el-button>
       </template>
     </el-dialog>
+    <el-dialog v-model="mergeDialogVisible" title="合并标签" width="560px"
+      :close-on-click-modal="false" :close-on-press-escape="!mergeSubmitting" :show-close="!mergeSubmitting">
+      <el-form label-width="100px">
+        <el-form-item label="来源标签">
+          {{ mergeSource?.nameZh || mergeSource?.name }}（{{ mergeSource?.slug }}）
+        </el-form-item>
+        <el-form-item label="保留标签">
+          <el-select v-model="mergeTargetId" filterable remote clearable :remote-method="searchMergeTargets"
+            :loading="mergeTargetsLoading" :disabled="mergeSubmitting" placeholder="搜索同组已启用的标签" style="width: 100%">
+            <el-option v-for="tag in mergeTargets" :key="tag.id" :value="tag.id"
+              :label="`${tag.nameZh || tag.name} (${tag.slug})`" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <el-alert title="合并会迁移产品关联并自动去重，停用来源标签并保留历史记录；自动分类同步更新，人工分类保留。"
+        type="warning" :closable="false" />
+      <el-descriptions v-if="mergePreview" :column="1" border style="margin-top: 16px">
+        <el-descriptions-item label="合并方向">{{ mergePreview.source.nameZh || mergePreview.source.name }} → {{ mergePreview.target.nameZh || mergePreview.target.name }}</el-descriptions-item>
+        <el-descriptions-item label="受影响产品">{{ mergePreview.affectedProductCount }} 个</el-descriptions-item>
+        <el-descriptions-item label="已有重复关联">{{ mergePreview.overlapProductCount }} 个产品，将自动去重</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button :disabled="mergeSubmitting" @click="mergeDialogVisible = false">取消</el-button>
+        <el-button :disabled="!mergeTargetId || mergeSubmitting" :loading="mergePreviewLoading" @click="handlePreviewMerge">预览影响</el-button>
+        <el-button type="warning" :disabled="!mergePreview || mergePreviewLoading" :loading="mergeSubmitting" @click="handleConfirmMerge">确认合并</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -207,12 +240,14 @@ import {
   fetchCategoryPage,
   fetchProductTagPage,
   getCategory,
+  previewProductTagMerge,
+  mergeProductTags,
   updateCategory,
   updateCategoryStatus,
   updateProductTag,
   updateProductTagStatus,
 } from '@/api/category'
-import type { Category, ProductTag } from '@/types/category'
+import type { Category, ProductTag, ProductTagMergePreview } from '@/types/category'
 import ImageUpload from '@/components/common/ImageUpload.vue'
 import ImagePreview from '@/components/common/ImagePreview.vue'
 import type { ImageVO } from '@/types/image'
@@ -277,6 +312,7 @@ const tagForm = ref({
   id: 0,
   name: '',
   slug: '',
+  nameZh: '',
   tagGroup: 'style',
   sort: 0,
   status: 1,
@@ -304,7 +340,7 @@ const tagRules: FormRules = {
   name: [{ required: true, message: '请输入标签名称', trigger: 'blur' }],
   slug: [
     { required: true, message: '请输入标签标识', trigger: 'blur' },
-    { pattern: /^[a-z0-9-]+$/, message: '只能包含小写字母、数字和连字符', trigger: 'blur' },
+    { pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/, message: '只能包含小写字母、数字和连字符', trigger: 'blur' },
   ],
   tagGroup: [{ required: true, message: '请选择标签组', trigger: 'change' }],
 }
@@ -468,7 +504,7 @@ const handleCategoryStatusChange = async (row: Category, val: number) => {
 
 const handleAddTag = () => {
   tagDialogType.value = 'add'
-  tagForm.value = { id: 0, name: '', slug: '', tagGroup: 'style', sort: 0, status: 1, description: '' }
+  tagForm.value = { id: 0, name: '', nameZh: '', slug: '', tagGroup: 'style', sort: 0, status: 1, description: '' }
   tagDialogVisible.value = true
 }
 
@@ -477,6 +513,7 @@ const handleEditTag = (row: ProductTag) => {
   tagForm.value = {
     id: row.id,
     name: row.name,
+    nameZh: row.nameZh || '',
     slug: row.slug,
     tagGroup: row.tagGroup,
     sort: row.sort ?? 0,
@@ -493,6 +530,7 @@ const handleSubmitTag = async () => {
     try {
       const payload = {
         name: tagForm.value.name,
+        nameZh: tagForm.value.nameZh,
         slug: tagForm.value.slug,
         tagGroup: tagForm.value.tagGroup,
         sort: tagForm.value.sort,
@@ -512,6 +550,90 @@ const handleSubmitTag = async () => {
       ElMessage.error(tagDialogType.value === 'add' ? '新增标签失败' : '更新标签失败')
     }
   })
+}
+
+const mergeDialogVisible = ref(false)
+const mergeSource = ref<ProductTag>()
+const mergeTargetId = ref<number>()
+const mergeTargets = ref<ProductTag[]>([])
+const mergeTargetsLoading = ref(false)
+const mergePreview = ref<ProductTagMergePreview>()
+const mergePreviewLoading = ref(false)
+const mergeSubmitting = ref(false)
+let mergeSearchRequest = 0
+let mergePreviewRequest = 0
+
+watch(mergeTargetId, () => {
+  mergePreviewRequest++
+  mergePreview.value = undefined
+  mergePreviewLoading.value = false
+}, { flush: 'sync' })
+watch(mergeDialogVisible, (visible) => {
+  if (!visible) {
+    mergeSearchRequest++
+    mergePreviewRequest++
+    mergePreview.value = undefined
+  }
+})
+
+const searchMergeTargets = async (keyword: string) => {
+  if (!mergeSource.value) return
+  const request = ++mergeSearchRequest
+  const source = mergeSource.value
+  mergeTargetsLoading.value = true
+  try {
+    const res = await fetchProductTagPage({ pageNum: 1, pageSize: 50, keyword: keyword || undefined, tagGroup: source.tagGroup, status: 1 })
+    if (request === mergeSearchRequest) {
+      mergeTargets.value = (res.data?.list || []).filter(tag => tag.id !== source.id && tag.status === 1 && tag.tagGroup === source.tagGroup)
+    }
+  } catch {
+    if (request === mergeSearchRequest) ElMessage.error('获取可合并标签失败')
+  } finally {
+    if (request === mergeSearchRequest) mergeTargetsLoading.value = false
+  }
+}
+
+const handleMergeTag = (row: ProductTag) => {
+  mergePreviewRequest++
+  mergeSource.value = row
+  mergeTargetId.value = undefined
+  mergePreview.value = undefined
+  mergeTargets.value = []
+  mergePreviewLoading.value = false
+  mergeDialogVisible.value = true
+  void searchMergeTargets('')
+}
+
+const handlePreviewMerge = async () => {
+  if (!mergeSource.value || !mergeTargetId.value || mergeSubmitting.value) return
+  const request = ++mergePreviewRequest
+  mergePreview.value = undefined
+  mergePreviewLoading.value = true
+  try {
+    const res = await previewProductTagMerge(mergeSource.value.id, mergeTargetId.value)
+    if (request === mergePreviewRequest) mergePreview.value = res.data
+  } catch {
+    if (request === mergePreviewRequest) ElMessage.error('获取合并预览失败，请重试')
+  } finally {
+    if (request === mergePreviewRequest) mergePreviewLoading.value = false
+  }
+}
+
+const handleConfirmMerge = async () => {
+  const preview = mergePreview.value
+  if (!preview || mergeSubmitting.value || mergePreviewLoading.value) return
+  mergeSubmitting.value = true
+  try {
+    await mergeProductTags(preview.source.id, { targetId: preview.target.id, confirmationToken: preview.confirmationToken })
+    ElMessage.success('标签已合并，来源标签已停用')
+    mergeDialogVisible.value = false
+    await fetchTags()
+  } catch {
+    mergePreview.value = undefined
+    ElMessage.error('合并失败，请重新预览后重试')
+  } finally {
+    mergeSubmitting.value = false
+  }
 }
 
 const handleTagStatusChange = async (row: ProductTag, val: number) => {

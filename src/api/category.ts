@@ -6,6 +6,7 @@ import type {
   CategoryPageData,
   CreateCategoryDto,
   ProductTag,
+  ProductTagMergePreview,
   ProductTagMutationPayload,
   ProductTagPageData,
   ProductTagPageQuery,
@@ -53,4 +54,12 @@ export const updateProductTag = (id: number, data: ProductTagMutationPayload): P
 
 export const updateProductTagStatus = (id: number, status: number): Promise<ApiResponse<ProductTag>> => {
   return instance.post(`/admin/product-tags/status/${id}/${status}`)
+}
+
+export const previewProductTagMerge = (sourceId: number, targetId: number): Promise<ApiResponse<ProductTagMergePreview>> => {
+  return instance.get(`/admin/product-tags/${sourceId}/merge-preview`, { params: { targetId } })
+}
+
+export const mergeProductTags = (sourceId: number, data: { targetId: number; confirmationToken: string }): Promise<ApiResponse<ProductTagMergePreview>> => {
+  return instance.post(`/admin/product-tags/${sourceId}/merge`, data)
 }
