@@ -114,33 +114,18 @@
       </div>
     </el-drawer>
 
-    <el-dialog v-model="startVisible" title="手动开启备份" width="520px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="数据库类型">
-          <el-select v-model="form.dbType" style="width: 240px">
-            <el-option label="MySQL" value="mysql" />
-            <el-option label="PostgreSQL" value="postgres" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="备份类型">
-          <el-select v-model="form.backupType" style="width: 240px">
-            <el-option label="完全备份" value="FULL" />
-            <el-option label="增量备份" value="INCREMENTAL" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="存储路径">
-          <el-input v-model="form.storagePath" placeholder="目录或URL，例如: https://cdn... 或 /data/backup" />
-        </el-form-item>
-        <el-form-item label="文件名">
-          <el-input v-model="form.fileName" placeholder="留空自动生成 (可选)" />
-        </el-form-item>
-        <el-form-item label="操作人">
-          <el-input v-model="form.operator" placeholder="操作者标识" />
-        </el-form-item>
-      </el-form>
+    <el-dialog v-model="startVisible" title="手动开启备份" width="min(800px, 92vw)">
+      <el-alert
+        title="请登录数据库所在服务器，在宿主机终端手动执行以下命令。"
+        type="info"
+        :closable="false"
+        show-icon
+      />
+      <pre class="backup-command"><code>{{ manualBackupCommand }}</code></pre>
+      <p>执行完成后，请确认终端显示“上传完成”，再返回此页面刷新“可用备份”。</p>
       <template #footer>
-        <el-button @click="startVisible = false">取消</el-button>
-        <el-button type="primary" :loading="starting" @click="submitStart">开始</el-button>
+        <el-button @click="startVisible = false">关闭</el-button>
+        <el-button type="primary" @click="copyBackupCommand">复制命令</el-button>
       </template>
     </el-dialog>
   </div>
@@ -149,10 +134,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getAvailableDbBackups, getDbBackupDownloadUrl, getRecentDbBackups, startDbBackup, getDbBackup } from '@/api/ops-db'
-import type { DbBackupFile, DbBackupJob, DbBackupStartDTO } from '@/types/ops'
+import { getAvailableDbBackups, getDbBackupDownloadUrl, getRecentDbBackups, getDbBackup } from '@/api/ops-db'
+import type { DbBackupFile, DbBackupJob } from '@/types/ops'
 import { formatDateTime } from '@/utils/date'
-import { useUserStore } from '@/store/user'
 
 const loading = ref(false)
 const activeTab = ref<'available' | 'history'>('available')
@@ -165,18 +149,15 @@ const detailVisible = ref(false)
 const current = ref<DbBackupJob | null>(null)
 
 const startVisible = ref(false)
-const starting = ref(false)
-const form = ref<DbBackupStartDTO>({
-  dbType: 'mysql',
-  backupType: 'FULL',
-  storagePath: '/data/backup',
-  fileName: '',
-  operator: ''
-})
+const manualBackupCommand = "cd /app/wristo-tools\n\nbash -c '\ntrap '\\''rc=$?; printf \"退出码=%s，位置=%s:%s\\n\" \"$rc\" \"${BASH_SOURCE[0]:-unknown}\" \"$LINENO\"'\\'' EXIT\ntrap '\\''rc=$?; printf \"失败位置=%s:%s，退出码=%s\\n\" \"${BASH_SOURCE[0]:-unknown}\" \"$LINENO\" \"$rc\"'\\'' ERR\nset -E\nsource prod-tasks/database/backup_databases.sh\n'"
 
-const userStore = useUserStore()
-if (userStore?.userInfo?.username) {
-  form.value.operator = userStore.userInfo.username
+const copyBackupCommand = async () => {
+  try {
+    await navigator.clipboard.writeText(manualBackupCommand)
+    ElMessage.success('命令已复制，请登录服务器执行')
+  } catch {
+    ElMessage.warning('复制失败，请手动选中并复制上方命令')
+  }
 }
 
 const statusType = (status: string): 'info' | 'warning' | 'success' | 'danger' => {
@@ -265,28 +246,6 @@ const openStartDialog = () => {
   startVisible.value = true
 }
 
-const submitStart = async () => {
-  if (!form.value.storagePath) {
-    ElMessage.warning('请填写存储路径')
-    return
-  }
-  starting.value = true
-  try {
-    const res = await startDbBackup(form.value)
-    ElMessage.success('备份任务已创建')
-    startVisible.value = false
-    // 立即刷新，并将返回的任务放到最前面
-    await fetchRecent()
-    if (res.data) {
-      jobs.value = [res.data, ...jobs.value.filter(j => j.id !== res.data!.id)]
-    }
-  } catch (e) {
-    // 错误已在拦截器提示
-  } finally {
-    starting.value = false
-  }
-}
-
 onMounted(fetchAvailable)
 </script>
 
@@ -296,6 +255,7 @@ onMounted(fetchAvailable)
 .cell-two-lines { display: flex; flex-direction: column; line-height: 1.4; }
 .file-box { display: flex; flex-direction: column; gap: 4px; }
 .file-name { font-weight: 600; }
+.backup-command { margin: 16px 0; padding: 16px; overflow-x: auto; background: var(--el-fill-color-light); border-radius: 4px; font-size: 13px; line-height: 1.6; user-select: text; }
 .msg { margin-top: 16px; }
 .msg-title { font-weight: 600; margin-bottom: 8px; }
 </style>
