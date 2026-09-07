@@ -209,3 +209,13 @@ export const refreshProductStats = (): Promise<ApiResponse<boolean>> => {
 export const resetAllProductStoreWeights = (): Promise<ApiResponse<number>> => {
   return instance.post('/admin/products/store-weight/reset-all')
 }
+
+// 分布式消费者的有效租约任务
+export const getRunningProductPackagingTasks = (populate = '*'): Promise<ApiResponse<ProductPackagingLogVO[]>> =>
+  instance.get('/admin/product-packaging-logs/queue/running', { params: { populate } })
+
+export const getProductPackagingQueuePause = (): Promise<ApiResponse<boolean>> =>
+  instance.get('/admin/product-packaging-logs/queue/pause')
+
+export const getProductPackagingQueueProtocol = (): Promise<ApiResponse<{ legacyWorkerActive: boolean }>> =>
+  instance.get('/admin/product-packaging-logs/queue/protocol')

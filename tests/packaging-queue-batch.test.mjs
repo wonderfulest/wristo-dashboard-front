@@ -5,15 +5,21 @@ import ts from 'typescript'
 const source = fs.readFileSync(new URL('../src/views/dashboard/packaging/PackagingQueue.vue', import.meta.url), 'utf8')
 const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
 const code = ts.transpileModule(script.replace(/^import[\s\S]*?from ['"][^'"]+['"]\s*;?/gm, ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-function setup(update = async () => ({ code: 0 })) {
+function setup(update = async () => ({ code: 0 }), overrides = {}) {
   const calls = []
   const context = {
-    ref: value => ({ value }), computed: getter => ({ get value() { return getter() } }), onMounted: () => {},
+    ref: value => ({ value }), computed: getter => ({ get value() { return getter() } }), onMounted: () => {}, onUnmounted: () => {},
     ElMessage: { error() {}, success() {}, warning() {} },
     updateProductPackagingQueuePriority: async (id, value) => { calls.push([id, value]); return update(id) },
-    getProductPackagingQueue: async () => ({ code: 0, data: [] })
+    getProductPackagingQueue: async () => ({ code: 0, data: [] }),
+    getRunningProductPackagingTasks: async () => ({ code: 0, data: [] }),
+    getProductPackagingQueuePause: async () => ({ code: 0, data: false }),
+    getProductPackagingDeadQueue: async () => ({ code: 0, data: [] }),
+    getProductPackagingQueueProtocol: async () => ({ code: 0, data: { legacyWorkerActive: false } }),
+    setProductPackagingQueuePause: async () => ({ code: 0 }),
+    ...overrides
   }
-  const state = new Function(...Object.keys(context), `${code}\nreturn { queue, designerId, designers, filteredQueue, selectedRows, clearSelection, openBatchPriorityDialog, priorityValue, submitPriority, priorityTargetRows, priorityDialogVisible, batchFailureSummary };`)(...Object.values(context))
+  const state = new Function(...Object.keys(context), `${code}\nreturn { handleRefresh, handleToggleQueuePause, runningTasks, queuePaused, deadCount, loaded, lastUpdated, refreshError, updatingPriority, runningDuration, isSelectable, queue, designerId, designers, filteredQueue, selectedRows, clearSelection, openBatchPriorityDialog, priorityValue, submitPriority, priorityTargetRows, priorityDialogVisible, batchFailureSummary };`)(...Object.values(context))
   return { ...state, calls }
 }
 const row = (id, designer) => ({ id, product: { user: { id: designer, username: 'Same name' } } })
@@ -57,4 +63,51 @@ test('invalid priorities never submit requests', async () => {
     await state.submitPriority()
   }
   assert.deepEqual(state.calls, [])
+})
+
+test('refresh reads all running tasks and actual global pause state', async () => {
+  const state = setup(undefined, {
+    getRunningProductPackagingTasks: async () => ({ code: 0, data: [row(4, 10), row(5, 20)] }),
+    getProductPackagingQueuePause: async () => ({ code: 0, data: true }),
+    getProductPackagingDeadQueue: async () => ({ code: 0, data: [row(6, 10)] })
+  })
+  await state.handleRefresh()
+  assert.equal(state.runningTasks.value.length, 2)
+  assert.equal(state.queuePaused.value, true)
+  assert.equal(state.deadCount.value, 1)
+  assert.equal(state.loaded.value, true)
+  assert.equal(state.isSelectable(row(5, 20)), false)
+})
+test('partial refresh failure preserves previous snapshot and timestamp', async () => {
+  let fail = false
+  const state = setup(undefined, {
+    getProductPackagingQueuePause: async () => ({ code: fail ? 1 : 0, data: true })
+  })
+  await state.handleRefresh()
+  const updated = state.lastUpdated.value
+  state.queue.value = [row(1, 10)]
+  fail = true
+  await state.handleRefresh()
+  assert.equal(state.queue.value.length, 1)
+  assert.equal(state.queuePaused.value, true)
+  assert.equal(state.lastUpdated.value, updated)
+  assert.match(state.refreshError.value, /刷新失败/)
+})
+test('pause failure retains server state and refresh is suspended during editing', async () => {
+  const state = setup(undefined, {
+    setProductPackagingQueuePause: async () => ({ code: 1 })
+  })
+  await state.handleToggleQueuePause(true)
+  assert.equal(state.queuePaused.value, false)
+  state.lastUpdated.value = null
+  state.priorityDialogVisible.value = true
+  await state.handleRefresh()
+  assert.equal(state.lastUpdated.value, null)
+})
+test('duration uses reported start time and handles missing or invalid starts', () => {
+  const state = setup()
+  state.lastUpdated.value = 120000
+  assert.equal(state.runningDuration({ processingStartedAt: 30000 }), '1 分 30 秒')
+  assert.equal(state.runningDuration({}), '待上报')
+  assert.equal(state.runningDuration({ processingStartedAt: 'bad' }), '待上报')
 })

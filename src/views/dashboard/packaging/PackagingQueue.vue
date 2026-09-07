@@ -1,75 +1,46 @@
 <template>
   <div class="packaging-queue-container">
     <div class="header">
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <el-button type="primary" @click="handleRefresh" :loading="loading || lockedLoading">
-          刷新
-        </el-button>
-        <el-popconfirm
-          title="确定要手动清理当前队列锁吗？如果仍有任务在执行，可能导致状态不一致。"
-          confirm-button-text="确定"
-          cancel-button-text="取消"
-          @confirm="handleClearQueueLock"
-        >
-          <template #reference>
-            <el-button type="danger" :loading="clearingLock">清理队列锁</el-button>
-          </template>
-        </el-popconfirm>
-        <el-switch
-          v-model="queuePaused"
-          :loading="pausingQueue"
-          active-text="已暂停"
-          inactive-text="运行中"
-          @change="handleToggleQueuePause"
-        />
+      <h2>打包任务队列</h2>
+      <div class="queue-controls">
+        <span class="refresh-time">最后更新：{{ lastUpdated ? formatDateTime(lastUpdated) : '尚未加载' }}</span>
+        <el-switch v-model="autoRefresh" active-text="每 10 秒刷新" />
+        <el-button type="primary" @click="handleRefresh" :loading="loading"
+          :disabled="updatingPriority || pausingQueue || priorityDialogVisible">刷新</el-button>
       </div>
     </div>
-    <div class="locked-task-card">
-      <h3>当前正在打包的任务</h3>
-      <div v-if="lockedLoading" class="locked-task-empty">加载中...</div>
-      <div v-else-if="!lockedTask" class="locked-task-empty">当前没有正在打包中的任务</div>
-      <div v-else class="locked-task-content">
-        <div class="locked-task-main">
-          <div class="locked-task-info">
-            <div class="locked-task-row">
-              <span class="label">记录 ID：</span>
-              <span>{{ lockedTask.id }}</span>
-            </div>
-            <div class="locked-task-row">
-              <span class="label">打包类型：</span>
-              <span>{{ lockedTask.type || '-' }}</span>
-            </div>
-            <div class="locked-task-row">
-              <span class="label">设备 ID：</span>
-              <span>{{ lockedTask.deviceId || '-' }}</span>
-            </div>
-            <div class="locked-task-row">
-              <span class="label">打包状态：</span>
-              <StatusTag :status="lockedTask.packagingStatus" />
-            </div>
-            <div class="locked-task-row">
-              <span class="label">错误信息：</span>
-              <el-tooltip v-if="lockedTask.errorMessage" :content="lockedTask.errorMessage" placement="top">
-                <span class="error-message">{{ lockedTask.errorMessage }}</span>
-              </el-tooltip>
-              <span v-else class="no-error">-</span>
-            </div>
-            <div class="locked-task-row">
-              <span class="label">创建时间：</span>
-              <span>{{ formatDateTime(lockedTask.createdAt) }}</span>
-            </div>
-            <div class="locked-task-row">
-              <span class="label">更新时间：</span>
-              <span>{{ formatDateTime(lockedTask.updatedAt) }}</span>
-            </div>
-          </div>
-          <div class="locked-task-product">
-            <AppProductInfo :product="lockedTask.product" :thumb-size="72" />
-          </div>
-        </div>
-      </div>
+    <el-alert v-if="refreshError" :title="refreshError" type="warning" :closable="false" show-icon />
+    <div class="queue-summary">
+      <div><span>等待领取</span><strong>{{ loaded ? queue.length : '—' }}</strong></div>
+      <div><span>执行中</span><strong>{{ loaded ? runningTasks.length : '—' }}</strong></div>
+      <router-link to="/packaging/packaging-dead-queue"><span>死信任务</span><strong>{{ loaded ? deadCount : '—' }}</strong></router-link>
     </div>
-
+    <div class="queue-toolbar">
+      <el-switch :model-value="queuePaused" :loading="pausingQueue"
+        :disabled="!loaded || loading" aria-label="暂停领取新任务"
+        :active-text="!loaded ? '状态待确认' : queuePaused ? '已暂停领取' : '允许领取新任务'"
+        @change="handleToggleQueuePause" />
+      <span>暂停仅停止领取新任务，已领取任务继续执行。</span>
+    </div>
+    <details v-if="legacyWorkerActive" class="legacy-maintenance">
+      <summary>旧版消费者维护：检测到全局队列锁</summary>
+      <p>旧版锁会阻止分布式消费者领取任务。仅在确认旧版消费者已停止后清理；此操作不会释放分布式任务租约。</p>
+      <el-popconfirm title="确认旧版消费者已停止并清理旧版全局锁？" @confirm="handleClearQueueLock">
+        <template #reference><el-button type="danger" :loading="clearingLock">清理旧版全局锁</el-button></template>
+      </el-popconfirm>
+    </details>
+    <h3>执行中（{{ loaded ? runningTasks.length : '—' }}）</h3>
+    <el-table :data="runningTasks" row-key="id" v-loading="loading" :empty-text="loaded ? '当前没有执行中的任务' : '尚未获取执行中任务'">
+      <el-table-column prop="id" label="任务 ID" width="95" />
+      <el-table-column label="产品信息" min-width="280"><template #default="{ row }"><AppProductInfo :product="row.product" :thumb-size="56" /></template></el-table-column>
+      <el-table-column prop="type" label="类型" width="80" />
+      <el-table-column label="设备" min-width="160"><template #default="{ row }">{{ row.deviceId || '全部适用设备' }}</template></el-table-column>
+      <el-table-column label="构建状态" width="120"><template #default="{ row }"><StatusTag :status="row.packagingStatus" /></template></el-table-column>
+      <el-table-column label="开始时间" width="180"><template #default="{ row }">{{ row.processingStartedAt ? formatDateTime(row.processingStartedAt) : '待上报' }}</template></el-table-column>
+      <el-table-column label="执行耗时" width="120"><template #default="{ row }">{{ runningDuration(row) }}</template></el-table-column>
+      <el-table-column label="日志" width="100"><template #default="{ row }"><el-link v-if="row.lastBuildLogPath" :href="row.lastBuildLogPath" target="_blank" rel="noopener noreferrer" type="primary">最近日志</el-link><span v-else class="no-error">待上传</span></template></el-table-column>
+    </el-table>
+    <h3>等待队列</h3>
     <div class="queue-toolbar">
       <el-select
         v-model="designerId"
@@ -84,6 +55,7 @@
           :label="designer.username" :value="designer.id" />
       </el-select>
       <span>共 {{ filteredQueue.length }} 条，已选 {{ selectedRows.length }} 条</span>
+      <span v-if="selectedRows.length" class="refresh-time">选择任务期间暂停自动刷新</span>
       <el-button type="primary" :disabled="!selectedRows.length || loading || updatingPriority"
         @click="openBatchPriorityDialog">批量调整优先级</el-button>
       <el-button :disabled="!selectedRows.length || updatingPriority" @click="clearSelection">清空选择</el-button>
@@ -112,12 +84,12 @@
           {{ row.product?.user?.username || '-' }}
         </template>
       </el-table-column>
-      <el-table-column label="打包状态" width="120">
-        <template #default="{ row }">
-          <StatusTag :status="row.packagingStatus" />
+      <el-table-column label="调度状态" width="120">
+        <template #default>
+          <el-tag>等待领取</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="错误信息" min-width="200">
+      <el-table-column label="上次错误" min-width="200">
         <template #default="{ row }">
           <el-tooltip v-if="row.errorMessage" :content="row.errorMessage" placement="top">
             <span class="error-message">{{ row.errorMessage }}</span>
@@ -204,14 +176,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage, type TableInstance } from 'element-plus'
 import type { ProductPackagingLogVO } from '@/types/product'
 import {
   getProductPackagingQueue,
   removeProductPackagingQueueItem,
   updateProductPackagingQueuePriority,
-  getLockedProductPackagingTask,
+  getRunningProductPackagingTasks,
+  getProductPackagingQueuePause,
+  getProductPackagingQueueProtocol,
+  getProductPackagingDeadQueue,
   clearProductPackagingQueueLock,
   setProductPackagingQueuePause
 } from '@/api/products'
@@ -240,17 +215,28 @@ const clearSelection = () => {
   selectedRows.value = []
 }
 const handleSelectionChange = (rows: ProductPackagingLogVO[]) => { selectedRows.value = rows }
-const isSelectable = (row: ProductPackagingLogVO) => row.id !== lockedTask.value?.id
+const isSelectable = (row: ProductPackagingLogVO) => !runningTasks.value.some(task => task.id === row.id)
 
 
-// 当前锁定的正在打包任务
-const lockedTask = ref<ProductPackagingLogVO | null>(null)
-const lockedLoading = ref(false)
+const runningTasks = ref<ProductPackagingLogVO[]>([])
+const deadCount = ref(0)
+const loaded = ref(false)
+const lastUpdated = ref<number | null>(null)
+const refreshError = ref('')
+const autoRefresh = ref(true)
+const legacyWorkerActive = ref(false)
 const clearingLock = ref(false)
-
-// 队列暂停状态（前端本地状态）
 const queuePaused = ref(false)
 const pausingQueue = ref(false)
+let refreshTimer: ReturnType<typeof setInterval> | undefined
+
+const runningDuration = (row: ProductPackagingLogVO) => {
+  if (!row.processingStartedAt || !lastUpdated.value) return '待上报'
+  const started = new Date(row.processingStartedAt).getTime()
+  if (!Number.isFinite(started)) return '待上报'
+  const seconds = Math.max(0, Math.floor((lastUpdated.value - started) / 1000))
+  return `${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒`
+}
 
 const priorityDialogVisible = ref(false)
 const priorityTargetRow = ref<ProductPackagingLogVO | null>(null)
@@ -287,24 +273,6 @@ const fetchQueue = async () => {
     ElMessage.error('获取打包队列失败')
   } finally {
     loading.value = false
-  }
-}
-
-const fetchLockedTask = async () => {
-  lockedLoading.value = true
-  try {
-    const res = await getLockedProductPackagingTask('*')
-    if (res.code === 0) {
-      // 明确处理 undefined，避免类型 "ProductPackagingLogVO | null | undefined" 报错
-      lockedTask.value = res.data ?? null
-    } else {
-      ElMessage.error(res.msg || '获取正在打包任务失败')
-    }
-  } catch (error) {
-    console.error('获取正在打包任务失败:', error)
-    ElMessage.error('获取正在打包任务失败')
-  } finally {
-    lockedLoading.value = false
   }
 }
 
@@ -379,9 +347,30 @@ const removeFromQueue = async (row: ProductPackagingLogVO) => {
   }
 }
 
-const handleRefresh = () => {
-  fetchQueue()
-  fetchLockedTask()
+const handleRefresh = async () => {
+  if (loading.value || updatingPriority.value || pausingQueue.value || priorityDialogVisible.value) return
+  loading.value = true
+  try {
+    const results = await Promise.all([
+      getProductPackagingQueue('*'), getRunningProductPackagingTasks('*'),
+      getProductPackagingQueuePause(), getProductPackagingDeadQueue(''), getProductPackagingQueueProtocol()
+    ])
+    if (results.some(result => result.code !== 0)) throw new Error('refresh failed')
+    const [waiting, running, paused, dead, protocol] = results
+    queue.value = waiting.data || []
+    runningTasks.value = running.data || []
+    queuePaused.value = paused.data === true
+    deadCount.value = dead.data?.length || 0
+    legacyWorkerActive.value = protocol.data?.legacyWorkerActive === true
+    selectedRows.value = selectedRows.value.filter(row => queue.value.some(task => task.id === row.id) && isSelectable(row))
+    lastUpdated.value = Date.now()
+    loaded.value = true
+    refreshError.value = ''
+  } catch {
+    refreshError.value = '刷新失败，当前数据可能已过期，请重试。'
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleClearQueueLock = async () => {
@@ -389,38 +378,41 @@ const handleClearQueueLock = async () => {
     clearingLock.value = true
     const res = await clearProductPackagingQueueLock()
     if (res.code === 0) {
-      ElMessage.success('已清理队列锁')
-      lockedTask.value = null
-      fetchQueue()
+      ElMessage.success('已清理旧版全局锁')
+      await handleRefresh()
+    } else {
+      ElMessage.error(res.msg || '清理旧版全局锁失败')
     }
-  } catch (error) {
-    // 错误由 axios 拦截器处理
+  } catch {
+    ElMessage.error('清理旧版全局锁失败，请刷新确认实际状态')
   } finally {
     clearingLock.value = false
   }
 }
 
-const handleToggleQueuePause = async (value: boolean) => {
+const handleToggleQueuePause = async (value: boolean | string | number) => {
+  if (typeof value !== 'boolean') return
+  pausingQueue.value = true
   try {
-    pausingQueue.value = true
     const res = await setProductPackagingQueuePause(value)
-    if (res.code === 0) {
-      queuePaused.value = value
-      ElMessage.success(value ? '已暂停打包队列' : '已恢复打包队列')
-    }
-  } catch (error) {
-    // 错误由 axios 拦截器处理
-    // 失败时回滚开关状态
-    queuePaused.value = !value
+    if (res.code !== 0) throw new Error('pause failed')
+    queuePaused.value = value
+    ElMessage.success(value ? '已暂停领取新任务，执行中任务继续运行' : '已恢复领取新任务')
+  } catch {
+    ElMessage.error('更新暂停状态失败，请刷新确认实际状态')
   } finally {
     pausingQueue.value = false
+    await handleRefresh()
   }
 }
 
 onMounted(() => {
-  fetchQueue()
-  fetchLockedTask()
+  handleRefresh()
+  refreshTimer = setInterval(() => {
+    if (autoRefresh.value && !document.hidden && !selectedRows.value.length) handleRefresh()
+  }, 10000)
 })
+onUnmounted(() => { if (refreshTimer) clearInterval(refreshTimer) })
 </script>
 
 <style lang="scss" scoped>
@@ -466,60 +458,11 @@ onMounted(() => {
   font-style: italic;
 }
 
-.locked-task-card {
-  margin-bottom: 24px;
-  padding: 16px 20px;
-  border-radius: 6px;
-  background-color: #f5f7fa;
-  border: 1px solid #e4e7ed;
-
-  h3 {
-    margin: 0 0 12px;
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-  }
-}
-
-.locked-task-empty {
-  color: #909399;
-  font-size: 13px;
-}
-
-.locked-task-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.locked-task-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 24px;
-}
-
-.locked-task-info {
-  flex: 1;
-}
-
-.locked-task-product {
-  flex-shrink: 0;
-}
-
-.locked-task-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 6px;
-
-  .label {
-    width: 88px;
-    color: #909399;
-    font-size: 13px;
-  }
-
-  span {
-    font-size: 13px;
-  }
-}
+.queue-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.refresh-time { color: #909399; font-size: 13px; }
+.queue-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 20px 0; }
+.queue-summary > div, .queue-summary > a { display: flex; flex-direction: column; gap: 8px; padding: 20px; border: 1px solid #e4e7ed; border-radius: 8px; color: #606266; text-decoration: none; }
+.queue-summary strong { font-size: 28px; color: #303133; }
+.legacy-maintenance { padding: 16px; background: #fdf6ec; margin-bottom: 20px; color: #8a601b; }
+@media (max-width: 768px) { .header { align-items: flex-start; flex-direction: column; gap: 16px; } .queue-summary { gap: 8px; } .queue-summary > div, .queue-summary > a { padding: 12px; } }
 </style>
