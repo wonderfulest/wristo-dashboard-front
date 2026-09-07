@@ -30,7 +30,7 @@
       </el-popconfirm>
     </details>
     <h3>执行中（{{ loaded ? runningTasks.length : '—' }}）</h3>
-    <el-table :data="runningTasks" row-key="id" v-loading="loading" :empty-text="loaded ? '当前没有执行中的任务' : '尚未获取执行中任务'">
+    <el-table :data="sortedRunningTasks" row-key="id" v-loading="loading" :empty-text="loaded ? '当前没有执行中的任务' : '尚未获取执行中任务'">
       <el-table-column prop="id" label="任务 ID" width="95" />
       <el-table-column label="产品信息" min-width="280"><template #default="{ row }"><AppProductInfo :product="row.product" :thumb-size="56" /></template></el-table-column>
       <el-table-column prop="type" label="类型" width="80" />
@@ -219,6 +219,14 @@ const isSelectable = (row: ProductPackagingLogVO) => !runningTasks.value.some(ta
 
 
 const runningTasks = ref<ProductPackagingLogVO[]>([])
+// 开始越早，执行耗时越长；未上报或无效的开始时间排在末尾。
+const sortedRunningTasks = computed(() => {
+  const startTime = (row: ProductPackagingLogVO) => {
+    const value = row.processingStartedAt ? new Date(row.processingStartedAt).getTime() : NaN
+    return Number.isFinite(value) ? value : Infinity
+  }
+  return [...runningTasks.value].sort((a, b) => startTime(a) - startTime(b))
+})
 const deadCount = ref(0)
 const loaded = ref(false)
 const lastUpdated = ref<number | null>(null)
