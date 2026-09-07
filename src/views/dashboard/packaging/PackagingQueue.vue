@@ -70,7 +70,27 @@
       </div>
     </div>
 
-    <el-table :data="queue" style="width: 100%" v-loading="loading">
+    <div class="queue-toolbar">
+      <el-select
+        v-model="designerId"
+        placeholder="全部设计师"
+        clearable
+        filterable
+        :disabled="updatingPriority"
+        style="width: 220px"
+        @change="clearSelection"
+      >
+        <el-option v-for="designer in designers" :key="designer.id"
+          :label="designer.username" :value="designer.id" />
+      </el-select>
+      <span>共 {{ filteredQueue.length }} 条，已选 {{ selectedRows.length }} 条</span>
+      <el-button type="primary" :disabled="!selectedRows.length || loading || updatingPriority"
+        @click="openBatchPriorityDialog">批量调整优先级</el-button>
+      <el-button :disabled="!selectedRows.length || updatingPriority" @click="clearSelection">清空选择</el-button>
+    </div>
+    <el-table ref="queueTable" :data="filteredQueue" row-key="id" style="width: 100%"
+      v-loading="loading || updatingPriority" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="48" :selectable="isSelectable" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="打包类型" width="100">
         <template #default="{ row }">
@@ -143,11 +163,19 @@
     <!-- 调整优先级对话框 -->
     <el-dialog
       v-model="priorityDialogVisible"
-      title="调整队列优先级"
+      :title="batchPriorityMode ? '批量调整队列优先级' : '调整队列优先级'"
+      :close-on-click-modal="!updatingPriority"
+      :close-on-press-escape="!updatingPriority"
+      :show-close="!updatingPriority"
       width="420px"
     >
-      <div v-if="priorityTargetRow">
-        <div style="margin-bottom: 12px; color: #606266;">
+      <div v-if="priorityTargetRow || batchPriorityMode">
+        <div v-if="batchPriorityMode" style="margin-bottom: 12px;">
+          将为选中的 <b>{{ priorityTargetRows.length }}</b> 条任务设置统一优先级。
+          <div v-if="updatingPriority">已处理 {{ processedCount }} / {{ priorityTargetRows.length }} 条</div>
+          <el-alert v-if="batchFailureSummary" :title="batchFailureSummary" type="warning" :closable="false" />
+        </div>
+        <div v-if="priorityTargetRow" style="margin-bottom: 12px; color: #606266;">
           调整产品：<b>{{ priorityTargetRow.product?.name || '-' }}</b>
           （设计ID：{{ priorityTargetRow.product?.designId || '-' }}，打包记录ID：{{ priorityTargetRow.id }}）
         </div>
@@ -155,6 +183,7 @@
           <el-form-item label="优先级（0-9，0 为手动插队）" required>
             <el-input
               v-model.number="priorityValue"
+              :disabled="updatingPriority"
               type="number"
               min="0"
               max="9"
@@ -175,8 +204,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { computed, ref, onMounted } from 'vue'
+import { ElMessage, type TableInstance } from 'element-plus'
 import type { ProductPackagingLogVO } from '@/types/product'
 import {
   getProductPackagingQueue,
@@ -192,6 +221,27 @@ import AppProductInfo from '@/components/common/AppProductInfo.vue'
 
 const loading = ref(false)
 const queue = ref<ProductPackagingLogVO[]>([])
+const queueTable = ref<TableInstance>()
+const designerId = ref<number | ''>('')
+const selectedRows = ref<ProductPackagingLogVO[]>([])
+const designers = computed(() => {
+  const users = new Map<number, { id: number; username: string }>()
+  for (const row of queue.value) {
+    const user = row.product?.user
+    if (user) users.set(user.id, user)
+  }
+  return [...users.values()].sort((a, b) => a.username.localeCompare(b.username))
+})
+const filteredQueue = computed(() => queue.value.filter(row =>
+  !designerId.value || row.product?.user?.id === designerId.value
+))
+const clearSelection = () => {
+  queueTable.value?.clearSelection()
+  selectedRows.value = []
+}
+const handleSelectionChange = (rows: ProductPackagingLogVO[]) => { selectedRows.value = rows }
+const isSelectable = (row: ProductPackagingLogVO) => row.id !== lockedTask.value?.id
+
 
 // 当前锁定的正在打包任务
 const lockedTask = ref<ProductPackagingLogVO | null>(null)
@@ -206,12 +256,28 @@ const priorityDialogVisible = ref(false)
 const priorityTargetRow = ref<ProductPackagingLogVO | null>(null)
 const priorityValue = ref<number | null>(5)
 const updatingPriority = ref(false)
+const batchPriorityMode = ref(false)
+const priorityTargetRows = ref<ProductPackagingLogVO[]>([])
+const processedCount = ref(0)
+const batchFailureSummary = ref('')
+
+const openBatchPriorityDialog = () => {
+  priorityTargetRows.value = selectedRows.value.filter(isSelectable)
+  if (!priorityTargetRows.value.length) return
+  batchPriorityMode.value = true
+  priorityTargetRow.value = null
+  priorityValue.value = 5
+  processedCount.value = 0
+  batchFailureSummary.value = ''
+  priorityDialogVisible.value = true
+}
 
 const fetchQueue = async () => {
   loading.value = true
   try {
     const res = await getProductPackagingQueue('*')
     if (res.code === 0) {
+      clearSelection()
       queue.value = res.data || []
     } else {
       ElMessage.error(res.msg || '获取打包队列失败')
@@ -243,23 +309,52 @@ const fetchLockedTask = async () => {
 }
 
 const openPriorityDialog = (row: ProductPackagingLogVO) => {
+  batchPriorityMode.value = false
   priorityTargetRow.value = row
   priorityValue.value = (row.priority ?? 5) as number
   priorityDialogVisible.value = true
 }
 
 const submitPriority = async () => {
-  if (!priorityTargetRow.value) return
+  if (updatingPriority.value) return
+  if (!batchPriorityMode.value && !priorityTargetRow.value) return
 
-  let value = typeof priorityValue.value === 'number' ? priorityValue.value : 5
-  if (!Number.isInteger(value) || value < 0 || value > 9) {
+  const value = priorityValue.value
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 9) {
     ElMessage.error('优先级必须是 0-9 的整数，0 为手动插队')
     return
   }
 
   try {
     updatingPriority.value = true
-    const res = await updateProductPackagingQueuePriority(priorityTargetRow.value.id, value)
+    if (batchPriorityMode.value) {
+      const targets = [...priorityTargetRows.value]
+      const failed: ProductPackagingLogVO[] = []
+      processedCount.value = 0
+      batchFailureSummary.value = ''
+      for (const row of targets) {
+        try {
+          const result = await updateProductPackagingQueuePriority(row.id, value)
+          if (result.code !== 0) failed.push(row)
+        } catch {
+          failed.push(row)
+        }
+        processedCount.value++
+      }
+      const summary = `成功 ${targets.length - failed.length} 条，失败 ${failed.length} 条`
+      if (failed.length) {
+        batchFailureSummary.value = `${summary}。可再次确认，仅重试失败任务。`
+        priorityTargetRows.value = failed
+        processedCount.value = 0
+        ElMessage.warning(summary)
+      } else {
+        ElMessage.success(summary)
+        priorityDialogVisible.value = false
+      }
+      await fetchQueue()
+      return
+    }
+    const res = await updateProductPackagingQueuePriority(priorityTargetRow.value!.id, value)
     if (res.code === 0) {
       ElMessage.success('已更新队列优先级')
       priorityDialogVisible.value = false
@@ -348,6 +443,16 @@ onMounted(() => {
     font-size: 24px;
     font-weight: 600;
   }
+}
+
+.queue-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: #606266;
+  font-size: 14px;
 }
 
 .error-message {
