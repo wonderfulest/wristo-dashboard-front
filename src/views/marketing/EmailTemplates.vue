@@ -6,6 +6,7 @@
         <el-input v-model="searchFile" placeholder="按文件名搜索" clearable style="width: 220px" @keyup.enter.native="handleSearch" />
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
+        <el-button type="primary" @click="scenarioTestVisible = true">按业务场景测试</el-button>
         <el-button type="success" @click="openCreate">新建模板</el-button>
       </div>
     </div>
@@ -49,6 +50,8 @@
         @current-change="handleCurrentChange"
       />
     </div>
+
+    <EmailScenarioTest v-model="scenarioTestVisible" />
 
     <el-dialog v-model="testSendVisible" title="测试发送" width="800">
       <el-form label-width="80px">
@@ -107,6 +110,9 @@ import {
 import type { EmailTemplate } from '@/types/email-template'
 import { generateVariablesJsonFromHtml } from '@/utils/mock-data'
 
+import EmailScenarioTest from './components/EmailScenarioTest.vue'
+
+const scenarioTestVisible = ref(false)
 const router = useRouter()
 
 const loading = ref(false)
@@ -244,11 +250,18 @@ const doTestSend = async () => {
     ElMessage.error('请输入目标邮箱')
     return
   }
+  try {
+    const variables = JSON.parse(testVariables.value || '{}')
+    if (!variables || Array.isArray(variables) || typeof variables !== 'object') throw new Error()
+  } catch {
+    ElMessage.error('变量必须是有效的 JSON 对象')
+    return
+  }
   testSending.value = true
   try {
-    const res = await testSendEmailTemplate(currentRow.id, testToEmail.value, testVariables.value || '{}')
+    const res = await testSendEmailTemplate(currentRow.id, testToEmail.value.trim(), testVariables.value || '{}')
     if (res.code === 0) {
-      ElMessage.success('测试邮件已发送')
+      res.data?.includes('未发送') ? ElMessage.warning(res.data) : ElMessage.success(res.data || '已提交邮件服务，请检查收件箱')
       testSendVisible.value = false
     }
   } finally {
