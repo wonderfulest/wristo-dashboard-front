@@ -220,6 +220,7 @@ export const topMenus: TopMenuGroup[] = [
     children: [
       { key: 'platform-versions', title: '平台版本', icon: 'Connection', path: '/ops/platform-versions' },
       { key: 'system-config', title: '系统配置', icon: 'Setting', path: '/ops/system-config' },
+      { key: 'feature-switches', title: '功能开关', icon: 'Setting', path: '/ops/feature-switches' },
       { key: 'db-backups', title: '数据库备份', icon: 'Files', path: '/ops/db-backups' },
       { key: 's3-ops', title: 'S3 运维', icon: 'Cpu', path: '/ops/s3-ops' },
     ],

@@ -64,6 +64,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/ops/feature-switches',
+      name: 'FeatureSwitches',
+      component: () => import('@/views/ops/FeatureSwitches.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/ops/platform-versions',
       name: 'PlatformVersions',
       component: () => import('@/views/ops/PlatformVersions.vue'),
