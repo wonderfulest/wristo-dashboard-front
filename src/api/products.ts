@@ -219,3 +219,18 @@ export const getProductPackagingQueuePause = (): Promise<ApiResponse<boolean>> =
 
 export const getProductPackagingQueueProtocol = (): Promise<ApiResponse<{ legacyWorkerActive: boolean }>> =>
   instance.get('/admin/product-packaging-logs/queue/protocol')
+
+
+export interface PackagingChannel {
+  queueId: string
+  paused: boolean
+  online: boolean
+  lastSeenAt: number
+  taskId: string | null
+}
+
+export const getPackagingChannels = (): Promise<ApiResponse<PackagingChannel[]>> =>
+  instance.get('/admin/product-packaging-logs/queue/channels')
+
+export const setPackagingChannelPause = (queueId: string, paused: boolean): Promise<ApiResponse<void>> =>
+  instance.post(`/admin/product-packaging-logs/queue/channels/${encodeURIComponent(queueId)}/pause`, null, { params: { paused } })

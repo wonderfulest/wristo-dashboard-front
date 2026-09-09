@@ -16,9 +16,9 @@
       <router-link to="/packaging/packaging-dead-queue"><span>死信任务</span><strong>{{ loaded ? deadCount : '—' }}</strong></router-link>
     </div>
     <div class="queue-toolbar">
-      <el-switch :model-value="queuePaused" :loading="pausingQueue"
-        :disabled="!loaded || loading" aria-label="暂停领取新任务"
-        :active-text="!loaded ? '状态待确认' : queuePaused ? '已暂停领取' : '允许领取新任务'"
+      <el-switch :model-value="!queuePaused" :loading="pausingQueue"
+        :disabled="!loaded || loading || !!pausingChannel" aria-label="全局允许领取新任务"
+        :active-text="!loaded ? '状态待确认' : queuePaused ? '全局已暂停领取' : '全局允许领取新任务'"
         @change="handleToggleQueuePause" />
       <span>暂停仅停止领取新任务，已领取任务继续执行。</span>
     </div>
@@ -29,9 +29,28 @@
         <template #reference><el-button type="danger" :loading="clearingLock">清理旧版全局锁</el-button></template>
       </el-popconfirm>
     </details>
+    <h3>执行队列（{{ channels.length }}）</h3>
+    <p class="refresh-time">编号格式：环境-pack-节点-通道，例如 prod-pack-n01-01。全局与队列开关均允许时，才会领取新任务。</p>
+    <el-table :data="channels" row-key="queueId" :empty-text="loaded ? '尚无已登记队列，请为 worker 配置编号并启动' : '尚未获取队列状态'">
+      <el-table-column prop="queueId" label="队列编号" min-width="220" />
+      <el-table-column label="在线状态" width="110"><template #default="{ row }">
+        <el-tag :type="row.online ? 'success' : 'info'">{{ row.online ? '在线' : '离线' }}</el-tag>
+      </template></el-table-column>
+      <el-table-column label="允许领取" width="130"><template #default="{ row }">
+        <el-switch :model-value="!row.paused" :aria-label="`${row.queueId} 允许领取`"
+          :loading="pausingChannel === row.queueId" :disabled="!loaded || loading || pausingQueue || !!pausingChannel"
+          @change="(value: boolean | string | number) => handleToggleChannel(row, value)" />
+      </template></el-table-column>
+      <el-table-column label="领取状态" min-width="160"><template #default="{ row }">
+        {{ queuePaused ? '全局暂停' : row.paused ? '队列暂停' : !row.online ? '离线' : row.taskId ? '执行中' : '等待任务' }}
+      </template></el-table-column>
+      <el-table-column label="当前任务" width="120"><template #default="{ row }">{{ row.taskId || '—' }}</template></el-table-column>
+      <el-table-column label="最近心跳" min-width="180"><template #default="{ row }">{{ formatDateTime(row.lastSeenAt) }}</template></el-table-column>
+    </el-table>
     <h3>执行中（{{ loaded ? runningTasks.length : '—' }}）</h3>
     <el-table :data="sortedRunningTasks" row-key="id" v-loading="loading" :empty-text="loaded ? '当前没有执行中的任务' : '尚未获取执行中任务'">
       <el-table-column prop="id" label="任务 ID" width="95" />
+      <el-table-column label="队列编号" min-width="190"><template #default="{ row }">{{ row.queueId || '未编号（旧 worker）' }}</template></el-table-column>
       <el-table-column label="产品信息" min-width="280"><template #default="{ row }"><AppProductInfo :product="row.product" :thumb-size="56" /></template></el-table-column>
       <el-table-column prop="type" label="类型" width="80" />
       <el-table-column label="设备" min-width="160"><template #default="{ row }">{{ row.deviceId || '全部适用设备' }}</template></el-table-column>
@@ -181,6 +200,9 @@ import { ElMessage, type TableInstance } from 'element-plus'
 import type { ProductPackagingLogVO } from '@/types/product'
 import {
   getProductPackagingQueue,
+  getPackagingChannels,
+  setPackagingChannelPause,
+  type PackagingChannel,
   removeProductPackagingQueueItem,
   updateProductPackagingQueuePriority,
   getRunningProductPackagingTasks,
@@ -234,6 +256,8 @@ const refreshError = ref('')
 const autoRefresh = ref(true)
 const legacyWorkerActive = ref(false)
 const clearingLock = ref(false)
+const channels = ref<PackagingChannel[]>([])
+const pausingChannel = ref('')
 const queuePaused = ref(false)
 const pausingQueue = ref(false)
 let refreshTimer: ReturnType<typeof setInterval> | undefined
@@ -356,15 +380,16 @@ const removeFromQueue = async (row: ProductPackagingLogVO) => {
 }
 
 const handleRefresh = async () => {
-  if (loading.value || updatingPriority.value || pausingQueue.value || priorityDialogVisible.value) return
+  if (loading.value || updatingPriority.value || pausingQueue.value || pausingChannel.value || priorityDialogVisible.value) return
   loading.value = true
   try {
     const results = await Promise.all([
       getProductPackagingQueue('*'), getRunningProductPackagingTasks('*'),
-      getProductPackagingQueuePause(), getProductPackagingDeadQueue(''), getProductPackagingQueueProtocol()
+      getProductPackagingQueuePause(), getProductPackagingDeadQueue(''), getProductPackagingQueueProtocol(), getPackagingChannels()
     ])
     if (results.some(result => result.code !== 0)) throw new Error('refresh failed')
-    const [waiting, running, paused, dead, protocol] = results
+    const [waiting, running, paused, dead, protocol, channelResult] = results
+    channels.value = channelResult.data || []
     queue.value = waiting.data || []
     runningTasks.value = running.data || []
     queuePaused.value = paused.data === true
@@ -402,14 +427,30 @@ const handleToggleQueuePause = async (value: boolean | string | number) => {
   if (typeof value !== 'boolean') return
   pausingQueue.value = true
   try {
-    const res = await setProductPackagingQueuePause(value)
+    const res = await setProductPackagingQueuePause(!value)
     if (res.code !== 0) throw new Error('pause failed')
-    queuePaused.value = value
-    ElMessage.success(value ? '已暂停领取新任务，执行中任务继续运行' : '已恢复领取新任务')
+    queuePaused.value = !value
+    ElMessage.success(value ? '已恢复领取新任务' : '已暂停领取新任务，执行中任务继续运行')
   } catch {
     ElMessage.error('更新暂停状态失败，请刷新确认实际状态')
   } finally {
     pausingQueue.value = false
+    await handleRefresh()
+  }
+}
+
+const handleToggleChannel = async (row: PackagingChannel, allowed: boolean | string | number) => {
+  if (typeof allowed !== 'boolean' || loading.value || pausingChannel.value) return
+  pausingChannel.value = row.queueId
+  try {
+    const res = await setPackagingChannelPause(row.queueId, !allowed)
+    if (res.code !== 0) throw new Error('channel pause failed')
+    row.paused = !allowed
+    ElMessage.success(allowed ? `${row.queueId} 已允许领取` : `${row.queueId} 已暂停领取，当前任务继续执行`)
+  } catch {
+    ElMessage.error('更新队列状态失败，请刷新确认实际状态')
+  } finally {
+    pausingChannel.value = ''
     await handleRefresh()
   }
 }

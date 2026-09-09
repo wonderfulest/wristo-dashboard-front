@@ -11,6 +11,8 @@ function setup(update = async () => ({ code: 0 }), overrides = {}) {
     ref: value => ({ value }), computed: getter => ({ get value() { return getter() } }), onMounted: () => {}, onUnmounted: () => {},
     ElMessage: { error() {}, success() {}, warning() {} },
     updateProductPackagingQueuePriority: async (id, value) => { calls.push([id, value]); return update(id) },
+    getPackagingChannels: async () => ({ code: 0, data: [] }),
+    setPackagingChannelPause: async () => ({ code: 0 }),
     getProductPackagingQueue: async () => ({ code: 0, data: [] }),
     getRunningProductPackagingTasks: async () => ({ code: 0, data: [] }),
     getProductPackagingQueuePause: async () => ({ code: 0, data: false }),
@@ -19,7 +21,7 @@ function setup(update = async () => ({ code: 0 }), overrides = {}) {
     setProductPackagingQueuePause: async () => ({ code: 0 }),
     ...overrides
   }
-  const state = new Function(...Object.keys(context), `${code}\nreturn { handleRefresh, handleToggleQueuePause, runningTasks, queuePaused, deadCount, loaded, lastUpdated, refreshError, updatingPriority, runningDuration, isSelectable, queue, designerId, designers, filteredQueue, selectedRows, clearSelection, openBatchPriorityDialog, priorityValue, submitPriority, priorityTargetRows, priorityDialogVisible, batchFailureSummary };`)(...Object.values(context))
+  const state = new Function(...Object.keys(context), `${code}\nreturn { channels, handleToggleChannel, handleRefresh, handleToggleQueuePause, runningTasks, queuePaused, deadCount, loaded, lastUpdated, refreshError, updatingPriority, runningDuration, isSelectable, queue, designerId, designers, filteredQueue, selectedRows, clearSelection, openBatchPriorityDialog, priorityValue, submitPriority, priorityTargetRows, priorityDialogVisible, batchFailureSummary };`)(...Object.values(context))
   return { ...state, calls }
 }
 const row = (id, designer) => ({ id, product: { user: { id: designer, username: 'Same name' } } })
@@ -110,4 +112,42 @@ test('duration uses reported start time and handles missing or invalid starts', 
   assert.equal(state.runningDuration({ processingStartedAt: 30000 }), '1 分 30 秒')
   assert.equal(state.runningDuration({}), '待上报')
   assert.equal(state.runningDuration({ processingStartedAt: 'bad' }), '待上报')
+})
+
+
+test('channel switches send inverse pause flag without changing other queues', async () => {
+  const channels = [{ queueId: 'prod-pack-n01-01', paused: false }, { queueId: 'prod-pack-n02-01', paused: false }]
+  const calls = []
+  const state = setup(undefined, {
+    getPackagingChannels: async () => ({ code: 0, data: channels }),
+    setPackagingChannelPause: async (id, paused) => { calls.push([id, paused]); return { code: 0 } }
+  })
+  await state.handleRefresh()
+  await state.handleToggleChannel(channels[0], false)
+  assert.deepEqual(calls, [['prod-pack-n01-01', true]])
+  assert.equal(channels[0].paused, true)
+  assert.equal(channels[1].paused, false)
+  await state.handleToggleChannel(channels[0], true)
+  assert.deepEqual(calls[1], ['prod-pack-n01-01', false])
+})
+
+test('failed channel toggle retains last confirmed state', async () => {
+  const channel = { queueId: 'prod-pack-n01-01', paused: true }
+  const state = setup(undefined, {
+    getPackagingChannels: async () => ({ code: 0, data: [channel] }),
+    setPackagingChannelPause: async () => { throw new Error('offline') }
+  })
+  await state.handleRefresh()
+  await state.handleToggleChannel(channel, true)
+  assert.equal(state.channels.value[0].paused, true)
+})
+
+test('global allow switch sends paused false', async () => {
+  const calls = []
+  const state = setup(undefined, {
+    setProductPackagingQueuePause: async paused => { calls.push(paused); return { code: 0 } }
+  })
+  await state.handleToggleQueuePause(true)
+  await state.handleToggleQueuePause(false)
+  assert.deepEqual(calls, [false, true])
 })

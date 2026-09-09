@@ -149,6 +149,7 @@ import type { Category } from '@/types/category'
 import type { UserBase } from '@/types/user'
 
 export interface ProductPackagingLogVO {
+  queueId?: string
   id: number
   packagingStatus: string
   errorMessage: string | null
