@@ -6,7 +6,7 @@
         <span class="refresh-time">最后更新：{{ lastUpdated ? formatDateTime(lastUpdated) : '尚未加载' }}</span>
         <el-switch v-model="autoRefresh" active-text="每 10 秒刷新" />
         <el-button type="primary" @click="handleRefresh" :loading="loading"
-          :disabled="updatingPriority || pausingQueue || !!deletingChannel || priorityDialogVisible">刷新</el-button>
+          :disabled="updatingPriority || pausingQueue || !!deletingChannel || clearingOfflineChannels || priorityDialogVisible">刷新</el-button>
       </div>
     </div>
     <el-alert v-if="refreshError" :title="refreshError" type="warning" :closable="false" show-icon />
@@ -17,7 +17,7 @@
     </div>
     <div class="queue-toolbar">
       <el-switch :model-value="!queuePaused" :loading="pausingQueue"
-        :disabled="!loaded || loading || !!pausingChannel || !!deletingChannel" aria-label="全局允许领取新任务"
+        :disabled="!loaded || loading || !!pausingChannel || !!deletingChannel || clearingOfflineChannels" aria-label="全局允许领取新任务"
         :active-text="!loaded ? '状态待确认' : queuePaused ? '全局已暂停领取' : '全局允许领取新任务'"
         @change="handleToggleQueuePause" />
       <span>暂停仅停止领取新任务，已领取任务继续执行。</span>
@@ -29,7 +29,12 @@
         <template #reference><el-button type="danger" :loading="clearingLock">清理旧版全局锁</el-button></template>
       </el-popconfirm>
     </details>
-    <h3>执行队列（{{ channels.length }}）</h3>
+    <div class="channel-header">
+      <h3>执行队列（{{ channels.length }}）</h3>
+      <el-button type="danger" plain :loading="clearingOfflineChannels"
+        :disabled="!loaded || !offlineIdleChannelCount || loading || pausingQueue || !!pausingChannel || !!deletingChannel || clearingOfflineChannels || updatingPriority || priorityDialogVisible"
+        @click="handleClearOfflineChannels">一键清理离线队列</el-button>
+    </div>
     <p class="refresh-time">编号格式：环境-pack-节点-通道，例如 prod-pack-n01-01。全局与队列开关均允许时，才会领取新任务。</p>
     <el-table :data="channels" row-key="queueId" :empty-text="loaded ? '尚无已登记队列，请为 worker 配置编号并启动' : '尚未获取队列状态'">
       <el-table-column prop="queueId" label="队列编号" min-width="220" />
@@ -38,7 +43,7 @@
       </template></el-table-column>
       <el-table-column label="允许领取" width="130"><template #default="{ row }">
         <el-switch :model-value="!row.paused" :aria-label="`${row.queueId} 允许领取`"
-          :loading="pausingChannel === row.queueId" :disabled="!loaded || loading || pausingQueue || !!pausingChannel || !!deletingChannel"
+          :loading="pausingChannel === row.queueId" :disabled="!loaded || loading || pausingQueue || !!pausingChannel || !!deletingChannel || clearingOfflineChannels"
           @change="(value: boolean | string | number) => handleToggleChannel(row, value)" />
       </template></el-table-column>
       <el-table-column label="领取状态" min-width="160"><template #default="{ row }">
@@ -50,7 +55,7 @@
         <el-button type="danger" link :aria-label="`删除队列 ${row.queueId}`"
           :title="row.online ? '仅离线队列可删除' : '删除队列'"
           :loading="deletingChannel === row.queueId"
-          :disabled="row.online || !loaded || loading || pausingQueue || !!pausingChannel || !!deletingChannel"
+          :disabled="row.online || !loaded || loading || pausingQueue || !!pausingChannel || !!deletingChannel || clearingOfflineChannels"
           @click="handleDeleteChannel(row)">删除</el-button>
       </template></el-table-column>
     </el-table>
@@ -210,6 +215,7 @@ import {
   getPackagingChannels,
   setPackagingChannelPause,
   deletePackagingChannel,
+  clearOfflinePackagingChannels,
   type PackagingChannel,
   removeProductPackagingQueueItem,
   updateProductPackagingQueuePriority,
@@ -267,6 +273,8 @@ const clearingLock = ref(false)
 const channels = ref<PackagingChannel[]>([])
 const pausingChannel = ref('')
 const deletingChannel = ref('')
+const clearingOfflineChannels = ref(false)
+const offlineIdleChannelCount = computed(() => channels.value.filter(row => !row.online && !row.taskId).length)
 const queuePaused = ref(false)
 const pausingQueue = ref(false)
 let refreshTimer: ReturnType<typeof setInterval> | undefined
@@ -389,7 +397,7 @@ const removeFromQueue = async (row: ProductPackagingLogVO) => {
 }
 
 const handleRefresh = async () => {
-  if (loading.value || updatingPriority.value || pausingQueue.value || pausingChannel.value || deletingChannel.value || priorityDialogVisible.value) return
+  if (loading.value || updatingPriority.value || pausingQueue.value || pausingChannel.value || deletingChannel.value || clearingOfflineChannels.value || priorityDialogVisible.value) return
   loading.value = true
   try {
     const results = await Promise.all([
@@ -449,7 +457,7 @@ const handleToggleQueuePause = async (value: boolean | string | number) => {
 }
 
 const handleToggleChannel = async (row: PackagingChannel, allowed: boolean | string | number) => {
-  if (typeof allowed !== 'boolean' || loading.value || pausingChannel.value || deletingChannel.value) return
+  if (typeof allowed !== 'boolean' || loading.value || pausingChannel.value || deletingChannel.value || clearingOfflineChannels.value) return
   pausingChannel.value = row.queueId
   try {
     const res = await setPackagingChannelPause(row.queueId, !allowed)
@@ -464,8 +472,31 @@ const handleToggleChannel = async (row: PackagingChannel, allowed: boolean | str
   }
 }
 
+const handleClearOfflineChannels = async () => {
+  if (!loaded.value || !offlineIdleChannelCount.value || loading.value || pausingQueue.value || pausingChannel.value || deletingChannel.value || clearingOfflineChannels.value || updatingPriority.value || priorityDialogVisible.value) return
+  clearingOfflineChannels.value = true
+  try {
+    await ElMessageBox.confirm(`确定清理离线且无执行任务的队列？当前可清理 ${offlineIdleChannelCount.value} 个，实际数量以清理时状态为准。打包任务和历史记录会保留。`, '清理离线队列', {
+      confirmButtonText: '清理', cancelButtonText: '取消', type: 'warning'
+    })
+    const res = await clearOfflinePackagingChannels()
+    if (res.code !== 0) {
+      ElMessage.error(res.msg || '清理离线队列失败')
+    } else {
+      ElMessage.success(`已清理 ${res.data} 个离线队列`)
+    }
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error('清理离线队列失败，请刷新确认实际状态')
+    }
+  } finally {
+    clearingOfflineChannels.value = false
+    await handleRefresh()
+  }
+}
+
 const handleDeleteChannel = async (row: PackagingChannel) => {
-  if (row.online || !loaded.value || loading.value || pausingQueue.value || pausingChannel.value || deletingChannel.value) return
+  if (row.online || !loaded.value || loading.value || pausingQueue.value || pausingChannel.value || deletingChannel.value || clearingOfflineChannels.value) return
   deletingChannel.value = row.queueId
   try {
     await ElMessageBox.confirm(`确定删除离线队列 ${row.queueId}？打包任务和历史记录会保留；该队列重新连接后会再次登记。`, '删除队列', {
@@ -539,6 +570,7 @@ onUnmounted(() => { if (refreshTimer) clearInterval(refreshTimer) })
   font-style: italic;
 }
 
+.channel-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .queue-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
 .refresh-time { color: #909399; font-size: 13px; }
 .queue-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 20px 0; }

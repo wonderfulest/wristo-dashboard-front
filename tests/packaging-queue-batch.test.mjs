@@ -21,7 +21,7 @@ function setup(update = async () => ({ code: 0 }), overrides = {}) {
     setProductPackagingQueuePause: async () => ({ code: 0 }),
     ...overrides
   }
-  const state = new Function(...Object.keys(context), `${code}\nreturn { handleDeleteChannel, deletingChannel, channels, handleToggleChannel, handleRefresh, handleToggleQueuePause, runningTasks, queuePaused, deadCount, loaded, lastUpdated, refreshError, updatingPriority, runningDuration, isSelectable, queue, designerId, designers, filteredQueue, selectedRows, clearSelection, openBatchPriorityDialog, priorityValue, submitPriority, priorityTargetRows, priorityDialogVisible, batchFailureSummary };`)(...Object.values(context))
+  const state = new Function(...Object.keys(context), `${code}\nreturn { handleClearOfflineChannels, clearingOfflineChannels, offlineIdleChannelCount, handleDeleteChannel, deletingChannel, channels, handleToggleChannel, handleRefresh, handleToggleQueuePause, runningTasks, queuePaused, deadCount, loaded, lastUpdated, refreshError, updatingPriority, runningDuration, isSelectable, queue, designerId, designers, filteredQueue, selectedRows, clearSelection, openBatchPriorityDialog, priorityValue, submitPriority, priorityTargetRows, priorityDialogVisible, batchFailureSummary };`)(...Object.values(context))
   return { ...state, calls }
 }
 const row = (id, designer) => ({ id, product: { user: { id: designer, username: 'Same name' } } })
@@ -209,4 +209,50 @@ test('server rejection refreshes channel status and never reports success', asyn
   assert.equal(errors.length, 1)
   assert.equal(state.channels.value[0].online, true)
   assert.equal(state.deletingChannel.value, '')
+})
+
+test('offline cleanup blocks duplicates during confirmation and uses server count', async () => {
+  let confirm
+  let requests = 0
+  let refreshes = 0
+  const messages = []
+  const state = setup(undefined, {
+    ElMessageBox: { confirm: () => new Promise(resolve => { confirm = resolve }) },
+    ElMessage: { success: msg => messages.push(msg), error: assert.fail },
+    clearOfflinePackagingChannels: async () => { requests++; return { code: 0, data: 0 } },
+    getPackagingChannels: async () => { refreshes++; return { code: 0, data: [] } }
+  })
+  state.loaded.value = true
+  state.channels.value = [{ online: false, taskId: null }, { online: false, taskId: '101' }, { online: true }]
+  assert.equal(state.offlineIdleChannelCount.value, 1)
+  const pending = state.handleClearOfflineChannels()
+  assert.equal(state.clearingOfflineChannels.value, true)
+  await state.handleClearOfflineChannels()
+  await state.handleRefresh()
+  assert.equal(requests, 0)
+  assert.equal(refreshes, 0)
+  confirm()
+  await pending
+  assert.equal(requests, 1)
+  assert.equal(refreshes, 1)
+  assert.deepEqual(messages, ['已清理 0 个离线队列'])
+  assert.equal(state.clearingOfflineChannels.value, false)
+})
+
+test('offline cleanup cancellation and failure release loading state', async () => {
+  for (const cancel of [true, false]) {
+    let requests = 0
+    const errors = []
+    const state = setup(undefined, {
+      ElMessageBox: { confirm: async () => { if (cancel) throw 'cancel' } },
+      ElMessage: { success: assert.fail, error: msg => errors.push(msg) },
+      clearOfflinePackagingChannels: async () => { requests++; throw new Error('network') }
+    })
+    state.loaded.value = true
+    state.channels.value = [{ online: false, taskId: null }]
+    await state.handleClearOfflineChannels()
+    assert.equal(requests, cancel ? 0 : 1)
+    assert.equal(errors.length, cancel ? 0 : 1)
+    assert.equal(state.clearingOfflineChannels.value, false)
+  }
 })

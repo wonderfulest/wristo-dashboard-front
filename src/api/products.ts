@@ -237,3 +237,6 @@ export const setPackagingChannelPause = (queueId: string, paused: boolean): Prom
 
 export const deletePackagingChannel = (queueId: string): Promise<ApiResponse<void>> =>
   instance.delete(`/admin/product-packaging-logs/queue/channels/${encodeURIComponent(queueId)}`)
+
+export const clearOfflinePackagingChannels = (): Promise<ApiResponse<number>> =>
+  instance.delete('/admin/product-packaging-logs/queue/channels/offline')
