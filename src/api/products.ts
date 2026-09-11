@@ -234,3 +234,6 @@ export const getPackagingChannels = (): Promise<ApiResponse<PackagingChannel[]>>
 
 export const setPackagingChannelPause = (queueId: string, paused: boolean): Promise<ApiResponse<void>> =>
   instance.post(`/admin/product-packaging-logs/queue/channels/${encodeURIComponent(queueId)}/pause`, null, { params: { paused } })
+
+export const deletePackagingChannel = (queueId: string): Promise<ApiResponse<void>> =>
+  instance.delete(`/admin/product-packaging-logs/queue/channels/${encodeURIComponent(queueId)}`)

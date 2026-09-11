@@ -6,7 +6,7 @@
         <span class="refresh-time">最后更新：{{ lastUpdated ? formatDateTime(lastUpdated) : '尚未加载' }}</span>
         <el-switch v-model="autoRefresh" active-text="每 10 秒刷新" />
         <el-button type="primary" @click="handleRefresh" :loading="loading"
-          :disabled="updatingPriority || pausingQueue || priorityDialogVisible">刷新</el-button>
+          :disabled="updatingPriority || pausingQueue || !!deletingChannel || priorityDialogVisible">刷新</el-button>
       </div>
     </div>
     <el-alert v-if="refreshError" :title="refreshError" type="warning" :closable="false" show-icon />
@@ -17,7 +17,7 @@
     </div>
     <div class="queue-toolbar">
       <el-switch :model-value="!queuePaused" :loading="pausingQueue"
-        :disabled="!loaded || loading || !!pausingChannel" aria-label="全局允许领取新任务"
+        :disabled="!loaded || loading || !!pausingChannel || !!deletingChannel" aria-label="全局允许领取新任务"
         :active-text="!loaded ? '状态待确认' : queuePaused ? '全局已暂停领取' : '全局允许领取新任务'"
         @change="handleToggleQueuePause" />
       <span>暂停仅停止领取新任务，已领取任务继续执行。</span>
@@ -38,7 +38,7 @@
       </template></el-table-column>
       <el-table-column label="允许领取" width="130"><template #default="{ row }">
         <el-switch :model-value="!row.paused" :aria-label="`${row.queueId} 允许领取`"
-          :loading="pausingChannel === row.queueId" :disabled="!loaded || loading || pausingQueue || !!pausingChannel"
+          :loading="pausingChannel === row.queueId" :disabled="!loaded || loading || pausingQueue || !!pausingChannel || !!deletingChannel"
           @change="(value: boolean | string | number) => handleToggleChannel(row, value)" />
       </template></el-table-column>
       <el-table-column label="领取状态" min-width="160"><template #default="{ row }">
@@ -46,6 +46,13 @@
       </template></el-table-column>
       <el-table-column label="当前任务" width="120"><template #default="{ row }">{{ row.taskId || '—' }}</template></el-table-column>
       <el-table-column label="最近心跳" min-width="180"><template #default="{ row }">{{ formatDateTime(row.lastSeenAt) }}</template></el-table-column>
+      <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }">
+        <el-button type="danger" link :aria-label="`删除队列 ${row.queueId}`"
+          :title="row.online ? '仅离线队列可删除' : '删除队列'"
+          :loading="deletingChannel === row.queueId"
+          :disabled="row.online || !loaded || loading || pausingQueue || !!pausingChannel || !!deletingChannel"
+          @click="handleDeleteChannel(row)">删除</el-button>
+      </template></el-table-column>
     </el-table>
     <h3>执行中（{{ loaded ? runningTasks.length : '—' }}）</h3>
     <el-table :data="sortedRunningTasks" row-key="id" v-loading="loading" :empty-text="loaded ? '当前没有执行中的任务' : '尚未获取执行中任务'">
@@ -196,12 +203,13 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { ElMessage, type TableInstance } from 'element-plus'
+import { ElMessage, ElMessageBox, type TableInstance } from 'element-plus'
 import type { ProductPackagingLogVO } from '@/types/product'
 import {
   getProductPackagingQueue,
   getPackagingChannels,
   setPackagingChannelPause,
+  deletePackagingChannel,
   type PackagingChannel,
   removeProductPackagingQueueItem,
   updateProductPackagingQueuePriority,
@@ -258,6 +266,7 @@ const legacyWorkerActive = ref(false)
 const clearingLock = ref(false)
 const channels = ref<PackagingChannel[]>([])
 const pausingChannel = ref('')
+const deletingChannel = ref('')
 const queuePaused = ref(false)
 const pausingQueue = ref(false)
 let refreshTimer: ReturnType<typeof setInterval> | undefined
@@ -380,7 +389,7 @@ const removeFromQueue = async (row: ProductPackagingLogVO) => {
 }
 
 const handleRefresh = async () => {
-  if (loading.value || updatingPriority.value || pausingQueue.value || pausingChannel.value || priorityDialogVisible.value) return
+  if (loading.value || updatingPriority.value || pausingQueue.value || pausingChannel.value || deletingChannel.value || priorityDialogVisible.value) return
   loading.value = true
   try {
     const results = await Promise.all([
@@ -440,7 +449,7 @@ const handleToggleQueuePause = async (value: boolean | string | number) => {
 }
 
 const handleToggleChannel = async (row: PackagingChannel, allowed: boolean | string | number) => {
-  if (typeof allowed !== 'boolean' || loading.value || pausingChannel.value) return
+  if (typeof allowed !== 'boolean' || loading.value || pausingChannel.value || deletingChannel.value) return
   pausingChannel.value = row.queueId
   try {
     const res = await setPackagingChannelPause(row.queueId, !allowed)
@@ -451,6 +460,29 @@ const handleToggleChannel = async (row: PackagingChannel, allowed: boolean | str
     ElMessage.error('更新队列状态失败，请刷新确认实际状态')
   } finally {
     pausingChannel.value = ''
+    await handleRefresh()
+  }
+}
+
+const handleDeleteChannel = async (row: PackagingChannel) => {
+  if (row.online || !loaded.value || loading.value || pausingQueue.value || pausingChannel.value || deletingChannel.value) return
+  deletingChannel.value = row.queueId
+  try {
+    await ElMessageBox.confirm(`确定删除离线队列 ${row.queueId}？打包任务和历史记录会保留；该队列重新连接后会再次登记。`, '删除队列', {
+      confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning'
+    })
+    const res = await deletePackagingChannel(row.queueId)
+    if (res.code !== 0) {
+      ElMessage.error(res.msg || '删除队列失败，请刷新确认队列是否仍离线')
+    } else {
+      ElMessage.success('队列已删除')
+    }
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error('删除队列失败，请刷新确认队列是否仍离线')
+    }
+  } finally {
+    deletingChannel.value = ''
     await handleRefresh()
   }
 }

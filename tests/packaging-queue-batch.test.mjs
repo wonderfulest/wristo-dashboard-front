@@ -21,7 +21,7 @@ function setup(update = async () => ({ code: 0 }), overrides = {}) {
     setProductPackagingQueuePause: async () => ({ code: 0 }),
     ...overrides
   }
-  const state = new Function(...Object.keys(context), `${code}\nreturn { channels, handleToggleChannel, handleRefresh, handleToggleQueuePause, runningTasks, queuePaused, deadCount, loaded, lastUpdated, refreshError, updatingPriority, runningDuration, isSelectable, queue, designerId, designers, filteredQueue, selectedRows, clearSelection, openBatchPriorityDialog, priorityValue, submitPriority, priorityTargetRows, priorityDialogVisible, batchFailureSummary };`)(...Object.values(context))
+  const state = new Function(...Object.keys(context), `${code}\nreturn { handleDeleteChannel, deletingChannel, channels, handleToggleChannel, handleRefresh, handleToggleQueuePause, runningTasks, queuePaused, deadCount, loaded, lastUpdated, refreshError, updatingPriority, runningDuration, isSelectable, queue, designerId, designers, filteredQueue, selectedRows, clearSelection, openBatchPriorityDialog, priorityValue, submitPriority, priorityTargetRows, priorityDialogVisible, batchFailureSummary };`)(...Object.values(context))
   return { ...state, calls }
 }
 const row = (id, designer) => ({ id, product: { user: { id: designer, username: 'Same name' } } })
@@ -150,4 +150,63 @@ test('global allow switch sends paused false', async () => {
   await state.handleToggleQueuePause(true)
   await state.handleToggleQueuePause(false)
   assert.deepEqual(calls, [false, true])
+})
+
+
+test('online channels cannot open deletion confirmation or call delete', async () => {
+  const state = setup(undefined, {
+    ElMessageBox: { confirm: async () => assert.fail('online confirmation') },
+    deletePackagingChannel: async () => assert.fail('online deletion')
+  })
+  state.loaded.value = true
+  await state.handleDeleteChannel({ queueId: 'prod-pack-n01-01', online: true })
+})
+
+test('offline deletion waits for confirmation, prevents duplicates, then refreshes', async () => {
+  let confirm
+  const deleted = []
+  const state = setup(undefined, {
+    ElMessageBox: { confirm: () => new Promise(resolve => { confirm = resolve }) },
+    deletePackagingChannel: async id => { deleted.push(id); return { code: 0 } }
+  })
+  state.loaded.value = true
+  const channel = { queueId: 'prod-pack-n01-01', online: false }
+  state.channels.value = [channel]
+  const pending = state.handleDeleteChannel(channel)
+  assert.deepEqual(deleted, [])
+  assert.equal(state.deletingChannel.value, channel.queueId)
+  await state.handleDeleteChannel(channel)
+  await state.handleRefresh()
+  assert.equal(state.channels.value.length, 1)
+  confirm()
+  await pending
+  assert.deepEqual(deleted, [channel.queueId])
+  assert.deepEqual(state.channels.value, [])
+  assert.equal(state.deletingChannel.value, '')
+})
+
+test('cancelled deletion does not send a delete request', async () => {
+  const state = setup(undefined, {
+    ElMessageBox: { confirm: async () => { throw 'cancel' } },
+    deletePackagingChannel: async () => assert.fail('cancelled deletion')
+  })
+  state.loaded.value = true
+  await state.handleDeleteChannel({ queueId: 'prod-pack-n01-01', online: false })
+  assert.equal(state.deletingChannel.value, '')
+})
+
+test('server rejection refreshes channel status and never reports success', async () => {
+  const errors = []
+  const channel = { queueId: 'prod-pack-n01-01', online: true }
+  const state = setup(undefined, {
+    ElMessageBox: { confirm: async () => {} },
+    ElMessage: { error: message => errors.push(message), success: () => assert.fail('rejected deletion') },
+    deletePackagingChannel: async () => ({ code: 1, msg: '队列在线，仅离线队列可删除' }),
+    getPackagingChannels: async () => ({ code: 0, data: [channel] })
+  })
+  state.loaded.value = true
+  await state.handleDeleteChannel({ ...channel, online: false })
+  assert.equal(errors.length, 1)
+  assert.equal(state.channels.value[0].online, true)
+  assert.equal(state.deletingChannel.value, '')
 })

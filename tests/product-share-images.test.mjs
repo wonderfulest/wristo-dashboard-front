@@ -11,7 +11,7 @@ test('share image API lists, appends, and deletes app-bound assets', async () =>
   assert.match(source, /fetchProductShareImages/)
   assert.match(source, /uploadProductShareImages/)
   assert.match(source, /deleteProductShareImage/)
-  assert.match(source, /\/admin\/products\/\$\{appId\}\/share-images/)
+  assert.match(source, /\/admin\/products\/\$\{appId\}\/images/)
   assert.match(source, /formData\.append\('files', file\)/)
 })
 
