@@ -1,12 +1,24 @@
 <template>
   <div class="recommendations" v-loading="loading">
     <h2>iOS 首页应用推荐</h2>
-    <p>选择 3–5 个已上架应用，首页轮播直接展示应用的「首页横幅」。请在 Studio 上架设置中上传 1440 × 720 横幅。</p>
+    <p>添加已上架应用到候选池，数量不限，首页轮播直接展示应用的「首页横幅」。请在 Studio 上架设置中上传 1440 × 720 横幅。</p>
     <el-switch v-model="enabled" active-text="启用轮播" :disabled="saving" />
+    <el-form class="display-settings" label-position="top" :disabled="saving">
+      <el-form-item label="最多展示数量">
+        <el-input-number v-model="displayCount" :min="1" :precision="0" :step="1" />
+      </el-form-item>
+      <el-form-item label="展示方式">
+        <el-radio-group v-model="displayMode">
+          <el-radio-button value="TOP_N">Top N · 按列表顺序</el-radio-button>
+          <el-radio-button value="RANDOM">随机展示</el-radio-button>
+        </el-radio-group>
+      </el-form-item>
+    </el-form>
+    <p>{{ displayMode === 'RANDOM' ? '每次加载首页时随机选取，不重复展示同一应用。' : '按下方列表顺序选取前 N 个，可用上移、下移调整优先级。' }}有效候选不足时展示全部有效应用。</p>
     <div class="actions">
       <el-input v-model="appId" placeholder="输入 App ID" style="width: 240px" @keyup.enter="add" :disabled="saving" />
-      <el-button @click="add" :loading="adding" :disabled="saving || items.length >= 5">添加应用</el-button>
-      <span>{{ items.length }} / 5</span>
+      <el-button @click="add" :loading="adding" :disabled="saving">添加应用</el-button>
+      <span>候选池：{{ items.length }} 个应用</span>
     </div>
     <el-table :data="items" row-key="appId">
       <el-table-column label="顺序" type="index" width="70" />
@@ -37,16 +49,18 @@ import instance from '@/config/axios'
 import type { ApiResponse } from '@/types/api'
 
 type RecommendedApp = { appId: number; name?: string; bannerImageUrl?: string }
-type Selection = { enabled: boolean; appIds: number[] }
+type Selection = { enabled: boolean; appIds: number[]; displayCount?: number; displayMode?: 'TOP_N' | 'RANDOM' }
 const endpoint = '/admin/website/ios-home-recommendations'
 const enabled = ref(false)
+const displayCount = ref(5)
+const displayMode = ref<'TOP_N' | 'RANDOM'>('TOP_N')
 const items = ref<RecommendedApp[]>([])
 const appId = ref('')
 const loading = ref(true)
 const adding = ref(false)
 const saving = ref(false)
 const loaded = ref(false)
-const canSave = computed(() => loaded.value && (!enabled.value || items.value.length >= 3) && items.value.length <= 5 && items.value.every(item => !!item.bannerImageUrl))
+const canSave = computed(() => loaded.value && (!enabled.value || items.value.length >= 1) && Number.isSafeInteger(displayCount.value) && displayCount.value >= 1 && items.value.every(item => !!item.bannerImageUrl))
 
 async function candidate(id: number): Promise<RecommendedApp> {
   const res: ApiResponse<RecommendedApp> = await instance.get(`${endpoint}/candidate/${id}`)
@@ -54,7 +68,7 @@ async function candidate(id: number): Promise<RecommendedApp> {
   return res.data
 }
 async function add() {
-  if (adding.value || saving.value || items.value.length >= 5) return
+  if (adding.value || saving.value) return
   const id = Number(appId.value.trim())
   if (!Number.isSafeInteger(id) || id <= 0) { ElMessage.warning('请输入有效的 App ID'); return }
   if (items.value.some(item => item.appId === id)) { ElMessage.warning('该应用已在列表中'); return }
@@ -71,7 +85,7 @@ async function save() {
   if (!canSave.value || saving.value) return
   saving.value = true
   try {
-    const res: ApiResponse<Selection> = await instance.put(endpoint, { enabled: enabled.value, appIds: items.value.map(item => item.appId) })
+    const res: ApiResponse<Selection> = await instance.put(endpoint, { enabled: enabled.value, displayCount: displayCount.value, displayMode: displayMode.value, appIds: items.value.map(item => item.appId) })
     if (res.code !== 0) throw new Error(res.msg || '保存失败')
     ElMessage.success('首页应用推荐已保存')
   } catch (error) { ElMessage.error(error instanceof Error ? error.message : '保存失败') }
@@ -82,6 +96,8 @@ onMounted(async () => {
     const res: ApiResponse<Selection> = await instance.get(endpoint)
     if (res.code !== 0 || !res.data) throw new Error(res.msg || '加载失败')
     enabled.value = res.data.enabled
+    displayCount.value = res.data.displayCount ?? 5
+    displayMode.value = res.data.displayMode ?? 'TOP_N'
     items.value = await Promise.all(res.data.appIds.map(async id => {
       try { return await candidate(id) } catch { return { appId: id } }
     }))
@@ -95,5 +111,6 @@ onMounted(async () => {
 .recommendations { padding: 24px; }
 p { color: var(--el-text-color-secondary); line-height: 1.7; }
 .actions { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
+.display-settings { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px; }
 .save { margin-top: 24px; }
 </style>
