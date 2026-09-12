@@ -4,19 +4,25 @@
       <div class="header-actions">
         <el-button
           type="primary"
-          :disabled="selectedDeadQueue.length === 0"
+          :disabled="selectedDeadQueue.length === 0 || deleting || submittingRequeue"
           @click="openBatchRequeueDialog"
         >
           批量重提
         </el-button>
         <el-button
           type="warning"
-          :disabled="deadQueue.length === 0"
+          :disabled="deadQueue.length === 0 || deleting || submittingRequeue"
           @click="openRequeueAllDialog"
         >
           一键重提
         </el-button>
-        <el-button @click="fetchDeadQueue" :loading="loading">刷新</el-button>
+        <el-button
+          type="danger"
+          :disabled="selectedDeadQueue.length === 0 || loading || submittingRequeue"
+          :loading="deleting"
+          @click="deleteDeadTasks(selectedDeadQueue)"
+        >批量删除</el-button>
+        <el-button @click="fetchDeadQueue" :loading="loading" :disabled="deleting || submittingRequeue">刷新</el-button>
       </div>
     </div>
 
@@ -25,7 +31,7 @@
       type="warning"
       :closable="false"
       show-icon
-      title="这里展示打包 worker 失败后写入 wf:pack:dead 的任务。重新提交会从死信队列移除，并加入正常打包任务队列。"
+      title="这里展示打包 worker 失败后写入 wf:pack:dead 的任务。重新提交会从死信队列移除，并加入正常打包任务队列。删除仅移除死信队列项，保留打包历史记录。"
     />
 
     <div class="table-actions" v-if="selectedDeadQueue.length > 0">
@@ -88,9 +94,10 @@
           {{ formatDateTime(row.updatedAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link @click="openRequeueDialog(row)">重新提交</el-button>
+          <el-button type="primary" link :disabled="deleting || submittingRequeue" @click="openRequeueDialog(row)">重新提交</el-button>
+          <el-button type="danger" link :disabled="loading || deleting || submittingRequeue" @click="deleteDeadTasks([row])">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -131,10 +138,11 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getProductPackagingDeadQueue,
-  requeueProductPackagingDeadQueueItem
+  requeueProductPackagingDeadQueueItem,
+  removeProductPackagingDeadQueueItem
 } from '@/api/products'
 import type { ProductPackagingLogVO } from '@/types/product'
 import { formatDateTime } from '@/utils/date'
@@ -144,6 +152,7 @@ import AppProductInfo from '@/components/common/AppProductInfo.vue'
 const loading = ref(false)
 const deadQueue = ref<ProductPackagingLogVO[]>([])
 const selectedDeadQueue = ref<ProductPackagingLogVO[]>([])
+const deleting = ref(false)
 
 const requeueDialogVisible = ref(false)
 const requeueTargetRows = ref<ProductPackagingLogVO[]>([])
@@ -174,6 +183,49 @@ const fetchDeadQueue = async () => {
 
 const handleSelectionChange = (rows: ProductPackagingLogVO[]) => {
   selectedDeadQueue.value = rows
+}
+
+const deleteDeadTasks = async (rows: ProductPackagingLogVO[]) => {
+  if (deleting.value || submittingRequeue.value || rows.length === 0) return
+  const targets = [...rows]
+  deleting.value = true
+  try {
+    const description = targets.length === 1
+      ? `作业 ID：${targets[0].id}`
+      : `选中的 ${targets.length} 条作业`
+    try {
+      await ElMessageBox.confirm(
+        `确认从死信队列删除${description}？仅移除死信队列项，保留打包历史记录。`,
+        '删除死信任务',
+        { type: 'warning', confirmButtonText: '确认删除', cancelButtonText: '取消' }
+      )
+    } catch {
+      return
+    }
+
+    let successCount = 0
+    let failedCount = 0
+    for (const row of targets) {
+      try {
+        const res = await removeProductPackagingDeadQueueItem(row.id)
+        if (res.code === 0) successCount += 1
+        else failedCount += 1
+      } catch {
+        failedCount += 1
+      }
+    }
+
+    if (failedCount === 0) {
+      ElMessage.success(`已删除 ${successCount} 条死信任务`)
+    } else if (successCount > 0) {
+      ElMessage.warning(`已删除 ${successCount} 条，${failedCount} 条失败，请重试`)
+    } else {
+      ElMessage.error(`删除失败，共 ${failedCount} 条，请重试`)
+    }
+    await fetchDeadQueue()
+  } finally {
+    deleting.value = false
+  }
 }
 
 const openRequeueDialog = (row: ProductPackagingLogVO) => {

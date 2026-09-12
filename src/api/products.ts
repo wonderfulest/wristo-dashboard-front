@@ -94,6 +94,13 @@ export const getProductPackagingDeadQueue = (
   })
 }
 
+// 仅移除死信队列项，保留打包历史记录
+export const removeProductPackagingDeadQueueItem = (
+  id: number
+): Promise<ApiResponse<void>> => {
+  return instance.delete(`/admin/product-packaging-logs/queue/dead/${id}`)
+}
+
 // 将死信队列中的任务重新提交到正常打包队列
 export const requeueProductPackagingDeadQueueItem = (
   id: number,
