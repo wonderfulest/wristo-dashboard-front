@@ -115,7 +115,7 @@ export const topMenus: TopMenuGroup[] = [
     key: 'app-operations',
     title: '应用运营',
     icon: 'Grid',
-    basePaths: ['/products', '/website/home-banners', '/website/categories', '/meter'],
+    basePaths: ['/products', '/website/home-banners', '/website/ios-home-recommendations', '/website/categories', '/meter'],
     children: [
       { key: 'app-management', title: '应用管理', icon: 'Grid', children: [
         { key: 'products-recent-online', title: '最近上线', icon: 'TrendCharts', path: '/products/recent-online' },
@@ -125,6 +125,7 @@ export const topMenus: TopMenuGroup[] = [
       ] },
       { key: 'content-operations', title: '内容运营', icon: 'Picture', children: [
         { key: 'app-daily-config', title: '每日一图配置', icon: 'Picture', path: '/products/app-daily/config' },
+        { key: 'ios-home-recommendations', title: 'iOS 首页推荐', icon: 'Picture', path: '/website/ios-home-recommendations' },
         { key: 'website-home-banners', title: '首页 Banner', icon: 'Picture', path: '/website/home-banners' },
       ] },
       { key: 'garmin-ecosystem', title: 'Garmin 生态', icon: 'Monitor', children: [

@@ -498,6 +498,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/website/ios-home-recommendations',
+      name: 'IosHomeRecommendations',
+      component: () => import('@/views/website/IosHomeRecommendations.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/website/home-banners',
       name: 'WebsiteHomeBanners',
       component: () => import('@/views/website/HomeBanners.vue'),
