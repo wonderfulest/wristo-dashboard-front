@@ -408,7 +408,7 @@ const handleCleanupOld = async () => {
   }
   try {
     await ElMessageBox.confirm(
-      `确认清理 ${cleanupMonth.value} 以及更早月份的历史试用记录吗？该操作不可撤销，请谨慎操作。`,
+      `确认清理 ${cleanupMonth.value} 月的历史试用记录吗？该月全部记录须超过三个月且已备份；未购买记录将删除，已购买/退款记录的购买码将清空。该操作不可撤销。`,
       '确认清理',
       { type: 'warning' }
     )
