@@ -32,10 +32,19 @@
       <el-table-column prop="nickname" label="昵称" width="180" sortable="custom" />
       <el-table-column prop="email" label="邮箱" width="280" sortable="custom" />
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
+      <el-table-column label="系统禁用" width="110">
+        <template #default="{ row }">
+          <el-tag :type="normalizeStatus(row.status) === 1 ? 'success' : 'danger'">{{ normalizeStatus(row.status) === 1 ? '未禁用' : normalizeStatus(row.status) === 0 ? '已禁用' : '未知' }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="用户删除" width="110">
+        <template #default="{ row }">
+          <el-tag :type="row.isDeleted === '1' ? 'danger' : 'info'">{{ row.isDeleted === '1' ? '已删除' : row.isDeleted === '0' ? '未删除' : '未知' }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="180">
         <template #default="scope">
-          <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button size="small" :disabled="scope.row.isDeleted === '1'" @click="handleEdit(scope.row)">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -71,6 +80,15 @@
             <el-option v-for="role in roleOptions" :key="role.roleCode" :label="role.roleName" :value="role.roleCode" />
           </el-select>
         </el-form-item>
+        <el-form-item v-if="isEdit" label="系统禁用">
+          <el-select v-model="currentUser.status">
+            <el-option label="未禁用" :value="1" />
+            <el-option label="已禁用" :value="0" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="isEdit" label="用户删除">
+          <span>{{ currentUser.isDeleted === '1' ? '已删除' : '未删除' }}（由用户主动注销产生，不可手动修改）</span>
+        </el-form-item>
         <el-form-item v-if="!isEdit" label="密码">
           <el-input v-model="password" type="password" />
         </el-form-item>
@@ -85,8 +103,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { pageUsers, registerEmailAccount, updateUser, deleteUser, getUserStats } from '@/api/user'
+import { ElMessage } from 'element-plus'
+import { pageUsers, registerEmailAccount, updateUser, getUserStats } from '@/api/user'
 import { getRoleList } from '@/api/role'
 import type { UserInfo, RoleInfo } from '@/types/api'
 import type { UserStats, UserUpdateDTO } from '@/types/user'
@@ -219,9 +237,15 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
+const normalizeStatus = (value: unknown): number | undefined => {
+  if (value === 'ENABLED' || value === 1 || value === true) return 1
+  if (value === 'DISABLED' || value === 0 || value === false) return 0
+  return undefined
+}
+
 const handleEdit = (row: UserInfo) => {
   isEdit.value = true
-  currentUser.value = { ...row }
+  currentUser.value = { ...row, status: normalizeStatus(row.status) }
   if (Array.isArray(row.roles)) {
     // 统一将角色映射为 roleCode 字符串数组
     rolesInput.value = (row.roles as RoleInfo[]).map((r: RoleInfo) => r.roleCode)
@@ -229,21 +253,6 @@ const handleEdit = (row: UserInfo) => {
     rolesInput.value = []
   }
   dialogVisible.value = true
-}
-
-const handleDelete = (row: UserInfo) => {
-  ElMessageBox.confirm('确定要删除该用户吗？', '提示', {
-    type: 'warning',
-  }).then(async () => {
-    const res = await deleteUser(row.id)
-    if (res.code === 0) {
-      ElMessage.success('删除成功')
-      fetchUsers()
-      fetchUserStats()
-    } else {
-      ElMessage.error(res.msg || '删除失败')
-    }
-  })
 }
 
 const handleSave = async () => {

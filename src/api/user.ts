@@ -44,10 +44,6 @@ export const updateUser = (id: number, data: UserUpdateDTO): Promise<ApiResponse
   return instance.post(`/admin/users/update/${id}`, data)
 }
 
-export const deleteUser = (id: number): Promise<ApiResponse<null>> => {
-  return instance.get(`/admin/users/delete/${id}`)
-}
-
 // 分页查询用户
 export interface UserPageQueryDTO extends PageQueryDTO {
   userId?: number
