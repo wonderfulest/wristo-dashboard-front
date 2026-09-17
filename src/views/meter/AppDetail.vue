@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
@@ -120,6 +120,7 @@ import { getAppMeter, getDeviceOverview, getActiveDevices, getLostDevices, getAl
 import { getProduct, getProductReviews, replyProductReview } from '@/api/products'
 import type { AppMeterVO, DeviceOverviewVO, DeviceActiveVO, DeviceDetailVO } from '@/types/meter'
 import type { Product, ProductReviewVO } from '@/types/product'
+import { getCachedAppImageUrl } from '@/utils/cachedImage'
 
 const route = useRoute()
 const router = useRouter()
@@ -133,6 +134,7 @@ const reviewsLoading = ref(false)
 const meter = ref<AppMeterVO | null>(null)
 const productDetail = ref<Product | null>(null)
 const productReviews = ref<ProductReviewVO[]>([])
+const cachedProductImageUrl = ref('')
 const selectedAppName = ref('')
 const inited = ref(false)
 
@@ -154,10 +156,27 @@ const deviceDetailVisible = ref(false)
 const deviceDetailLoading = ref(false)
 const deviceDetail = ref<DeviceDetailVO | null>(null)
 
-const productImageUrl = computed(() => {
+const sourceProductImageUrl = computed(() => {
   if (!productDetail.value) return ''
   return productDetail.value.garminImageUrl || productDetail.value.rawImageUrl || productDetail.value.bannerImageUrl || ''
 })
+
+const productImageUrl = computed(() => cachedProductImageUrl.value || sourceProductImageUrl.value)
+
+const releaseCachedImageUrl = () => {
+  if (cachedProductImageUrl.value.startsWith('blob:')) URL.revokeObjectURL(cachedProductImageUrl.value)
+  cachedProductImageUrl.value = ''
+}
+
+const cacheProductImage = async () => {
+  releaseCachedImageUrl()
+  if (!appId.value || !sourceProductImageUrl.value) return
+  try {
+    cachedProductImageUrl.value = await getCachedAppImageUrl(appId.value, sourceProductImageUrl.value)
+  } catch {
+    // Keep the remote URL as a fallback when Cache Storage/CORS is unavailable.
+  }
+}
 
 const fetchDeviceOverview = async () => {
   if (!appId.value) return
@@ -252,6 +271,7 @@ const fetchAppName = async () => {
     if (res.code === 0 && res.data) {
       productDetail.value = res.data
       selectedAppName.value = res.data.name || ''
+      await cacheProductImage()
     }
   } catch {
     productDetail.value = null
@@ -340,6 +360,8 @@ const fetchMeter = async () => {
 const onSelected = (p: Product) => {
   selectedAppName.value = p.name || ''
 }
+
+onBeforeUnmount(releaseCachedImageUrl)
 
 watch([appId, date], async () => {
   if (!inited.value) return
