@@ -375,9 +375,6 @@
         <el-form-item label="商品名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入商品名称" />
         </el-form-item>
-        <el-form-item label="设计ID" prop="designId">
-          <el-input v-model="form.designId" placeholder="请输入设计ID" />
-        </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input
             v-model="form.description"
@@ -391,14 +388,16 @@
             :precision="2"
             :step="0.1"
             :min="0"
+            style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="下载量" prop="download">
+        <el-form-item label="权重" prop="storeWeight">
           <el-input-number
-            v-model="form.download"
+            v-model="form.storeWeight"
             :precision="0"
             :step="1"
             :min="0"
+            :max="99"
           />
         </el-form-item>
         <el-form-item label="试用时长" prop="trialLasts">
@@ -768,6 +767,7 @@ const form = ref({
   trialLasts: 0,
   status: 1,
   download: 0,
+  storeWeight: 20,
   categories: [] as Category[]
 })
 
@@ -1095,7 +1095,7 @@ const fetchCategories = async () => {
 
 // 编辑商品
 const handleEdit = (row: Product) => {
-  form.value = { ...row, categories: row.categories || [] } as any
+  form.value = { ...row, price: row.price ?? row.payment?.price ?? 0, storeWeight: row.storeWeight ?? 20, categories: row.categories || [] } as any
   dialogVisible.value = true
 }
 
@@ -1137,6 +1137,7 @@ const handleSubmit = async () => {
         name: form.value.name,
         description: form.value.description,
         price: form.value.price,
+        storeWeight: form.value.storeWeight,
         garminImageUrl: form.value.garminImageUrl,
         garminStoreUrl: form.value.garminStoreUrl,
         trialLasts: form.value.trialLasts,

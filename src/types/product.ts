@@ -35,6 +35,8 @@ export interface Product {
   description: string
   /** 价格（后端 BigDecimal，对前端为 number） */
   price: number
+  /** 商店展示权重（0–99） */
+  storeWeight?: number
   /** 原始图片 */
   rawImageUrl?: string
   /** Garmin 图片 / 商店 URL */
