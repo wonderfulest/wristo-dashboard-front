@@ -1,5 +1,6 @@
 <template>
   <div class="dashboard">
+    <AppManagement />
     <DashboardFilterBar />
     <BusinessOverview />
     <DesignOutputOverview />
@@ -9,6 +10,7 @@
 </template>
 
 <script setup lang="ts">
+import AppManagement from '@/components/dashboard/AppManagement.vue'
 import ReviewTimeControl from '@/components/dashboard/ReviewTimeControl.vue'
 import DashboardFilterBar from '@/components/dashboard/DashboardFilterBar.vue'
 import BusinessOverview from '@/components/dashboard/BusinessOverview.vue'
