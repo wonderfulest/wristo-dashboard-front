@@ -15,8 +15,10 @@ export interface CnCatalogStatus {
 export const getCnCatalogStatus = (): Promise<ApiResponse<CnCatalogStatus>> =>
   instance.get('/admin/catalog-cn/status')
 
-export const submitCnCatalogPage = (afterAppId: number): Promise<ApiResponse<CnBackfillPage>> =>
-  instance.post('/admin/catalog-cn/backfill', null, { params: { afterAppId, limit: 200 } })
+export type CnSyncRange = 'DAYS_3' | 'DAYS_7' | 'MONTH_1' | 'MONTHS_3' | 'MONTHS_6' | 'YEAR_1' | 'ALL'
+
+export const submitCnCatalogPage = (afterAppId: number, range: CnSyncRange, until: string): Promise<ApiResponse<CnBackfillPage>> =>
+  instance.post('/admin/catalog-cn/backfill', null, { params: { afterAppId, limit: 200, range, until } })
 
 // 全量统计耗时随应用数量增长；请求失败时不能推断服务端任务已经停止。
 export const refreshDownloads = (): Promise<ApiResponse<boolean>> =>

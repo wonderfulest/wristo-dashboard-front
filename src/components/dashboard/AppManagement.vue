@@ -4,10 +4,15 @@
     <div class="operations">
       <div class="operation">
         <h3>国外同步国内</h3>
-        <p>将国外应用目录全量提交到 Wristo CN，更新应用资料、分类及展示数据。</p>
-        <el-button type="primary" :loading="active === 'sync'" :disabled="busy || !syncReady" @click="syncAll">
-          国外同步国内
-        </el-button>
+        <p>按应用最后更新时间，将所选时间段内的应用提交到 Wristo CN，更新应用资料、分类及展示数据。</p>
+        <div class="sync-controls">
+          <el-select v-model="syncRange" aria-label="同步时间范围" :disabled="busy" style="width: 120px">
+            <el-option v-for="option in syncRanges" :key="option.value" :label="option.label" :value="option.value" />
+          </el-select>
+          <el-button type="primary" :loading="active === 'sync'" :disabled="busy || !syncReady" @click="syncAll">
+            国外同步国内
+          </el-button>
+        </div>
         <span v-if="syncMessage" class="result" role="status">{{ syncMessage }}</span>
       </div>
       <div class="operation">
@@ -42,8 +47,19 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getCnCatalogStatus, submitCnCatalogPage, refreshDownloads, refreshPurchases } from '@/api/app-management'
-import type { CnCatalogStatus } from '@/api/app-management'
+import type { CnCatalogStatus, CnSyncRange } from '@/api/app-management'
 import { backfillAllCnCatalog } from '@/utils/cnCatalogBackfill'
+
+const syncRanges: { value: CnSyncRange; label: string }[] = [
+  { value: 'DAYS_3', label: '3天' },
+  { value: 'DAYS_7', label: '7天' },
+  { value: 'MONTH_1', label: '1个月' },
+  { value: 'MONTHS_3', label: '3个月' },
+  { value: 'MONTHS_6', label: '半年' },
+  { value: 'YEAR_1', label: '一年' },
+  { value: 'ALL', label: '所有' },
+]
+const syncRange = ref<CnSyncRange>('DAYS_3')
 
 const active = ref<'sync' | 'downloads' | 'purchases' | null>(null)
 const busy = computed(() => active.value !== null)
@@ -81,23 +97,26 @@ async function loadStatus() {
 
 async function syncAll() {
   if (busy.value || !syncReady.value) return
+  const range = syncRange.value
+  const until = new Date().toISOString()
+  const label = syncRanges.find(option => option.value === range)!.label
   active.value = 'sync'
   let queued = 0
-  syncMessage.value = '正在提交应用…'
+  syncMessage.value = `正在提交（${label}）应用…`
   try {
     await backfillAllCnCatalog(async after => {
-      const res = await submitCnCatalogPage(after)
+      const res = await submitCnCatalogPage(after, range, until)
       if (!res.data) throw new Error("同步分页为空")
       return res.data
     }, count => {
       queued = count
-      syncMessage.value = `已提交 ${count} 个应用，正在提交后续应用…`
+      syncMessage.value = `（${label}）已提交 ${count} 个应用，正在提交后续应用…`
     }, () => disposed)
-    syncMessage.value = `已提交 ${queued} 个应用，后台同步中，请查看待同步及失败重试数量。`
+    syncMessage.value = `（${label}）已提交 ${queued} 个应用，后台同步中，请查看待同步及失败重试数量。`
     ElMessage.success('应用已提交同步队列')
     if (!disposed && !poll) poll = setInterval(() => { void loadStatus() }, 5000)
   } catch {
-    syncMessage.value = `提交未全部完成，已确认入队 ${queued} 个应用；可重新全量提交。`
+    syncMessage.value = `（${label}）提交未全部完成，已确认入队 ${queued} 个应用；可按所选范围重试。`
   } finally {
     active.value = null
     await loadStatus()
@@ -134,6 +153,7 @@ onUnmounted(() => {
 .operations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 .operation h3 { margin: 0 0 8px; font-size: 15px; }
 .operation p { margin: 0 0 16px; color: var(--el-text-color-secondary); line-height: 1.6; min-height: 48px; }
+.sync-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .result { display: block; margin-top: 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
 .sync-status { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0 12px; font-size: 13px; color: var(--el-text-color-secondary); }
 @media (max-width: 768px) {
