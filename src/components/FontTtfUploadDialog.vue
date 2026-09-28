@@ -168,14 +168,12 @@ onMounted(async () => {
   try {
     loadingFontTypes.value = true
     const list: EnumOption[] = await enumStore.getEnumOptions(DESIGN_FONT_TYPE_ENUM_NAME)
-    fontTypeOptions.value = Array.isArray(list) && list.length
-      ? list
-      : [{ name: 'ratio', value: 'ratio' }]
+    fontTypeOptions.value = Array.isArray(list) ? list : []
     if (!selectedFontType.value && fontTypeOptions.value.length) {
       selectedFontType.value = fontTypeOptions.value[0].value
     }
   } catch {
-    fontTypeOptions.value = [{ name: 'ratio', value: 'ratio' }]
+    fontTypeOptions.value = []
   } finally {
     loadingFontTypes.value = false
   }

@@ -20,6 +20,9 @@ export const GA_SHORT_LINK_STATUS_ENUM_NAME = 'com.wukong.face.modules.ga.enums.
 export const GA_SHORT_LINK_CHANNEL_ENUM_NAME = 'com.wukong.face.modules.ga.enums.ShortLinkChannel'
 export const GA_SHORT_LINK_PLATFORM_ENUM_NAME = 'com.wukong.face.modules.ga.enums.ShortLinkPlatform'
 
+// Share in-flight requests within each store without persisting promises.
+const pendingRequests = new WeakMap<object, Map<string, Promise<void>>>()
+
 // ===== Store =====
 export const useEnumStore = defineStore('enum', {
   state: (): EnumState => ({
@@ -39,18 +42,35 @@ export const useEnumStore = defineStore('enum', {
       return this.getOptions(name)
     },
     async ensureOptions(name: string) {
-      if (this.loaded[name] || this.loading[name]) return
+      if (this.loaded[name] && this.options[name]?.length) return
+      let pending = pendingRequests.get(this)
+      if (!pending) {
+        pending = new Map()
+        pendingRequests.set(this, pending)
+      }
+      const existing = pending.get(name)
+      if (existing) return existing
+
       this.loading[name] = true
       this.error[name] = null
+      const request = (async () => {
+        try {
+          const resp = (await listEnumOptions(name)) as any
+          const list: EnumOption[] = resp?.data?.data || resp?.data || []
+          this.options[name] = Array.isArray(list) ? list : []
+          this.loaded[name] = this.options[name].length > 0
+        } catch (e: any) {
+          this.loaded[name] = false
+          this.error[name] = e?.message || 'Failed to load enum options'
+        } finally {
+          this.loading[name] = false
+        }
+      })()
+      pending.set(name, request)
       try {
-        const resp = (await listEnumOptions(name)) as any
-        const list: EnumOption[] = resp?.data?.data || resp?.data || []
-        this.options[name] = Array.isArray(list) ? list : []
-        this.loaded[name] = true
-      } catch (e: any) {
-        this.error[name] = e?.message || 'Failed to load enum options'
+        await request
       } finally {
-        this.loading[name] = false
+        pending.delete(name)
       }
     }
   },
