@@ -114,13 +114,12 @@
           </template>
         </div>
         <el-form label-position="top">
-          <el-form-item label="优先级（0-9，0 为手动插队）" required>
+          <el-form-item label="优先级（整数，可为负数，数值越小越优先）" required>
             <el-input
               v-model.number="requeuePriority"
               type="number"
-              min="0"
               max="9"
-              placeholder="请输入 0-9 的整数，默认 7"
+              placeholder="请输入不大于 9 的整数，可为负数，默认 7"
               style="width: 200px;"
             />
           </el-form-item>
@@ -258,8 +257,8 @@ const submitRequeue = async () => {
   if (requeueTargetRows.value.length === 0) return
 
   const value = typeof requeuePriority.value === 'number' ? requeuePriority.value : 5
-  if (!Number.isInteger(value) || value < 0 || value > 9) {
-    ElMessage.error('优先级必须是 0-9 的整数，0 为手动插队')
+  if (!Number.isInteger(value) || value > 9) {
+    ElMessage.error('优先级必须是不大于 9 的整数，可为负数，数值越小越优先')
     return
   }
 

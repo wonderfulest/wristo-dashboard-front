@@ -183,14 +183,13 @@
           （设计ID：{{ priorityTargetRow.product?.designId || '-' }}，打包记录ID：{{ priorityTargetRow.id }}）
         </div>
         <el-form label-position="top">
-          <el-form-item label="优先级（0-9，0 为手动插队）" required>
+          <el-form-item label="优先级（整数，可为负数，数值越小越优先）" required>
             <el-input
               v-model.number="priorityValue"
               :disabled="updatingPriority"
               type="number"
-              min="0"
               max="9"
-              placeholder="请输入 0-9 的整数"
+              placeholder="请输入不大于 9 的整数，可为负数"
               style="width: 200px;"
             />
           </el-form-item>
@@ -337,8 +336,8 @@ const submitPriority = async () => {
   if (!batchPriorityMode.value && !priorityTargetRow.value) return
 
   const value = priorityValue.value
-  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 9) {
-    ElMessage.error('优先级必须是 0-9 的整数，0 为手动插队')
+  if (typeof value !== 'number' || !Number.isInteger(value) || value > 9) {
+    ElMessage.error('优先级必须是不大于 9 的整数，可为负数，数值越小越优先')
     return
   }
 
