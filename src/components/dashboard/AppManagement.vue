@@ -4,7 +4,7 @@
     <div class="operations">
       <div class="operation">
         <h3>国外同步国内</h3>
-        <p>按应用最后更新时间，将所选时间段内的应用提交到 Wristo CN，更新应用资料、分类及展示数据。</p>
+        <p>按应用创建时间，将所选时间段内新创建的应用提交到 Wristo CN，更新应用资料、分类及展示数据。</p>
         <div class="sync-controls">
           <el-select v-model="syncRange" aria-label="同步时间范围" :disabled="busy" style="width: 120px">
             <el-option v-for="option in syncRanges" :key="option.value" :label="option.label" :value="option.value" />
