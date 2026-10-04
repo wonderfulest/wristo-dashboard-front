@@ -220,6 +220,8 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/ops'],
     children: [
       { key: 'platform-versions', title: '平台版本', icon: 'Connection', path: '/ops/platform-versions' },
+      { key: 'ai-usage', title: 'AI 用量与成本', icon: 'DataAnalysis', path: '/ops/ai-usage' },
+      { key: 'ai-prices', title: 'AI 模型定价', icon: 'Coin', path: '/ops/ai-prices' },
       { key: 'ai-models', title: 'AI 模型配置', icon: 'MagicStick', path: '/ops/ai-models' },
       { key: 'system-config', title: '系统配置', icon: 'Setting', path: '/ops/system-config' },
       { key: 'feature-switches', title: '功能开关', icon: 'Setting', path: '/ops/feature-switches' },

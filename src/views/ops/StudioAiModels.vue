@@ -3,6 +3,7 @@
     <div class="header">
       <div><h2>AI 模型配置</h2><p>为 Studio 的 Banner、应用标签和描述分别选择生成模型。</p></div>
       <div class="actions">
+        <el-button @click="$router.push('/ops/ai-prices')">模型官方定价</el-button>
         <el-button :disabled="loading || saving" @click="load">刷新</el-button>
         <el-button :disabled="loading || saving" @click="openHistory">修改历史</el-button>
         <el-button type="primary" :loading="saving" :disabled="loading || !settings" @click="save">保存配置</el-button>
@@ -30,9 +31,10 @@
               </el-select>
             </template>
           </el-table-column>
+          <el-table-column label="每次消耗积分" min-width="180"><template #default="{ row }"><el-input-number v-model="settings.scenes[row.key as AiScene].creditCost" :min="1" :max="100000" :precision="0" :step="1" :disabled="saving" /></template></el-table-column>
           <el-table-column label="当前草稿状态" min-width="160"><template #default="{ row }"><el-tag :type="sceneReady(row.key) ? 'success' : 'warning'">{{ sceneStatus(row.key) }}</el-tag></template></el-table-column>
         </el-table>
-        <p class="hint">保存后，新请求使用最新配置；已启动的任务继续使用原模型。禁用模型会暂停使用该模型的场景，失败不会自动切换供应商。</p>
+        <p class="hint">保存后，新请求使用最新配置；已启动的任务继续使用原模型和提交时确认的积分价格。禁用模型会暂停使用该模型的场景，失败不会自动切换供应商。</p>
       </el-card>
       <el-card shadow="never">
         <template #header><div class="header"><strong>模型目录</strong><el-button :disabled="saving" @click="addModel">新增模型</el-button></div></template>
@@ -105,6 +107,7 @@ async function save() {
   if (!settings.value || saving.value) return
   if (settings.value.models.some(m => !/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,99}$/.test(m.model))) { ElMessage.warning('请填写有效的模型名称'); return }
   if (scenes.some(s => !sceneModels(s.key).some(m => m.id === settings.value!.scenes[s.key].modelId))) { ElMessage.warning('请为每个场景选择能力匹配的模型'); return }
+  if (scenes.some(s => !Number.isInteger(settings.value!.scenes[s.key].creditCost) || settings.value!.scenes[s.key].creditCost < 1 || settings.value!.scenes[s.key].creditCost > 100000)) { ElMessage.warning('积分须为 1 至 100000 的整数'); return }
   saving.value = true; error.value = ''
   try {
     const response = await saveStudioAi(settings.value)

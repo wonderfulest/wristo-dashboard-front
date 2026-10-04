@@ -11,7 +11,7 @@ export interface AiModel {
 }
 export interface AiSettings {
   models: AiModel[]
-  scenes: Record<AiScene, { enabled: boolean; modelId: string }>
+  scenes: Record<AiScene, { enabled: boolean; modelId: string; creditCost: number }>
 }
 export interface AiAdminView {
   settings: AiSettings
