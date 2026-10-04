@@ -1,0 +1,22 @@
+import instance from '@/config/axios'
+import type { ApiResponse } from '@/types/api'
+
+export type AiScene = 'TAGS' | 'DESCRIPTION' | 'BANNER'
+export interface AiModel {
+  id: string
+  provider: 'BAILIAN' | 'OPENAI'
+  model: string
+  capability: 'TEXT' | 'IMAGE'
+  enabled: boolean
+}
+export interface AiSettings {
+  models: AiModel[]
+  scenes: Record<AiScene, { enabled: boolean; modelId: string }>
+}
+export interface AiAdminView {
+  settings: AiSettings
+  credentials: Record<string, boolean>
+  active: boolean
+}
+export const getStudioAi = (): Promise<ApiResponse<AiAdminView>> => instance.get('/admin/studio-ai')
+export const saveStudioAi = (settings: AiSettings): Promise<ApiResponse<AiAdminView>> => instance.put('/admin/studio-ai', settings)

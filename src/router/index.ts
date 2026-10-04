@@ -58,6 +58,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/ops/ai-models',
+      name: 'StudioAiModels',
+      component: () => import('@/views/ops/StudioAiModels.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/ops/system-config',
       name: 'SystemConfig',
       component: () => import('@/views/ops/SystemConfig.vue'),
