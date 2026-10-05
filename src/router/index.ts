@@ -64,6 +64,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/ops/credit-statistics',
+      name: 'CreditStatistics',
+      component: () => import('@/views/ops/CreditStatistics.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/ops/ai-prices',
       name: 'AiPrices',
       component: () => import('@/views/ops/AiPrices.vue'),

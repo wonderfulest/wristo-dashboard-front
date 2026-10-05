@@ -221,6 +221,7 @@ export const topMenus: TopMenuGroup[] = [
     children: [
       { key: 'platform-versions', title: '平台版本', icon: 'Connection', path: '/ops/platform-versions' },
       { key: 'ai-usage', title: 'AI 用量与成本', icon: 'DataAnalysis', path: '/ops/ai-usage' },
+      { key: 'credit-statistics', title: '积分统计', icon: 'Coin', path: '/ops/credit-statistics' },
       { key: 'ai-prices', title: 'AI 模型定价', icon: 'Coin', path: '/ops/ai-prices' },
       { key: 'user-rewards', title: '用户积分任务', icon: 'Coin', path: '/ops/user-rewards' },
       { key: 'share-rewards', title: '分享访问积分奖励', icon: 'Share', path: '/ops/share-rewards' },
