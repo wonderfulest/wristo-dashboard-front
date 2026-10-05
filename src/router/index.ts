@@ -70,6 +70,24 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/ops/user-rewards',
+      name: 'UserRewards',
+      component: () => import('@/views/ops/UserRewards.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ops/share-rewards',
+      name: 'ShareRewards',
+      component: () => import('@/views/ops/ShareRewards.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ops/creator-rewards',
+      name: 'CreatorRewards',
+      component: () => import('@/views/ops/CreatorRewards.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/ops/ai-models',
       name: 'StudioAiModels',
       component: () => import('@/views/ops/StudioAiModels.vue'),

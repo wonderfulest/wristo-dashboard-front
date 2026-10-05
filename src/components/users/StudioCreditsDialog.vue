@@ -34,7 +34,7 @@ const visible = ref(false), userId = ref<number>(), balance = ref<number>(), pag
 const entries = ref<CreditEntry[]>([]), loading = ref(false), submitting = ref(false), uncertain = ref(false), loadError = ref('')
 const form = reactive({ direction: 'ADD' as 'ADD' | 'REMOVE', amount: 100, reason: 'RECHARGE', note: '' })
 const reasons: Record<string, string> = { RECHARGE: '充值', PLATFORM_GIFT: '平台赠送', ACTIVITY_REWARD: '活动奖励', SERVICE_COMPENSATION: '服务补偿', REFUND_RECOVERY: '退款回收', CORRECTION: '误充值纠正', VIOLATION: '违规扣减', OTHER: '其他' }
-const types: Record<string, string> = { ADMIN_CREDIT: '管理员充值', ADMIN_DEBIT: '管理员扣减', REGISTRATION_GIFT: '注册赠送', AI_TAGS: 'AI 标签', AI_DESCRIPTION: 'AI 描述', AI_BANNER: 'Banner 图片', AI_WATCHFACE: 'AI 表盘', AI_WATCHFACE_ADJUST: '表盘局部调整', AI_WATCHFACE_REFUND: '表盘生成退款', AI_WATCHFACE_ADJUST_REFUND: '表盘调整退款' }
+const types: Record<string, string> = { SHARE_VISIT_REWARD: '分享访问奖励', USER_CHECK_IN: '每日签到', USER_DOWNLOAD: '首次下载奖励', USER_PURCHASE: '用户购买奖励', USER_PURCHASE_REFUND: '用户购买奖励撤回', CREATOR_DOWNLOAD: '创作者下载奖励', CREATOR_PURCHASE: '创作者购买奖励', CREATOR_PURCHASE_REFUND: '创作者购买奖励撤回', ADMIN_CREDIT: '管理员充值', ADMIN_DEBIT: '管理员扣减', REGISTRATION_GIFT: '注册赠送', AI_TAGS: 'AI 标签', AI_DESCRIPTION: 'AI 描述', AI_BANNER: 'Banner 图片', AI_WATCHFACE: 'AI 表盘', AI_WATCHFACE_ADJUST: '表盘局部调整', AI_WATCHFACE_REFUND: '表盘生成退款', AI_WATCHFACE_ADJUST_REFUND: '表盘调整退款' }
 const reasonOptions = computed(() => form.direction === 'ADD' ? ['RECHARGE', 'PLATFORM_GIFT', 'ACTIVITY_REWARD', 'SERVICE_COMPENSATION', 'OTHER'] : ['REFUND_RECOVERY', 'CORRECTION', 'VIOLATION', 'OTHER'])
 const time = (value: string) => new Date(value).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })
 let sequence = 0
