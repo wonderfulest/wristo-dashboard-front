@@ -51,14 +51,9 @@
           {{ formatNullableDateTime(row.deadLetterAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="打包类型" width="100">
+      <el-table-column label="打包类型" width="180">
         <template #default="{ row }">
-          {{ row.type || '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column label="设备 ID" width="140">
-        <template #default="{ row }">
-          {{ row.deviceId || '-' }}
+          {{ row.type === 'prg' ? `prg(${row.deviceId || '-'})` : row.type || '-' }}
         </template>
       </el-table-column>
       <el-table-column label="产品信息" min-width="320">
@@ -94,8 +89,19 @@
           {{ formatDateTime(row.updatedAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
+          <el-link
+            v-if="row.lastBuildLogPath"
+            class="build-log-link"
+            type="primary"
+            :underline="false"
+            :href="row.lastBuildLogPath"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="查看该任务最近一次打包日志"
+          >查看日志</el-link>
+          <span v-else class="build-log-empty">暂无日志</span>
           <el-button type="primary" link :disabled="deleting || submittingRequeue" @click="openRequeueDialog(row)">重新提交</el-button>
           <el-button type="danger" link :disabled="loading || deleting || submittingRequeue" @click="deleteDeadTasks([row])">删除</el-button>
         </template>
@@ -350,6 +356,16 @@ onMounted(() => {
 .no-error {
   color: #909399;
   font-style: italic;
+}
+
+.build-log-link,
+.build-log-empty {
+  margin-right: 12px;
+  font-size: 14px;
+}
+
+.build-log-empty {
+  color: #909399;
 }
 
 .dialog-tip {
