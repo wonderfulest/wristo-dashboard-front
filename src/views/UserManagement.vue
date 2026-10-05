@@ -80,6 +80,12 @@
             <el-option v-for="role in roleOptions" :key="role.roleCode" :label="role.roleName" :value="role.roleCode" />
           </el-select>
         </el-form-item>
+        <el-form-item v-if="isEdit" label="AI 生成">
+          <div>
+            <el-switch v-model="currentUser.aiGenerationEnabled" active-text="开启" inactive-text="关闭" />
+            <p class="ai-setting-hint">关闭后，该用户的 Studio 将隐藏 AI 生成入口。开启仍受全局总开关控制。</p>
+          </div>
+        </el-form-item>
         <el-form-item v-if="isEdit" label="系统禁用">
           <el-select v-model="currentUser.status">
             <el-option label="未禁用" :value="1" />
@@ -245,7 +251,7 @@ const normalizeStatus = (value: unknown): number | undefined => {
 
 const handleEdit = (row: UserInfo) => {
   isEdit.value = true
-  currentUser.value = { ...row, status: normalizeStatus(row.status) }
+  currentUser.value = { ...row, status: normalizeStatus(row.status), aiGenerationEnabled: row.aiGenerationEnabled !== false }
   if (Array.isArray(row.roles)) {
     // 统一将角色映射为 roleCode 字符串数组
     rolesInput.value = (row.roles as RoleInfo[]).map((r: RoleInfo) => r.roleCode)
@@ -292,6 +298,7 @@ const handleSave = async () => {
     }
 
     const updatePayload: UserUpdateDTO = {
+      aiGenerationEnabled: currentUser.value.aiGenerationEnabled,
       username,
       nickname: nickname || undefined,
       avatar: currentUser.value.avatar || undefined,
@@ -328,6 +335,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.ai-setting-hint { color: #909399; font-size: 12px; margin: 8px 0 0; }
 .user-management-page {
   height: 100%;
   display: flex;

@@ -18,6 +18,11 @@
       <span>密钥由服务端环境变量管理；已配置不代表已验证模型访问权限。</span>
     </div>
     <template v-if="settings">
+      <el-card shadow="never">
+        <template #header><strong>AI 生成总开关</strong></template>
+        <el-switch v-model="settings.enabled" :disabled="saving" active-text="开启" inactive-text="关闭" />
+        <p class="hint">关闭后，所有用户的 Studio AI 生成入口将隐藏，新的生成请求将被拒绝。开启后还需同时满足用户开关、场景及模型配置。保存后生效，Studio 刷新或重新进入后更新入口。</p>
+      </el-card>
       <el-card v-for="group in sceneGroups" :key="group.title" shadow="never">
         <template #header><strong>{{ group.title }}</strong></template>
         <p class="hint">{{ group.description }}</p>
@@ -101,6 +106,7 @@ const sceneModels = (scene: AiScene) => settings.value?.models.filter(m => m.cap
 const isSelected = (id: string) => Object.values(settings.value?.scenes || {}).some(route => route.modelId === id)
 const hasCredentials = (model: AiModel) => credentials.value[model.provider === 'OPENAI' ? 'OPENAI' : `BAILIAN_${model.capability}`]
 function sceneStatus(scene: AiScene) {
+  if (settings.value?.enabled === false) return '总开关已关闭'
   const route = settings.value?.scenes[scene]
   const model = sceneModels(scene).find(m => m.id === route?.modelId)
   if (!route?.enabled) return '场景已暂停'
@@ -110,7 +116,7 @@ function sceneStatus(scene: AiScene) {
   return '可用'
 }
 const sceneReady = (scene: AiScene) => sceneStatus(scene) === '可用'
-function apply(data: AiAdminView) { settings.value = data.settings; credentials.value = data.credentials; active.value = data.active }
+function apply(data: AiAdminView) { settings.value = { ...data.settings, enabled: data.settings.enabled !== false }; credentials.value = data.credentials; active.value = data.active }
 async function load() {
   loading.value = true; error.value = ''; settings.value = undefined
   try { const response = await getStudioAi(); if (response.code !== 0 || !response.data) throw new Error(); apply(response.data) }

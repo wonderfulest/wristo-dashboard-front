@@ -9,6 +9,7 @@ export interface UserBase {
 } 
 
 export interface UserUpdateDTO {
+  aiGenerationEnabled?: boolean
   username?: string
   nickname?: string
   avatar?: string
@@ -30,6 +31,7 @@ export interface AdminEmailAccountCreateDTO {
    newEmail: string
  }
 export interface UserInfo {
+  aiGenerationEnabled?: boolean
   id: number
   username: string
   nickname: string | null

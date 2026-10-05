@@ -10,6 +10,7 @@ export interface AiModel {
   enabled: boolean
 }
 export interface AiSettings {
+  enabled: boolean
   models: AiModel[]
   scenes: Record<AiScene, { enabled: boolean; modelId: string; creditCost: number }>
 }
