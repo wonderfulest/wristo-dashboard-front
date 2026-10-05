@@ -1,7 +1,7 @@
 import instance from '@/config/axios'
 import type { ApiResponse } from '@/types/api'
 
-export type AiScene = 'TAGS' | 'DESCRIPTION' | 'BANNER'
+export type AiScene = 'TAGS' | 'DESCRIPTION' | 'BANNER' | 'WATCHFACE' | 'WATCHFACE_ADJUST'
 export interface AiModel {
   id: string
   provider: 'BAILIAN' | 'OPENAI'

@@ -1,7 +1,7 @@
 <template>
   <div class="ai-page" v-loading="loading">
     <div class="header">
-      <div><h2>AI 模型配置</h2><p>为 Studio 的 Banner、应用标签和描述分别选择生成模型。</p></div>
+      <div><h2>AI 模型配置</h2><p>管理 Studio AI 表盘设计、Banner、应用标签和描述的开关、模型及积分。</p></div>
       <div class="actions">
         <el-button @click="$router.push('/ops/ai-prices')">模型官方定价</el-button>
         <el-button :disabled="loading || saving" @click="load">刷新</el-button>
@@ -18,9 +18,10 @@
       <span>密钥由服务端环境变量管理；已配置不代表已验证模型访问权限。</span>
     </div>
     <template v-if="settings">
-      <el-card shadow="never">
-        <template #header><strong>生成场景</strong></template>
-        <el-table :data="scenes">
+      <el-card v-for="group in sceneGroups" :key="group.title" shadow="never">
+        <template #header><strong>{{ group.title }}</strong></template>
+        <p class="hint">{{ group.description }}</p>
+        <el-table :data="group.scenes">
           <el-table-column label="场景" min-width="150"><template #default="{ row }">{{ row.label }}</template></el-table-column>
           <el-table-column label="启用" width="100"><template #default="{ row }"><el-switch v-model="settings.scenes[row.key as AiScene].enabled" :disabled="saving" /></template></el-table-column>
           <el-table-column label="默认模型" min-width="320">
@@ -41,11 +42,11 @@
         <el-table :data="settings.models">
           <el-table-column label="供应商" min-width="150"><template #default="{ row }"><el-select v-model="row.provider" :disabled="saving"><el-option label="阿里云百炼" value="BAILIAN" /><el-option label="OpenAI" value="OPENAI" /></el-select></template></el-table-column>
           <el-table-column label="模型名称" min-width="230"><template #default="{ row }"><el-input v-model="row.model" maxlength="100" :disabled="saving" placeholder="供应商 API 模型名称" /></template></el-table-column>
-          <el-table-column label="能力" min-width="190"><template #default="{ row }"><el-select v-model="row.capability" :disabled="saving"><el-option label="视觉理解与文本" value="TEXT" /><el-option label="参考图生成图片" value="IMAGE" /></el-select></template></el-table-column>
+          <el-table-column label="能力" min-width="190"><template #default="{ row }"><el-select v-model="row.capability" :disabled="saving"><el-option label="文本 / 视觉理解" value="TEXT" /><el-option label="参考图生成图片" value="IMAGE" /></el-select></template></el-table-column>
           <el-table-column label="启用" width="95"><template #default="{ row }"><el-switch v-model="row.enabled" :disabled="saving" /></template></el-table-column>
           <el-table-column label="操作" width="100"><template #default="{ row }"><el-button type="danger" link :disabled="saving || isSelected(row.id)" @click="removeModel(row.id)">删除</el-button></template></el-table-column>
         </el-table>
-        <p class="hint">文本模型须支持图像输入。OpenAI 文本使用 Responses API，图片使用 GPT Image 编辑接口；百炼沿用兼容文本接口和多模态图片接口。自定义模型需与对应接口兼容。</p>
+        <p class="hint">AI 表盘设计使用视觉文本模型理解提示词和参考图，生成逐元素布局，再由服务端编译为可编辑 WRT；用于应用标签和描述的文本模型还须支持图像输入。OpenAI 文本使用 Responses API，图片使用 GPT Image 编辑接口；百炼沿用兼容文本接口和多模态图片接口。自定义模型需与对应接口兼容。</p>
       </el-card>
     </template>
     <el-drawer v-model="historyVisible" title="AI 模型配置 · 修改历史" size="min(850px, 96vw)">
@@ -76,7 +77,24 @@ const historyVisible = ref(false)
 const historyLoading = ref(false)
 const historyError = ref('')
 const histories = ref<GlobalConfigHistory[]>([])
-const scenes: { key: AiScene; label: string }[] = [{ key: 'BANNER', label: 'Banner 图片' }, { key: 'TAGS', label: '应用标签' }, { key: 'DESCRIPTION', label: 'AI 描述' }]
+const scenes: { key: AiScene; label: string }[] = [{ key: 'WATCHFACE', label: 'AI 表盘设计（WRT）' }, { key: 'WATCHFACE_ADJUST', label: 'AI 表盘局部调整' }, { key: 'BANNER', label: 'Banner 图片' }, { key: 'TAGS', label: '应用标签' }, { key: 'DESCRIPTION', label: 'AI 描述' }]
+const sceneGroups = [
+  {
+    title: 'AI 表盘设计',
+    description: '对应 Studio 新建画布中的 Create with AI。支持提示词与一张参考图共同生成可编辑 WRT，包含数字/指针时间、月相、天气和动态资源组。参考图生成需要支持图像输入的模型。默认每次 20 积分，可在此调整；实际调用模型前扣费，生成失败自动退回原扣款。',
+    scenes: scenes.filter(scene => scene.key === 'WATCHFACE'),
+  },
+  {
+    title: 'AI 表盘调整',
+    description: '对应编辑器中的 AI Adjust 对话面板。按每轮调整请求计费，默认 5 积分；调用模型前扣费，生成或校验失败自动退款。成功生成后不应用或撤销不退款，预览和应用不重复扣费。',
+    scenes: scenes.filter(scene => scene.key === 'WATCHFACE_ADJUST'),
+  },
+  {
+    title: '其他生成场景',
+    description: '分别管理 Banner 图片、应用标签和 AI 描述。',
+    scenes: scenes.filter(scene => scene.key !== 'WATCHFACE' && scene.key !== 'WATCHFACE_ADJUST'),
+  },
+]
 const credentialLabels = [{ key: 'BAILIAN_TEXT', label: '百炼文本' }, { key: 'BAILIAN_IMAGE', label: '百炼图片' }, { key: 'OPENAI', label: 'OpenAI' }]
 const providerLabel = (value: string) => value === 'OPENAI' ? 'OpenAI' : '百炼'
 const sceneModels = (scene: AiScene) => settings.value?.models.filter(m => m.capability === (scene === 'BANNER' ? 'IMAGE' : 'TEXT')) || []

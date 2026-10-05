@@ -1,6 +1,6 @@
 <template>
   <div class="usage-page">
-    <div class="page-header"><div><h2>AI 用量与成本</h2><p>按用户和模型核对消耗，成本按调用时的价格版本估算。</p></div><el-button @click="$router.push('/ops/ai-prices')">模型官方定价</el-button></div>
+    <div class="page-header"><div><h2>AI 用量与成本</h2><p>按用户和模型核对消耗，成本按调用时的价格版本估算。</p></div><div><el-button type="primary" @click="creditsDialog?.open(filters.userId)">积分管理</el-button><el-button @click="$router.push('/ops/ai-prices')">模型官方定价</el-button></div></div>
     <el-alert title="预估成本按配置的最高单价计算，不应用缓存折扣、免费额度或阶梯优惠；不同币种分别汇总。缺少价格或计费用量的调用不计为零成本。" type="info" :closable="false" show-icon />
     <el-card shadow="never">
       <el-form inline @submit.prevent="search">
@@ -35,21 +35,24 @@
         <el-table-column label="图片" width="90"><template #default="{row}">{{ amount(row.image_count) }}</template></el-table-column>
         <el-table-column label="预估成本" min-width="180"><template #default="{row}"><strong>{{ row.estimated_cost == null ? '—' : `${row.cost_currency} ${money(row.estimated_cost)}` }}</strong><div class="muted" v-if="group === 'calls'">{{ costStatuses[row.cost_status] || '未估算' }}</div><div class="muted" v-else>未定价 {{ row.unpriced_calls || 0 }} · 缺用量 {{ row.unknown_cost_calls || 0 }}</div></template></el-table-column>
         <el-table-column v-if="group === 'calls'" label="时间 / 价格版本" min-width="210"><template #default="{row}">{{ time(row.created_at) }}<div><el-button v-if="row.pricing_version" link type="primary" @click="$router.push({path:'/ops/ai-prices', query:{version:row.pricing_version}})">查看价格版本</el-button><span v-else class="muted">未关联价格</span></div><el-tooltip :content="row.request_id"><span class="muted">请求 {{ row.request_id?.slice(0,8) }}</span></el-tooltip></template></el-table-column>
-        <el-table-column v-if="group === 'users'" label="操作" width="95" fixed="right"><template #default="{row}"><el-button link type="primary" @click="userDetails(row.user_id)">调用明细</el-button></template></el-table-column>
+        <el-table-column v-if="group === 'users'" label="操作" width="180" fixed="right"><template #default="{row}"><el-button link type="primary" @click="userDetails(row.user_id)">调用明细</el-button><el-button link type="primary" @click="creditsDialog?.open(Number(row.user_id))">积分管理</el-button></template></el-table-column>
       </el-table>
       <div class="pagination"><span class="muted">同一用户或模型的不同币种分别列行，未知用量显示“—”。</span><el-pagination v-model:current-page="page" v-model:page-size="pageSize" :page-sizes="[20,50,100]" :total="total" layout="total, sizes, prev, pager, next" @current-change="load" @size-change="search" /></div>
     </el-card>
+    <StudioCreditsDialog ref="creditsDialog" />
   </div>
 </template>
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import UserSelect from '@/components/users/UserSelect.vue'
+import StudioCreditsDialog from '@/components/users/StudioCreditsDialog.vue'
+const creditsDialog = ref<InstanceType<typeof StudioCreditsDialog>>()
 import { getUsageOverview, getUsageReport, type UsageFilter, type UsageOverview, type UsageRow } from '@/api/aiUsage'
 const filters = reactive<UsageFilter>({})
 const dates = ref<string[]>([])
 const group = ref('users'), page = ref(1), pageSize = ref(20), total = ref(0)
 const loading = ref(false), error = ref(''), overview = ref<UsageOverview>(), rows = ref<UsageRow[]>([])
-const scenes: Record<string,string> = { AI_TAGS:'应用标签', AI_DESCRIPTION:'AI 描述', AI_BANNER:'Banner 图片', AI_MARKETING:'营销文案' }
+const scenes: Record<string,string> = { AI_WATCHFACE:'可编辑表盘', AI_WATCHFACE_ADJUST:'表盘局部调整', AI_TAGS:'应用标签', AI_DESCRIPTION:'AI 描述', AI_BANNER:'Banner 图片', AI_MARKETING:'营销文案' }
 const statuses: Record<string,string> = { SUCCEEDED:'成功', FAILED:'失败', STARTED:'待完成' }
 const costStatuses: Record<string,string> = { ESTIMATED:'已估算', UNPRICED:'未配置价格', UNKNOWN_USAGE:'缺少计费用量' }
 const amount = (v?: number | null) => v == null ? '—' : Number(v).toLocaleString('zh-CN')
