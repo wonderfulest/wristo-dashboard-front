@@ -22,6 +22,7 @@ test('顶部菜单按业务流程组织', () => {
     'home',
     'content-production',
     'app-operations',
+    'games',
     'users-transactions',
     'marketing-growth',
     'platform-operations',

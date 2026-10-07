@@ -151,6 +151,16 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
+    key: 'games',
+    title: '小游戏',
+    icon: 'Trophy',
+    basePaths: ['/games'],
+    children: [
+      { key: 'games-overview', title: '运营总览', icon: 'DataAnalysis', path: '/games/overview' },
+      { key: 'games-manage', title: '游戏管理', icon: 'FolderOpened', path: '/games/manage' },
+    ],
+  },
+  {
     key: 'users-transactions',
     title: '用户与交易',
     icon: 'User',

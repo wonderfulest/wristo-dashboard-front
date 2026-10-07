@@ -5,6 +5,11 @@ import { redirectToSsoLogin } from '@/utils/ssoRedirect'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/website/games', redirect: '/games/manage' },
+    { path: '/games', redirect: '/games/overview' },
+    { path: '/games/overview', name: 'GamesOverview', component: () => import('@/views/games/GameOverview.vue'), meta: { requiresAuth: true } },
+    { path: '/games/manage', name: 'GamesAdmin', component: () => import('@/views/website/Games.vue'), meta: { requiresAuth: true } },
+    { path: '/games/:gameKey', name: 'GameOperations', component: () => import('@/views/games/GameDetail.vue'), meta: { requiresAuth: true } },
 
     // Contact Us
     {

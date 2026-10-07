@@ -24,7 +24,7 @@
         <div v-if="ratioTip" class="ratio-tip" :title="ratioTip">{{ ratioTip }}</div>
 
         <div v-if="uploading" class="mask">上传中...</div>
-        <button v-if="modelValue" type="button" class="clear" :disabled="uploading" @click.stop="clear">×</button>
+        <button v-if="modelValue || previewUrl" type="button" class="clear" :disabled="uploading" @click.stop="clear">×</button>
       </div>
     </el-upload>
   </div>
@@ -61,6 +61,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'update:modelValue', v?: number): void
   (e: 'uploaded', v: ImageVO): void
+  (e: 'uploading', v: boolean): void
 }>()
 
 const uploading = ref(false)
@@ -189,11 +190,12 @@ const beforeUpload = (file: File) => {
 const uploadRawFile = async (raw: File) => {
   if (!beforeUpload(raw)) return
 
-  const ok = await ensureAspectCodeValid()
-  if (!ok) return
-
+  if (uploading.value) return
   uploading.value = true
+  emit('uploading', true)
   try {
+    const ok = await ensureAspectCodeValid()
+    if (!ok) return
     const res = await uploadImage(raw, props.aspectCode)
     const img = (res as any)?.data as ImageVO | undefined
     if (!img?.id) {
@@ -207,6 +209,7 @@ const uploadRawFile = async (raw: File) => {
     ElMessage.error(e?.msg || '上传失败')
   } finally {
     uploading.value = false
+    emit('uploading', false)
   }
 }
 
