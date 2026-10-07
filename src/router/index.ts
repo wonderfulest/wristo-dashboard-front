@@ -200,6 +200,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/dashboard/users',
+      name: 'UserOverview',
+      component: () => import('@/views/dashboard/UserOverview.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/dashboard/sales',
       name: 'DashboardSales',
       component: () => import('@/views/dashboard/SalesAnalytics.vue'),

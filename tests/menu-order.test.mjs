@@ -31,7 +31,10 @@ test('顶部菜单按业务流程组织', () => {
 test('各业务域使用稳定的二级分组顺序', () => {
   assert.deepEqual(getDirectChildKeys('home'), [
     'dashboard-overview',
+    'dashboard-users',
     'dashboard-sales',
+    'dashboard-activations',
+    'activation-user-detail',
     'dashboard-launch',
     'dashboard-value',
     'tickets',

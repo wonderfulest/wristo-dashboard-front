@@ -116,13 +116,16 @@
 
     <el-dialog v-model="startVisible" title="手动开启备份" width="min(800px, 92vw)">
       <el-alert
-        title="请登录数据库所在服务器，在宿主机终端手动执行以下命令。"
+        title="请登录 US1 数据库服务器（SSH 别名 wristo-api-us1），在宿主机终端使用 root 或具有 sudo 权限的账号执行以下命令。"
         type="info"
         :closable="false"
         show-icon
       />
       <pre class="backup-command"><code>{{ manualBackupCommand }}</code></pre>
-      <p>执行完成后，请确认终端显示“上传完成”，再返回此页面刷新“可用备份”。</p>
+      <p>命令调用已安装的备份服务，仅备份 wristo 数据库。服务使用 /opt/wristo/wristo-tools/deploy/us1/maintenance.py，无需切换目录或手动加载环境变量。</p>
+      <p>systemctl start 会等待任务结束；已有备份正在运行时会等待该任务。请勿重复执行，也不要添加 --no-block。</p>
+      <p>确认命令显示“备份任务成功结束”，且 Result=success、ExecMainStatus=0；核对 backup-success.json 中的 finished_at（UTC）和 key，再返回此页面刷新“可用备份”和“执行记录”。云端备份位于 mysql/backups/us1/。</p>
+      <p>若执行失败，请查看命令末尾输出的日志。backup-success.json 可能保留上次成功上传的信息，不能单凭该文件判断本次任务成功。</p>
       <template #footer>
         <el-button @click="startVisible = false">关闭</el-button>
         <el-button type="primary" @click="copyBackupCommand">复制命令</el-button>
@@ -149,7 +152,14 @@ const detailVisible = ref(false)
 const current = ref<DbBackupJob | null>(null)
 
 const startVisible = ref(false)
-const manualBackupCommand = "cd /app/wristo-tools\n\nbash -c '\ntrap '\\''rc=$?; printf \"退出码=%s，位置=%s:%s\\n\" \"$rc\" \"${BASH_SOURCE[0]:-unknown}\" \"$LINENO\"'\\'' EXIT\ntrap '\\''rc=$?; printf \"失败位置=%s:%s，退出码=%s\\n\" \"${BASH_SOURCE[0]:-unknown}\" \"$LINENO\" \"$rc\"'\\'' ERR\nset -E\nsource prod-tasks/database/backup_databases.sh\n'"
+const manualBackupCommand = `if sudo systemctl start wristo-us1-backup.service; then
+  echo "备份任务成功结束"
+  sudo cat /var/lib/wristo-us1-maintenance/backup-success.json
+else
+  echo "备份任务失败，请检查下方服务状态和日志"
+fi
+sudo systemctl show wristo-us1-backup.service -p Result -p ExecMainStatus
+sudo tail -n 80 /var/log/wristo-us1/backup.log`
 
 const copyBackupCommand = async () => {
   try {

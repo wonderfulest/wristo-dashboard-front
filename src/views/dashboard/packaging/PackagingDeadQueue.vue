@@ -66,6 +66,15 @@
           {{ row.product?.user?.username || '-' }}
         </template>
       </el-table-column>
+      <el-table-column label="提交用户" min-width="180">
+        <template #default="{ row }">
+          <template v-if="row.submittedByUserId != null">
+            <div>{{ row.submittedByUsername || '未命名用户' }}</div>
+            <div class="submitter-id">ID：{{ row.submittedByUserId }}</div>
+          </template>
+          <span v-else>未记录</span>
+        </template>
+      </el-table-column>
       <el-table-column label="打包状态" width="120">
         <template #default="{ row }">
           <StatusTag :status="row.packagingStatus" />
@@ -345,6 +354,11 @@ onMounted(() => {
   margin-bottom: 12px;
   color: #606266;
   font-size: 13px;
+}
+
+.submitter-id {
+  color: #909399;
+  font-size: 12px;
 }
 
 .error-message {

@@ -2,7 +2,13 @@
   <div class="user-management-page">
     <div class="page-header">
       <el-button type="success" @click="handleAdd">注册邮箱账号</el-button>
+      <el-button @click="router.push('/dashboard/users')">用户统计</el-button>
     </div>
+    <el-alert v-if="route.query.overview === '1'" class="overview-filter" type="info" :closable="false" show-icon>
+      <template #title>来自用户统计：{{ overviewLabel }}（排除已删除账号）</template>
+      <p>当前列表沿用概览筛选条件；账号状态和最后登录时间可能随后更新。点击重置可清除全部筛选。</p>
+      <details><summary>查看筛选条件</summary><ul><li v-for="filter in overviewFilterDescriptions" :key="filter">{{ filter }}</li></ul></details>
+    </el-alert>
     <div class="filters">
       <UserSelect v-model="searchUserId" placeholder="按用户搜索" @change="handleUserChange" />
       <el-select v-model="query.roleId" clearable filterable placeholder="按角色筛选" style="width: 220px; margin-right: 12px;">
@@ -31,6 +37,14 @@
       <el-table-column prop="username" label="用户名" width="180" sortable="custom" />
       <el-table-column prop="nickname" label="昵称" width="180" sortable="custom" />
       <el-table-column prop="email" label="邮箱" width="280" sortable="custom" />
+      <el-table-column prop="createdAt" label="注册时间（UTC）" width="190" sortable="custom" />
+      <el-table-column prop="lastLoginTime" label="最后登录（UTC）" width="190" sortable="custom" />
+      <el-table-column label="注册入口" width="150">
+        <template #default="{ row }">{{ registrationSourceLabels[row.registrationSource] || '未知' }}</template>
+      </el-table-column>
+      <el-table-column label="注册方式" width="120">
+        <template #default="{ row }">{{ registrationMethodLabels[row.registrationMethod] || '未知' }}</template>
+      </el-table-column>
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
       <el-table-column label="系统禁用" width="110">
         <template #default="{ row }">
@@ -108,7 +122,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { pageUsers, registerEmailAccount, updateUser, getUserStats } from '@/api/user'
 import { getRoleList } from '@/api/role'
@@ -117,7 +132,22 @@ import type { UserStats, UserUpdateDTO } from '@/types/user'
 import type { AdminEmailAccountCreateDTO } from '@/types/user'
 import type { UserPageQueryDTO } from '@/api/user'
 import UserSelect from '@/components/users/UserSelect.vue'
+import { registrationSourceLabels, registrationMethodLabels, parseOverviewFilters } from '@/components/users/userOverview.mjs'
 
+const route = useRoute(), router = useRouter()
+const overviewLabel = computed(() => typeof route.query.overviewLabel === 'string' ? route.query.overviewLabel : '用户明细')
+const overviewFilterDescriptions = computed(() => {
+  const f = parseOverviewFilters(route.query)
+  return [
+    f.createdFrom && `注册时间 ≥ ${f.createdFrom} UTC`, f.createdBefore && `注册时间 < ${f.createdBefore} UTC`,
+    f.loginFrom && `最后登录 ≥ ${f.loginFrom} UTC`, f.loginBefore && `最后登录 < ${f.loginBefore} UTC`,
+    f.registrationSource && `注册入口：${registrationSourceLabels[f.registrationSource] || f.registrationSource}`,
+    f.registrationMethod && `注册方式：${registrationMethodLabels[f.registrationMethod] || f.registrationMethod}`,
+    f.status != null && `账号状态：${f.status === 1 ? '正常' : '禁用'}`,
+    f.emailVerified != null && `邮箱${f.emailVerified ? '已验证' : '未验证'}`,
+    f.neverLoggedIn && '无登录记录', f.noRole && '未分配角色', f.roleId && `角色 ID：${f.roleId}`,
+  ].filter((value): value is string => typeof value === 'string' && value.length > 0)
+})
 const users = ref<UserInfo[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -142,6 +172,7 @@ const query = ref<UserPageQueryDTO>({
   roleId: undefined,
   email: undefined,
   orderBy: 'id desc',
+  ...parseOverviewFilters(route.query),
 })
 
 const searchUserId = ref<number | undefined>(undefined)
@@ -206,10 +237,11 @@ const handleSearch = () => {
   fetchUsers()
 }
 
-const handleReset = () => {
+const handleReset = async () => {
   searchUserId.value = undefined
   query.value = { pageNum: 1, pageSize: query.value.pageSize, userId: undefined, username: undefined, roleId: undefined, email: undefined }
-  fetchUsers()
+  if (route.query.overview === '1') await router.replace({ path: route.path, query: {} })
+  else fetchUsers()
 }
 
 const handlePageChange = (page: number) => {
@@ -229,7 +261,8 @@ const handleSortChange = (payload: { column: any; prop: string; order: 'ascendin
     query.value.orderBy = undefined
   } else {
     const dir = order === 'ascending' ? 'asc' : 'desc'
-    query.value.orderBy = `${prop} ${dir}`
+    const column = ({ createdAt: 'created_at', lastLoginTime: 'last_login_time' } as Record<string, string>)[prop] || prop
+    query.value.orderBy = `${column} ${dir}`
   }
   query.value.pageNum = 1
   fetchUsers()
@@ -327,6 +360,11 @@ const handleSave = async () => {
   }
 }
 
+watch(() => route.query, () => {
+  searchUserId.value = undefined
+  query.value = { pageNum: 1, pageSize: query.value.pageSize, orderBy: 'id desc', ...parseOverviewFilters(route.query) }
+  fetchUsers()
+})
 onMounted(() => {
   fetchUsers()
   fetchUserStats()
@@ -336,6 +374,7 @@ onMounted(() => {
 
 <style scoped>
 .ai-setting-hint { color: #909399; font-size: 12px; margin: 8px 0 0; }
+.overview-filter { margin-bottom: 16px; }
 .user-management-page {
   height: 100%;
   display: flex;

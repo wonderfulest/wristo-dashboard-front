@@ -53,6 +53,8 @@
     </el-table>
 
 
+    <CompanionAppsConfig @saved="fetchList" />
+
     <!-- 审核时间快捷区域 -->
     <el-card class="quick-review" shadow="never">
       <template #header>
@@ -119,6 +121,7 @@
 </template>
 
 <script setup lang="ts">
+import CompanionAppsConfig from '@/components/ops/CompanionAppsConfig.vue'
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { listConfigs, upsertConfig, getConfigHistory, getReviewTime, setReviewTime, refreshReviewTime, activateConfig } from '@/api/config'

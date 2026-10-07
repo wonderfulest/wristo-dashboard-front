@@ -5,6 +5,7 @@ import type { AdminEmailAccountCreateDTO } from '@/types/user'
 import type { ChangeUserEmailDTO } from '@/types/user'
 import type { PageQueryDTO } from '@/types/api'
 import type { MchUserVO, UserMchUpdateDTO } from '@/types/user'
+import type { OverviewFilters } from '@/components/users/userOverview.mjs'
 
 export const getUserInfo = (): Promise<ApiResponse<UserInfo>> => {
   return instance.get('/users/info?populate=roles')
@@ -45,7 +46,7 @@ export const updateUser = (id: number, data: UserUpdateDTO): Promise<ApiResponse
 }
 
 // 分页查询用户
-export interface UserPageQueryDTO extends PageQueryDTO {
+export interface UserPageQueryDTO extends PageQueryDTO, OverviewFilters {
   userId?: number
   username?: string
   roleId?: number

@@ -5,10 +5,10 @@
         <p>官网只展示主系列；所有基础分类、细分分类、功能、场景和设备维度统一维护为标签。</p>
       </div>
       <div class="header-actions">
-        <el-button v-if="activeTab !== 'tags'" type="primary" @click="handleAddCategory">
+        <el-button v-if="activeTab === 'public'" type="primary" @click="handleAddCategory">
           新增主系列
         </el-button>
-        <el-button v-else type="primary" @click="handleAddTag">新增标签</el-button>
+        <el-button v-else-if="activeTab === 'tags'" type="primary" @click="handleAddTag">新增标签</el-button>
       </div>
     </div>
 
@@ -77,7 +77,7 @@
           <el-button @click="fetchTags">刷新</el-button>
         </div>
 
-        <el-alert title="标签由统一词库维护。Slug 和分组创建后固定；停用标签会从产品展示与可选词库中隐藏。" type="info" :closable="false" style="margin-bottom: 12px" />
+        <el-alert title="标签由统一词库维护。Slug 创建后固定，标签组可调整；停用标签会从产品展示与可选词库中隐藏。" type="info" :closable="false" style="margin-bottom: 12px" />
         <el-table :data="tags" style="width: 100%" v-loading="tagLoading">
           <el-table-column prop="nameZh" label="中文名称" min-width="120" />
           <el-table-column prop="name" label="标签" min-width="180">
@@ -128,6 +128,7 @@
           />
         </div>
       </el-tab-pane>
+      <el-tab-pane label="百炼标签生成" name="generation"><TagGeneration /></el-tab-pane>
     </el-tabs>
 
     <el-dialog v-model="categoryDialogVisible" :title="categoryDialogType === 'add' ? '新增主系列' : '编辑分类'" width="520px">
@@ -181,8 +182,8 @@
           <el-input v-model.trim="tagForm.slug" maxlength="100" :disabled="tagDialogType === 'edit'" placeholder="amoled" />
         </el-form-item>
         <el-form-item label="标签组" prop="tagGroup">
-          <el-select v-model="tagForm.tagGroup" :disabled="tagDialogType === 'edit'" style="width: 100%">
-            <el-option v-for="group in tagGroups" :key="group.value" :label="group.label" :value="group.value" />
+          <el-select v-model="tagForm.tagGroup" style="width: 100%">
+            <el-option v-for="group in editableTagGroups" :key="group.value" :label="group.label" :value="group.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="排序">
@@ -252,7 +253,9 @@ import ImageUpload from '@/components/common/ImageUpload.vue'
 import ImagePreview from '@/components/common/ImagePreview.vue'
 import type { ImageVO } from '@/types/image'
 
-type TabName = 'public' | 'tags'
+import TagGeneration from '@/components/tags/TagGeneration.vue'
+
+type TabName = 'public' | 'tags' | 'generation'
 
 const publicSeries = [
   { slug: 'whole', name: 'All Watch Faces', sort: 1000, note: '官网总入口，不作为风格标签。' },
@@ -268,7 +271,23 @@ const publicSeries = [
   { slug: 'seasonal', name: 'Seasonal', sort: 900, note: '节日或活动期展示。' },
 ]
 
+const visualTagGroups = [
+  { value: 'display-type', label: '时间显示' },
+  { value: 'layout', label: '布局' },
+  { value: 'classic-retro', label: '经典复古' },
+  { value: 'tech-mechanical', label: '科技机械' },
+  { value: 'visual-style', label: '视觉风格' },
+  { value: 'nature-themes', label: '自然' },
+  { value: 'space-themes', label: '宇宙' },
+  { value: 'art-illustration', label: '艺术插画' },
+  { value: 'interests-themes', label: '兴趣主题' },
+  { value: 'seasons', label: '四季' },
+  { value: 'holidays', label: '节日' },
+  { value: 'color', label: '颜色' },
+]
+
 const tagGroups = [
+  ...visualTagGroups,
   { value: 'style', label: '风格' },
   { value: 'function', label: '功能' },
   { value: 'scene', label: '场景' },
@@ -308,12 +327,18 @@ const tagQuery = ref<{ keyword: string; tagGroup: string; status: number | undef
 const tagDialogVisible = ref(false)
 const tagDialogType = ref<'add' | 'edit'>('add')
 const tagFormRef = ref<FormInstance>()
+const originalTagGroup = ref('')
+const editableTagGroups = computed(() => {
+  if (tagDialogType.value === 'add') return tagGroups
+  const isVisual = visualTagGroups.some(group => group.value === originalTagGroup.value)
+  return isVisual ? visualTagGroups : tagGroups.filter(group => group.value === originalTagGroup.value)
+})
 const tagForm = ref({
   id: 0,
   name: '',
   slug: '',
   nameZh: '',
-  tagGroup: 'style',
+  tagGroup: 'layout',
   sort: 0,
   status: 1,
   description: '',
@@ -504,11 +529,12 @@ const handleCategoryStatusChange = async (row: Category, val: number) => {
 
 const handleAddTag = () => {
   tagDialogType.value = 'add'
-  tagForm.value = { id: 0, name: '', nameZh: '', slug: '', tagGroup: 'style', sort: 0, status: 1, description: '' }
+  tagForm.value = { id: 0, name: '', nameZh: '', slug: '', tagGroup: 'layout', sort: 0, status: 1, description: '' }
   tagDialogVisible.value = true
 }
 
 const handleEditTag = (row: ProductTag) => {
+  originalTagGroup.value = row.tagGroup
   tagDialogType.value = 'edit'
   tagForm.value = {
     id: row.id,

@@ -19,6 +19,8 @@ export interface ActivationTimelineItem {
   deviceKey: string | null
   deviceName: string | null
   partNumber: string | null
+  activationPlatform: string
+  miniProgram: string | null
   source: string
   channel: string
   activatedAt: string | null
@@ -45,6 +47,7 @@ export interface ActivationDetail {
   historical: boolean
 }
 export interface ActivationDetailQuery {
+  activationPlatform?: string
   email: string
   startDate?: string
   endDate?: string

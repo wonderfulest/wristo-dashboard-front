@@ -28,7 +28,15 @@ export interface ActivationPercentile {
   userCount: number
   actualPercent: number
 }
+export interface ActivationPlatformCount {
+  activationPlatform: string
+  activationCount: number
+  userCount: number
+}
+export interface ActivationPlatformDaily extends ActivationPlatformCount { date: string }
 export interface ActivationAnalytics {
+  platforms: ActivationPlatformCount[]
+  platformDaily: ActivationPlatformDaily[]
   activationUserCount: number
   deviceUserCount: number
   appDistribution: ActivationPercentile[]

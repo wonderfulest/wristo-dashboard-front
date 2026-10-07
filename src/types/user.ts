@@ -31,6 +31,8 @@ export interface AdminEmailAccountCreateDTO {
    newEmail: string
  }
 export interface UserInfo {
+  registrationSource?: string | null
+  registrationMethod?: string | null
   aiGenerationEnabled?: boolean
   id: number
   username: string

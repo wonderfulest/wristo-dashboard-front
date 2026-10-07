@@ -1,6 +1,6 @@
 <template>
   <div class="activation-page">
-    <DashboardFilterBar eyebrow="ACTIVATION ANALYTICS" title="激活分析" description="查看六位码激活趋势、权益来源与用户激活排行" />
+    <DashboardFilterBar eyebrow="ACTIVATION ANALYTICS" title="激活分析" description="查看激活平台、六位码激活趋势、权益来源与用户激活排行" />
     <section class="filters">
       <div class="heading">
         <el-radio-group v-model="quickDays" size="small" @change="applyQuickRange"><el-radio-button :label="7">近 7 天</el-radio-button><el-radio-button :label="30">近 30 天</el-radio-button><el-radio-button :label="90">近 90 天</el-radio-button></el-radio-group>
@@ -31,7 +31,7 @@
       </el-card>
       <el-card shadow="never" v-loading="loading">
         <template #header>
-          <div class="heading"><h2>每日激活来源</h2><el-radio-group v-model="sourceMode" size="small"><el-radio-button label="count">数量</el-radio-button><el-radio-button label="percent">占比</el-radio-button></el-radio-group></div>
+          <div class="heading"><h2>每日激活权益来源</h2><el-radio-group v-model="sourceMode" size="small"><el-radio-button label="count">数量</el-radio-button><el-radio-button label="percent">占比</el-radio-button></el-radio-group></div>
         </template>
         <p class="muted">占比的分母为当天全部成功激活次数。直接购买包含购买套餐时的首次激活；已有套餐权益指无需再次购买的套餐复用。</p>
         <ActivationChart :items="data.daily" :tracking-started-at="data.trackingStartedAt" :mode="sourceMode" />
@@ -41,6 +41,22 @@
           <el-table-column label="全部激活" width="110"><template #default="{ row }">{{ isObserved(row.date) ? row.totalCount : '未采集' }}</template></el-table-column>
           <el-table-column v-for="source in activationSources" :key="source.key" :label="source.label + ' / 占比'" min-width="160"><template #default="{ row }">{{ isObserved(row.date) ? `${row[source.key]} / ${percent(row[source.key], row.totalCount)}%` : '未采集' }}</template></el-table-column>
         </el-table>
+      </el-card>
+      <el-card shadow="never" v-loading="loading">
+        <template #header><div class="heading"><h2>激活平台来源</h2>
+          <el-select v-model="selectedPlatform" aria-label="统计平台来源" placeholder="全部平台" style="width: 180px">
+            <el-option value="" label="全部平台" />
+            <el-option v-for="platform in activationPlatforms" :key="platform.value" :value="platform.value" :label="platform.label" />
+          </el-select>
+        </div></template>
+        <p class="muted">按所选日期和应用统计。平台筛选仅影响本区域；用户按邮箱去重，同一用户可出现在多个平台，人数不可相加。历史记录及未上报来源的客户端显示为未知。</p>
+        <el-table :data="platformRows" stripe>
+          <el-table-column prop="label" label="平台来源" min-width="150" />
+          <el-table-column prop="activationCount" label="激活次数" min-width="120" />
+          <el-table-column prop="userCount" label="去重用户数" min-width="120" />
+        </el-table>
+        <h2 class="platform-trend-title">每日平台激活次数</h2>
+        <ActivationPlatformChart :dates="data.daily.filter(row => isObserved(row.date)).map(row => row.date)" :items="data.platformDaily || []" :selected="selectedPlatform" />
       </el-card>
       <section class="heading ranking-controls">
         <h2>用户邮箱排行与分布</h2>
@@ -86,6 +102,8 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import DashboardFilterBar from '@/components/dashboard/DashboardFilterBar.vue'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
+import ActivationPlatformChart from '@/components/dashboard/ActivationPlatformChart.vue'
+import { activationPlatforms, platformSummary } from '@/components/dashboard/activationPlatforms.mjs'
 import ActivationChart from '@/components/dashboard/ActivationChart.vue'
 import { activationSources, activationSummary, activationPercent as percent } from '@/components/dashboard/activationCharts.mjs'
 import type { DashboardFilter } from '@/components/dashboard/dashboardTypes'
@@ -125,6 +143,8 @@ const sourceMode = ref<'count' | 'percent'>('count')
 const loading = ref(false)
 const error = ref('')
 const data = ref<ActivationAnalytics | null>(null)
+const selectedPlatform = ref('')
+const platformRows = computed(() => platformSummary(data.value?.platforms).filter(row => !selectedPlatform.value || row.value === selectedPlatform.value))
 const summary = computed(() => activationSummary(data.value?.daily || []))
 const rankings = computed(() => [
   { key: 'activation', page: activationPage.value, total: data.value?.activationUserCount || 0, title: '激活次数最多的用户', rows: data.value?.activationRanking || [], primary: 'activationCount', label: '激活次数', secondary: 'appCount', secondaryLabel: '不同应用数' },
@@ -162,6 +182,7 @@ onBeforeUnmount(() => { requestId++ })
 </script>
 
 <style scoped>
+.platform-trend-title { margin-top: 24px; }
 .activation-page { padding: 16px; max-width: 1480px; margin: 0 auto; display: grid; gap: 16px; }
 .filters { display: grid; gap: 8px; }
 .muted, small { color: #708078; font-size: 12px; line-height: 1.7; }

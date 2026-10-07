@@ -40,6 +40,10 @@
       <el-card shadow="never">
         <template #header><div class="timeline-heading"><h2>激活时间线</h2><el-radio-group v-model="historical" size="small" @change="resetPageAndFetch"><el-radio-button :label="false">有时间记录</el-radio-button><el-radio-button :label="true">历史记录 · 时间未知</el-radio-button></el-radio-group></div></template>
         <div class="timeline-filters">
+          <el-select v-model="activationPlatform" aria-label="激活平台来源" placeholder="全部平台来源" style="width: 180px" @change="resetPageAndFetch">
+            <el-option value="" label="全部平台来源" />
+            <el-option v-for="platform in activationPlatforms" :key="platform.value" :value="platform.value" :label="platform.label" />
+          </el-select>
           <el-date-picker v-if="!historical" v-model="dateRange" type="daterange" value-format="YYYY-MM-DD" start-placeholder="开始日期（UTC）" end-placeholder="结束日期（UTC）" @change="resetPageAndFetch" />
           <span class="muted">{{ historical ? '历史记录无法按日期排序或筛选' : '按激活时间倒序；日期筛选仅影响时间线' }} · 共 {{ data.total }} 条</span>
         </div>
@@ -66,6 +70,7 @@
               </div>
               <p class="muted">App ID：{{ item.appId ?? '未知' }} · 激活记录 #{{ item.trialId }} · {{ item.channel === 'SIX_DIGIT' ? '六位码激活' : item.channel === 'OTHER' ? '其他入口' : '入口未知' }}</p>
               <dl class="event-facts">
+                <div><dt>激活平台来源</dt><dd>{{ activationPlatformLabel(item.activationPlatform, item.miniProgram) }}</dd></div>
                 <div><dt>激活设备</dt><dd>{{ item.deviceName || '未知型号' }}<small v-if="item.partNumber">部件号：{{ item.partNumber }}</small></dd></div>
                 <div><dt>地点</dt><dd>{{ activationLocation(item).place }}<small v-if="activationLocation(item).label">{{ activationLocation(item).label }}<br />采集于 {{ activationTime(item.locationCapturedAt) }}</small></dd></div>
                 <div v-if="item.purchaseCountryCode"><dt>购买国家／地区</dt><dd>{{ item.purchaseCountryCode }}<small>关联订单信息，不代表激活地点</small></dd></div>
@@ -81,6 +86,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue'
+import { activationPlatforms, activationPlatformLabel } from '@/components/dashboard/activationPlatforms.mjs'
 import { useRoute, useRouter } from 'vue-router'
 import { getActivationDetail, type ActivationDetail } from '@/api/activationDetail'
 import { activationDetailRoute, activationTime, activationSourceLabel, activationLocation, activationAssetUrl } from '@/components/dashboard/activationDetail.mjs'
@@ -89,6 +95,7 @@ const route = useRoute()
 const router = useRouter()
 const emailInput = ref('')
 const activeEmail = ref('')
+const activationPlatform = ref('')
 const historical = ref(false)
 const dateRange = ref<[string, string] | null>(null)
 const page = ref(1)
@@ -112,6 +119,7 @@ async function fetchData() {
   loading.value = true
   try {
     const response = await getActivationDetail({ email: activeEmail.value, page: page.value, pageSize: pageSize.value, historical: historical.value,
+      ...(activationPlatform.value ? { activationPlatform: activationPlatform.value } : {}),
       ...(!historical.value && dateRange.value ? { startDate: dateRange.value[0], endDate: dateRange.value[1] } : {}) })
     if (current !== requestId) return
     if (response.code !== 0 || !response.data) throw new Error(response.msg || '获取激活详情失败')
@@ -126,6 +134,7 @@ watch(() => route.query.email, value => {
   emailInput.value = activeEmail.value
   page.value = 1
   historical.value = false
+  activationPlatform.value = ''
   dateRange.value = null
   void fetchData()
 }, { immediate: true })
