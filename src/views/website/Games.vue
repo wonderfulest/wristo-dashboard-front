@@ -7,7 +7,7 @@ import type { ImageVO } from '@/types/image'
 import { getGameConfigs, saveGameConfig, type GameConfig } from '@/api/games'
 const items = ref<GameConfig[]>([]), loading = ref(false), saving = ref(false), visible = ref(false), error = ref('')
 const form = ref<GameConfig | null>(null), formRef = ref<FormInstance>()
-const rules: FormRules = Object.fromEntries(['name', 'nameZh', 'description', 'descriptionZh', 'instructions', 'instructionsZh'].map(k => [k, [{ required: true, message: '请填写该项', trigger: 'blur' }]]))
+const rules: FormRules = Object.fromEntries(['name', 'nameZh', 'summary', 'summaryZh', 'description', 'descriptionZh', 'instructions', 'instructionsZh'].map(k => [k, [{ required: true, message: '请填写该项', trigger: 'blur' }]]))
 for (const field of ['logoUrl', 'coverUrl', 'heroUrl', 'shareUrl', 'downloadUrl']) {
   rules[field] = [{ validator: (_rule, value, callback) => {
     if (!value) return callback()
@@ -23,7 +23,7 @@ const activeUploads = ref<Record<string, boolean>>({})
 function edit(row: GameConfig) {
   imageIds.value = {}; activeUploads.value = {}
   const urls = row.shareUrls ?? (row.shareUrl ? [row.shareUrl] : [])
-  form.value = { ...row, shareUrls: [...urls] }; visible.value = true
+  form.value = { ...row, summary: row.summary ?? row.description.slice(0, 300), summaryZh: row.summaryZh ?? row.descriptionZh.slice(0, 300), shareUrls: [...urls] }; visible.value = true
 }
 async function save() {
   if (Object.values(activeUploads.value).some(Boolean)) return
@@ -94,8 +94,10 @@ onMounted(load)
       <el-form v-if="form" ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-alert :title="`${form.key} · 协议 v${form.rulesVersion} · ${form.modes.join(' / ')}`" type="info" :closable="false"/>
         <div class="two"><el-form-item label="英文名称" prop="name"><el-input v-model="form.name" maxlength="100"/></el-form-item><el-form-item label="中文名称" prop="nameZh"><el-input v-model="form.nameZh" maxlength="100"/></el-form-item></div>
-        <el-form-item label="游戏描述（英文）" prop="description"><el-input v-model="form.description" type="textarea" :rows="3" maxlength="4000"/></el-form-item>
-        <el-form-item label="游戏描述（中文）" prop="descriptionZh"><el-input v-model="form.descriptionZh" type="textarea" :rows="3" maxlength="4000"/></el-form-item>
+        <el-form-item label="游戏简述（英文，显示在外层卡片）" prop="summary"><el-input v-model="form.summary" type="textarea" :rows="2" maxlength="300" show-word-limit/></el-form-item>
+        <el-form-item label="游戏简述（中文，显示在外层卡片）" prop="summaryZh"><el-input v-model="form.summaryZh" type="textarea" :rows="2" maxlength="300" show-word-limit/></el-form-item>
+        <el-form-item label="详细描述（英文）" prop="description"><el-input v-model="form.description" type="textarea" :rows="3" maxlength="4000"/></el-form-item>
+        <el-form-item label="详细描述（中文）" prop="descriptionZh"><el-input v-model="form.descriptionZh" type="textarea" :rows="3" maxlength="4000"/></el-form-item>
         <el-form-item label="英文玩法" prop="instructions"><el-input v-model="form.instructions" type="textarea" :rows="3" maxlength="4000"/></el-form-item>
         <el-form-item label="中文玩法" prop="instructionsZh"><el-input v-model="form.instructionsZh" type="textarea" :rows="3" maxlength="4000"/></el-form-item>
         <el-divider content-position="left">游戏图片与佳明上架素材</el-divider>

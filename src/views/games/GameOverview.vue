@@ -1,11 +1,21 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { getGameOverview, type GameOverview, type GameMetrics } from '@/api/games'
+import { getGameConfigs, getGameOverview, type GameOverview, type GameMetrics } from '@/api/games'
 import DashboardFilterBar from '@/components/dashboard/DashboardFilterBar.vue'
 import GameMetricsCards from './GameMetrics.vue'
 import { recentRange } from './gameAnalytics.mjs'
 const range = ref<[string, string]>(recentRange())
 const data = ref<GameOverview | null>(null), loading = ref(false), error = ref(''), query = ref('')
+const logos = ref<Record<string, string>>({})
+const logoError = ref(false)
+async function loadLogos() {
+  logoError.value = false
+  try {
+    const result = await getGameConfigs()
+    if (!result.data) throw new Error('Missing game configs')
+    logos.value = Object.fromEntries(result.data.map(game => [game.key, game.logoUrl]))
+  } catch { logoError.value = true }
+}
 let requestId = 0
 const rows = computed(() => data.value?.games.filter(g => `${g.name} ${g.nameZh} ${g.key}`.toLowerCase().includes(query.value.toLowerCase())) || [])
 const totals = computed<GameMetrics>(() => {
@@ -21,7 +31,7 @@ async function load() {
   finally { if (id === requestId) loading.value = false }
 }
 function quick(days: number) { range.value = recentRange(days); load() }
-onMounted(load)
+onMounted(() => { load(); loadLogos() })
 </script>
 <template>
   <section class="games-page">
@@ -34,8 +44,19 @@ onMounted(load)
     <template v-if="data">
       <GameMetricsCards :metrics="totals" :to="data.to" aggregate />
       <el-card shadow="never"><template #header><div class="filters"><h2>各游戏运营数据</h2><el-input v-model="query" placeholder="搜索游戏名称或标识" clearable style="max-width:280px" aria-label="搜索游戏"/></div></template>
+        <el-alert v-if="logoError" type="warning" title="游戏 Logo 加载失败" :closable="false"><el-button link type="primary" @click="loadLogos">重试</el-button></el-alert>
         <el-table :data="rows" stripe empty-text="没有符合条件的游戏">
-          <el-table-column label="游戏" min-width="180" fixed><template #default="{ row }"><router-link :to="`/games/${row.key}`">{{ row.nameZh || row.name }}</router-link><div class="muted">{{ row.key }}</div></template></el-table-column>
+          <el-table-column label="游戏" min-width="240" fixed>
+            <template #default="{ row }">
+              <div class="game-identity">
+                <el-image v-if="logos[row.key]" :src="logos[row.key]" :alt="`${row.nameZh || row.name} Logo`" class="game-logo" fit="contain">
+                  <template #error><span class="logo-placeholder">无图片</span></template>
+                </el-image>
+                <span v-else class="game-logo logo-placeholder">未设置</span>
+                <div><router-link :to="`/games/${row.key}`">{{ row.nameZh || row.name }}</router-link><div class="muted">{{ row.key }}</div></div>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column label="状态" width="90"><template #default="{ row }"><el-tag :type="row.enabled ? 'success' : 'info'">{{ row.enabled ? '已上架' : '已下架' }}</el-tag></template></el-table-column>
           <el-table-column prop="metrics.endDayActive" label="截止日日活" min-width="110" sortable />
           <el-table-column prop="metrics.activePlayers" label="区间活跃" min-width="105" sortable />
@@ -51,5 +72,6 @@ onMounted(load)
   </section>
 </template>
 <style scoped>
+.game-identity{display:flex;align-items:center;gap:12px}.game-logo{width:44px;height:44px;flex-shrink:0;border-radius:8px;background:#f1f5f9}.logo-placeholder{display:flex;align-items:center;justify-content:center;width:44px;height:44px;font-size:12px;color:#738078}
 .games-page{padding:24px;display:flex;flex-direction:column;gap:18px}.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.muted{color:#738078;font-size:12px;margin:0;line-height:1.7}h2{font-size:16px;margin:0;margin-right:auto}a{color:#168456;text-decoration:none}.placeholder{padding:50px;text-align:center;color:#738078}@media(max-width:680px){.games-page{padding:14px}.filters :deep(.el-date-editor){max-width:100%;width:100%}}
 </style>

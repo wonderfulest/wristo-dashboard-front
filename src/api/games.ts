@@ -1,17 +1,17 @@
 import api from '@/config/axios'
 import type { ApiResponse } from '@/types/api'
 export interface GameConfig {
-  key: string; garminAppId: string | null; name: string; nameZh: string; description: string; descriptionZh: string
+  key: string; garminAppId: string | null; name: string; nameZh: string; description: string; descriptionZh: string; summary: string; summaryZh: string
   instructions: string; instructionsZh: string; logoUrl: string; coverUrl: string; heroUrl: string | null; shareUrl: string | null; shareUrls: string[]; downloadUrl: string
   enabled: boolean; sortOrder: number; modes: string[]; metric: string; rulesVersion: number
 }
 export const getGameConfigs = (): Promise<ApiResponse<GameConfig[]>> => api.get('/admin/games')
 export const saveGameConfig = (game: GameConfig): Promise<ApiResponse<GameConfig>> => {
-  const { name, nameZh, description, descriptionZh, instructions, instructionsZh,
+  const { name, nameZh, summary, summaryZh, description, descriptionZh, instructions, instructionsZh,
     logoUrl, coverUrl, heroUrl, shareUrl, downloadUrl, enabled, sortOrder, shareUrls } = game
   // Send only Edit DTO fields. Empty galleries also work with the legacy single-image API.
   return api.put(`/admin/games/${game.key}`, {
-    name, nameZh, description, descriptionZh, instructions, instructionsZh,
+    name, nameZh, summary, summaryZh, description, descriptionZh, instructions, instructionsZh,
     logoUrl, coverUrl, heroUrl, shareUrl: shareUrls ? (shareUrls[0] || '') : shareUrl,
     downloadUrl, enabled, sortOrder,
     ...(shareUrls?.length ? { shareUrls } : {}),
