@@ -1,13 +1,13 @@
-<template><div ref="container" class="game-trend" role="img" aria-label="每日活跃、开局和完成局数趋势，下方提供每日数据表" /></template>
+<template><div ref="container" class="game-trend" role="img" aria-label="每日活跃、开局和完成局数趋势" /></template>
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { TooltipComponent, GridComponent, LegendComponent, DataZoomComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import type { GameDaily } from '@/api/games'
+import type { GameTrendDaily } from '@/api/games'
 echarts.use([LineChart, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent, CanvasRenderer])
-const props = defineProps<{ items: GameDaily[] }>()
+const props = defineProps<{ items: GameTrendDaily[] }>()
 const container = ref<HTMLElement>()
 let chart: echarts.ECharts | undefined
 let observer: ResizeObserver | undefined

@@ -29,7 +29,8 @@ export interface GameDaily {
 export interface GameOverviewRow {
   key: string; name: string; nameZh: string; garminAppId: string | null; enabled: boolean; metrics: GameMetrics
 }
-export interface GameOverview { timezone: string; from: string; to: string; games: GameOverviewRow[] }
+export type GameTrendDaily = Pick<GameDaily, 'date' | 'activePlayers' | 'starts' | 'completions'>
+export interface GameOverview { timezone: string; from: string; to: string; games: GameOverviewRow[]; daily?: GameTrendDaily[] }
 export interface GameReport { timezone: string; from: string; to: string; summary: GameMetrics; daily: GameDaily[] }
 export interface GameBoard {
   gameKey: string; mode: string; metric: string; participants: number

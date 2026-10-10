@@ -3,18 +3,21 @@ import { computed, ref, onMounted } from 'vue'
 import { getGameConfigs, getGameOverview, type GameOverview, type GameMetrics } from '@/api/games'
 import DashboardFilterBar from '@/components/dashboard/DashboardFilterBar.vue'
 import GameMetricsCards from './GameMetrics.vue'
+import GameTrend from './GameTrend.vue'
 import { recentRange } from './gameAnalytics.mjs'
 const range = ref<[string, string]>(recentRange())
 const data = ref<GameOverview | null>(null), loading = ref(false), error = ref(''), query = ref('')
 const logos = ref<Record<string, string>>({})
-const logoError = ref(false)
-async function loadLogos() {
-  logoError.value = false
+const downloadUrls = ref<Record<string, string>>({})
+const configError = ref(false)
+async function loadConfigs() {
+  configError.value = false
   try {
     const result = await getGameConfigs()
     if (!result.data) throw new Error('Missing game configs')
     logos.value = Object.fromEntries(result.data.map(game => [game.key, game.logoUrl]))
-  } catch { logoError.value = true }
+    downloadUrls.value = Object.fromEntries(result.data.map(game => [game.key, game.downloadUrl?.trim() || '']))
+  } catch { configError.value = true }
 }
 let requestId = 0
 const rows = computed(() => data.value?.games.filter(g => `${g.name} ${g.nameZh} ${g.key}`.toLowerCase().includes(query.value.toLowerCase())) || [])
@@ -31,7 +34,7 @@ async function load() {
   finally { if (id === requestId) loading.value = false }
 }
 function quick(days: number) { range.value = recentRange(days); load() }
-onMounted(() => { load(); loadLogos() })
+onMounted(() => { load(); loadConfigs() })
 </script>
 <template>
   <section class="games-page">
@@ -43,8 +46,14 @@ onMounted(() => { load(); loadLogos() })
     <div v-if="loading" class="placeholder">正在加载游戏运营数据…</div>
     <template v-if="data">
       <GameMetricsCards :metrics="totals" :to="data.to" aggregate />
+      <el-card shadow="never">
+        <template #header><h2>每日趋势</h2></template>
+        <p class="muted">全部游戏按日汇总 · 日活为各游戏分别去重后相加，跨游戏不去重。点击图例可切换曲线，拖动底部滑块可缩放日期范围。</p>
+        <GameTrend v-if="data.daily?.length" :items="data.daily" />
+        <el-empty v-else :description="data.daily ? '所选日期暂无每日数据' : '当前接口暂未提供每日趋势数据，请更新 API 后刷新'" />
+      </el-card>
       <el-card shadow="never"><template #header><div class="filters"><h2>各游戏运营数据</h2><el-input v-model="query" placeholder="搜索游戏名称或标识" clearable style="max-width:280px" aria-label="搜索游戏"/></div></template>
-        <el-alert v-if="logoError" type="warning" title="游戏 Logo 加载失败" :closable="false"><el-button link type="primary" @click="loadLogos">重试</el-button></el-alert>
+        <el-alert v-if="configError" type="warning" title="游戏 Logo 和商店链接加载失败" :closable="false"><el-button link type="primary" @click="loadConfigs">重试</el-button></el-alert>
         <el-table :data="rows" stripe empty-text="没有符合条件的游戏">
           <el-table-column label="游戏" min-width="240" fixed>
             <template #default="{ row }">
@@ -65,13 +74,21 @@ onMounted(() => { load(); loadLogos() })
           <el-table-column prop="metrics.newPlayers" label="新增玩家" min-width="105" sortable />
           <el-table-column prop="metrics.totalPlayers" label="累计玩家" min-width="105" sortable />
           <el-table-column prop="metrics.uploadedRuns" label="上传结算" min-width="105" sortable />
-          <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><router-link :to="`/games/${row.key}`">运营详情</router-link></template></el-table-column>
+          <el-table-column label="操作" width="220" fixed="right">
+            <template #default="{ row }">
+              <div class="game-actions">
+                <router-link :to="`/games/${row.key}`">运营详情</router-link>
+                <el-link v-if="downloadUrls[row.key]" :href="downloadUrls[row.key]" target="_blank" rel="noopener noreferrer" type="primary">跳转到商店 ↗</el-link>
+              </div>
+            </template>
+          </el-table-column>
         </el-table>
       </el-card>
     </template>
   </section>
 </template>
 <style scoped>
+.game-actions{display:flex;align-items:center;gap:12px;white-space:nowrap}
 .game-identity{display:flex;align-items:center;gap:12px}.game-logo{width:44px;height:44px;flex-shrink:0;border-radius:8px;background:#f1f5f9}.logo-placeholder{display:flex;align-items:center;justify-content:center;width:44px;height:44px;font-size:12px;color:#738078}
 .games-page{padding:24px;display:flex;flex-direction:column;gap:18px}.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.muted{color:#738078;font-size:12px;margin:0;line-height:1.7}h2{font-size:16px;margin:0;margin-right:auto}a{color:#168456;text-decoration:none}.placeholder{padding:50px;text-align:center;color:#738078}@media(max-width:680px){.games-page{padding:14px}.filters :deep(.el-date-editor){max-width:100%;width:100%}}
 </style>
