@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { getGameConfigs, getGameOverview, type GameOverview, type GameMetrics } from '@/api/games'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getGameConfigs, getGameOverview, setGameWebsiteVisibility, type GameConfig, type GameOverviewRow, type GameOverview, type GameMetrics } from '@/api/games'
 import DashboardFilterBar from '@/components/dashboard/DashboardFilterBar.vue'
 import GameMetricsCards from './GameMetrics.vue'
 import GameTrend from './GameTrend.vue'
@@ -9,15 +10,43 @@ const range = ref<[string, string]>(recentRange())
 const data = ref<GameOverview | null>(null), loading = ref(false), error = ref(''), query = ref('')
 const logos = ref<Record<string, string>>({})
 const downloadUrls = ref<Record<string, string>>({})
+const configs = ref<Record<string, GameConfig>>({})
+const visibilityBusy = ref<Record<string, boolean>>({})
+const configLoading = ref(false)
 const configError = ref(false)
 async function loadConfigs() {
   configError.value = false
+  configLoading.value = true
   try {
     const result = await getGameConfigs()
     if (!result.data) throw new Error('Missing game configs')
+    configs.value = Object.fromEntries(result.data.map(game => [game.key, game]))
     logos.value = Object.fromEntries(result.data.map(game => [game.key, game.logoUrl]))
     downloadUrls.value = Object.fromEntries(result.data.map(game => [game.key, game.downloadUrl?.trim() || '']))
   } catch { configError.value = true }
+  finally { configLoading.value = false }
+}
+async function toggleWebsiteVisibility(row: GameOverviewRow) {
+  const config = configs.value[row.key]
+  if (!config || typeof config.websiteVisible !== 'boolean' || visibilityBusy.value[row.key]) return
+  const visible = !config.websiteVisible
+  visibilityBusy.value[row.key] = true
+  try {
+    try {
+      await ElMessageBox.confirm(
+        visible
+          ? `重新上线「${row.nameZh || row.name}」？游戏启用且已配置商店链接时，将在 wristo.io 展示。`
+          : `下线「${row.nameZh || row.name}」？下线后将不在 wristo.io 展示，已安装游戏的使用和成绩上传不受影响。`,
+        visible ? '重新上线到网站' : '从网站下线',
+        { type: 'warning', confirmButtonText: visible ? '重新上线' : '下线', cancelButtonText: '取消' },
+      )
+    } catch { return }
+    const result = await setGameWebsiteVisibility(row.key, visible)
+    if (typeof result.data?.websiteVisible !== 'boolean') throw new Error('Missing visibility state')
+    configs.value[row.key] = result.data
+    ElMessage.success(visible ? '已重新上线到网站' : '已从网站下线')
+  } catch { ElMessage.error('网站展示状态更新失败，请重试') }
+  finally { visibilityBusy.value[row.key] = false }
 }
 let requestId = 0
 const rows = computed(() => data.value?.games.filter(g => `${g.name} ${g.nameZh} ${g.key}`.toLowerCase().includes(query.value.toLowerCase())) || [])
@@ -53,7 +82,7 @@ onMounted(() => { load(); loadConfigs() })
         <el-empty v-else :description="data.daily ? '所选日期暂无每日数据' : '当前接口暂未提供每日趋势数据，请更新 API 后刷新'" />
       </el-card>
       <el-card shadow="never"><template #header><div class="filters"><h2>各游戏运营数据</h2><el-input v-model="query" placeholder="搜索游戏名称或标识" clearable style="max-width:280px" aria-label="搜索游戏"/></div></template>
-        <el-alert v-if="configError" type="warning" title="游戏 Logo 和商店链接加载失败" :closable="false"><el-button link type="primary" @click="loadConfigs">重试</el-button></el-alert>
+        <el-alert v-if="configError" type="warning" title="游戏配置加载失败，网站展示操作暂不可用" :closable="false"><el-button link type="primary" @click="loadConfigs">重试</el-button></el-alert>
         <el-table :data="rows" stripe empty-text="没有符合条件的游戏">
           <el-table-column label="游戏" min-width="240" fixed>
             <template #default="{ row }">
@@ -66,7 +95,13 @@ onMounted(() => { load(); loadConfigs() })
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="状态" width="90"><template #default="{ row }"><el-tag :type="row.enabled ? 'success' : 'info'">{{ row.enabled ? '已上架' : '已下架' }}</el-tag></template></el-table-column>
+          <el-table-column label="游戏状态" width="90"><template #default="{ row }"><el-tag :type="row.enabled ? 'success' : 'info'">{{ row.enabled ? '已启用' : '已停用' }}</el-tag></template></el-table-column>
+          <el-table-column label="网站展示" width="110">
+            <template #default="{ row }">
+              <el-tag v-if="!configError && typeof configs[row.key]?.websiteVisible === 'boolean'" :type="configs[row.key].websiteVisible ? 'success' : 'info'">{{ configs[row.key].websiteVisible ? '已上线' : '已下线' }}</el-tag>
+              <span v-else class="muted">未知</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="metrics.endDayActive" label="截止日日活" min-width="110" sortable />
           <el-table-column prop="metrics.activePlayers" label="区间活跃" min-width="105" sortable />
           <el-table-column prop="metrics.starts" label="游戏次数" min-width="105" sortable />
@@ -74,9 +109,10 @@ onMounted(() => { load(); loadConfigs() })
           <el-table-column prop="metrics.newPlayers" label="新增玩家" min-width="105" sortable />
           <el-table-column prop="metrics.totalPlayers" label="累计玩家" min-width="105" sortable />
           <el-table-column prop="metrics.uploadedRuns" label="上传结算" min-width="105" sortable />
-          <el-table-column label="操作" width="220" fixed="right">
+          <el-table-column label="操作" width="310" fixed="right">
             <template #default="{ row }">
               <div class="game-actions">
+                <el-button link :type="configs[row.key]?.websiteVisible ? 'danger' : 'primary'" :loading="visibilityBusy[row.key]" :disabled="configLoading || configError || typeof configs[row.key]?.websiteVisible !== 'boolean'" @click="toggleWebsiteVisibility(row)">{{ configs[row.key]?.websiteVisible === false ? '重新上线' : '下线' }}</el-button>
                 <router-link :to="`/games/${row.key}`">运营详情</router-link>
                 <el-link v-if="downloadUrls[row.key]" :href="downloadUrls[row.key]" target="_blank" rel="noopener noreferrer" type="primary">跳转到商店 ↗</el-link>
               </div>

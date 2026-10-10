@@ -3,9 +3,11 @@ import type { ApiResponse } from '@/types/api'
 export interface GameConfig {
   key: string; garminAppId: string | null; name: string; nameZh: string; description: string; descriptionZh: string; summary: string; summaryZh: string
   instructions: string; instructionsZh: string; logoUrl: string; coverUrl: string; heroUrl: string | null; shareUrl: string | null; shareUrls: string[]; downloadUrl: string
-  enabled: boolean; sortOrder: number; modes: string[]; metric: string; rulesVersion: number
+  websiteVisible: boolean; enabled: boolean; sortOrder: number; modes: string[]; metric: string; rulesVersion: number
 }
 export const getGameConfigs = (): Promise<ApiResponse<GameConfig[]>> => api.get('/admin/games')
+export const setGameWebsiteVisibility = (key: string, websiteVisible: boolean): Promise<ApiResponse<GameConfig>> =>
+  api.put(`/admin/games/${encodeURIComponent(key)}/website-visibility`, { websiteVisible })
 export const saveGameConfig = (game: GameConfig): Promise<ApiResponse<GameConfig>> => {
   const { name, nameZh, summary, summaryZh, description, descriptionZh, instructions, instructionsZh,
     logoUrl, coverUrl, heroUrl, shareUrl, downloadUrl, enabled, sortOrder, shareUrls } = game
