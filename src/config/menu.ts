@@ -161,6 +161,15 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
+    key: 'utilities',
+    title: '实用工具',
+    icon: 'Tools',
+    basePaths: ['/utilities'],
+    children: [
+      { key: 'utilities-manage', title: '工具管理', icon: 'FolderOpened', path: '/utilities/manage' },
+    ],
+  },
+  {
     key: 'users-transactions',
     title: '用户与交易',
     icon: 'User',

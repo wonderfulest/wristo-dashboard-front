@@ -11,6 +11,9 @@ const router = createRouter({
     { path: '/games/manage', name: 'GamesAdmin', component: () => import('@/views/website/Games.vue'), meta: { requiresAuth: true } },
     { path: '/games/:gameKey', name: 'GameOperations', component: () => import('@/views/games/GameDetail.vue'), meta: { requiresAuth: true } },
 
+    { path: '/utilities', redirect: '/utilities/manage' },
+    { path: '/utilities/manage', name: 'UtilitiesAdmin', component: () => import('@/views/website/Utilities.vue'), meta: { requiresAuth: true } },
+
     // Contact Us
     {
       path: '/contact-us',
