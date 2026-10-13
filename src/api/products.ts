@@ -13,11 +13,13 @@ export interface UnSupportDevicePageQueryDTO {
 export const fetchUnSupportByDevicePage = (
   params: UnSupportDevicePageQueryDTO
 ): Promise<ApiResponse<PageResponse<Product>>> => {
-  return instance.post('/admin/products/page/device-un-support?populate=*', params)
+  return instance.post('/admin/products/page/device-un-support?populate=user', params)
 }
 
 export const fetchProductPage = (params: ProductPageQuery): Promise<ApiResponse<PageResponse<Product>>> => {
-  return instance.post('/admin/products/page?populate=*', params)
+  // populate is read from the URL by the backend, not from the JSON body.
+  const { populate, ...query } = params
+  return instance.post('/admin/products/page', query, { params: { populate } })
 }
 
 export const searchPublicProductPageV2 = (
@@ -36,7 +38,7 @@ export const searchPublicProductPageV2 = (
 
 // 分页查询打包日志
 export const getProductPackagingLogsPage = (params: ProductPackagingLogQuery): Promise<ApiResponse<PageResponse<ProductPackagingLogVO>>> => {
-  return instance.post('/admin/products/packaging-log/page?populate=*', params)
+  return instance.post('/admin/products/packaging-log/page?populate=product,user', params)
 } 
 
 // 删除打包日志
@@ -78,7 +80,7 @@ export const setProductPackagingQueuePause = (paused: boolean): Promise<ApiRespo
 
 // 获取打包任务队列列表
 export const getProductPackagingQueue = (
-  populate: string = '*'
+  populate: string = 'product,user'
 ): Promise<ApiResponse<ProductPackagingLogVO[]>> => {
   return instance.get('/admin/product-packaging-logs/queue', {
     params: { populate }
@@ -87,7 +89,7 @@ export const getProductPackagingQueue = (
 
 // 获取打包任务死信队列列表
 export const getProductPackagingDeadQueue = (
-  populate: string = '*'
+  populate: string = 'product,user'
 ): Promise<ApiResponse<ProductPackagingLogVO[]>> => {
   return instance.get('/admin/product-packaging-logs/queue/dead', {
     params: { populate }
@@ -113,7 +115,7 @@ export const requeueProductPackagingDeadQueueItem = (
 
 // 获取当前正在打包中的任务（基于队列锁标记）
 export const getLockedProductPackagingTask = (
-  populate: string = '*'
+  populate: string = 'product,user'
 ): Promise<ApiResponse<ProductPackagingLogVO | null>> => {
   return instance.get('/admin/product-packaging-logs/queue/locked', {
     params: { populate }
@@ -218,7 +220,7 @@ export const resetAllProductStoreWeights = (): Promise<ApiResponse<number>> => {
 }
 
 // 分布式消费者的有效租约任务
-export const getRunningProductPackagingTasks = (populate = '*'): Promise<ApiResponse<ProductPackagingLogVO[]>> =>
+export const getRunningProductPackagingTasks = (populate = 'product,user'): Promise<ApiResponse<ProductPackagingLogVO[]>> =>
   instance.get('/admin/product-packaging-logs/queue/running', { params: { populate } })
 
 export const getProductPackagingQueuePause = (): Promise<ApiResponse<boolean>> =>

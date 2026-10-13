@@ -178,7 +178,7 @@ const fetchProducts = async () => {
       orderBy: sortOrder.value,
       name: searchName.value || undefined,
       status: 1,
-      populate: '*',
+      populate: 'user',
       lastGoLiveStart: buildLastGoLiveStart(),
       lastGoLiveEnd: rangePreset.value === 'all' ? undefined : `${formatDateForQuery(new Date())} 23:59:59`,
     })

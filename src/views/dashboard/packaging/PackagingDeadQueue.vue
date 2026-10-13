@@ -180,7 +180,7 @@ const formatNullableDateTime = (value: string | number | Date | null | undefined
 const fetchDeadQueue = async () => {
   loading.value = true
   try {
-    const res = await getProductPackagingDeadQueue('*')
+    const res = await getProductPackagingDeadQueue()
     if (res.code === 0) {
       deadQueue.value = res.data || []
       selectedDeadQueue.value = []

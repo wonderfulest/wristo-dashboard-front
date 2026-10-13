@@ -309,7 +309,7 @@ const openBatchPriorityDialog = () => {
 const fetchQueue = async () => {
   loading.value = true
   try {
-    const res = await getProductPackagingQueue('*')
+    const res = await getProductPackagingQueue()
     if (res.code === 0) {
       clearSelection()
       queue.value = res.data || []
@@ -400,7 +400,7 @@ const handleRefresh = async () => {
   loading.value = true
   try {
     const results = await Promise.all([
-      getProductPackagingQueue('*'), getRunningProductPackagingTasks('*'),
+      getProductPackagingQueue(), getRunningProductPackagingTasks(),
       getProductPackagingQueuePause(), getProductPackagingDeadQueue(''), getProductPackagingQueueProtocol(), getPackagingChannels()
     ])
     if (results.some(result => result.code !== 0)) throw new Error('refresh failed')

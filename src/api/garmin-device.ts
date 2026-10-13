@@ -64,10 +64,10 @@ export function updateGarminDeviceForm(params: {
 // Backend endpoint: GET /api/admin/products/garmin-devices/getById/{id}
 // Our axios instance likely prefixes /api, so we append only the path under BASE
 export function getGarminDeviceById(id: number) {
-  return instance.get<ApiResponse<GarminDeviceVO>>(`${BASE}/getById/${id}?populate=*`)
+  return instance.get<ApiResponse<GarminDeviceVO>>(`${BASE}/getById/${id}?populate=simulator,compiler`)
 }
 
 // Backend endpoint: GET /api/admin/products/garmin-devices/getByDeviceId/{deviceId}
 export function getGarminDeviceByDeviceId(deviceId: string) {
-  return instance.get<ApiResponse<GarminDeviceVO>>(`${BASE}/getByDeviceId/${encodeURIComponent(deviceId)}?populate=*`)
+  return instance.get<ApiResponse<GarminDeviceVO>>(`${BASE}/getByDeviceId/${encodeURIComponent(deviceId)}?populate=simulator,compiler`)
 }

@@ -14,7 +14,7 @@ import type {
 const BASE = '/admin/contact/tickets'
 
 export function fetchTicketPage(dto: TicketQueryDTO): Promise<ApiResponse<PageResponse<TicketVO>>> {
-  return instance.post(`${BASE}/page?populate=*`, dto)
+  return instance.post(`${BASE}/page?populate=product,user`, dto)
 }
 
 export function fetchTicketList(params: TicketQueryDTO): Promise<ApiResponse<TicketVO[]>> {
@@ -46,11 +46,11 @@ export function closeTicket(id: number, adminId: number): Promise<ApiResponse<vo
 }
 
 export function fetchTicketComments(id: number): Promise<ApiResponse<TicketComment[]>> {
-  return instance.get(`${BASE}/${id}/comments?populate=*`)
+  return instance.get(`${BASE}/${id}/comments?populate=user`)
 }
 
 export function fetchTicketHistory(id: number): Promise<ApiResponse<TicketHistory[]>> {
-  return instance.get(`${BASE}/${id}/history?populate=*`)
+  return instance.get(`${BASE}/${id}/history?populate=user`)
 }
 
 export function fetchTicketTags(): Promise<ApiResponse<string[]>> {

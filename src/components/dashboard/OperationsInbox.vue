@@ -38,8 +38,8 @@ const fetchCounts = async () => {
   state.errors = {}
   await Promise.all([
     settle('review', fetchDesignReviewPage({ pageNum: 1, pageSize: 1, designStatus: 'submitted' }).then(r => Number(r.data?.total) || 0)),
-    settle('queue', getProductPackagingQueue('*').then(r => r.data?.length || 0)),
-    settle('dead', getProductPackagingDeadQueue('*').then(r => r.data?.length || 0)),
+    settle('queue', getProductPackagingQueue('').then(r => r.data?.length || 0)),
+    settle('dead', getProductPackagingDeadQueue('').then(r => r.data?.length || 0)),
     settle('tickets', fetchTicketPage({ pageNum: 1, pageSize: 1, statuses: ['open', 'resolved'] }).then(r => Number(r.data?.total) || 0)),
   ])
   loading.value = false

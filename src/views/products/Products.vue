@@ -969,7 +969,7 @@ const fetchProducts = async () => {
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
       name: searchName.value ? searchName.value : undefined,
-      populate: '*',
+      populate: 'user,categories,payment',
       categoryId: selectedCategoryId.value || undefined,
       userId: selectedCreatorId.value || undefined,
       status: selectedStatus.value,
