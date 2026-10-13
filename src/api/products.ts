@@ -249,3 +249,11 @@ export const deletePackagingChannel = (queueId: string): Promise<ApiResponse<voi
 
 export const clearOfflinePackagingChannels = (): Promise<ApiResponse<number>> =>
   instance.delete('/admin/product-packaging-logs/queue/channels/offline')
+
+// 按原试用时长批量更新全部未删除应用，单位：小时
+export const batchUpdateProductTrialDuration = (data: {
+  sourceTrialLasts: number
+  targetTrialLasts: number
+}): Promise<ApiResponse<number>> => {
+  return instance.post('/admin/products/trial-duration/batch-update', data)
+}

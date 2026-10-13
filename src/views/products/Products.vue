@@ -77,6 +77,7 @@
         />
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="handleRecentOnlineDownloads">近30天上线下载排行</el-button>
+        <el-button type="warning" plain @click="openTrialDurationDialog">批量修改试用时长</el-button>
         <el-button @click="handleRefreshStats" :loading="refreshingStats">刷新统计</el-button>
         <el-button type="warning" plain @click="bulkCategoryDialogVisible = true">
           一键管理分类
@@ -294,6 +295,35 @@
         @current-change="handleCurrentChange"
       />
     </div>
+    <el-dialog
+      v-model="trialDurationDialogVisible"
+      title="批量修改试用时长"
+      width="min(520px, 94vw)"
+      :close-on-click-modal="false"
+      :close-on-press-escape="!updatingTrialDuration"
+      :show-close="!updatingTrialDuration"
+    >
+      <el-alert
+        title="修改全部未删除应用中时长匹配的记录，包括未上线应用，不受当前筛选和分页限制。"
+        type="warning"
+        :closable="false"
+        show-icon
+      />
+      <el-form label-width="110px" style="margin-top: 20px" :disabled="updatingTrialDuration">
+        <el-form-item label="原时长（小时）" required>
+          <el-input-number v-model="sourceTrialLasts" :min="0" :precision="2" :step="0.25" />
+        </el-form-item>
+        <el-form-item label="新时长（小时）" required>
+          <el-input-number v-model="targetTrialLasts" :min="0" :precision="2" :step="0.25" />
+        </el-form-item>
+      </el-form>
+      <p>例如：0.25 小时为 15 分钟。本操作修改应用试用配置，不直接改写用户试用记录。</p>
+      <template #footer>
+        <el-button :disabled="updatingTrialDuration" @click="trialDurationDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="updatingTrialDuration" @click="handleBatchUpdateTrialDuration">批量修改</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 创建工单对话框 -->
     <el-dialog
       v-model="ticketDialogVisible"
@@ -724,7 +754,7 @@ import MobileRecordList from '@/components/common/MobileRecordList.vue'
 import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 import { formatDate } from '@/utils/date'
 import { formatProductGoLive } from './productDisplay.mjs'
-import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, manageCategoryForAllProducts } from '@/api/products'
+import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, batchUpdateProductTrialDuration, manageCategoryForAllProducts } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -747,6 +777,54 @@ const products = ref<Product[]>([])
 const loading = ref(false)
 const refreshingStats = ref(false)
 const resettingStoreWeights = ref(false)
+const trialDurationDialogVisible = ref(false)
+const updatingTrialDuration = ref(false)
+const sourceTrialLasts = ref<number>()
+const targetTrialLasts = ref<number>()
+
+const openTrialDurationDialog = () => {
+  sourceTrialLasts.value = undefined
+  targetTrialLasts.value = undefined
+  trialDurationDialogVisible.value = true
+}
+
+const handleBatchUpdateTrialDuration = async () => {
+  if (updatingTrialDuration.value) return
+  const source = sourceTrialLasts.value
+  const target = targetTrialLasts.value
+  if (source == null || target == null || !Number.isFinite(source) || !Number.isFinite(target) || source < 0 || target < 0) {
+    ElMessage.warning('请填写有效的非负试用时长（小时）')
+    return
+  }
+  if (source === target) {
+    ElMessage.warning('新试用时长不能与原时长相同')
+    return
+  }
+  updatingTrialDuration.value = true
+  try {
+    try {
+      await ElMessageBox.confirm(
+        `将全部未删除应用中试用时长为 ${source} 小时的记录改为 ${target} 小时，不受当前筛选和分页限制。确认修改？`,
+        '确认批量修改试用时长',
+        { confirmButtonText: '确认修改', cancelButtonText: '取消', type: 'warning' }
+      )
+    } catch {
+      return
+    }
+    const res = await batchUpdateProductTrialDuration({ sourceTrialLasts: source, targetTrialLasts: target })
+    if (res.code === 0) {
+      ElMessage.success(`已修改 ${res.data ?? 0} 个应用的试用时长`)
+      trialDurationDialogVisible.value = false
+      await fetchProducts()
+    } else {
+      ElMessage.error(res.msg || '批量修改试用时长失败')
+    }
+  } catch {
+    ElMessage.error('批量修改试用时长失败')
+  } finally {
+    updatingTrialDuration.value = false
+  }
+}
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
