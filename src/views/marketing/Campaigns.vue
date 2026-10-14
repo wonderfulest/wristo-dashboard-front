@@ -46,8 +46,9 @@
           <el-switch :model-value="row.isActive === 1" @change="(val:any)=>toggleActive(row, val)" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="360" fixed="right">
+      <el-table-column label="操作" width="440" fixed="right">
         <template #default="{ row }">
+          <el-button type="primary" link @click="openAnalytics(row)">效果统计</el-button>
           <el-button v-if="row.status === 'DRAFT' || row.status === 'RUNNING'" type="primary" link @click="openEdit(row)">编辑</el-button>
           <el-button v-if="row.status === 'DRAFT'" type="danger" link @click="confirmDelete(row)">删除</el-button>
           <el-button v-if="row.status === 'DRAFT'" type="primary" link @click="openItems(row)">配置应用</el-button>
@@ -71,6 +72,7 @@
       />
     </div>
 
+    <CampaignAnalyticsDialog v-model:visible="analyticsVisible" :campaign="analyticsCampaign" />
     <CampaignCreateDialog v-model:visible="createVisible" @submit="onCreateSubmit" />
     <CampaignEditDialog v-model:visible="editVisible" :initial="dialog.current || null" @submit="onEditSubmit" />
 
@@ -149,6 +151,15 @@ import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import type { Product } from '@/types/product'
 import CampaignCreateDialog from '@/views/marketing/components/CampaignCreateDialog.vue'
 import CampaignEditDialog from '@/views/marketing/components/CampaignEditDialog.vue'
+
+import CampaignAnalyticsDialog from '@/views/marketing/components/CampaignAnalyticsDialog.vue'
+
+const analyticsVisible = ref(false)
+const analyticsCampaign = ref<CampaignVO | null>(null)
+const openAnalytics = (campaign: CampaignVO) => {
+  analyticsCampaign.value = campaign
+  analyticsVisible.value = true
+}
 
 const loading = ref(false)
 const total = ref(0)
