@@ -22,7 +22,11 @@
 
     <el-table :data="list" style="width: 100%" :loading="loading" :default-sort="defaultSort" @sort-change="handleSortChange">
       <el-table-column prop="id" label="ID" width="80" sortable="custom" />
-      <el-table-column prop="name" label="名称" min-width="160" sortable="custom" />
+      <el-table-column prop="name" label="名称" min-width="160" sortable="custom">
+        <template #default="{ row }">
+          <router-link :to="`/marketing/segments/${row.id}`">{{ row.name }}</router-link>
+        </template>
+      </el-table-column>
       <el-table-column prop="status" label="状态" width="100">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
@@ -31,8 +35,9 @@
       <el-table-column prop="updatedAt" label="更新时间" min-width="180" sortable="custom">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="420">
+      <el-table-column label="操作" width="500">
         <template #default="scope">
+          <el-button size="small" @click="$router.push(`/marketing/segments/${scope.row.id}`)">查看用户</el-button>
           <el-button size="small" @click="openEdit(scope.row)">编辑</el-button>
           <el-button size="small" @click="handleRefreshOne(scope.row)">刷新</el-button>
           <el-button

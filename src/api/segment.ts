@@ -10,6 +10,7 @@ export interface SegmentVO {
   ruleExpr: string
   description: string
   status: number
+  userCount: number
   createdAt: string
   updatedAt: string
 }
@@ -78,4 +79,19 @@ export const activateSegment = (id: number): Promise<ApiResponse<SegmentVO>> => 
 // 关闭启用分群
 export const deactivateSegment = (id: number): Promise<ApiResponse<SegmentVO>> => {
   return instance.post('/admin/segment/deactive', undefined, { params: { id } })
+}
+
+export interface SegmentMemberVO {
+  userId: number
+  username: string
+  nickname: string
+  email: string
+  createdAt: string
+}
+
+export const pageSegmentMembers = (
+  id: number,
+  params: { pageNum: number; pageSize: number; keyword?: string },
+): Promise<ApiResponse<PageResponse<SegmentMemberVO>>> => {
+  return instance.get(`/admin/segment/${id}/users`, { params })
 }

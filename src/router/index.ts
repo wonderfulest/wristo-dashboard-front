@@ -456,6 +456,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/marketing/segments/:id',
+      name: 'SegmentDetail',
+      component: () => import('@/views/marketing/SegmentDetail.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/marketing/user-profiles',
       name: 'UserProfiles',
       component: () => import('@/views/marketing/UserProfiles.vue'),
