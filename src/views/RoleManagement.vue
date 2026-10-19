@@ -11,6 +11,7 @@
         </template>
       </el-table-column>
     </el-table>
+    <StudioDesignQuotaSettings />
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑角色' : '新增角色'">
       <el-form :model="currentRole" label-width="80px">
         <el-form-item label="角色名">
@@ -30,6 +31,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import StudioDesignQuotaSettings from '@/components/StudioDesignQuotaSettings.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getRoleList, createRole, updateRole, deleteRole } from '@/api/role'
 import type { RoleInfo } from '@/types/api'
