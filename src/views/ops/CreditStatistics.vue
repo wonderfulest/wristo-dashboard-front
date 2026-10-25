@@ -83,7 +83,7 @@ const typeLabels: Record<string, string> = {
   ADMIN_CREDIT: '后台增加', ADMIN_DEBIT: '后台扣减', SHARE_VISIT_REWARD: '分享访问奖励',
   USER_CHECK_IN: '每日签到', USER_DOWNLOAD: '首次下载奖励', USER_PURCHASE: '用户购买奖励', USER_PURCHASE_REFUND: '用户购买奖励追回',
   CREATOR_DOWNLOAD: '创作者下载奖励', CREATOR_PURCHASE: '创作者购买奖励', CREATOR_PURCHASE_REFUND: '创作者购买奖励追回',
-  AI_TAGS: 'AI 标签', AI_DESCRIPTION: 'AI 描述', AI_BANNER: 'Banner 图片', AI_WATCHFACE: 'AI 表盘', AI_WATCHFACE_ADJUST: '表盘局部调整',
+  AI_IMAGE_EDIT: 'AI 图片编辑', AI_IMAGE_EDIT_REFUND: 'AI 图片编辑退款', AI_TAGS: 'AI 标签', AI_DESCRIPTION: 'AI 描述', AI_BANNER: 'Banner 图片', AI_WATCHFACE: 'AI 表盘', AI_WATCHFACE_ADJUST: '表盘局部调整',
   AI_WATCHFACE_REFUND: '表盘生成积分退回', AI_WATCHFACE_ADJUST_REFUND: '表盘调整积分退回',
 }
 const reasonLabels: Record<string, string> = {

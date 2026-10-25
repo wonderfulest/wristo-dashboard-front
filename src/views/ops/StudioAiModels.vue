@@ -17,6 +17,7 @@
       </el-tag>
       <span>密钥由服务端环境变量管理；已配置不代表已验证模型访问权限。</span>
     </div>
+    <ImageAiPricing />
     <template v-if="settings">
       <el-card shadow="never">
         <template #header><strong>AI 生成总开关</strong></template>
@@ -66,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+import ImageAiPricing from '@/components/ops/ImageAiPricing.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getStudioAi, saveStudioAi, type AiSettings, type AiScene, type AiModel, type AiAdminView } from '@/api/studioAi'
