@@ -292,6 +292,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/website/studio-conversion',
+      name: 'StudioConversion',
+      component: () => import('@/views/studio/StudioConversion.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/website/studio-memberships',
       name: 'StudioMembershipAnalytics',
       component: () => import('@/views/studio/StudioMembershipAnalytics.vue'),

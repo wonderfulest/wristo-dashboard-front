@@ -173,8 +173,9 @@ export const topMenus: TopMenuGroup[] = [
     key: 'users-transactions',
     title: '用户与交易',
     icon: 'User',
-    basePaths: ['/users', '/orders', '/merchant', '/website/studio-memberships', '/website/subscription-plans', '/profile'],
+    basePaths: ['/users', '/orders', '/merchant', '/website/studio-memberships', '/website/studio-conversion', '/website/subscription-plans', '/profile'],
     children: [
+      { key: 'studio-conversion', title: 'Studio 转化', icon: 'DataAnalysis', path: '/website/studio-conversion' },
       { key: 'user-services', title: '用户服务', icon: 'User', children: [
         { key: 'user-management', title: '用户管理', icon: 'User', path: '/users/user-management' },
         { key: 'change-user-email', title: '变更用户邮箱', icon: 'Message', path: '/users/user-management/change-email' },
@@ -234,12 +235,11 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
-    key: 'platform-operations',
-    title: '平台运维',
-    icon: 'Tools',
-    basePaths: ['/ops'],
+    key: 'credits-ai',
+    title: '积分与 AI',
+    icon: 'Coin',
+    basePaths: ['/ops/ai-usage', '/ops/credit-statistics', '/ops/ai-prices', '/ops/user-rewards', '/ops/share-rewards', '/ops/creator-rewards', '/ops/ai-models'],
     children: [
-      { key: 'platform-versions', title: '平台版本', icon: 'Connection', path: '/ops/platform-versions' },
       { key: 'ai-usage', title: 'AI 用量与成本', icon: 'DataAnalysis', path: '/ops/ai-usage' },
       { key: 'credit-statistics', title: '积分统计', icon: 'Coin', path: '/ops/credit-statistics' },
       { key: 'ai-prices', title: 'AI 模型定价', icon: 'Coin', path: '/ops/ai-prices' },
@@ -247,6 +247,15 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'share-rewards', title: '分享访问积分奖励', icon: 'Share', path: '/ops/share-rewards' },
       { key: 'creator-rewards', title: '创作者积分奖励', icon: 'Present', path: '/ops/creator-rewards' },
       { key: 'ai-models', title: 'AI 模型配置', icon: 'MagicStick', path: '/ops/ai-models' },
+    ],
+  },
+  {
+    key: 'platform-operations',
+    title: '平台运维',
+    icon: 'Tools',
+    basePaths: ['/ops'],
+    children: [
+      { key: 'platform-versions', title: '平台版本', icon: 'Connection', path: '/ops/platform-versions' },
       { key: 'system-config', title: '系统配置', icon: 'Setting', path: '/ops/system-config' },
       { key: 'feature-switches', title: '功能开关', icon: 'Setting', path: '/ops/feature-switches' },
       { key: 'db-backups', title: '数据库备份', icon: 'Files', path: '/ops/db-backups' },

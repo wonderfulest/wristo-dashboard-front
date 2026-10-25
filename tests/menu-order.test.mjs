@@ -25,6 +25,7 @@ test('顶部菜单按业务流程组织', () => {
     'games',
     'users-transactions',
     'marketing-growth',
+    'credits-ai',
     'platform-operations',
   ])
 })
