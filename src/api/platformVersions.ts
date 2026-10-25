@@ -34,3 +34,15 @@ export const updatePlatformVersions = (data: PlatformVersionUpdate): Promise<Api
 
 export const getPlatformVersionHistory = (): Promise<ApiResponse<GlobalConfigHistory[]>> =>
   instance.get('/admin/platform-versions/history')
+
+export interface AppBuildVersionRecord {
+  id: number
+  version: string
+  releaseNote?: string
+  recordedBy?: string
+  recordedAt?: string
+}
+export const getAppBuildVersions = (): Promise<ApiResponse<AppBuildVersionRecord[]>> =>
+  instance.get('/admin/platform-versions/app-build-versions')
+export const registerAppBuildVersion = (data: { version: string; releaseNote: string }): Promise<ApiResponse<void>> =>
+  instance.post('/admin/platform-versions/app-build-versions', data)
