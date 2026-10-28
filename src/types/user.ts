@@ -71,6 +71,7 @@ export interface RoleInfo {
 }
 
 export interface UserMchUpdateDTO {
+  remark?: string
   username?: string
   nickname?: string
   avatar?: string
@@ -88,6 +89,7 @@ export interface UserMchUpdateDTO {
 }
 
 export interface MchUserVO extends UserInfo {
+  remark?: string | null
   payoutMethod?: string | null
   payoutAccount?: string | null
   bannerImageId?: number | null

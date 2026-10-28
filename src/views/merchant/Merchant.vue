@@ -135,6 +135,10 @@
           <el-input v-model="editForm.slogan" placeholder="Slogan" />
         </el-form-item>
 
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="editForm.remark" type="textarea" :rows="4" :maxlength="10000" show-word-limit placeholder="仅管理员可见的商家备注" />
+        </el-form-item>
+
         <el-form-item label="支付方式" prop="payoutMethod">
           <el-input v-model="editForm.payoutMethod" placeholder="例如: PayPal / Bank" />
         </el-form-item>
@@ -266,6 +270,7 @@ const editForm = ref({
   payoutAccount: '',
   bannerImageId: undefined as number | undefined,
   slogan: '',
+  remark: '',
   facebookUrl: '',
   instagramUrl: '',
   xUrl: '',
@@ -316,6 +321,7 @@ const openEdit = async (row: any) => {
       payoutAccount: (r.payoutAccount || '') as any,
       bannerImageId: (r.bannerImageId ?? undefined) as any,
       slogan: (r.slogan || '') as any,
+      remark: r.remark || '',
       facebookUrl: (r.facebookUrl || '') as any,
       instagramUrl: (r.instagramUrl || '') as any,
       xUrl: (r.xUrl || '') as any,
@@ -345,6 +351,7 @@ const handleEditSubmit = async () => {
         payoutAccount: editForm.value.payoutAccount,
         bannerImageId: editForm.value.bannerImageId,
         slogan: editForm.value.slogan,
+        remark: editForm.value.remark,
         facebookUrl: editForm.value.facebookUrl,
         instagramUrl: editForm.value.instagramUrl,
         xUrl: editForm.value.xUrl,
