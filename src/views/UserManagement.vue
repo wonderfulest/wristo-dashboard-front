@@ -46,6 +46,15 @@
         <template #default="{ row }">{{ registrationMethodLabels[row.registrationMethod] || '未知' }}</template>
       </el-table-column>
       <el-table-column prop="roles" label="角色" :formatter="roleFormatter" />
+      <el-table-column label="会员身份" min-width="180">
+        <template #default="{ row }">
+          <template v-if="row.premium?.active">
+            <el-tag type="warning">Wristo Premium</el-tag>
+            <div>{{ row.premium.lifetime ? '终身会员' : `有效期至 ${new Date(row.premium.expiresAt).toLocaleDateString('zh-CN')}` }}</div>
+          </template>
+          <span v-else>—</span>
+        </template>
+      </el-table-column>
       <el-table-column label="系统禁用" width="110">
         <template #default="{ row }">
           <el-tag :type="normalizeStatus(row.status) === 1 ? 'success' : 'danger'">{{ normalizeStatus(row.status) === 1 ? '未禁用' : normalizeStatus(row.status) === 0 ? '已禁用' : '未知' }}</el-tag>

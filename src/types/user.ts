@@ -30,7 +30,14 @@ export interface AdminEmailAccountCreateDTO {
    oldEmail: string
    newEmail: string
  }
+export interface PremiumEntitlement {
+  active: boolean
+  lifetime: boolean
+  expiresAt: string | null
+}
+
 export interface UserInfo {
+  premium?: PremiumEntitlement | null
   registrationSource?: string | null
   registrationMethod?: string | null
   aiGenerationEnabled?: boolean

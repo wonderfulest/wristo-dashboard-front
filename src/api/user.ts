@@ -8,7 +8,7 @@ import type { MchUserVO, UserMchUpdateDTO } from '@/types/user'
 import type { OverviewFilters } from '@/components/users/userOverview.mjs'
 
 export const getUserInfo = (): Promise<ApiResponse<UserInfo>> => {
-  return instance.get('/users/info?populate=roles')
+  return instance.get('/users/info?populate=roles,premium')
 }
 
 export const updateUserInfo = (data: Partial<UserInfo>): Promise<ApiResponse<UserInfo>> => {
@@ -26,11 +26,11 @@ export const uploadAvatar = (file: File): Promise<ApiResponse<string>> => {
 }
 
 export const getUserList = (): Promise<ApiResponse<UserInfo[]>> => {
-  return instance.get('/admin/users/list/all?populate=roles')
+  return instance.get('/admin/users/list/all?populate=roles,premium')
 }
 
 export const getUserDetail = (id: number): Promise<ApiResponse<UserInfo>> => {
-  return instance.get(`/admin/users/get/${id}`)
+  return instance.get(`/admin/users/get/${id}?populate=roles,premium`)
 }
 
 export const createUser = (data: { username: string; password: string; email: string; roles?: string[] }): Promise<ApiResponse<UserInfo>> => {
@@ -54,7 +54,7 @@ export interface UserPageQueryDTO extends PageQueryDTO, OverviewFilters {
 }
 
 export const pageUsers = (dto: UserPageQueryDTO): Promise<ApiResponse<PageResponse<UserInfo>>> => {
-  return instance.post('/admin/users/page?populate=roles', dto)
+  return instance.post('/admin/users/page?populate=roles,premium', dto)
 }
 
 export const getUserStats = (): Promise<ApiResponse<UserStats>> => {
@@ -71,11 +71,11 @@ export interface MerchantUserPageQueryDTO extends PageQueryDTO {
 export const pageMerchantUsers = (
   dto: MerchantUserPageQueryDTO
 ): Promise<ApiResponse<PageResponse<MchUserVO>>> => {
-  return instance.post('/admin/merchants/page?populate=roles,image', dto)
+  return instance.post('/admin/merchants/page?populate=roles,premium,image', dto)
 }
 
 export const getMerchantById = (id: number): Promise<ApiResponse<MchUserVO>> => {
-  return instance.get(`/admin/merchants/get/${id}?populate=roles,image`)
+  return instance.get(`/admin/merchants/get/${id}?populate=roles,premium,image`)
 }
 
 export const updateMerchantById = (id: number, dto: UserMchUpdateDTO): Promise<ApiResponse<MchUserVO>> => {
