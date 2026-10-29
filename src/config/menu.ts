@@ -238,7 +238,7 @@ export const topMenus: TopMenuGroup[] = [
     key: 'credits-ai',
     title: '积分与 AI',
     icon: 'Coin',
-    basePaths: ['/ops/ai-usage', '/ops/credit-statistics', '/ops/ai-prices', '/ops/user-rewards', '/ops/share-rewards', '/ops/creator-rewards', '/ops/ai-models'],
+    basePaths: ['/ops/ai-usage', '/ops/credit-statistics', '/ops/ai-prices', '/ops/user-rewards', '/ops/share-rewards', '/ops/creator-rewards', '/ops/ai-models', '/ops/watchface-rules'],
     children: [
       { key: 'ai-usage', title: 'AI 用量与成本', icon: 'DataAnalysis', path: '/ops/ai-usage' },
       { key: 'credit-statistics', title: '积分统计', icon: 'Coin', path: '/ops/credit-statistics' },
@@ -246,6 +246,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'user-rewards', title: '用户积分任务', icon: 'Coin', path: '/ops/user-rewards' },
       { key: 'share-rewards', title: '分享访问积分奖励', icon: 'Share', path: '/ops/share-rewards' },
       { key: 'creator-rewards', title: '创作者积分奖励', icon: 'Present', path: '/ops/creator-rewards' },
+      { key: 'watchface-rules', title: '表盘生成规则', icon: 'Document', path: '/ops/watchface-rules' },
       { key: 'ai-models', title: 'AI 模型配置', icon: 'MagicStick', path: '/ops/ai-models' },
     ],
   },

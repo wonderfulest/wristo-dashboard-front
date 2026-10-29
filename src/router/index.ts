@@ -102,6 +102,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/ops/watchface-rules',
+      name: 'WatchfaceRules',
+      component: () => import('@/views/ops/WatchfaceRules.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/ops/ai-models',
       name: 'StudioAiModels',
       component: () => import('@/views/ops/StudioAiModels.vue'),
