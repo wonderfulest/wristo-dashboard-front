@@ -220,6 +220,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/dashboard/downloads',
+      name: 'DownloadRecords',
+      component: () => import('@/views/dashboard/DownloadRecords.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/dashboard/sales',
       name: 'DashboardSales',
       component: () => import('@/views/dashboard/SalesAnalytics.vue'),
