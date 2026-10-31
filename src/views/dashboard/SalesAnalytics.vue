@@ -11,7 +11,6 @@
       <DeviceOrderSummary />
       <CountryOrderDistribution />
       <AppSalesSummary />
-      <AppDownloadRanking />
     </div>
   </div>
 </template>
@@ -23,7 +22,6 @@ import FunnelAnalytics from '@/components/dashboard/FunnelAnalytics.vue'
 import DeviceOrderSummary from '@/components/dashboard/DeviceOrderSummary.vue'
 import CountryOrderDistribution from '@/components/dashboard/CountryOrderDistribution.vue'
 import AppSalesSummary from '@/components/dashboard/AppSalesSummary.vue'
-import AppDownloadRanking from '@/components/dashboard/AppDownloadRanking.vue'
 </script>
 
 <style scoped>

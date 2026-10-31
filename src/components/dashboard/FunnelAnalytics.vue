@@ -1,10 +1,12 @@
 <template>
   <div class="dashboard-content">
     <div class="section-heading">
-      <h3 class="section-title">转化分析</h3>
+      <h3 class="section-title">首次下载转化分析</h3>
       <DashboardSectionFilter v-model="filter" :loading="funnelLoading" />
     </div>
 
+    <p class="funnel-note">按所选 UTC 日期首次出现的设备与表盘分组，观察截至当前的后续状态及成功购买；历史重新上报不进入本漏斗。购买设备去重，包含应用与覆盖该表盘的套餐，历史比例会随延迟购买更新。中间层级包含已完成购买的设备。</p>
+    <p v-if="funnel" class="funnel-note">全部上报 {{ formatNumber(funnel.downloads) }} · 历史重新上报 {{ formatNumber(funnel.repeatDownloads) }}（{{ formatNumber(funnel.returningDevices) }} 个设备与表盘）· 回流后购买 {{ formatNumber(funnel.returningPurchasedDevices) }}</p>
     <div class="funnel-toolbar">
       <div class="step-toggle">
         <span class="toggle-label">显示层级：</span>
@@ -70,16 +72,19 @@ const formatNumber = (n: number | undefined) => {
 }
 
 const formatPercent = (fromVal?: number, toVal?: number) => {
-  if (!fromVal || fromVal <= 0 || !toVal) return '-'
+  if (!fromVal || fromVal <= 0 || toVal == null) return '-'
   const pct = (toVal / fromVal) * 100
   return pct.toFixed(1) + '%'
 }
 
 const displayPeriod = ref(initialRange.displayPeriod)
 
+let funnelRequest = 0
 const fetchFunnel = async () => {
+  const request = ++funnelRequest
   try {
     funnelLoading.value = true
+    funnel.value = null
     funnelError.value = null
     displayPeriod.value = `${filter.value.startDate} 至 ${filter.value.endDate}`
     const appIdVal = filter.value.appId != null && !Number.isNaN(filter.value.appId) ? filter.value.appId : null
@@ -89,32 +94,32 @@ const fetchFunnel = async () => {
       appId: appIdVal
     }
     const res = await getFunnel(dto)
-    if (res.code === 0 && res.data) funnel.value = res.data
+    if (request !== funnelRequest) return
+    if (res.code === 0 && res.data && res.data.firstDownloads != null && res.data.purchasedDevices != null) funnel.value = res.data
     else funnelError.value = res.msg || 'Failed to fetch funnel data'
   } catch (e) {
+    if (request !== funnelRequest) return
     funnelError.value = 'Network error occurred'
     console.error('Error fetching funnel:', e)
   } finally {
-    funnelLoading.value = false
+    if (request === funnelRequest) funnelLoading.value = false
   }
 }
 
 const steps = [
-  { label: '下载', key: 'downloads' as const },
+  { label: '首次下载', key: 'firstDownloads' as const },
   { label: '弹码', key: 'codeDisplayed' as const },
   { label: '输入码', key: 'codeEntered' as const },
   { label: '开始购买', key: 'startPurchase' as const },
-  { label: '应用购买', key: 'appPurchases' as const },
-  { label: '套餐购买', key: 'bundlePurchases' as const }
+  { label: '成功购买设备', key: 'purchasedDevices' as const }
 ]
 
 const stepVisible = ref<Record<string, boolean>>({
-  downloads: true,
+  firstDownloads: true,
   codeDisplayed: true,
   codeEntered: true,
   startPurchase: true,
-  appPurchases: true,
-  bundlePurchases: true
+  purchasedDevices: true
 })
 
 const setAllVisible = (val: boolean) => {
@@ -205,6 +210,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.funnel-note { color: var(--el-text-color-secondary); font-size: 13px; line-height: 1.7; }
 .dashboard-content { margin-top: 32px; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px 0 12px; }
 .section-title { font-size: 18px; font-weight: 700; color: #212529; margin: 0; text-align: left; }

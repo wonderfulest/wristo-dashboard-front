@@ -10,6 +10,7 @@ export interface DashboardMetrics {
   revenue: number
   orders: number
   downloads: number
+  repeatDownloads: number
   purchaseRate: number | null
 }
 

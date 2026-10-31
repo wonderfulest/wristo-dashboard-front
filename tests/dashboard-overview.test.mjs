@@ -41,13 +41,14 @@ test('calculateBusinessMetrics aggregates cents and counts without inventing com
       { date: '2026-08-12', orderCount: 2, downloads: 80, earnings: 1298 },
       { date: '2026-08-13', orderCount: 3, downloads: 120, earnings: 2702 },
     ],
-    { downloads: 200, appPurchases: 6, bundlePurchases: 4 },
+    { downloads: 300, firstDownloads: 200, repeatDownloads: 100, purchasedDevices: 10, appPurchases: 6, bundlePurchases: 4 },
   )
 
   assert.deepEqual(metrics, {
     revenue: 40,
     orders: 5,
     downloads: 200,
+    repeatDownloads: 100,
     purchaseRate: 5,
   })
 })
@@ -57,6 +58,7 @@ test('calculateBusinessMetrics safely handles missing and zero funnel data', () 
     revenue: 0,
     orders: 0,
     downloads: 0,
+    repeatDownloads: 0,
     purchaseRate: null,
   })
 })
@@ -83,7 +85,7 @@ test('dashboard overview and sales pages separate operational and sales sections
   assert.doesNotMatch(source, /SalesLineChart|FunnelAnalytics|LaunchOperationsRecommendation|CategoryValueMatrix/)
   assert.match(salesPage, /<SalesLineChart\s*\/>/)
   assert.match(salesPage, /<FunnelAnalytics\s*\/>/)
-  for (const component of ['DeviceOrderSummary', 'CountryOrderDistribution', 'AppSalesSummary', 'AppDownloadRanking']) {
+  for (const component of ['DeviceOrderSummary', 'CountryOrderDistribution', 'AppSalesSummary']) {
     assert.match(salesPage, new RegExp(`<${component}\\s*/>`))
   }
   for (const component of [overview, sales, funnel]) {
@@ -106,4 +108,14 @@ test('review time action exposes all three operational steps', async () => {
   assert.match(source, /重建搜索索引/)
   assert.match(source, /提交后台重建任务/)
   assert.match(source, /索引重建已提交后台执行/)
+})
+
+
+test('first download conversion never falls back to calendar-day orders or returning reports', () => {
+  const sales = [{ earnings: 100, orderCount: 99, downloads: 999 }]
+  const empty = calculateBusinessMetrics(sales, { downloads: 100, firstDownloads: 0, repeatDownloads: 100, purchasedDevices: 0, appPurchases: 99 })
+  assert.equal(empty.downloads, 0)
+  assert.equal(empty.purchaseRate, null)
+  const converted = calculateBusinessMetrics(sales, { downloads: 100, firstDownloads: 10, repeatDownloads: 90, purchasedDevices: 2, appPurchases: 99 })
+  assert.equal(converted.purchaseRate, 20)
 })

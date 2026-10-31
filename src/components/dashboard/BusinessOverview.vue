@@ -33,8 +33,9 @@ const metrics = ref<DashboardMetrics>(calculateBusinessMetrics())
 const cards = [
   { key: 'revenue' as const, label: '销售收入', note: '统计周期内已记录收入', tone: 'green' },
   { key: 'orders' as const, label: '订单数', note: '仅统计产生销售收入的订单', tone: 'blue' },
-  { key: 'downloads' as const, label: '下载量', note: '所选应用或全部应用', tone: 'amber' },
-  { key: 'purchaseRate' as const, label: '下载 → 购买', note: '应用购买与套餐购买合计', tone: 'coral' },
+  { key: 'downloads' as const, label: '首次下载', note: '统计期内首次出现的设备与表盘', tone: 'amber' },
+  { key: 'repeatDownloads' as const, label: '历史重新上报', note: '单独统计，不计入首次下载转化率', tone: 'blue' },
+  { key: 'purchaseRate' as const, label: '首次下载 → 购买', note: '同批设备截至当前的去重购买占比', tone: 'coral' },
 ]
 
 const query = computed(() => ({
@@ -43,17 +44,25 @@ const query = computed(() => ({
   ...(filter.value.appId ? { appId: filter.value.appId } : {}),
 }))
 
+let metricsRequest = 0
 const fetchMetrics = async () => {
+  const request = ++metricsRequest
+  metrics.value = calculateBusinessMetrics()
+  emit('metrics-change', metrics.value)
   loading.value = true
   error.value = ''
   try {
     const [sales, funnel] = await Promise.all([getSales(query.value), getFunnel(query.value)])
+    if (request !== metricsRequest) return
+    if (sales.code !== 0 || funnel.code !== 0) throw new Error('统计加载失败')
+    if (funnel.data?.firstDownloads == null || funnel.data?.purchasedDevices == null) throw new Error('首次下载统计尚未就绪')
     metrics.value = calculateBusinessMetrics(sales.data || [], funnel.data || null)
     emit('metrics-change', metrics.value)
   } catch {
+    if (request !== metricsRequest) return
     error.value = '经营指标暂时无法加载，请稍后重试'
   } finally {
-    loading.value = false
+    if (request === metricsRequest) loading.value = false
   }
 }
 

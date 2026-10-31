@@ -29,11 +29,12 @@ export const calculateBusinessMetrics = (sales = [], funnel = null) => {
     orders: result.orders + (Number(item?.orderCount) || 0),
     downloads: result.downloads + (Number(item?.downloads) || 0),
   }), { revenue: 0, orders: 0, downloads: 0 })
-  const downloads = Number(funnel?.downloads) || totals.downloads
-  const purchases = (Number(funnel?.appPurchases) || 0) + (Number(funnel?.bundlePurchases) || 0)
+  const downloads = Number(funnel?.firstDownloads) || 0
+  const purchases = Number(funnel?.purchasedDevices) || 0
   return {
     ...totals,
     downloads,
+    repeatDownloads: Number(funnel?.repeatDownloads) || 0,
     purchaseRate: downloads > 0 ? purchases * 100 / downloads : null,
   }
 }

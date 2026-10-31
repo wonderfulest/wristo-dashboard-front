@@ -34,6 +34,8 @@ export interface AppSalesSummaryPageQueryDTO {
 export interface AppDownloadSummaryVO {
   appId: number
   downloadCount: number
+  firstDownloadCount: number
+  repeatDownloadCount: number
   app: ProductBase | null
 }
 
@@ -92,6 +94,11 @@ export interface AppFunnelVO {
   appId: number | null
   /** 下载 */
   downloads: number
+  firstDownloads: number
+  repeatDownloads: number
+  returningDevices: number
+  purchasedDevices: number
+  returningPurchasedDevices: number
   /** 弹码 */
   codeDisplayed: number
   /** 输入码 */

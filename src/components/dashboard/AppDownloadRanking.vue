@@ -1,13 +1,8 @@
 <template>
   <div class="dashboard-content">
     <div class="section-heading">
-      <h3 class="section-title">应用下载量 Top 排序</h3>
-      <DashboardSectionFilter
-        v-model="filter"
-        :loading="loading"
-        :show-app="false"
-        @update:model-value="handleFilterChange"
-      />
+      <h3 class="section-title">应用下载排行</h3>
+
     </div>
 
     <div v-if="error" class="error-message">
@@ -15,7 +10,7 @@
     </div>
 
     <div class="table-scroll" role="region" aria-label="应用下载量排行榜，可横向滚动" tabindex="0">
-      <el-table v-loading="loading" :data="items" border style="width: 100%" empty-text="No data">
+      <el-table v-loading="loading" :data="items" border style="width: 100%" empty-text="暂无下载数据">
         <el-table-column label="排名" width="72" align="center">
           <template #default="{ $index }">
             {{ (pageNum - 1) * pageSize + $index + 1 }}
@@ -23,27 +18,30 @@
         </el-table-column>
         <el-table-column label="应用" width="320">
           <template #default="{ row }">
-            <a
-              class="app-cell app-link"
-              :href="row.app?.garminStoreUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <div class="app-cell">
+              <a class="app-link" :href="row.app?.garminStoreUrl" target="_blank" rel="noopener noreferrer">
               <img
                 v-if="row.app?.garminImageUrl"
                 :src="row.app.garminImageUrl"
                 :alt="row.app?.name || `App #${row.appId}`"
                 class="app-thumb"
               />
+              </a>
               <div class="app-info">
-                <div class="app-name">{{ row.app?.name || 'App #' + row.appId }}</div>
+                <el-button link type="primary" class="app-name" @click="emit('view-records', row.appId)">{{ row.app?.name || 'App #' + row.appId }}</el-button>
                 <div class="app-sub">ID: {{ row.appId }}</div>
               </div>
-            </a>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="下载量" width="140" align="right">
+        <el-table-column label="全部上报" width="140" align="right">
           <template #default="{ row }">{{ Number(row.downloadCount || 0).toLocaleString() }}</template>
+        </el-table-column>
+        <el-table-column label="首次下载" width="140" align="right"><template #default="{ row }"><el-button link type="primary" @click="emit('view-records', row.appId, 'FIRST')">{{ Number(row.firstDownloadCount || 0).toLocaleString() }}</el-button></template></el-table-column>
+        <el-table-column label="历史重新上报" width="150" align="right"><template #default="{ row }"><el-button link type="primary" @click="emit('view-records', row.appId, 'RETURNING')">{{ Number(row.repeatDownloadCount || 0).toLocaleString() }}</el-button></template></el-table-column>
+        <el-table-column label="回流占比" width="110" align="right"><template #default="{ row }">{{ row.downloadCount ? (row.repeatDownloadCount / row.downloadCount * 100).toFixed(1) + '%' : '—' }}</template></el-table-column>
+        <el-table-column label="操作" width="120" align="center">
+          <template #default="{ row }"><el-button link type="primary" @click="emit('view-records', row.appId)">查看明细</el-button></template>
         </el-table-column>
       </el-table>
     </div>
@@ -64,20 +62,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref, watch } from 'vue'
 import { getAppDownloadSummaryPage } from '@/api/purchase'
 import type { AppDownloadSummaryVO, AppSalesSummaryPageQueryDTO } from '@/types/api'
-import DashboardSectionFilter from './DashboardSectionFilter.vue'
-import { buildDashboardRange } from './dashboardOverview.mjs'
 import type { DashboardFilter } from './dashboardTypes'
 
-const initialRange = buildDashboardRange('30d')
-const filter = ref<DashboardFilter>({
-  rangeType: '30d',
-  startDate: initialRange.startDate,
-  endDate: initialRange.endDate,
-  appId: null,
-})
+const props = defineProps<{ filter: DashboardFilter; revision: number }>()
+const emit = defineEmits<{ (event: 'view-records', appId: number, type?: 'FIRST' | 'RETURNING'): void }>()
+let requestId = 0
 const items = ref<AppDownloadSummaryVO[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -86,27 +78,33 @@ const pageSize = ref(10)
 const total = ref(0)
 
 const fetchPage = async () => {
+  const id = ++requestId
   try {
     loading.value = true
     error.value = null
     const dto: AppSalesSummaryPageQueryDTO = {
       pageNum: pageNum.value,
       pageSize: pageSize.value,
-      startDate: filter.value.startDate,
-      endDate: filter.value.endDate,
+      startDate: props.filter.startDate,
+      endDate: props.filter.endDate,
     }
     const res = await getAppDownloadSummaryPage(dto)
+    if (id !== requestId) return
     if (res.code === 0 && res.data) {
+      if ((res.data.list || []).some(row => row.firstDownloadCount == null || row.repeatDownloadCount == null)) throw new Error('下载分类接口尚未就绪')
       items.value = res.data.list || []
       total.value = res.data.total || 0
     } else {
+      items.value = []; total.value = 0
       error.value = res.msg || 'Failed to fetch app download ranking'
     }
   } catch (e) {
-    error.value = 'Network error occurred'
+    if (id !== requestId) return
+    items.value = []; total.value = 0
+    error.value = e instanceof Error ? e.message : '网络请求失败，请重试'
     console.error('Error fetching app download ranking:', e)
   } finally {
-    loading.value = false
+    if (id === requestId) loading.value = false
   }
 }
 
@@ -124,7 +122,7 @@ const handleSizeChange = (size: number) => {
   fetchPage()
 }
 
-onMounted(fetchPage)
+watch(() => [props.filter.startDate, props.filter.endDate, props.revision], handleFilterChange, { immediate: true })
 </script>
 
 <style scoped>

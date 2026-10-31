@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 
 const salesSource = readFileSync(new URL('../src/components/dashboard/AppSalesSummary.vue', import.meta.url), 'utf8')
 const salesPageSource = readFileSync(new URL('../src/views/dashboard/SalesAnalytics.vue', import.meta.url), 'utf8')
+const downloadsPageSource = readFileSync(new URL('../src/views/dashboard/DownloadRecords.vue', import.meta.url), 'utf8')
 const filterSource = readFileSync(new URL('../src/components/dashboard/DashboardSectionFilter.vue', import.meta.url), 'utf8')
 const downloadsSource = readFileSync(
   new URL('../src/components/dashboard/AppDownloadRanking.vue', import.meta.url),
@@ -22,14 +23,18 @@ test('app sales summary has its own 30-day time filter and sends both dates', ()
   assert.match(salesSource, /endDate:\s*filter\.value\.endDate/)
 })
 
-test('sales analytics page mounts an independent app download ranking', () => {
-  assert.match(salesPageSource, /import AppDownloadRanking/)
-  assert.match(salesPageSource, /<AppDownloadRanking\s*\/>/)
+test('download analysis owns ranking and records, separate from sales', () => {
+  assert.doesNotMatch(salesPageSource, /AppDownloadRanking/)
+  assert.match(downloadsPageSource, /<AppDownloadRanking/)
+  assert.match(downloadsPageSource, /<DownloadRecordTable/)
+  assert.match(downloadsPageSource, /@view-records="viewRecords"/)
 })
 
 test('download ranking component uses a 30-day filter and paginated download endpoint', () => {
-  assert.match(downloadsSource, /DashboardSectionFilter/)
-  assert.match(downloadsSource, /buildDashboardRange\('30d'\)/)
+  assert.match(downloadsPageSource, /DashboardSectionFilter/)
+  assert.match(downloadsPageSource, /buildDashboardRange\('30d'\)/)
+  assert.match(downloadsSource, /startDate: props.filter.startDate/)
+  assert.match(downloadsSource, /endDate: props.filter.endDate/)
   assert.match(downloadsSource, /getAppDownloadSummaryPage/)
   assert.match(downloadsSource, /downloadCount/)
 })
@@ -44,7 +49,7 @@ test('both app ranking tables keep rank first and constrain the app column', () 
   }
 })
 
-test('both app ranking tables link images and names to the Garmin store with hover zoom', () => {
+test('both app ranking tables preserve Garmin image links with hover zoom', () => {
   for (const source of [salesSource, downloadsSource]) {
     assert.match(source, /:href="row\.app\?\.garminStoreUrl"/)
     assert.match(source, /target="_blank"/)
