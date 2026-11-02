@@ -53,6 +53,8 @@
     </el-table>
 
 
+    <WatchfacePushConfig />
+
     <CompanionAppsConfig @saved="fetchList" />
 
     <!-- 审核时间快捷区域 -->
@@ -121,6 +123,7 @@
 </template>
 
 <script setup lang="ts">
+import WatchfacePushConfig from '@/components/ops/WatchfacePushConfig.vue'
 import CompanionAppsConfig from '@/components/ops/CompanionAppsConfig.vue'
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
