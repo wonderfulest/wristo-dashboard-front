@@ -67,7 +67,7 @@ export const topMenus: TopMenuGroup[] = [
     key: 'home',
     title: '首页',
     icon: 'House',
-    basePaths: ['/dashboard', '/tickets', '/contact-us'],
+    basePaths: ['/dashboard', '/tickets', '/contact-us', '/diagnostic-reports'],
     children: [
       { key: 'dashboard-overview', title: '业务概览', icon: 'DataBoard', path: '/dashboard' },
       { key: 'dashboard-users', title: '用户统计', icon: 'User', path: '/dashboard/users' },
@@ -77,6 +77,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'activation-user-detail', title: '邮箱激活详情', icon: 'User', path: '/dashboard/activations/user' },
       { key: 'dashboard-launch', title: '上线策略', icon: 'Promotion', path: '/dashboard/launch' },
       { key: 'dashboard-value', title: '价值分析', icon: 'Histogram', path: '/dashboard/value' },
+      { key: 'diagnostic-reports', title: '小程序诊断', icon: 'Tickets', path: '/diagnostic-reports' },
       { key: 'tickets', title: '工单管理', icon: 'Tickets', path: '/tickets' },
       { key: 'contact-us', title: '用户反馈', icon: 'ChatDotRound', path: '/contact-us' },
     ],

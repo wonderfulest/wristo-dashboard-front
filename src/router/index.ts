@@ -538,6 +538,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/diagnostic-reports',
+      name: 'DiagnosticReports',
+      component: () => import('@/views/dashboard/DiagnosticReports.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/tickets',
       name: 'Tickets',
       component: () => import('@/views/dashboard/Tickets.vue'),
