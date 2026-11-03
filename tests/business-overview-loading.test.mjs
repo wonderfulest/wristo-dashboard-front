@@ -45,14 +45,14 @@ test('loading and preparing never emit or display fabricated zero metrics', asyn
   assert.ok(state.events.every(([, metrics]) => metrics === null))
 })
 
-test('ready response preserves cents conversion and first-download cohort rate', async () => {
+test('ready response preserves cents conversion and period order purchase rate', async () => {
   const state = setup()
   const pending = state.fetchMetrics()
   state.requests[0].resolve(ready)
   await pending
   assert.equal(state.metrics.value.revenue, 12.34)
   assert.equal(state.metrics.value.downloads, 100)
-  assert.equal(state.metrics.value.purchaseRate, 5)
+  assert.equal(state.metrics.value.purchaseRate, 3)
   assert.equal(state.events.at(-1)[0], 'metrics-change')
 })
 

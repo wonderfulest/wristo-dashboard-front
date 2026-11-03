@@ -30,12 +30,11 @@ export const calculateBusinessMetrics = (sales = [], funnel = null) => {
     downloads: result.downloads + (Number(item?.downloads) || 0),
   }), { revenue: 0, orders: 0, downloads: 0 })
   const downloads = Number(funnel?.firstDownloads) || 0
-  const purchases = Number(funnel?.purchasedDevices) || 0
   return {
     ...totals,
     downloads,
     repeatDownloads: Number(funnel?.repeatDownloads) || 0,
-    purchaseRate: downloads > 0 ? purchases * 100 / downloads : null,
+    purchaseRate: downloads > 0 ? totals.orders * 100 / downloads : null,
   }
 }
 

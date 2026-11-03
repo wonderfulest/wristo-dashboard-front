@@ -40,8 +40,8 @@ const cards = [
   { key: 'revenue' as const, label: '销售收入', note: '统计周期内已记录收入', tone: 'green' },
   { key: 'orders' as const, label: '订单数', note: '仅统计产生销售收入的订单', tone: 'blue' },
   { key: 'downloads' as const, label: '首次下载', note: '统计期内首次出现的设备与表盘', tone: 'amber' },
-  { key: 'repeatDownloads' as const, label: '历史重新上报', note: '单独统计，不计入首次下载转化率', tone: 'blue' },
-  { key: 'purchaseRate' as const, label: '首次下载 → 购买', note: '同批设备截至当前的去重购买占比', tone: 'coral' },
+  { key: 'repeatDownloads' as const, label: '历史重新上报', note: '单独统计，不计入购买率分母', tone: 'blue' },
+  { key: 'purchaseRate' as const, label: '购买率', note: '统计周期内订单数 ÷ 首次下载数', tone: 'coral' },
 ]
 
 const query = computed(() => ({

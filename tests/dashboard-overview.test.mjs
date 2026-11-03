@@ -49,7 +49,7 @@ test('calculateBusinessMetrics aggregates cents and counts without inventing com
     orders: 5,
     downloads: 200,
     repeatDownloads: 100,
-    purchaseRate: 5,
+    purchaseRate: 2.5,
   })
 })
 
@@ -111,11 +111,17 @@ test('review time action exposes all three operational steps', async () => {
 })
 
 
-test('first download conversion never falls back to calendar-day orders or returning reports', () => {
+test('purchase rate uses period orders divided by first downloads and excludes repeat reports', () => {
   const sales = [{ earnings: 100, orderCount: 99, downloads: 999 }]
   const empty = calculateBusinessMetrics(sales, { downloads: 100, firstDownloads: 0, repeatDownloads: 100, purchasedDevices: 0, appPurchases: 99 })
   assert.equal(empty.downloads, 0)
   assert.equal(empty.purchaseRate, null)
   const converted = calculateBusinessMetrics(sales, { downloads: 100, firstDownloads: 10, repeatDownloads: 90, purchasedDevices: 2, appPurchases: 99 })
-  assert.equal(converted.purchaseRate, 20)
+  assert.equal(converted.purchaseRate, 990)
+})
+
+test('six period orders over 150 first downloads displays four percent', () => {
+  const metrics = calculateBusinessMetrics([{ orderCount: 6, earnings: 1178 }], { firstDownloads: 150, repeatDownloads: 79, purchasedDevices: 3 })
+  assert.equal(metrics.purchaseRate, 4)
+  assert.equal(formatDashboardMetric('purchaseRate', metrics.purchaseRate), '4.0%')
 })
