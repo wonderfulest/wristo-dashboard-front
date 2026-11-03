@@ -70,3 +70,15 @@ export interface GiftEntitlementRequest {
   giftAmountCny?: number | null
   giftExchangeRate?: number | null
 }
+
+export interface BusinessOverviewVO {
+  downloads: number
+  firstDownloads: number
+  repeatDownloads: number
+  purchasedDevices: number
+  orders: number
+  revenue: number
+  updatedAt: string | null
+  ready: boolean
+  lagSeconds: number | null
+}

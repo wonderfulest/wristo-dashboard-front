@@ -62,6 +62,8 @@ export interface UserStats {
   totalUsers: number
   emailUsers: number
   googleUsers: number
+  appleUsers: number
+  wechatUsers: number
 }
 
 export interface LoginResponseData {

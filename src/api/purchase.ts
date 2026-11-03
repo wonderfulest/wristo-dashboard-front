@@ -1,6 +1,7 @@
 import instance from '@/config/axios'
 import type {
   ApiResponse,
+  BusinessOverviewVO,
   GiftEntitlementRequest,
   PurchaseRecordPageQueryDTO,
   PageResponse,
@@ -57,4 +58,8 @@ export const getCountryOrderDistribution = async (
   dto: CountryOrderStatsQueryDTO
 ): Promise<ApiResponse<CountryOrderDistributionVO>> => {
   return instance.post('/admin/purchases/country/summary', dto)
+}
+
+export const getBusinessOverview = async (dto: SalesQueryDTO): Promise<ApiResponse<BusinessOverviewVO>> => {
+  return instance.post('/admin/purchases/business-overview', dto)
 }

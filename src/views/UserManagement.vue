@@ -30,6 +30,14 @@
         <div class="stat-label">有 Google 账号</div>
         <div class="stat-value">{{ formatCount(userStats.googleUsers) }}</div>
       </div>
+      <div class="stat-item">
+        <div class="stat-label">苹果绑定用户</div>
+        <div class="stat-value">{{ formatCount(userStats.appleUsers) }}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">微信绑定用户</div>
+        <div class="stat-value">{{ formatCount(userStats.wechatUsers) }}</div>
+      </div>
     </div>
     <div class="table-scroll" role="region" aria-label="用户列表表格，可横向滚动" tabindex="0">
     <el-table :data="users" style="width: 100%" :loading="loading" :default-sort="defaultSort" @sort-change="handleSortChange">
@@ -170,6 +178,8 @@ const userStats = ref<UserStats>({
   totalUsers: 0,
   emailUsers: 0,
   googleUsers: 0,
+  appleUsers: 0,
+  wechatUsers: 0,
 })
 const defaultSort = ref<{ prop: string; order: 'ascending' | 'descending' }>({ prop: 'id', order: 'descending' })
 
@@ -413,7 +423,7 @@ onMounted(() => {
 
 .stats-panel {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
