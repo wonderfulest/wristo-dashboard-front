@@ -257,3 +257,13 @@ export const batchUpdateProductTrialDuration = (data: {
 }): Promise<ApiResponse<number>> => {
   return instance.post('/admin/products/trial-duration/batch-update', data)
 }
+
+// 清空所有已结束记录，不受分页和筛选条件影响
+export const clearFinishedProductPackagingLogs = (): Promise<ApiResponse<number>> => {
+  return instance.delete('/admin/product-packaging-logs/finished')
+}
+
+// 清空死信队列，保留历史记录
+export const clearProductPackagingDeadQueue = (): Promise<ApiResponse<number>> => {
+  return instance.delete('/admin/product-packaging-logs/queue/dead')
+}

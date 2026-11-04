@@ -28,6 +28,7 @@
     </div>
 
     <div class="table-actions">
+      <el-button type="danger" :loading="clearing" :disabled="loading || submittingRequeue" @click="clearAll">一键清空</el-button>
       <el-button
         type="primary"
         :disabled="selectedPackagingLogs.length === 0"
@@ -271,8 +272,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { deleteProductPackagingLog, getProductPackagingLogsPage, requeueProductPackagingLog } from '@/api/products'
+import { clearFinishedProductPackagingLogs } from '@/api/products'
 import type { ProductPackagingLogVO } from '@/types/product'
 
 import { getPackagingStatusOptions, formatPackagingStatusArray } from '@/utils/status'
@@ -285,6 +287,7 @@ import UserSelect from '@/components/users/UserSelect.vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 
 // 响应式数据
+const clearing = ref(false)
 const loading = ref(false)
 const packagingLogs = ref<ProductPackagingLogVO[]>([])
 const selectedPackagingLogs = ref<ProductPackagingLogVO[]>([])
@@ -370,6 +373,32 @@ const handleSizeChange = (size: number) => {
 const handleCurrentChange = (page: number) => {
   currentPage.value = page
   fetchPackagingLogs()
+}
+
+const clearAll = async () => {
+  if (clearing.value || loading.value || submittingRequeue.value) return
+  clearing.value = true
+  try {
+    try {
+      await ElMessageBox.confirm('将清空所有已结束的打包记录（不限当前页和筛选结果），保留初始化、排队中、执行中及撤销中的任务，不删除打包产物。', '一键清空', {
+        type: 'warning', confirmButtonText: '确认清空', cancelButtonText: '取消'
+      })
+    } catch {
+      return
+    }
+    const res = await clearFinishedProductPackagingLogs()
+    if (res.code !== 0) {
+      ElMessage.error(res.msg || '清空失败')
+      return
+    }
+    ElMessage.success(`已清空 ${res.data ?? 0} 条`)
+    currentPage.value = 1
+    await fetchPackagingLogs()
+  } catch {
+    ElMessage.error('清空失败，请刷新后重试')
+  } finally {
+    clearing.value = false
+  }
 }
 
 const handleSelectionChange = (rows: ProductPackagingLogVO[]) => {

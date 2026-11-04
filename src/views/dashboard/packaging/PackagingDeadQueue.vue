@@ -2,6 +2,7 @@
   <div class="packaging-dead-queue-container">
     <div class="header">
       <div class="header-actions">
+        <el-button type="danger" :loading="deleting" :disabled="loading || submittingRequeue" @click="clearAll">一键清空</el-button>
         <el-button
           type="primary"
           :disabled="selectedDeadQueue.length === 0 || deleting || submittingRequeue"
@@ -158,6 +159,7 @@ import {
   requeueProductPackagingDeadQueueItem,
   removeProductPackagingDeadQueueItem
 } from '@/api/products'
+import { clearProductPackagingDeadQueue } from '@/api/products'
 import type { ProductPackagingLogVO } from '@/types/product'
 import { formatDateTime } from '@/utils/date'
 import StatusTag from '@/components/StatusTag.vue'
@@ -192,6 +194,31 @@ const fetchDeadQueue = async () => {
     ElMessage.error('获取死信队列失败')
   } finally {
     loading.value = false
+  }
+}
+
+const clearAll = async () => {
+  if (deleting.value || loading.value || submittingRequeue.value) return
+  deleting.value = true
+  try {
+    try {
+      await ElMessageBox.confirm('将清空全部死信队列项，保留打包历史记录，不影响正常打包任务队列。', '一键清空', {
+        type: 'warning', confirmButtonText: '确认清空', cancelButtonText: '取消'
+      })
+    } catch {
+      return
+    }
+    const res = await clearProductPackagingDeadQueue()
+    if (res.code !== 0) {
+      ElMessage.error(res.msg || '清空失败')
+      return
+    }
+    ElMessage.success(`已清空 ${res.data ?? 0} 条`)
+    await fetchDeadQueue()
+  } catch {
+    ElMessage.error('清空失败，请刷新后重试')
+  } finally {
+    deleting.value = false
   }
 }
 
