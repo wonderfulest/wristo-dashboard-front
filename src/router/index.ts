@@ -368,6 +368,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/products/garmin-push-messages',
+      name: 'GarminPushMessages',
+      component: () => import('@/views/garmin/PushMessages.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/products/garmin-devices',
       name: 'GarminDevices',
       component: () => import('@/views/products/GarminDevices.vue'),

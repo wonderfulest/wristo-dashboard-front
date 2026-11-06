@@ -132,6 +132,7 @@ export const topMenus: TopMenuGroup[] = [
         { key: 'website-home-banners', title: '首页 Banner', icon: 'Picture', path: '/website/home-banners' },
       ] },
       { key: 'garmin-ecosystem', title: 'Garmin 生态', icon: 'Monitor', children: [
+        { key: 'garmin-push-messages', title: '佳明推送消息', icon: 'Bell', path: '/products/garmin-push-messages' },
         { key: 'garmin-devices', title: '佳明设备', icon: 'Monitor', path: '/products/garmin-devices' },
         { key: 'device-un-support', title: '未支持应用', icon: 'Warning', path: '/products/device-un-support' },
         { key: 'delete-from-garmin', title: '从佳明商城删除', icon: 'Delete', path: '/products/delete-from-garmin' },
