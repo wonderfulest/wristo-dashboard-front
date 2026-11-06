@@ -178,6 +178,11 @@ export const topMenus: TopMenuGroup[] = [
     icon: 'User',
     basePaths: ['/users', '/orders', '/merchant', '/website/studio-memberships', '/website/studio-conversion', '/website/subscription-plans', '/profile'],
     children: [
+      { key: 'orders-entitlements', title: '订单与权益', icon: 'CreditCard', children: [
+        { key: 'history', title: '订单记录', icon: 'Document', path: '/orders/history' },
+        { key: 'entitlement-grants', title: '赠送权益', icon: 'Key', path: '/orders/entitlement-grants' },
+        { key: 'trial-records', title: '试用记录', icon: 'Tickets', path: '/orders/trials' },
+      ] },
       { key: 'studio-conversion', title: 'Studio 转化', icon: 'DataAnalysis', path: '/website/studio-conversion' },
       { key: 'user-services', title: '用户服务', icon: 'User', children: [
         { key: 'user-management', title: '用户管理', icon: 'User', path: '/users/user-management' },
@@ -187,11 +192,6 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'memberships-subscriptions', title: '会员与订阅', icon: 'CreditCard', children: [
         { key: 'studio-memberships', title: 'Studio 会员', icon: 'CreditCard', path: '/website/studio-memberships' },
         { key: 'subscription-plans', title: '订阅计划', icon: 'Notebook', path: '/website/subscription-plans' },
-      ] },
-      { key: 'orders-entitlements', title: '订单与权益', icon: 'CreditCard', children: [
-        { key: 'history', title: '订单记录', icon: 'Document', path: '/orders/history' },
-        { key: 'entitlement-grants', title: '赠送权益', icon: 'Key', path: '/orders/entitlement-grants' },
-        { key: 'trial-records', title: '试用记录', icon: 'Tickets', path: '/orders/trials' },
       ] },
       { key: 'after-sales-promotions', title: '售后与优惠', icon: 'Money', children: [
         { key: 'refund', title: '订单退款', icon: 'Money', path: '/orders/refund' },
