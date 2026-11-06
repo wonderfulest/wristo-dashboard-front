@@ -15,7 +15,8 @@
           <el-option label="创建时间升序" value="created_at:asc" />
         </el-select>
         <el-button @click="fetchDesigns">刷新</el-button>
-        <el-button type="success" @click="handleBatchApprove" :disabled="!multipleSelection.length">批量通过</el-button>
+        <el-button type="success" @click="handleBatchApprove" :disabled="batchRejecting || !multipleSelection.length">批量通过</el-button>
+        <el-button type="danger" @click="handleBatchReject" :loading="batchRejecting" :disabled="loading || batchRejecting || !multipleSelection.length">一键拒绝</el-button>
       </div>
     </div>
     <el-table
@@ -62,8 +63,8 @@
       </el-table-column>
       <el-table-column label="操作" width="180" fixed="right">
         <template #default="{ row }">
-          <el-button type="success" size="small" @click="handleApprove(row)">通过</el-button>
-          <el-button type="danger" size="small" @click="handleReject(row)">拒绝</el-button>
+          <el-button type="success" size="small" :disabled="batchRejecting" @click="handleApprove(row)">通过</el-button>
+          <el-button type="danger" size="small" :disabled="batchRejecting" @click="handleReject(row)">拒绝</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -95,6 +96,7 @@ import DesignSearchSelect from '@/components/common/DesignSearchSelect.vue'
 const designs = ref<any[]>([])
 const multipleSelection = ref<any[]>([])
 const loading = ref(false)
+const batchRejecting = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -155,6 +157,55 @@ const handleBatchApprove = async () => {
     if (error?.action !== 'cancel') {
       ElMessage.error('操作失败')
     }
+  }
+}
+
+const handleBatchReject = async () => {
+  if (batchRejecting.value) return
+  const designUids = [...new Set<string>(multipleSelection.value
+    .map((item) => item.designUid)
+    .filter((id: string) => !!id))]
+  if (!designUids.length) {
+    ElMessage.warning('请先选择要拒绝的设计')
+    return
+  }
+
+  batchRejecting.value = true
+  try {
+    const { value } = await ElMessageBox.prompt(
+      `将拒绝选中的 ${designUids.length} 个设计，请填写统一的拒绝原因`,
+      '一键拒绝',
+      {
+        confirmButtonText: '确认拒绝',
+        cancelButtonText: '取消',
+        inputType: 'textarea',
+        inputPlaceholder: '请填写拒绝原因（必填）',
+        inputValidator: (val: string) => !!val?.trim() || '必须填写拒绝原因'
+      }
+    )
+    const reviewComment = value.trim()
+    let succeeded = 0
+    for (const designUid of designUids) {
+      try {
+        const resp = await rejectDesignWithComment({ designUid, reviewComment })
+        if (resp.code === 0 && resp.data) succeeded++
+      } catch {
+        // 单项失败不影响其余设计，最终统一展示处理结果。
+      }
+    }
+    const failed = designUids.length - succeeded
+    const message = `拒绝完成：成功 ${succeeded} 个，失败 ${failed} 个`
+    if (!failed) ElMessage.success(message)
+    else if (succeeded) ElMessage.warning(message)
+    else ElMessage.error(message)
+    multipleSelection.value = []
+    await fetchDesigns()
+  } catch (error: unknown) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error('批量拒绝失败')
+    }
+  } finally {
+    batchRejecting.value = false
   }
 }
 
