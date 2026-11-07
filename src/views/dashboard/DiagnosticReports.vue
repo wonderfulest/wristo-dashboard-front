@@ -1,7 +1,7 @@
 <template>
   <div class="diagnostics-page">
     <h2>小程序诊断报告</h2>
-    <p>用户主动提交的安装与蓝牙诊断信息，保留30天。时间为 UTC。</p>
+    <p>用户主动提交的页面异常、接口请求、安装与蓝牙诊断信息，保留30天。时间为 UTC。</p>
     <el-form inline @submit.prevent="search">
       <el-form-item label="反馈编号"><el-input v-model="reportNo" placeholder="粘贴 WR- 开头的完整编号" clearable style="width: 380px" /></el-form-item>
       <el-button type="primary" :loading="loading" @click="search">查询</el-button>
@@ -20,7 +20,17 @@
         <template v-if="detail">
           <p><strong>{{ detail.reportNo }}</strong> · 用户 {{ detail.userId }} · {{ detail.createdAt }} UTC</p>
           <p class="description">{{ detail.description }}</p>
-          <pre>{{ formatted }}</pre>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item v-for="(value, key) in environment" :key="key" :label="String(key)">{{ value }}</el-descriptions-item>
+          </el-descriptions>
+          <h3>运行事件（按发生时间）</h3>
+          <el-table :data="events" max-height="460" border empty-text="没有运行事件">
+            <el-table-column prop="time" label="时间（UTC）" width="210" />
+            <el-table-column prop="kind" label="会话" width="110" />
+            <el-table-column prop="name" label="事件" min-width="180" />
+            <el-table-column label="详情" min-width="360"><template #default="{ row }"><span class="event-data">{{ row.data }}</span></template></el-table-column>
+          </el-table>
+          <el-collapse class="raw-report"><el-collapse-item title="完整诊断日志" name="raw"><pre>{{ formatted }}</pre></el-collapse-item></el-collapse>
         </template>
       </div>
     </el-dialog>
@@ -35,6 +45,17 @@ interface Detail extends Summary { diagnostics: string }
 const reportNo = ref(''), page = ref(1), rows = ref<Summary[]>([]), hasNext = ref(false), loading = ref(false), error = ref('')
 const visible = ref(false), detailLoading = ref(false), detail = ref<Detail | null>(null)
 let listRun = 0, detailRun = 0
+const parsed = computed(() => {
+  try { const value = JSON.parse(detail.value?.diagnostics || '{}'); return value && typeof value === 'object' ? value : {} } catch { return {} }
+})
+const environment = computed(() => parsed.value.environment && typeof parsed.value.environment === 'object' ? parsed.value.environment : {})
+const events = computed(() => {
+  const sessions = Array.isArray(parsed.value.sessions) ? parsed.value.sessions : []
+  return sessions.flatMap((session: any) => (Array.isArray(session?.events) ? session.events : [])
+    .filter((event: any) => event && Number.isFinite(event.at))
+    .map((event: any) => ({ at: event.at, time: Number.isFinite(new Date(event.at).getTime()) ? new Date(event.at).toISOString().replace('T', ' ').replace('Z', '') : '', kind: session.kind, name: event.name, data: JSON.stringify(event.data || {}) })))
+    .sort((a: { at: number }, b: { at: number }) => a.at - b.at)
+})
 const formatted = computed(() => { try { return JSON.stringify(JSON.parse(detail.value?.diagnostics || '{}'), null, 2) } catch { return detail.value?.diagnostics || '' } })
 async function load() {
   const run = ++listRun; loading.value = true; error.value = ''
@@ -62,6 +83,8 @@ onMounted(load)
 <style scoped>
 .diagnostics-page { padding: 24px; }
 .paging { display: flex; gap: 16px; align-items: center; margin-top: 20px; }
+.event-data { white-space: pre-wrap; overflow-wrap: anywhere; font-family: monospace; }
+.raw-report { margin-top: 20px; }
 .description { white-space: pre-wrap; overflow-wrap: anywhere; }
 pre { padding: 16px; border-radius: 8px; background: var(--el-fill-color-light); max-height: 60vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
 </style>
