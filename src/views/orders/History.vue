@@ -307,6 +307,7 @@ const formatProduct = (record: PurchaseRecordVO): string => {
   } else if (record.product) {
     return record.product.name
   }
+  if (record.origin === 'wechat-membership-sync') return '微信会员'
   return 'Unknown Product'
 }
 

@@ -180,7 +180,6 @@ export const topMenus: TopMenuGroup[] = [
     children: [
       { key: 'orders-entitlements', title: '订单与权益', icon: 'CreditCard', children: [
         { key: 'history', title: '订单记录', icon: 'Document', path: '/orders/history' },
-        { key: 'wechat-orders', title: '微信订单', icon: 'Tickets', path: '/orders/wechat' },
         { key: 'entitlement-grants', title: '赠送权益', icon: 'Key', path: '/orders/entitlement-grants' },
         { key: 'trial-records', title: '试用记录', icon: 'Tickets', path: '/orders/trials' },
       ] },

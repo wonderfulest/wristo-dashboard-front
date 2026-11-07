@@ -138,12 +138,7 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     { path: '/orders', redirect: '/orders/history' },
-    {
-      path: '/orders/wechat',
-      name: 'WechatOrders',
-      component: () => import('@/views/orders/WechatOrders.vue'),
-      meta: { requiresAuth: true }
-    },
+    { path: '/orders/wechat', redirect: '/orders/history' },
     // Orders module (new nested paths)
     {
       path: '/orders/history',
