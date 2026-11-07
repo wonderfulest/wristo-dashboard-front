@@ -1,5 +1,6 @@
 <template>
   <div class="account-page">
+    <OrderTabs />
     <!-- Filters -->
     <div class="filters">
       <AppSearchSelect v-model="searchAppId" :width="'260px'" />
@@ -264,6 +265,7 @@ import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import MobileRecordList from '@/components/common/MobileRecordList.vue'
 import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
+import OrderTabs from './OrderTabs.vue'
 import { getPurchaseRecordPageList } from '@/api/purchase'
 import type { PurchaseRecordVO, PurchaseRecordPageQueryDTO, PageResponse } from '@/types/api'
 import { formatGiftPayoutStatus } from './giftEntitlementCommission.mjs'
