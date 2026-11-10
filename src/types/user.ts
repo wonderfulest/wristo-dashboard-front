@@ -37,6 +37,7 @@ export interface PremiumEntitlement {
 }
 
 export interface UserInfo {
+  emailVerified?: boolean | null
   premium?: PremiumEntitlement | null
   registrationSource?: string | null
   registrationMethod?: string | null

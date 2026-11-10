@@ -1,6 +1,24 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { NodeTypes, createSimpleExpression, type NodeTransform } from '@vue/compiler-dom'
 import { fileURLToPath, URL } from 'url'
+
+// Attach the same native table behavior to every dashboard SFC, including dialogs.
+const tableCounts = new WeakMap<object, Map<string, number>>()
+const persistentTableWidths: NodeTransform = (node, context) => {
+  if (node.type !== NodeTypes.ELEMENT || !['el-table', 'ElTable'].includes(node.tag)) return
+  const data = node.props.find(p => p.type === NodeTypes.DIRECTIVE && p.arg?.type === NodeTypes.SIMPLE_EXPRESSION && p.arg.content === 'data')
+  const source = data?.type === NodeTypes.DIRECTIVE ? data.exp?.loc.source : ''
+  const base = context.filename.split('/src/').pop() + ':' + (source || 'table')
+  const counts = tableCounts.get(context.root) || new Map<string, number>()
+  tableCounts.set(context.root, counts)
+  const index = counts.get(base) || 0
+  counts.set(base, index + 1)
+  node.props.push({
+    type: NodeTypes.DIRECTIVE, name: 'bind', arg: undefined, modifiers: [], loc: node.loc,
+    exp: createSimpleExpression(`_ctx.$tableWidths(${JSON.stringify(base + ':' + index)})`, false),
+  })
+}
 
 const joinUrl = (baseUrl: string | undefined, path: string) => `${(baseUrl || '').replace(/\/$/, '')}/${path}`
 
@@ -18,7 +36,7 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_WRISTO_API_BASE_URL': JSON.stringify(env.VITE_WRISTO_DASHBOARD_API_BASE_URL || ''),
     },
     plugins: [
-      vue()
+      vue({ template: { compilerOptions: { nodeTransforms: [persistentTableWidths] } } })
     ],
     base: '/', // Ensure base URL is set to root
     resolve: {

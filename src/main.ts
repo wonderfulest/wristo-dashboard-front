@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import './assets/styles/global.scss'
 import './style.css'
+import { tableWidths } from './utils/tableWidths'
 import App from './App.vue'
 import router from './router'
 import ElementPlus from 'element-plus'
@@ -9,6 +10,7 @@ import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 const app = createApp(App)
+app.config.globalProperties.$tableWidths = tableWidths
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 

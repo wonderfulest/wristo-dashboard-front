@@ -44,7 +44,17 @@
       <el-table-column prop="id" label="ID" width="60" sortable="custom" />
       <el-table-column prop="username" label="用户名" width="180" sortable="custom" />
       <el-table-column prop="nickname" label="昵称" width="180" sortable="custom" />
-      <el-table-column prop="email" label="邮箱" width="280" sortable="custom" />
+      <el-table-column prop="email" label="邮箱" min-width="280" sortable="custom">
+        <template #default="{ row }">
+          <template v-if="row.email">
+            {{ row.email }}
+            <el-tag size="small" :type="row.emailVerified ? 'success' : 'info'">
+              {{ row.emailVerified == null ? '状态未知' : row.emailVerified ? '已验证' : '未验证' }}
+            </el-tag>
+          </template>
+          <span v-else>—</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="createdAt" label="注册时间（UTC）" width="190" sortable="custom" />
       <el-table-column prop="lastLoginTime" label="最后登录（UTC）" width="190" sortable="custom" />
       <el-table-column label="注册入口" width="150">
