@@ -2,14 +2,12 @@
   <div class="merchant-tools-page">
     <div class="tools-grid">
       <DesignerBulkToggle />
-      <ReviewTimeControl />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import DesignerBulkToggle from '@/components/dashboard/DesignerBulkToggle.vue'
-import ReviewTimeControl from '@/components/dashboard/ReviewTimeControl.vue'
 </script>
 
 <style scoped>

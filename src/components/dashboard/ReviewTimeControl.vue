@@ -6,11 +6,11 @@
       </div>
     </template>
 
-    <p class="review-rule">网站和微信小程序仅展示已发布上线、且最后上线时间严格早于此审核时间的应用，并允许下单。未上线、上线时间等于或晚于审核时间的应用均不开放。</p>
+    <p class="review-rule">仅控制网站和微信小程序的“最新上线”：收费应用的上线时间须早于此时间，免费应用不受审核时间限制。应用详情和下单不受此限制。</p>
     <div class="review-body">
       <div class="current-box">
         <div class="label">当前审核时间：</div>
-        <div class="value mono">{{ reviewTime || '未设置，应用暂不开放' }}</div>
+        <div class="value mono">{{ reviewTime || '未设置，最新上线仅展示免费应用' }}</div>
         <div class="meta">
           <span>最近修改人：{{ current?.updatedBy || '-' }}</span>
           <span>最近修改时间：{{ current?.updatedAt ? formatDateTime(current!.updatedAt) : '-' }}</span>
