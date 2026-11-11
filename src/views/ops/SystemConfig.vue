@@ -57,27 +57,6 @@
 
     <CompanionAppsConfig @saved="fetchList" />
 
-    <!-- 审核时间快捷区域 -->
-    <el-card class="quick-review" shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span>审核时间（audit.review_time）快捷设置</span>
-        </div>
-      </template>
-      <div class="quick-body">
-        <div class="current">
-          <div class="label">当前审核时间：</div>
-          <div class="value mono">{{ reviewTime || '-' }}</div>
-        </div>
-        <div class="ops">
-          <el-button type="primary" :loading="reviewRefreshing" @click="refreshReview">刷新为当前时间</el-button>
-          <el-date-picker v-model="reviewInput" type="datetime" placeholder="YYYY-MM-DD HH:mm:ss"
-            format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" style="width: 240px" />
-          <el-button type="success" :loading="reviewSaving" @click="saveReviewManual">保存</el-button>
-        </div>
-      </div>
-    </el-card>
-
     <el-dialog v-model="editVisible" :title="isCreate ? '新增配置' : '编辑配置'" width="640px">
       <el-form :model="editForm" label-width="110px">
         <el-form-item label="分类">
@@ -127,7 +106,7 @@ import WatchfacePushConfig from '@/components/ops/WatchfacePushConfig.vue'
 import CompanionAppsConfig from '@/components/ops/CompanionAppsConfig.vue'
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { listConfigs, upsertConfig, getConfigHistory, getReviewTime, setReviewTime, refreshReviewTime, activateConfig } from '@/api/config'
+import { listConfigs, upsertConfig, getConfigHistory, activateConfig } from '@/api/config'
 import type { GlobalConfig, GlobalConfigHistory, GlobalConfigCategoryCode } from '@/types/ops'
 import { formatDateTime } from '@/utils/date'
 
@@ -149,7 +128,8 @@ const activatingKey = ref<string | null>(null)
 
 const filteredList = computed(() => {
   const kw = query.value.keyword?.trim().toLowerCase()
-  return list.value.filter(it => !kw || it.configKey.toLowerCase().includes(kw))
+  return list.value.filter(it => !(it.category === 'audit' && it.configKey === 'review_time')
+    && (!kw || it.configKey.toLowerCase().includes(kw)))
 })
 
 const fetchList = async () => {
@@ -215,9 +195,8 @@ const openEdit = (row: GlobalConfig) => {
 const submitEdit = async () => {
   if (!editForm.value.configKey) { ElMessage.warning('请填写 Key'); return }
   if (!editForm.value.category) { ElMessage.warning('请选择分类'); return }
-  // 针对审核时间项进行格式校验
-  if ((editForm.value.category === 'audit' && editForm.value.configKey === 'review_time') && !isValidDateTime(editForm.value.config_value)) {
-    ElMessage.warning('时间格式无效，请使用 YYYY-MM-DD HH:mm:ss');
+  if (editForm.value.category === 'audit' && editForm.value.configKey.trim() === 'review_time') {
+    ElMessage.warning('请在后台首页顶部设置应用上线审核时间')
     return
   }
   saving.value = true
@@ -265,67 +244,13 @@ const copy = async (s: string) => {
   try { await navigator.clipboard.writeText(s); ElMessage.success('已复制') } catch { ElMessage.error('复制失败') }
 }
 
-// ------------- 审核时间快捷逻辑 -------------
-const reviewTime = ref<string>('')
-const reviewInput = ref<string>('')
-const reviewSaving = ref(false)
-const reviewRefreshing = ref(false)
-
-const isValidDateTime = (s: string): boolean => {
-  if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) return false
-  const d = new Date(s.replace(' ', 'T'))
-  if (isNaN(d.getTime())) return false
-  // 再格式化回去比较，避免 2025-13-40 这类
-  const pad = (n: number) => String(n).padStart(2, '0')
-  const back = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-  return back === s
-}
-
-const fetchReview = async () => {
-  try {
-    const res = await getReviewTime()
-    reviewTime.value = res.data?.configValue || ''
-    if (!reviewInput.value && reviewTime.value) reviewInput.value = reviewTime.value
-  } catch {}
-}
-
-const refreshReview = async () => {
-  reviewRefreshing.value = true
-  try {
-    const res = await refreshReviewTime()
-    if (res?.data?.configValue) {
-      reviewTime.value = res.data.configValue
-      reviewInput.value = reviewTime.value
-    } else {
-      await fetchReview()
-    }
-    ElMessage.success('已刷新为当前时间')
-  } finally { reviewRefreshing.value = false }
-}
-
-const saveReviewManual = async () => {
-  if (!reviewInput.value) { ElMessage.warning('请先选择时间'); return }
-  if (!isValidDateTime(reviewInput.value)) { ElMessage.warning('时间格式无效，请使用 YYYY-MM-DD HH:mm:ss'); return }
-  reviewSaving.value = true
-  try {
-    const res = await setReviewTime(reviewInput.value, '作品审核时间点')
-    reviewTime.value = res.data?.configValue || reviewInput.value
-    ElMessage.success('已保存')
-  } finally { reviewSaving.value = false }
-}
-
-onMounted(async () => {
-  await Promise.all([fetchList(), fetchReview()])
-})
+onMounted(fetchList)
 </script>
 
 <style scoped>
 .config-page { padding: 16px; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .filters { display: flex; gap: 12px; align-items: center; }
-.quick-review { margin-top: 96px; margin-bottom: 16px; }
-.quick-body { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.current { display: flex; align-items: center; gap: 8px; }
 .value-cell { display: flex; gap: 8px; align-items: center; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; white-space: nowrap; }
 .diff { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

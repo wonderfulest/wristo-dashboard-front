@@ -1,11 +1,11 @@
 <template>
   <div class="dashboard">
+    <ReviewTimeControl />
     <AppManagement />
     <DashboardFilterBar />
     <BusinessOverview />
     <DesignOutputOverview />
     <OperationsInbox />
-    <ReviewTimeControl />
   </div>
 </template>
 

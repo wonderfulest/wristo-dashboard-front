@@ -1,15 +1,16 @@
 <template>
-  <el-card class="review-card" shadow="never">
+  <el-card class="review-card" shadow="never" v-loading="loading">
     <template #header>
       <div class="card-header">
-        <span>作品展示审核时间点</span>
+        <span>应用上线审核时间</span>
       </div>
     </template>
 
+    <p class="review-rule">网站和微信小程序仅展示已发布上线、且最后上线时间严格早于此审核时间的应用，并允许下单。未上线、上线时间等于或晚于审核时间的应用均不开放。</p>
     <div class="review-body">
       <div class="current-box">
         <div class="label">当前审核时间：</div>
-        <div class="value mono">{{ reviewTime || '-' }}</div>
+        <div class="value mono">{{ reviewTime || '未设置，应用暂不开放' }}</div>
         <div class="meta">
           <span>最近修改人：{{ current?.updatedBy || '-' }}</span>
           <span>最近修改时间：{{ current?.updatedAt ? formatDateTime(current!.updatedAt) : '-' }}</span>
@@ -165,7 +166,8 @@ onMounted(fetchCurrent)
 </script>
 
 <style scoped>
-.review-card { margin-top: 12px; }
+.review-card { margin-bottom: 20px; border: 2px solid var(--el-color-primary); }
+.review-rule { margin: 0 0 16px; line-height: 1.7; color: var(--el-text-color-regular); }
 .card-header { display: flex; align-items: center; justify-content: space-between; }
 .review-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; }
 .current-box { display: flex; flex-direction: column; gap: 6px; }
@@ -180,7 +182,7 @@ onMounted(fetchCurrent)
 .operation-step.is-running { border-color: #8fcdb0; background: #f1faf5; }.operation-step.is-running .step-index { background: #15915f; color: #fff; }
 .operation-step.is-success .step-index { background: #15915f; color: #fff; }.operation-step.is-failed { border-color: #e8a8a1; background: #fff7f6; }.operation-step.is-failed .step-index { background: #c94f43; color: #fff; }
 .refresh { display: flex; justify-content: center; }
-.circle-btn { width: 160px; height: 160px; border-radius: 50%; font-size: 16px; font-weight: 600; }
+.circle-btn { font-size: 16px; font-weight: 600; }
 .manual-set { display: flex; align-items: center; gap: 12px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
 @media (max-width: 960px) {
@@ -190,6 +192,5 @@ onMounted(fetchCurrent)
   .card-header { align-items: flex-start; flex-direction: column; gap: 8px; }
   .current-box .meta { flex-wrap: wrap; gap: 6px 12px; }
   .manual-set { width: 100%; align-items: stretch; flex-direction: column; }
-  .circle-btn { width: 132px; height: 132px; }
 }
 </style>
