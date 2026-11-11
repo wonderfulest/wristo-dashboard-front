@@ -137,6 +137,7 @@ const router = createRouter({
       component: () => import('@/views/ops/S3Ops.vue'),
       meta: { requiresAuth: true }
     },
+    { path: '/orders/custom', name: 'CustomWatchfaceOrders', component: () => import('@/views/orders/CustomOrders.vue'), meta: { requiresAuth: true } },
     { path: '/orders', redirect: '/orders/history' },
     { path: '/orders/wechat', redirect: '/orders/history' },
     // Orders module (new nested paths)

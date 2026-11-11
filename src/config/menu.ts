@@ -179,6 +179,7 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/users', '/orders', '/merchant', '/website/studio-memberships', '/website/studio-conversion', '/website/subscription-plans', '/profile'],
     children: [
       { key: 'orders-entitlements', title: '订单与权益', icon: 'CreditCard', children: [
+        { key: 'custom-watchface-orders', title: '定制订单', icon: 'EditPen', path: '/orders/custom' },
         { key: 'history', title: '订单记录', icon: 'Document', path: '/orders/history' },
         { key: 'entitlement-grants', title: '赠送权益', icon: 'Key', path: '/orders/entitlement-grants' },
         { key: 'trial-records', title: '试用记录', icon: 'Tickets', path: '/orders/trials' },
