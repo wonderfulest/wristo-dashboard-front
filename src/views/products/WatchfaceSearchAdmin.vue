@@ -34,6 +34,14 @@
       </div>
     </div>
 
+    <el-card shadow="never" style="margin-bottom: 16px">
+      <div class="search-controls">
+        <el-input v-model="syncAppId" aria-label="同步应用 appId" placeholder="输入 appId，例如 172507" style="width: 260px" @keyup.enter="syncAppIndex" />
+        <el-button type="primary" :loading="syncLoading" :disabled="!validSyncAppId" @click="syncAppIndex">同步搜索索引</el-button>
+      </div>
+      <p>仅同步指定应用；同步后检查索引是否存在。</p>
+    </el-card>
+
     <el-card class="search-card" shadow="never">
       <template #header>
         <div class="search-header">
@@ -109,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type {
   WatchfaceSearchStatusVO,
@@ -253,6 +261,28 @@ const openDoc = async (id: number) => {
     ElMessage.error(e?.msg || e?.message || '加载文档失败')
   } finally {
     docLoading.value = false
+  }
+}
+
+const syncAppId = ref('')
+const syncLoading = ref(false)
+const validSyncAppId = computed(() => /^\d+$/.test(syncAppId.value.trim()) && Number.isSafeInteger(Number(syncAppId.value)) && Number(syncAppId.value) > 0)
+const syncAppIndex = async () => {
+  if (!validSyncAppId.value || syncLoading.value) return
+  const appId = Number(syncAppId.value)
+  syncLoading.value = true
+  try {
+    const res = await rebuildOne(appId)
+    if (res.code !== 0) throw new Error(res.msg || '同步失败')
+    const doc = await getDoc(appId)
+    if (doc.code !== 0) throw new Error(doc.msg || '索引验证失败')
+    if (doc.data) ElMessage.success(`应用 ${appId} 同步请求完成，已确认索引存在`)
+    else ElMessage.warning(`应用 ${appId} 同步后未找到索引，请检查应用状态、公开可见性及搜索索引开关`)
+    await loadStatus()
+  } catch (e: any) {
+    ElMessage.error(e?.msg || e?.message || '同步失败')
+  } finally {
+    syncLoading.value = false
   }
 }
 

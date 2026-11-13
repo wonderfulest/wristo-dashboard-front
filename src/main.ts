@@ -1,3 +1,4 @@
+import { installUserActivity } from './utils/userActivity'
 import { createApp } from 'vue'
 import './assets/styles/global.scss'
 import './style.css'
@@ -25,3 +26,5 @@ console.log('VITE_WRISTO_SSO_REDIRECT_URI:', import.meta.env.VITE_WRISTO_SSO_RED
 app.mount('#app')
 
 
+
+installUserActivity()

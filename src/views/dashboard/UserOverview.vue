@@ -1,7 +1,7 @@
 <template>
   <div class="user-overview">
     <header class="page-header">
-      <div><h2>用户统计</h2><p>了解用户增长、注册入口与账号情况。</p></div>
+      <div><h2>用户统计</h2><p>了解用户增长、各端日活、注册入口与账号情况。</p></div>
       <el-button @click="router.push('/users/user-management')">用户管理</el-button>
     </header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
@@ -16,6 +16,7 @@
       </div>
       <p class="muted">排除已删除账号，包含禁用账号及系统建号。近 7/30 天按北京时间、含今天计算；登录人数依据最后登录时间，不代表活跃用户。以下日期筛选仅影响增长趋势。</p>
     </section>
+    <UserActivityPanel />
     <el-card shadow="never">
       <div class="section-heading"><h3>用户增长趋势</h3><span v-if="report" class="muted">{{ report.from }} 至 {{ report.to }} · {{ sourceLabel(report.source || '') || '全部入口' }} · 新增 {{ periodTotal.toLocaleString('zh-CN') }} 人</span></div>
       <el-form inline @submit.prevent="search">
@@ -56,6 +57,7 @@ import { getUserOverview, type UserOverview, type UserOverviewItem, type UserGro
 import { registrationSourceLabels, registrationMethodLabels, overviewUserRoute } from '@/components/users/userOverview.mjs'
 import UserOverviewBreakdown from '@/components/users/UserOverviewBreakdown.vue'
 import UserGrowthChart from '@/components/users/UserGrowthChart.vue'
+import UserActivityPanel from '@/components/users/UserActivityPanel.vue'
 
 const router = useRouter()
 const report = ref<UserOverview>()
