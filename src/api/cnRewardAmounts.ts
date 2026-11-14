@@ -10,5 +10,6 @@ export interface CnRewardAmounts {
   defaultRedemptionPoints: number
   productPoints: Record<string, number>
 }
-export const getCnRewardAmounts = (): Promise<ApiResponse<CnRewardAmounts>> => instance.get('/admin/cn-reward-amounts')
-export const saveCnRewardAmounts = (data: CnRewardAmounts): Promise<ApiResponse<CnRewardAmounts>> => instance.put('/admin/cn-reward-amounts', data)
+export interface CnRewardAmountsView { settings: CnRewardAmounts; version: number; initialized: boolean }
+export const getCnRewardAmounts = (): Promise<ApiResponse<CnRewardAmountsView>> => instance.get('/admin/cn-reward-amounts')
+export const saveCnRewardAmounts = (data: CnRewardAmounts, version: number): Promise<ApiResponse<CnRewardAmountsView>> => instance.put('/admin/cn-reward-amounts', data, { headers: { 'X-Config-Version': version } })

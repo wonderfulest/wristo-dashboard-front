@@ -7,7 +7,7 @@
       <main class="main-content">
         <Breadcrumb />
         <div class="content-wrapper">
-          <div class="page-content" data-mobile-table-fallback>
+          <div class="page-content" :class="{ 'credits-workspace': isTopMenuActive(topMenus.find(group => group.key === 'credits-ai')!, route.path) }" data-mobile-table-fallback>
             <router-view />
           </div>
         </div>

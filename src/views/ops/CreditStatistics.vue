@@ -1,7 +1,7 @@
 <template>
   <div class="credit-statistics">
     <header class="page-header">
-      <div><h2>AI 点数统计</h2><p>核对全平台AI 点数发放、消耗与剩余余额。</p></div>
+      <div><h2>AI 点数收支</h2><p>核对全平台 AI 点数发放、消耗与剩余余额。</p></div>
       <el-button @click="$router.push('/ops/ai-usage')">AI 用量与成本</el-button>
     </header>
 
@@ -11,7 +11,7 @@
       <div class="stats">
         <el-card shadow="never"><span>累计发放</span><strong>{{ count(report?.allTime.issued) }}</strong><small>赠送、奖励、充值及后台增加</small></el-card>
         <el-card shadow="never"><span>累计消耗</span><strong>{{ count(report?.allTime.consumed) }}</strong><small>AI 退回 {{ count(report?.allTime.refunded) }} · 净消耗 {{ count(report?.allTime.netConsumed) }}</small></el-card>
-        <el-card shadow="never"><span>当前剩余可用AI 点数</span><strong>{{ count(report?.accounts.available) }}</strong><small>逐账户扣除欠额后，汇总正余额</small></el-card>
+        <el-card shadow="never"><span>当前剩余可用 AI 点数</span><strong>{{ count(report?.accounts.available) }}</strong><small>逐账户扣除欠额后，汇总正余额</small></el-card>
         <el-card shadow="never"><span>当前退款欠额</span><strong>{{ count(report?.accounts.debt) }}</strong><small>全平台净余额 {{ count(report?.accounts.netBalance) }}</small></el-card>
       </div>
       <p v-if="report" class="muted reconciliation">
@@ -122,7 +122,7 @@ async function search() {
     if (result.code !== 0 || !result.data) throw new Error('Missing statistics')
     report.value = result.data
   } catch {
-    if (request === sequence) error.value = '无法读取AI 点数统计，请重新查询。'
+    if (request === sequence) error.value = '无法读取AI 点数收支，请重新查询。'
   } finally {
     if (request === sequence) loading.value = false
   }

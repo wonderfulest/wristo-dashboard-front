@@ -1,11 +1,11 @@
 <template>
   <el-card shadow="never">
     <template #header><strong>Wristo Image · AI 图片编辑</strong></template>
-    <p>图片站 AI 去水印按每次请求扣除 Wristo 积分，默认 3 积分。处理失败自动退款。此价格独立于 Studio 模型配置。</p>
+    <p>图片站 AI 去水印按每次请求扣除 AI 点数。处理失败自动退款。此价格独立于 Studio 模型配置。</p>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-input-number v-model="price" :min="1" :max="100000" :precision="0" :disabled="busy || !loaded" />
-    <span> 积分／次 </span>
-    <el-button :loading="busy" :disabled="!loaded" @click="save">保存图片编辑价格</el-button>
+    <span> AI 点数／次 </span>
+    <el-button :loading="busy" :disabled="!loaded" @click="save">保存图片编辑扣点</el-button>
     <el-button :disabled="busy" @click="load">刷新</el-button>
   </el-card>
 </template>

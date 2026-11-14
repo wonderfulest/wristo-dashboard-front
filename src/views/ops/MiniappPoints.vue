@@ -1,8 +1,8 @@
 <template>
   <div class="points-settings">
-    <h2>小程序任务与积分兑换</h2>
+    <h2>{{ mode === 'rewards' ? '小程序任务' : '小程序兑换' }}</h2>
     <p>使用统一奖励积分兑换表盘权益。每款表盘须单独开启，默认关闭。</p>
-    <el-card shadow="never" v-loading="rewardsLoading">
+    <el-card v-if="mode === 'rewards'" shadow="never" v-loading="rewardsLoading">
       <template #header>任务奖励积分</template>
       <el-alert v-if="rewardsError" :title="rewardsError" type="error" :closable="false" />
       <el-form v-if="rewards" label-position="top" :disabled="rewardsSaving || rewardsLoading" class="reward-form">
@@ -14,6 +14,7 @@
       <el-button type="primary" :loading="rewardsSaving" :disabled="!rewards || rewardsLoading" @click="saveRewards">保存任务奖励</el-button>
       <el-button :disabled="rewardsSaving" @click="loadRewards">刷新</el-button>
     </el-card>
+    <template v-if="mode === 'redemptions'">
     <el-card shadow="never" v-loading="loading">
       <template #header>全局默认兑换积分</template>
       <el-alert v-if="error" :title="error" type="error" :closable="false" />
@@ -37,6 +38,7 @@
       </el-table>
       <el-button :disabled="resourceSaving !== null" @click="loadResources">刷新资源</el-button>
     </el-card>
+    </template>
   </div>
 </template>
 <script setup lang="ts">
@@ -45,6 +47,7 @@ import { ElMessage } from 'element-plus'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import AppPointsSettings from '@/components/AppPointsSettings.vue'
 import { getPointsSettings, savePointsSettings, getPointsRewards, savePointsRewards, getPointsResources, savePointsResource, type PointsSettings, type PointsRewards, type PointsResource } from '@/api/miniappPoints'
+const { mode = 'rewards' } = defineProps<{ mode?: 'rewards' | 'redemptions' }>()
 const settings = ref<PointsSettings>(), appId = ref<number | null>(), version = ref(0)
 const loading = ref(false), saving = ref(false), error = ref('')
 async function load() {
@@ -122,6 +125,6 @@ async function saveResource(resource: PointsResource) {
   } catch { resourcesError.value = '未能确认保存结果，请刷新核对资源积分后重试。' }
   finally { resourceSaving.value = null }
 }
-onMounted(() => { void load(); void loadRewards(); void loadResources() })
+onMounted(() => { if (mode === 'rewards') void loadRewards(); else { void load(); void loadResources() } })
 </script>
 <style scoped>.reward-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 24px; } small { display: block; width: 100%; color: var(--el-text-color-secondary); } .points-settings { padding: 24px; display: flex; flex-direction: column; gap: 20px; } h2,p { margin: 0; } p { color: var(--el-text-color-secondary); line-height: 1.6; }@media (max-width: 600px) { .points-settings { padding: 12px; } .points-settings :deep(.el-input-number) { width: 100%; } }</style>

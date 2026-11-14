@@ -1,15 +1,15 @@
 <template>
   <div class="rewards-page" v-loading="loading">
     <header>
-      <div><h2>创作者积分奖励</h2><p>每天北京时间 02:00 结算前一天及遗漏的未结算记录，奖励发放至创作者的 奖励积分账户。</p></div>
+      <div><h2>创作者奖励</h2><p>每天北京时间 02:00 结算前一天及遗漏的未结算记录，奖励发放至创作者的奖励积分账户。</p></div>
       <div class="actions">
         <el-button :disabled="loading || saving" @click="load">刷新</el-button>
-        <el-button :disabled="loading || saving" @click="openHistory">修改历史</el-button>
-        <el-button type="primary" :loading="saving" :disabled="loading || !settings" @click="save">保存配置</el-button>
+        <el-button :disabled="loading || saving" v-if="mode === 'rules'" @click="openHistory">修改历史</el-button>
+        <el-button type="primary" :loading="saving" :disabled="loading || !settings" v-if="mode === 'rules'" @click="save">保存配置</el-button>
       </div>
     </header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <template v-if="settings">
+    <template v-if="settings && mode === 'rules'">
       <el-card shadow="never">
         <template #header><strong>下载奖励</strong></template>
         <el-form label-width="140px" :disabled="saving">
@@ -29,7 +29,7 @@
       </el-card>
       <el-alert title="修改从下一批日结生效；同一结算日重试沿用首次执行时的配置。关闭期间已结算的记录不补发，已有下载余数保留。" type="info" :closable="false" show-icon />
     </template>
-    <el-card v-if="view" shadow="never">
+    <el-card v-if="view && mode === 'records'" shadow="never">
       <template #header><strong>结算状态</strong></template>
       <el-descriptions :column="1" border>
         <el-descriptions-item label="开始计入时间">{{ formatTime(view.settlement.startedAt) }}（此前记录不补发）</el-descriptions-item>
@@ -43,17 +43,19 @@
       <el-table :data="histories" v-loading="historyLoading">
         <el-table-column prop="updatedBy" label="操作人" width="130" />
         <el-table-column prop="createdAt" label="时间" width="180" />
-        <el-table-column label="变更"><template #default="{ row }"><details><summary>查看配置</summary><p>旧配置</p><pre>{{ row.oldValue || '默认配置' }}</pre><p>新配置</p><pre>{{ row.newValue }}</pre></details></template></el-table-column>
+        <el-table-column label="变更"><template #default="{ row }"><ConfigChanges :before="row.oldValue" :after="row.newValue" /></template></el-table-column>
       </el-table>
     </el-drawer>
   </div>
 </template>
 <script setup lang="ts">
+import ConfigChanges from '@/components/credits/ConfigChanges.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getCreatorRewards, saveCreatorRewards, type CreatorRewardSettings, type CreatorRewardView } from '@/api/creatorRewards'
 import { getConfigHistory } from '@/api/config'
 import type { GlobalConfigHistory } from '@/types/ops'
+const { mode = 'rules' } = defineProps<{ mode?: 'rules' | 'records' }>()
 const settings = ref<CreatorRewardSettings>()
 const view = ref<CreatorRewardView>()
 const loading = ref(false), saving = ref(false), error = ref('')

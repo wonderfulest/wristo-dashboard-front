@@ -1,13 +1,13 @@
 <template>
   <div class="rewards-page" v-loading="loading">
     <header>
-      <div><h2>分享访问积分奖励</h2><p>用户通过专属链接分享网站，访客完成有效浏览后自动向分享者发放积分。</p></div>
-      <div class="actions"><el-button :disabled="saving" @click="load">刷新</el-button><el-button @click="openHistory">修改历史</el-button><el-button type="primary" :loading="saving" :disabled="!settings || loading" @click="save">保存配置</el-button></div>
+      <div><h2>分享访问奖励</h2><p>用户通过专属链接分享网站，访客完成有效浏览后自动向分享者发放奖励积分。</p></div>
+      <div class="actions"><el-button :disabled="saving" @click="load">刷新</el-button><el-button v-if="mode === 'rules'" @click="openHistory">修改历史</el-button><el-button type="primary" :loading="saving" :disabled="!settings || loading" v-if="mode === 'rules'" @click="save">保存配置</el-button></div>
     </header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <template v-if="settings && view">
-      <el-alert v-if="!view.identityReady" title="尚未配置服务端 IP 摘要密钥，暂不可启用。请在部署环境配置至少 32 字节的 WRISTO_SHARE_REWARD_HMAC_SECRET。" type="warning" :closable="false" show-icon />
-      <el-card shadow="never">
+      <el-alert v-if="mode === 'rules' && !view.identityReady" title="尚未配置服务端 IP 摘要密钥，暂不可启用。请在部署环境配置至少 32 字节的 WRISTO_SHARE_REWARD_HMAC_SECRET。" type="warning" :closable="false" show-icon />
+      <el-card v-if="mode === 'rules'" shadow="never">
         <el-form label-width="170px">
           <el-form-item label="启用分享奖励"><el-switch v-model="settings.enabled" :disabled="!view.identityReady" /></el-form-item>
           <el-form-item label="每次有效访问"><el-input-number v-model="settings.creditsPerVisit" :min="1" :max="10000" :precision="0" /><span class="unit">积分</span></el-form-item>
@@ -21,7 +21,7 @@
         </el-form>
         <p>本人访问不奖励。达到上限后仍记录有效访问；修改额度影响后续发奖，历史流水金额和规则保持不变。活动时间按当前浏览器时区输入。</p>
       </el-card>
-      <el-card shadow="never">
+      <el-card v-if="mode === 'records'" shadow="never">
         <template #header><strong>今日统计 · {{ view.stats.day }}（UTC+8）</strong></template>
         <el-descriptions :column="4" border>
           <el-descriptions-item label="发起访问">{{ view.stats.visits }}</el-descriptions-item>
@@ -32,7 +32,7 @@
         <p>发起访问按开始时间统计，有效访问与发奖按确认时间统计；有效访问包含重复访问和因额度限制未发奖的访问。</p>
       </el-card>
     </template>
-    <el-card shadow="never">
+    <el-card v-if="mode === 'records'" shadow="never">
       <template #header><strong>访问与奖励记录</strong></template>
       <el-alert v-if="visitsError" :title="visitsError" type="error" :closable="false" />
       <el-table :data="visits" v-loading="visitsLoading">
@@ -50,17 +50,19 @@
       <el-alert v-if="historyError" :title="historyError" type="error" :closable="false" />
       <el-table :data="histories" v-loading="historyLoading">
         <el-table-column prop="updatedBy" label="操作人" width="130" /><el-table-column prop="createdAt" label="时间" width="180" />
-        <el-table-column label="变更"><template #default="{ row }"><details><summary>查看配置</summary><pre>{{ row.oldValue || '默认配置' }}</pre><pre>{{ row.newValue }}</pre></details></template></el-table-column>
+        <el-table-column label="变更"><template #default="{ row }"><ConfigChanges :before="row.oldValue" :after="row.newValue" /></template></el-table-column>
       </el-table>
     </el-drawer>
   </div>
 </template>
 <script setup lang="ts">
+import ConfigChanges from '@/components/credits/ConfigChanges.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getShareRewards, saveShareRewards, getShareVisits, type ShareRewardSettings, type ShareRewardView, type ShareVisitEntry } from '@/api/shareRewards'
 import { getConfigHistory } from '@/api/config'
 import type { GlobalConfigHistory } from '@/types/ops'
+const { mode = 'rules' } = defineProps<{ mode?: 'rules' | 'records' }>()
 const settings = ref<ShareRewardSettings>(), view = ref<ShareRewardView>()
 const loading = ref(false), saving = ref(false), error = ref('')
 const visits = ref<ShareVisitEntry[]>([]), page = ref(1), total = ref(0), visitsLoading = ref(false), visitsError = ref('')
@@ -73,7 +75,7 @@ async function load() {
   try { const result = await getShareRewards(); if (result.code !== 0 || !result.data) throw new Error(); apply(result.data) }
   catch { error.value = '无法读取分享奖励配置，请刷新后重试。' }
   finally { loading.value = false }
-  await loadVisits()
+  if (mode === 'records') await loadVisits()
 }
 async function save() {
   if (!settings.value || saving.value) return

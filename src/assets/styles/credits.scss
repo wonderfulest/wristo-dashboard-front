@@ -1,0 +1,46 @@
+/* Scoped to the credits business area; other dashboard pages retain their layout. */
+.credits-workspace {
+  min-width: 0;
+  .credits-page { padding: 20px; display: grid; gap: 16px; min-width: 0; }
+  .credits-page > header { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 12px; }
+  h2 { font-size: 22px; margin: 0 0 6px; }
+  h3 { font-size: 16px; }
+  p { line-height: 1.65; }
+  .credits-page > header p { color: var(--el-text-color-secondary); font-size: 13px; margin: 0; }
+  .el-card { border-radius: 8px; min-width: 0; }
+  .el-card__header { padding: 14px 18px; }
+  .el-card__body { padding: 18px; }
+  .el-form-item { margin-bottom: 16px; }
+  .el-pagination { flex-wrap: wrap; gap: 4px; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .rewards-page, .ai-page, .credit-statistics { gap: 16px; }
+  @media(max-width:600px) {
+    .credits-page { padding: 12px; }
+    .el-card__body { padding: 12px; }
+    .el-form-item__content { min-width: 0; }
+    .el-form:not(.el-form--inline) .el-form-item { flex-wrap: wrap; }
+    .el-form:not(.el-form--inline) .el-form-item__label { width: 100% !important; justify-content: flex-start; text-align: left; height: auto; margin-bottom: 6px; }
+    .el-form:not(.el-form--inline) .el-form-item__content { margin-left: 0 !important; flex-basis: 100%; }
+    .el-date-editor { max-width: 100%; }
+  }
+}
+.credits-workspace .operations-page {
+  .el-form--inline { display: flex; align-items: start; flex-wrap: wrap; gap: 0 16px; }
+  .el-form--inline .el-form-item { margin-right: 0; }
+  .el-form--inline .el-select, .el-form--inline .el-input { width: 210px; }
+  .el-form--inline .el-date-editor { width: 270px; }
+  .operations-heading, .operations-footer, .operations-hint { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .operations-heading { margin-bottom: 14px; }.operations-footer { margin-top: 16px; }.operations-hint { justify-content: start; font-size: 12px; color: var(--el-text-color-secondary); }
+  .operations-hint .el-button + .el-button { margin-left: 0; }
+  .muted, .event-key { font-size: 12px; color: var(--el-text-color-secondary); overflow-wrap: anywhere; }
+  .event-key { font-family: ui-monospace, monospace; margin-top: 4px; }
+  .positive { color: var(--el-color-success); }.negative { color: var(--el-color-danger); }
+  .el-alert { margin-top: 8px; }
+  @media(max-width:600px) {
+    .el-form--inline .el-form-item { display: block; width: 100%; }
+    .el-form--inline .el-form-item__label { display: block; width: auto; text-align: left; }
+    .el-form--inline .el-form-item__content { min-width: 0; }
+    .el-form--inline .el-select, .el-form--inline .el-input, .el-form--inline .el-date-editor { width: 100%; }
+    .operations-footer .el-pagination { max-width: 100%; overflow: auto; }
+  }
+}

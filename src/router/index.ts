@@ -58,6 +58,43 @@ const router = createRouter({
       component: () => import('@/views/dashboard/EmailRecords.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/ops/credits-overview',
+      name: 'CreditsOverview',
+      component: () => import('@/views/ops/CreditsOverview.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ops/reward-rules',
+      name: 'RewardRules',
+      component: () => import('@/views/ops/RewardRules.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ops/reward-records',
+      name: 'RewardRecords',
+      component: () => import('@/views/ops/RewardRecords.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ops/redemptions',
+      name: 'Redemptions',
+      component: () => import('@/views/ops/Redemptions.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ops/credit-grants',
+      name: 'CreditGrants',
+      component: () => import('@/views/ops/CreditGrants.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ops/ai-scenes',
+      name: 'AiScenes',
+      component: () => import('@/views/ops/AiScenes.vue'),
+      meta: { requiresAuth: true }
+    },
+    { path: '/ops/points-ledger', name: 'PointsLedger', component: () => import('@/views/ops/PointsLedger.vue'), meta: { requiresAuth: true } },
     // Ops module (new nested paths)
     {
       path: '/ops/db-backups',
@@ -92,25 +129,25 @@ const router = createRouter({
     {
       path: '/ops/miniapp-points',
       name: 'MiniappPoints',
-      component: () => import('@/views/ops/MiniappPoints.vue'),
+      redirect: to => ({ path: '/ops/reward-rules', query: { ...to.query, tab: 'miniapp' } }),
       meta: { requiresAuth: true }
     },
     {
       path: '/ops/user-rewards',
       name: 'UserRewards',
-      component: () => import('@/views/ops/UserRewards.vue'),
+      redirect: to => ({ path: '/ops/reward-rules', query: { ...to.query, tab: 'users' } }),
       meta: { requiresAuth: true }
     },
     {
       path: '/ops/share-rewards',
       name: 'ShareRewards',
-      component: () => import('@/views/ops/ShareRewards.vue'),
+      redirect: to => ({ path: '/ops/reward-rules', query: { ...to.query, tab: 'visits' } }),
       meta: { requiresAuth: true }
     },
     {
       path: '/ops/creator-rewards',
       name: 'CreatorRewards',
-      component: () => import('@/views/ops/CreatorRewards.vue'),
+      redirect: to => ({ path: '/ops/reward-rules', query: { ...to.query, tab: 'creators' } }),
       meta: { requiresAuth: true }
     },
     {

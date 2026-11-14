@@ -1,14 +1,18 @@
 <template>
   <section>
-    <h2>社交分享奖励</h2><p>人工审核通过后发放积分；按北京时间自然月计算通过次数。请核对分享内容、截图和重复提交。</p>
+    <h2>社交分享奖励</h2><p>人工审核通过后发放奖励积分；按北京时间自然月计算通过次数。请核对分享内容、截图和重复提交。</p>
+    <el-button :disabled="loading || saving || reviewing" @click="refresh">刷新</el-button>
+    <el-alert v-if="mode === 'records' && settings && !settings.enabled" title="社交分享奖励已暂停，暂不能审核通过；仍可驳回不符合要求的提交。" type="warning" :closable="false" show-icon />
+    <el-button v-if="mode === 'records'" link type="primary" @click="$router.push('/ops/reward-rules?tab=social')">查看社交分享奖励规则</el-button>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
-    <el-form v-if="settings" inline :disabled="saving || reviewing || loading">
+    <el-form v-if="settings && mode === 'rules'" inline :disabled="saving || reviewing || loading">
       <el-form-item label="启用"><el-switch v-model="settings.enabled" /></el-form-item>
       <el-form-item label="每次通过积分"><el-input-number v-model="settings.credits" :min="1" :max="10000" :precision="0" /></el-form-item>
       <el-form-item label="每月通过上限"><el-input-number v-model="settings.monthlyLimit" :min="1" :max="100" :precision="0" /></el-form-item>
       <el-button :loading="saving" @click="save">保存分享配置</el-button>
     </el-form>
-    <div class="toolbar"><el-select v-model="status" style="width: 160px" :disabled="loading || reviewing" @change="filter"><el-option label="全部状态" value="" /><el-option label="待审核" value="PENDING" /><el-option label="已通过" value="APPROVED" /><el-option label="已驳回" value="REJECTED" /></el-select><el-button :disabled="loading || reviewing || saving" @click="refresh">刷新</el-button></div>
+    <template v-if="mode === 'records'">
+    <div class="toolbar"><el-select v-model="status" style="width: 160px" :disabled="loading || reviewing" @change="filter"><el-option label="全部状态" value="" /><el-option label="待审核" value="PENDING" /><el-option label="已通过" value="APPROVED" /><el-option label="已驳回" value="REJECTED" /></el-select></div>
     <el-table :data="items" v-loading="loading" empty-text="暂无分享记录">
       <el-table-column label="用户 / 平台" width="150"><template #default="{ row }">{{ row.userId }}<br />{{ row.platform }}</template></el-table-column>
       <el-table-column label="分享证据" min-width="260"><template #default="{ row }"><a v-if="safeLink(row.shareUrl)" :href="row.shareUrl" target="_blank" rel="noopener noreferrer">查看公开分享 ↗</a><p>{{ row.notes }}</p><div class="evidence"><el-image v-for="shot in row.screenshots" :key="shot.id" :src="shot.url" :preview-src-list="row.screenshots.map((s: SocialScreenshot) => s.url)" :initial-index="row.screenshots.indexOf(shot)" preview-teleported fit="contain" /></div></template></el-table-column>
@@ -16,12 +20,14 @@
       <el-table-column label="审核" width="160"><template #default="{ row }"><template v-if="row.status === 'PENDING'"><el-button size="small" type="success" :disabled="reviewing || saving || loading || !settings?.enabled" @click="review(row, true)">通过</el-button><el-button size="small" type="danger" :disabled="reviewing || saving || loading" @click="review(row, false)">驳回</el-button></template></template></el-table-column>
     </el-table>
     <el-pagination :current-page="page" :page-size="20" :total="total" layout="total, prev, pager, next" :disabled="loading || reviewing" @current-change="changePage" />
+    </template>
   </section>
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { socialRewardsApi, type SocialSettings, type SocialSubmission, type SocialScreenshot } from '@/api/socialRewards'
+const { mode = 'records' } = defineProps<{ mode?: 'rules' | 'records' }>()
 const settings = ref<SocialSettings>(), items = ref<SocialSubmission[]>([]), total = ref(0), page = ref(1), status = ref('PENDING')
 const loading = ref(false), saving = ref(false), reviewing = ref(false), error = ref('')
 const labels: Record<string, string> = { PENDING: '待审核', APPROVED: '已通过', REJECTED: '已驳回' }
@@ -29,7 +35,7 @@ function safeLink(value: string) { try { return ['http:', 'https:'].includes(new
 function message(e: unknown) { const cause = e as { msg?: string; response?: { data?: { msg?: string } } }; return cause?.response?.data?.msg || cause?.msg || '操作失败，请刷新核对结果后重试。' }
 let loadRequest = 0
 async function load() { const request = ++loadRequest; loading.value = true; error.value = ''; try { const r = await socialRewardsApi.list(page.value, status.value); if (request !== loadRequest) return; if (r.code !== 0 || !r.data) throw r; items.value = r.data.items; total.value = r.data.total } catch (e) { if (request === loadRequest) error.value = message(e) } finally { if (request === loadRequest) loading.value = false } }
-async function refresh() { loading.value = true; error.value = ''; try { const r = await socialRewardsApi.settings(); if (r.code !== 0 || !r.data) throw r; settings.value = { ...r.data }; await load() } catch (e) { error.value = message(e) } finally { loading.value = false } }
+async function refresh() { loading.value = true; error.value = ''; try { const r = await socialRewardsApi.settings(); if (r.code !== 0 || !r.data) throw r; settings.value = { ...r.data }; if (mode === 'records') await load() } catch (e) { error.value = message(e) } finally { loading.value = false } }
 async function filter() { page.value = 1; await load() }
 async function changePage(value: number) { page.value = value; await load() }
 async function save() { if (!settings.value || saving.value) return; if ([settings.value.credits, settings.value.monthlyLimit].some(n => !Number.isInteger(n) || n < 1) || settings.value.credits > 10000 || settings.value.monthlyLimit > 100) { error.value = '积分须为 1 至 10000、每月上限须为 1 至 100 的整数'; return }; saving.value = true; error.value = ''; try { const r = await socialRewardsApi.save({ ...settings.value }); if (r.code !== 0 || !r.data) throw r; settings.value = { ...r.data }; ElMessage.success('分享奖励配置已保存') } catch (e) { error.value = message(e) } finally { saving.value = false } }
@@ -46,5 +52,5 @@ async function review(item: SocialSubmission, approve: boolean) {
 onMounted(refresh)
 </script>
 <style scoped>
-section { border-top: 1px solid var(--el-border-color); padding-top: 24px; }p { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }.toolbar { display: flex; gap: 12px; margin: 16px 0; }.evidence { display: flex; gap: 8px; flex-wrap: wrap; }.el-image { width: 80px; height: 80px; }.el-pagination { margin-top: 16px; }
+section { min-width: 0; }p { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }.toolbar { display: flex; gap: 12px; margin: 16px 0; }.evidence { display: flex; gap: 8px; flex-wrap: wrap; }.el-image { width: 80px; height: 80px; }.el-pagination { margin-top: 16px; }
 </style>

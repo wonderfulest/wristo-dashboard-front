@@ -1,6 +1,6 @@
 <template>
   <div class="prices-page">
-    <header><div><h2>AI 模型定价</h2><p>录入官方最高单价，为新调用生成保守的成本预估。</p></div><div><el-button @click="$router.push('/ops/ai-usage')">用量与成本</el-button><el-button @click="$router.push('/ops/ai-models')">模型配置</el-button><el-button type="primary" @click="openCreate()">新增价格版本</el-button></div></header>
+    <header><div><h2>成本价格</h2><p>录入官方最高单价，为新调用生成保守的成本预估。</p></div><div><el-button @click="$router.push('/ops/ai-usage')">用量与成本</el-button><el-button @click="$router.push('/ops/ai-models')">模型与供应商</el-button><el-button type="primary" @click="openCreate()">新增价格版本</el-button></div></header>
     <el-alert title="每个模型选择按 Token 或按张计费。输入、输出均按录入的最高价计算，不区分缓存、阶梯或图片规格。新版本不改写历史调用成本。" type="info" :closable="false" show-icon />
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-card shadow="never">
@@ -16,7 +16,7 @@
         <el-table-column label="版本 / 操作人" min-width="160"><template #default="{row}"><el-tooltip :content="row.id"><span>{{ row.id.slice(0,8) }}</span></el-tooltip><div class="muted">{{ row.createdBy }}</div></template></el-table-column>
         <el-table-column label="操作" width="170" fixed="right"><template #default="{row}"><a :href="row.sourceUrl" target="_blank" rel="noopener noreferrer">官方来源</a><el-button link type="primary" @click="openCreate(row)">新建版本</el-button></template></el-table-column>
       </el-table>
-      <p class="muted">显示最近 1000 个版本。历史版本只读；定价仅用于成本估算，不改变用户积分扣费。</p>
+      <p class="muted">显示最近 1000 个版本。历史版本只读；定价仅用于成本估算，不改变用户 AI 点数扣费。</p>
     </el-card>
     <el-dialog v-model="visible" title="新增最高单价版本" width="min(650px, 96vw)" :close-on-click-modal="!saving" :close-on-press-escape="!saving" :show-close="!saving">
       <el-form label-position="top" @submit.prevent="save">
@@ -91,5 +91,5 @@ watch(selectedVersion, load)
 onMounted(async () => { await load(); try { const r=await getStudioAi(); if(r.code===0 && r.data) models.value=r.data.settings.models } catch { /* Custom model entry remains available. */ } })
 </script>
 <style scoped>
-.prices-page{padding:24px;display:flex;flex-direction:column;gap:20px}header,.filters,.dialog-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h2{margin:0 0 8px}.muted,p{font-size:12px;color:var(--el-text-color-secondary);line-height:1.7}.filters{justify-content:flex-start;margin-bottom:16px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}.el-select,.el-input-number{width:100%}.dialog-actions{justify-content:flex-end;margin-top:24px}.save-error{margin-top:12px}a{color:var(--el-color-primary);margin-right:12px}@media(max-width:600px){.prices-page{padding:12px}.form-grid{grid-template-columns:1fr}}
+.prices-page{padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}header,.filters,.dialog-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h2{margin:0 0 4px;font-size:22px}.muted,p{font-size:12px;color:var(--el-text-color-secondary);line-height:1.7}.filters{justify-content:flex-start;margin-bottom:16px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}.el-select,.el-input-number{width:100%}.dialog-actions{justify-content:flex-end;margin-top:24px}.save-error{margin-top:12px}a{color:var(--el-color-primary);margin-right:12px}@media(max-width:600px){.prices-page{padding:12px}.form-grid{grid-template-columns:1fr}}
 </style>

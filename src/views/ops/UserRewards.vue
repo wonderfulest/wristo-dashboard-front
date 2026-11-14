@@ -1,8 +1,9 @@
 <template>
   <div class="rewards-page" v-loading="loading">
-    <header><div><h2>用户积分任务</h2><p>奖励发放至用户的 奖励积分余额；修改额度只影响后续发放。</p></div><el-button @click="load" :disabled="saving">刷新</el-button></header>
+    <header><div><h2>用户任务</h2><p>奖励发放至用户的奖励积分余额；修改额度只影响后续发放。</p></div><el-button @click="load" :disabled="saving">刷新</el-button></header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-form v-if="settings" label-width="130px" :disabled="saving || loading">
+      <div class="task-grid">
       <el-card shadow="never">
         <template #header>每日签到</template>
         <el-form-item label="启用奖励"><el-switch v-model="settings.checkInEnabled" /></el-form-item>
@@ -22,26 +23,22 @@
         <el-form-item label="每日积分上限"><el-input-number v-model="settings.downloadDailyLimit" :min="1" :max="10000" :precision="0" /></el-form-item>
         <p>用户登录后在商店点击下载即可获得奖励，免费表盘也计入。同一用户、同一表盘只奖励一次；每日剩余额度不足一次奖励时，当天不再发放。此任务记录下载点击，不代表已安装到手表。</p>
       </el-card>
+      </div>
       <el-button type="primary" :loading="saving" @click="save">保存配置</el-button>
       <el-button @click="openHistory">修改历史</el-button>
     </el-form>
-    <StudioCreditAmountsSettings />
-    <CnRewardAmountsSettings />
-    <SocialShareReview />
-    <el-drawer v-model="historyVisible" title="用户积分任务 · 修改历史" size="min(800px, 96vw)">
+    <el-drawer v-model="historyVisible" title="用户任务 · 修改历史" size="min(800px, 96vw)">
       <el-alert v-if="historyError" :title="historyError" type="error" :closable="false" />
       <el-table :data="histories" v-loading="historyLoading">
         <el-table-column prop="updatedBy" label="操作人" width="130" />
         <el-table-column prop="createdAt" label="时间" width="180" />
-        <el-table-column label="配置变更"><template #default="{ row }"><details><summary>查看</summary><p>旧配置</p><pre>{{ row.oldValue || '默认配置' }}</pre><p>新配置</p><pre>{{ row.newValue }}</pre></details></template></el-table-column>
+        <el-table-column label="配置变更"><template #default="{ row }"><ConfigChanges :before="row.oldValue" :after="row.newValue" /></template></el-table-column>
       </el-table>
     </el-drawer>
   </div>
 </template>
 <script setup lang="ts">
-import SocialShareReview from './SocialShareReview.vue'
-import StudioCreditAmountsSettings from '@/components/StudioCreditAmountsSettings.vue'
-import CnRewardAmountsSettings from '@/components/CnRewardAmountsSettings.vue'
+import ConfigChanges from '@/components/credits/ConfigChanges.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getUserRewards, saveUserRewards, type UserRewardSettings } from '@/api/userRewards'
@@ -93,6 +90,10 @@ onMounted(load)
 header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 h2 { margin: 0 0 8px; }
 p { color: var(--el-text-color-secondary); line-height: 1.6; font-size: 13px; }
-.el-card { margin-bottom: 20px; }
+.task-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.task-grid :deep(.el-form-item) { display: block; }
+.task-grid :deep(.el-form-item__label) { display: block; width: auto !important; text-align: left; }
+.task-grid :deep(.el-form-item__content) { margin-left: 0 !important; }
+@media(max-width:1200px) { .task-grid { grid-template-columns: 1fr; } }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 </style>

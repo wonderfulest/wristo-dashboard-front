@@ -1,9 +1,9 @@
 <template>
   <div class="ai-page" v-loading="loading">
     <div class="header">
-      <div><h2>AI 模型配置</h2><p>管理 Studio AI 表盘设计、Banner、应用标签和描述的开关、模型及积分。</p></div>
+      <div><h2>{{ mode === 'scenes' ? '场景与扣点' : '模型与供应商' }}</h2><p>{{ mode === 'scenes' ? '配置 AI 场景开关、默认模型与每次消耗的 AI 点数。' : '管理模型能力、供应商与启用状态；被场景引用的模型不可删除。' }}</p></div>
       <div class="actions">
-        <el-button @click="$router.push('/ops/ai-prices')">模型官方定价</el-button>
+        <el-button @click="$router.push('/ops/ai-prices')">成本价格</el-button>
         <el-button :disabled="loading || saving" @click="load">刷新</el-button>
         <el-button :disabled="loading || saving" @click="openHistory">修改历史</el-button>
         <el-button type="primary" :loading="saving" :disabled="loading || !settings" @click="save">保存配置</el-button>
@@ -17,13 +17,14 @@
       </el-tag>
       <span>密钥由服务端环境变量管理；已配置不代表已验证模型访问权限。</span>
     </div>
-    <ImageAiPricing />
+    <ImageAiPricing v-if="mode === 'scenes'" />
     <template v-if="settings">
-      <el-card shadow="never">
+      <el-card v-if="mode === 'scenes'" shadow="never">
         <template #header><strong>AI 生成总开关</strong></template>
         <el-switch v-model="settings.enabled" :disabled="saving" active-text="开启" inactive-text="关闭" />
         <p class="hint">关闭后，所有用户的 Studio AI 生成入口将隐藏，新的生成请求将被拒绝。开启后还需同时满足用户开关、场景及模型配置。保存后生效，Studio 刷新或重新进入后更新入口。</p>
       </el-card>
+      <template v-if="mode === 'scenes'">
       <el-card v-for="group in sceneGroups" :key="group.title" shadow="never">
         <template #header><strong>{{ group.title }}</strong></template>
         <p class="hint">{{ group.description }}</p>
@@ -38,18 +39,20 @@
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="每次消耗积分" min-width="180"><template #default="{ row }"><el-input-number v-model="settings.scenes[row.key as AiScene].creditCost" :min="1" :max="100000" :precision="0" :step="1" :disabled="saving" /></template></el-table-column>
+          <el-table-column label="每次消耗 AI 点数" min-width="180"><template #default="{ row }"><el-input-number v-model="settings.scenes[row.key as AiScene].creditCost" :min="1" :max="100000" :precision="0" :step="1" :disabled="saving" /></template></el-table-column>
           <el-table-column label="当前草稿状态" min-width="160"><template #default="{ row }"><el-tag :type="sceneReady(row.key) ? 'success' : 'warning'">{{ sceneStatus(row.key) }}</el-tag></template></el-table-column>
         </el-table>
-        <p class="hint">保存后，新请求使用最新配置；已启动的任务继续使用原模型和提交时确认的积分价格。禁用模型会暂停使用该模型的场景，失败不会自动切换供应商。</p>
+        <p class="hint">保存后，新请求使用最新配置；已启动的任务继续使用原模型和提交时确认的 AI 点数价格。禁用模型会暂停使用该模型的场景，失败不会自动切换供应商。</p>
       </el-card>
-      <el-card shadow="never">
+      </template>
+      <el-card v-if="mode === 'models'" shadow="never">
         <template #header><div class="header"><strong>模型目录</strong><el-button :disabled="saving" @click="addModel">新增模型</el-button></div></template>
         <el-table :data="settings.models">
           <el-table-column label="供应商" min-width="150"><template #default="{ row }"><el-select v-model="row.provider" :disabled="saving"><el-option label="阿里云百炼" value="BAILIAN" /><el-option label="OpenAI" value="OPENAI" /></el-select></template></el-table-column>
           <el-table-column label="模型名称" min-width="230"><template #default="{ row }"><el-input v-model="row.model" maxlength="100" :disabled="saving" placeholder="供应商 API 模型名称" /></template></el-table-column>
           <el-table-column label="能力" min-width="190"><template #default="{ row }"><el-select v-model="row.capability" :disabled="saving"><el-option label="文本 / 视觉理解" value="TEXT" /><el-option label="参考图生成图片" value="IMAGE" /></el-select></template></el-table-column>
           <el-table-column label="启用" width="95"><template #default="{ row }"><el-switch v-model="row.enabled" :disabled="saving" /></template></el-table-column>
+          <el-table-column label="使用场景" min-width="160"><template #default="{ row }">{{ scenes.filter(scene => settings?.scenes[scene.key].modelId === row.id).map(scene => scene.label).join('、') || '未使用' }}</template></el-table-column>
           <el-table-column label="操作" width="100"><template #default="{ row }"><el-button type="danger" link :disabled="saving || isSelected(row.id)" @click="removeModel(row.id)">删除</el-button></template></el-table-column>
         </el-table>
         <p class="hint">AI 表盘设计使用视觉文本模型理解提示词和参考图，生成逐元素布局，再由服务端编译为可编辑 WRT；用于应用标签和描述的文本模型还须支持图像输入。OpenAI 文本使用 Responses API，图片使用 GPT Image 编辑接口；百炼沿用兼容文本接口和多模态图片接口。自定义模型需与对应接口兼容。</p>
@@ -60,13 +63,14 @@
       <el-table :data="histories" v-loading="historyLoading">
         <el-table-column prop="updatedBy" label="操作人" width="130" />
         <el-table-column prop="createdAt" label="时间" width="180" />
-        <el-table-column label="配置变更" min-width="320"><template #default="{ row }"><details><summary>查看配置</summary><p>旧配置</p><pre>{{ row.oldValue || '默认配置' }}</pre><p>新配置</p><pre>{{ row.newValue }}</pre></details></template></el-table-column>
+        <el-table-column label="配置变更" min-width="320"><template #default="{ row }"><ConfigChanges :before="row.oldValue" :after="row.newValue" /></template></el-table-column>
       </el-table>
     </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
+import ConfigChanges from '@/components/credits/ConfigChanges.vue'
 import ImageAiPricing from '@/components/ops/ImageAiPricing.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -74,6 +78,8 @@ import { getStudioAi, saveStudioAi, type AiSettings, type AiScene, type AiModel,
 import { getConfigHistory } from '@/api/config'
 import type { GlobalConfigHistory } from '@/types/ops'
 
+const { mode = 'models' } = defineProps<{ mode?: 'models' | 'scenes' }>()
+let loadedVersion: number | undefined
 const settings = ref<AiSettings>()
 const credentials = ref<Record<string, boolean>>({})
 const active = ref(true)
@@ -88,12 +94,12 @@ const scenes: { key: AiScene; label: string }[] = [{ key: 'WATCHFACE', label: 'A
 const sceneGroups = [
   {
     title: 'AI 表盘设计',
-    description: '对应 Studio 新建画布中的 Create with AI。支持提示词与一张参考图共同生成可编辑 WRT，包含数字/指针时间、月相、天气和动态资源组。参考图生成需要支持图像输入的模型。默认每次 20 积分，可在此调整；实际调用模型前扣费，生成失败自动退回原扣款。',
+    description: '对应 Studio 新建画布中的 Create with AI。支持提示词与一张参考图共同生成可编辑 WRT，包含数字/指针时间、月相、天气和动态资源组。参考图生成需要支持图像输入的模型。按配置的 AI 点数扣费；实际调用模型前扣费，生成失败自动退回原扣款。',
     scenes: scenes.filter(scene => scene.key === 'WATCHFACE'),
   },
   {
     title: 'AI 表盘调整',
-    description: '对应编辑器中的 AI Adjust 对话面板。按每轮调整请求计费，默认 5 积分；调用模型前扣费，生成或校验失败自动退款。成功生成后不应用或撤销不退款，预览和应用不重复扣费。',
+    description: '对应编辑器中的 AI Adjust 对话面板。按每轮调整请求计费，按配置的 AI 点数扣费；调用模型前扣费，生成或校验失败自动退款。成功生成后不应用或撤销不退款，预览和应用不重复扣费。',
     scenes: scenes.filter(scene => scene.key === 'WATCHFACE_ADJUST'),
   },
   {
@@ -118,7 +124,7 @@ function sceneStatus(scene: AiScene) {
   return '可用'
 }
 const sceneReady = (scene: AiScene) => sceneStatus(scene) === '可用'
-function apply(data: AiAdminView) { settings.value = { ...data.settings, enabled: data.settings.enabled !== false }; credentials.value = data.credentials; active.value = data.active }
+function apply(data: AiAdminView) { loadedVersion = data.version; settings.value = { ...data.settings, enabled: data.settings.enabled !== false }; credentials.value = data.credentials; active.value = data.active }
 async function load() {
   loading.value = true; error.value = ''; settings.value = undefined
   try { const response = await getStudioAi(); if (response.code !== 0 || !response.data) throw new Error(); apply(response.data) }
@@ -133,13 +139,14 @@ async function save() {
   if (!settings.value || saving.value) return
   if (settings.value.models.some(m => !/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,99}$/.test(m.model))) { ElMessage.warning('请填写有效的模型名称'); return }
   if (scenes.some(s => !sceneModels(s.key).some(m => m.id === settings.value!.scenes[s.key].modelId))) { ElMessage.warning('请为每个场景选择能力匹配的模型'); return }
-  if (scenes.some(s => !Number.isInteger(settings.value!.scenes[s.key].creditCost) || settings.value!.scenes[s.key].creditCost < 1 || settings.value!.scenes[s.key].creditCost > 100000)) { ElMessage.warning('积分须为 1 至 100000 的整数'); return }
+  if (scenes.some(s => !Number.isInteger(settings.value!.scenes[s.key].creditCost) || settings.value!.scenes[s.key].creditCost < 1 || settings.value!.scenes[s.key].creditCost > 100000)) { ElMessage.warning('AI 点数须为 1 至 100000 的整数'); return }
   saving.value = true; error.value = ''
   try {
-    const response = await saveStudioAi(settings.value)
+    if (!Number.isInteger(loadedVersion) || loadedVersion! < 0) throw new Error('缺少配置版本，请刷新页面后重新保存。')
+    const response = await saveStudioAi(settings.value, loadedVersion!)
     if (response.code !== 0 || !response.data) throw new Error()
     apply(response.data); ElMessage.success('AI 配置已保存，新请求立即生效')
-  } catch { error.value = '未能确认保存结果，请刷新核对最新配置后重试。' }
+  } catch (cause) { const failure = cause as { msg?: string; response?: { data?: { msg?: string } } }; error.value = failure?.response?.data?.msg || failure?.msg || (cause instanceof Error ? cause.message : '未能确认保存结果，请刷新核对最新配置后重试。') }
   finally { saving.value = false }
 }
 async function openHistory() {

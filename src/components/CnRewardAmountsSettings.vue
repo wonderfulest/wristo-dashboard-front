@@ -1,6 +1,6 @@
 <template>
   <el-card shadow="never" v-loading="loading">
-    <template #header><div class="header"><strong>国内站积分任务与兑换</strong><el-button :disabled="saving" @click="load">刷新</el-button></div></template>
+    <template #header><div class="header"><strong>国内站奖励与兑换配置</strong><el-button :disabled="saving" @click="load">刷新</el-button></div></template>
     <p>适用于国内站推荐试点接口。资格与活动开放范围保持原设置；数量由此统一配置，保存后影响新奖励和新兑换。</p>
     <el-alert title="首次启用前，请核对并录入原国内站奖励和兑换额度后保存。未保存时暂停国内站试点积分扣发，避免默认值覆盖原有额度。" type="info" :closable="false" />
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
@@ -17,14 +17,15 @@
         <el-button type="danger" plain @click="products.splice(index, 1)">删除覆盖</el-button>
       </div>
       <el-button :disabled="products.length >= 1000" @click="addProduct">添加表盘覆盖</el-button>
-      <div class="actions"><el-button type="primary" :loading="saving" @click="save">保存国内积分配置</el-button></div>
+      <div class="actions"><el-button type="primary" :loading="saving" @click="save">保存国内奖励与兑换配置</el-button></div>
     </el-form>
   </el-card>
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getCnRewardAmounts, saveCnRewardAmounts, type CnRewardAmounts } from '@/api/cnRewardAmounts'
+import { getCnRewardAmounts, saveCnRewardAmounts, type CnRewardAmounts, type CnRewardAmountsView } from '@/api/cnRewardAmounts'
+let loadedVersion: number | undefined
 const settings = ref<CnRewardAmounts>()
 const loading = ref(false), saving = ref(false), error = ref('')
 const products = ref<{ id: number; appId: string; points: number }[]>([])
@@ -34,7 +35,9 @@ const fields: { key: Exclude<keyof CnRewardAmounts, 'productPoints'>; label: str
   { key: 'trialDailyLimit', label: '每日试用奖励积分上限' }, { key: 'referralPoints', label: '推荐有效首单奖励积分' },
   { key: 'monthlyCap', label: '每月推荐奖励积分上限' }, { key: 'defaultRedemptionPoints', label: '默认表盘兑换积分' },
 ]
-function apply(value: CnRewardAmounts) {
+function apply(view: CnRewardAmountsView) {
+  loadedVersion = view.version
+  const value = view.settings
   settings.value = { ...value, productPoints: { ...value.productPoints } }
   products.value = Object.entries(value.productPoints).map(([appId, points]) => ({ id: nextId++, appId, points }))
 }
@@ -62,10 +65,11 @@ async function save() {
   }
   saving.value = true; error.value = ''
   try {
-    const response = await saveCnRewardAmounts({ ...s, productPoints: overrides })
+    if (!Number.isInteger(loadedVersion) || loadedVersion! < 0) throw new Error('缺少配置版本，请刷新页面后重新保存。')
+    const response = await saveCnRewardAmounts({ ...s, productPoints: overrides }, loadedVersion!)
     if (response.code !== 0 || !response.data) throw new Error()
     apply(response.data); ElMessage.success('国内积分配置已保存')
-  } catch { error.value = '未能确认保存结果，请刷新核对配置后重试。' }
+  } catch (cause) { const failure = cause as { msg?: string; response?: { data?: { msg?: string } } }; error.value = failure?.response?.data?.msg || failure?.msg || (cause instanceof Error ? cause.message : '未能确认保存结果，请刷新核对配置后重试。') }
   finally { saving.value = false }
 }
 onMounted(load)

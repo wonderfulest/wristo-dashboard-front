@@ -229,7 +229,7 @@ watch(
       if (item?.children?.length) {
         const hasActive = item.children.some((sub: any) => sub.path && route.path.startsWith(sub.path))
         // 默认 false，仅当包含当前路由时为 true；若用户已手动操作，则沿用已存在的状态
-        next[item.key] = openGroups.value[item.key] ?? hasActive
+        next[item.key] = hasActive || (openGroups.value[item.key] ?? false)
       }
     }
     openGroups.value = next

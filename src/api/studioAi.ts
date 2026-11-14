@@ -18,6 +18,7 @@ export interface AiAdminView {
   settings: AiSettings
   credentials: Record<string, boolean>
   active: boolean
+  version: number
 }
 export const getStudioAi = (): Promise<ApiResponse<AiAdminView>> => instance.get('/admin/studio-ai')
-export const saveStudioAi = (settings: AiSettings): Promise<ApiResponse<AiAdminView>> => instance.put('/admin/studio-ai', settings)
+export const saveStudioAi = (settings: AiSettings, version: number): Promise<ApiResponse<AiAdminView>> => instance.put('/admin/studio-ai', settings, { headers: { 'X-Config-Version': version } })

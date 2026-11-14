@@ -6,7 +6,7 @@ const source = fs.readFileSync(new URL('../src/views/ops/SocialShareReview.vue',
 const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText
 function setup(overrides = {}) {
  const calls = []
- const context = { ref: value => ({ value }), onMounted() {}, ElMessage: { success() {} }, ElMessageBox: { confirm: async () => {}, prompt: async () => ({ value: ' Missing evidence ' }) }, socialRewardsApi: { review: async (...args) => { calls.push(args); return { code: 0, data: {} } }, list: async () => ({ code: 0, data: { items: [], total: 0 } }) }, ...overrides }
+ const context = { defineProps: () => ({}), ref: value => ({ value }), onMounted() {}, ElMessage: { success() {} }, ElMessageBox: { confirm: async () => {}, prompt: async () => ({ value: ' Missing evidence ' }) }, socialRewardsApi: { review: async (...args) => { calls.push(args); return { code: 0, data: {} } }, list: async () => ({ code: 0, data: { items: [], total: 0 } }) }, ...overrides }
  const state = new Function(...Object.keys(context), `${code}; return { review, reviewing, settings, error };`)(...Object.values(context))
  state.settings.value = { enabled: true, credits: 50, monthlyLimit: 4 }
  return { ...state, calls }
