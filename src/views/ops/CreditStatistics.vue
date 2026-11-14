@@ -1,7 +1,7 @@
 <template>
   <div class="credit-statistics">
     <header class="page-header">
-      <div><h2>积分统计</h2><p>核对全平台积分发放、消耗与剩余余额。</p></div>
+      <div><h2>AI 点数统计</h2><p>核对全平台AI 点数发放、消耗与剩余余额。</p></div>
       <el-button @click="$router.push('/ops/ai-usage')">AI 用量与成本</el-button>
     </header>
 
@@ -11,7 +11,7 @@
       <div class="stats">
         <el-card shadow="never"><span>累计发放</span><strong>{{ count(report?.allTime.issued) }}</strong><small>赠送、奖励、充值及后台增加</small></el-card>
         <el-card shadow="never"><span>累计消耗</span><strong>{{ count(report?.allTime.consumed) }}</strong><small>AI 退回 {{ count(report?.allTime.refunded) }} · 净消耗 {{ count(report?.allTime.netConsumed) }}</small></el-card>
-        <el-card shadow="never"><span>当前剩余可用积分</span><strong>{{ count(report?.accounts.available) }}</strong><small>逐账户扣除欠额后，汇总正余额</small></el-card>
+        <el-card shadow="never"><span>当前剩余可用AI 点数</span><strong>{{ count(report?.accounts.available) }}</strong><small>逐账户扣除欠额后，汇总正余额</small></el-card>
         <el-card shadow="never"><span>当前退款欠额</span><strong>{{ count(report?.accounts.debt) }}</strong><small>全平台净余额 {{ count(report?.accounts.netBalance) }}</small></el-card>
       </div>
       <p v-if="report" class="muted reconciliation">
@@ -51,10 +51,10 @@
         <el-table-column label="日末净结余" min-width="135" align="right"><template #default="{ row }"><strong>{{ count(row.closingBalance) }}</strong></template></el-table-column>
       </el-table>
       <template v-else>
-        <el-select v-model="sourceFilter" aria-label="筛选积分来源" placeholder="全部来源" clearable class="source-filter">
+        <el-select v-model="sourceFilter" aria-label="筛选AI 点数来源" placeholder="全部来源" clearable class="source-filter">
           <el-option v-for="type in sourceTypes" :key="type" :value="type" :label="typeLabels[type] || type" />
         </el-select>
-        <el-table :data="sourceRows" v-loading="loading" :row-key="sourceKey" empty-text="所选期间暂无此类积分流水">
+        <el-table :data="sourceRows" v-loading="loading" :row-key="sourceKey" empty-text="所选期间暂无此类AI 点数流水">
           <el-table-column label="来源 / 原因" min-width="210"><template #default="{ row }">{{ typeLabels[row.type] || row.type }}<div v-if="row.reason" class="muted">{{ reasonLabels[row.reason] || row.reason }}</div></template></el-table-column>
           <el-table-column v-for="metric in metrics" :key="metric.key" :label="metric.label" min-width="115" align="right"><template #default="{ row }">{{ count(row.totals[metric.key]) }}</template></el-table-column>
         </el-table>
@@ -84,7 +84,7 @@ const typeLabels: Record<string, string> = {
   USER_SOCIAL_SHARE: '社交分享奖励', USER_CHECK_IN: '每日签到', USER_DOWNLOAD: '首次下载奖励', USER_PURCHASE: '用户购买奖励', USER_PURCHASE_REFUND: '用户购买奖励追回',
   CREATOR_DOWNLOAD: '创作者下载奖励', CREATOR_PURCHASE: '创作者购买奖励', CREATOR_PURCHASE_REFUND: '创作者购买奖励追回',
   AI_IMAGE_EDIT: 'AI 图片编辑', AI_IMAGE_EDIT_REFUND: 'AI 图片编辑退款', AI_TAGS: 'AI 标签', AI_DESCRIPTION: 'AI 描述', AI_BANNER: 'Banner 图片', AI_WATCHFACE: 'AI 表盘', AI_WATCHFACE_ADJUST: '表盘局部调整',
-  AI_WATCHFACE_REFUND: '表盘生成积分退回', AI_WATCHFACE_ADJUST_REFUND: '表盘调整积分退回',
+  AI_WATCHFACE_REFUND: '表盘生成AI 点数退回', AI_WATCHFACE_ADJUST_REFUND: '表盘调整AI 点数退回',
 }
 const reasonLabels: Record<string, string> = {
   RECHARGE: '充值', PLATFORM_GIFT: '平台赠送', ACTIVITY_REWARD: '活动奖励', SERVICE_COMPENSATION: '服务补偿',
@@ -122,7 +122,7 @@ async function search() {
     if (result.code !== 0 || !result.data) throw new Error('Missing statistics')
     report.value = result.data
   } catch {
-    if (request === sequence) error.value = '无法读取积分统计，请重新查询。'
+    if (request === sequence) error.value = '无法读取AI 点数统计，请重新查询。'
   } finally {
     if (request === sequence) loading.value = false
   }

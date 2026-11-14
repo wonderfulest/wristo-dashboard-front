@@ -72,6 +72,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/ops/points-accounts',
+      name: 'PointsAccounts',
+      component: () => import('@/views/ops/PointsAccounts.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/ops/credit-statistics',
       name: 'CreditStatistics',
       component: () => import('@/views/ops/CreditStatistics.vue'),
@@ -81,6 +87,12 @@ const router = createRouter({
       path: '/ops/ai-prices',
       name: 'AiPrices',
       component: () => import('@/views/ops/AiPrices.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ops/miniapp-points',
+      name: 'MiniappPoints',
+      component: () => import('@/views/ops/MiniappPoints.vue'),
       meta: { requiresAuth: true }
     },
     {

@@ -1,6 +1,6 @@
 <template>
   <div class="rewards-page" v-loading="loading">
-    <header><div><h2>用户积分任务</h2><p>奖励发放至用户的 Studio 积分余额；修改额度只影响后续发放。</p></div><el-button @click="load" :disabled="saving">刷新</el-button></header>
+    <header><div><h2>用户积分任务</h2><p>奖励发放至用户的 奖励积分余额；修改额度只影响后续发放。</p></div><el-button @click="load" :disabled="saving">刷新</el-button></header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-form v-if="settings" label-width="130px" :disabled="saving || loading">
       <el-card shadow="never">
@@ -25,6 +25,8 @@
       <el-button type="primary" :loading="saving" @click="save">保存配置</el-button>
       <el-button @click="openHistory">修改历史</el-button>
     </el-form>
+    <StudioCreditAmountsSettings />
+    <CnRewardAmountsSettings />
     <SocialShareReview />
     <el-drawer v-model="historyVisible" title="用户积分任务 · 修改历史" size="min(800px, 96vw)">
       <el-alert v-if="historyError" :title="historyError" type="error" :closable="false" />
@@ -38,6 +40,8 @@
 </template>
 <script setup lang="ts">
 import SocialShareReview from './SocialShareReview.vue'
+import StudioCreditAmountsSettings from '@/components/StudioCreditAmountsSettings.vue'
+import CnRewardAmountsSettings from '@/components/CnRewardAmountsSettings.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getUserRewards, saveUserRewards, type UserRewardSettings } from '@/api/userRewards'

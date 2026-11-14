@@ -1,7 +1,7 @@
 <template>
   <div class="rewards-page" v-loading="loading">
     <header>
-      <div><h2>创作者积分奖励</h2><p>每天北京时间 02:00 结算前一天及遗漏的未结算记录，奖励发放至创作者的 Studio 积分账户。</p></div>
+      <div><h2>创作者积分奖励</h2><p>每天北京时间 02:00 结算前一天及遗漏的未结算记录，奖励发放至创作者的 奖励积分账户。</p></div>
       <div class="actions">
         <el-button :disabled="loading || saving" @click="load">刷新</el-button>
         <el-button :disabled="loading || saving" @click="openHistory">修改历史</el-button>

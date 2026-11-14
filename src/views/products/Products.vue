@@ -173,6 +173,7 @@
         <template #default="{ row }">
           <div style="display: flex; gap: 8px;">
             <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+            <el-button type="primary" link @click="openPoints(row.appId)">积分兑换</el-button>
             <el-button 
               :type="row.status === 1 ? 'danger' : 'success'" 
               link 
@@ -267,6 +268,7 @@
           </template>
           <template #actions="{ item: row }">
             <el-button size="small" type="primary" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="primary" link @click="openPoints(row.appId)">积分兑换</el-button>
             <el-button
               size="small"
               :type="row.status === 1 ? 'danger' : 'success'"
@@ -486,6 +488,10 @@
           <el-button type="primary" @click="handleSubmit">确定</el-button>
         </span>
       </template>
+    </el-dialog>
+
+    <el-dialog v-model="pointsDialogVisible" title="表盘积分兑换" width="min(560px, 94vw)" destroy-on-close>
+      <AppPointsSettings v-if="pointsAppId && pointsDialogVisible" :app-id="pointsAppId" />
     </el-dialog>
 
     <!-- 分类编辑对话框 -->
@@ -745,6 +751,7 @@
 </template>
 
 <script setup lang="ts">
+import AppPointsSettings from '@/components/AppPointsSettings.vue'
 import { computed, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules, UploadFiles, UploadRawFile, UploadUserFile } from 'element-plus'
@@ -833,6 +840,10 @@ const allCategories = ref<Category[]>([])
 // 表单相关
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
+const pointsDialogVisible = ref(false)
+const pointsAppId = ref<number>()
+const openPoints = (id: number) => { pointsAppId.value = id; pointsDialogVisible.value = true }
+
 const form = ref({
   appId: 0,
   designId: '',

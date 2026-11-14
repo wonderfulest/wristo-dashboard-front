@@ -1,18 +1,18 @@
 <template>
-  <el-dialog v-model="visible" title="用户积分管理" width="min(900px, 95vw)" :close-on-click-modal="false" :close-on-press-escape="!submitting" :show-close="!submitting">
+  <el-dialog v-model="visible" title="用户AI 点数管理" width="min(900px, 95vw)" :close-on-click-modal="false" :close-on-press-escape="!submitting" :show-close="!submitting">
     <el-form label-width="90px" @submit.prevent="submit">
       <el-form-item label="用户"><UserSelect v-model="userId" placeholder="搜索用户名或邮箱" :disabled="submitting || uncertain" style="width: 100%" /></el-form-item>
       <template v-if="userId">
         <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon />
-        <el-form-item label="当前余额"><strong>{{ balance == null ? '—' : balance.toLocaleString('zh-CN') }} 积分</strong><el-button link type="primary" :disabled="submitting || loading" @click="refresh">刷新</el-button></el-form-item>
+        <el-form-item label="当前余额"><strong>{{ balance == null ? '—' : balance.toLocaleString('zh-CN') }} AI 点数</strong><el-button link type="primary" :disabled="submitting || loading" @click="refresh">刷新</el-button></el-form-item>
         <el-form-item label="操作"><el-radio-group v-model="form.direction" :disabled="submitting || uncertain" @change="changeDirection"><el-radio-button value="ADD">充值</el-radio-button><el-radio-button value="REMOVE">扣减</el-radio-button></el-radio-group></el-form-item>
-        <el-form-item label="积分数量" required><el-input-number v-model="form.amount" :min="1" :max="1000000" :precision="0" :step="1" :disabled="submitting || uncertain" /><span class="hint">每次最多 1,000,000 积分</span></el-form-item>
+        <el-form-item label="AI 点数数量" required><el-input-number v-model="form.amount" :min="1" :max="1000000" :precision="0" :step="1" :disabled="submitting || uncertain" /><span class="hint">每次最多 1,000,000 AI 点数</span></el-form-item>
         <el-form-item label="原因" required><el-select v-model="form.reason" :disabled="submitting || uncertain" style="width: 240px"><el-option v-for="key in reasonOptions" :key="key" :value="key" :label="reasons[key]" /></el-select></el-form-item>
         <el-form-item label="补充说明" :required="form.reason === 'OTHER'"><el-input v-model="form.note" type="textarea" :rows="2" maxlength="500" show-word-limit :disabled="submitting || uncertain" placeholder="选择其他时必须填写说明" /></el-form-item>
-        <el-alert v-if="uncertain" title="上次提交结果未确认。请使用原请求重试核实，重试不会重复调整积分。" type="warning" :closable="false" show-icon />
-        <el-form-item><el-button type="primary" native-type="submit" :loading="submitting" :disabled="loading || balance == null">{{ uncertain ? '重试确认结果' : form.direction === 'ADD' ? '确认充值' : '确认扣减' }}</el-button><span class="hint" v-if="balance != null && form.amount">调整后预计 {{ (balance + (form.direction === 'ADD' ? form.amount : -form.amount)).toLocaleString('zh-CN') }} 积分</span></el-form-item>
-        <h3>积分流水</h3>
-        <el-table :data="entries" max-height="320" v-loading="loading" empty-text="暂无积分流水">
+        <el-alert v-if="uncertain" title="上次提交结果未确认。请使用原请求重试核实，重试不会重复调整AI 点数。" type="warning" :closable="false" show-icon />
+        <el-form-item><el-button type="primary" native-type="submit" :loading="submitting" :disabled="loading || balance == null">{{ uncertain ? '重试确认结果' : form.direction === 'ADD' ? '确认充值' : '确认扣减' }}</el-button><span class="hint" v-if="balance != null && form.amount">调整后预计 {{ (balance + (form.direction === 'ADD' ? form.amount : -form.amount)).toLocaleString('zh-CN') }} AI 点数</span></el-form-item>
+        <h3>AI 点数流水</h3>
+        <el-table :data="entries" max-height="320" v-loading="loading" empty-text="暂无AI 点数流水">
           <el-table-column label="时间" min-width="165"><template #default="{ row }">{{ time(row.created_at) }}</template></el-table-column>
           <el-table-column label="类型 / 原因" min-width="160"><template #default="{ row }">{{ types[row.type] || row.type }}<div class="hint">{{ reasons[row.reason] || row.reason || '—' }}</div></template></el-table-column>
           <el-table-column label="变动" width="85"><template #default="{ row }"><span :class="row.delta > 0 ? 'positive' : 'negative'">{{ row.delta > 0 ? '+' : '' }}{{ row.delta }}</span></template></el-table-column>
@@ -49,7 +49,7 @@ async function refresh() {
     if (request !== sequence) return
     if (!account.data || !history.data) throw new Error('Missing credit response')
     balance.value = account.data.balance; entries.value = history.data.items; total.value = history.data.total
-  } catch { if (request === sequence) loadError.value = '无法读取积分，请点击刷新重试。' }
+  } catch { if (request === sequence) loadError.value = '无法读取AI 点数，请点击刷新重试。' }
   finally { if (request === sequence) loading.value = false }
 }
 watch(userId, () => { page.value = 1; void refresh() })
@@ -65,19 +65,19 @@ async function submit() {
   if (!pending) {
     if (!Number.isInteger(form.amount) || form.amount < 1 || form.amount > 1000000) { ElMessage.warning('请输入 1 至 1000000 的整数'); return }
     if (!reasonOptions.value.includes(form.reason) || (form.reason === 'OTHER' && !form.note.trim())) { ElMessage.warning('请填写调整原因'); return }
-    if (form.direction === 'REMOVE' && form.amount > balance.value) { ElMessage.warning('用户积分余额不足'); return }
+    if (form.direction === 'REMOVE' && form.amount > balance.value) { ElMessage.warning('用户AI 点数余额不足'); return }
   }
   submitting.value = true
   try {
     if (!pending) {
-      try { await ElMessageBox.confirm(`用户 ID：${userId.value}，${form.direction === 'ADD' ? '充值' : '扣减'} ${form.amount} 积分。原因：${reasons[form.reason]}${form.note.trim() ? '；' + form.note.trim() : ''}`, '确认积分调整', { confirmButtonText: '确认调整', cancelButtonText: '取消', type: 'warning' }) }
+      try { await ElMessageBox.confirm(`用户 ID：${userId.value}，${form.direction === 'ADD' ? '充值' : '扣减'} ${form.amount} AI 点数。原因：${reasons[form.reason]}${form.note.trim() ? '；' + form.note.trim() : ''}`, '确认AI 点数调整', { confirmButtonText: '确认调整', cancelButtonText: '取消', type: 'warning' }) }
       catch { return }
       pending = { userId: userId.value, data: { ...form, note: form.note.trim(), requestId: crypto.randomUUID() } }
     }
     try {
       await adjustCredits(pending.userId, pending.data)
       pending = undefined; uncertain.value = false; form.note = ''; page.value = 1
-      ElMessage.success('积分调整成功'); await refresh()
+      ElMessage.success('AI 点数调整成功'); await refresh()
     } catch (error: any) {
       // Keep the exact request on network/server failures: the server may already have committed it.
       const status = error?.response?.status
