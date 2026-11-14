@@ -60,7 +60,7 @@ test('invalid priorities never submit requests', async () => {
   const state = setup()
   state.selectedRows.value = [row(1, 10)]
   state.openBatchPriorityDialog()
-  for (const value of [null, '', -1, 10, 1.5]) {
+  for (const value of [null, '', '5', 10, 1.5, NaN, Infinity, -Infinity]) {
     state.priorityValue.value = value
     await state.submitPriority()
   }
@@ -254,5 +254,18 @@ test('offline cleanup cancellation and failure release loading state', async () 
     assert.equal(requests, cancel ? 0 : 1)
     assert.equal(errors.length, cancel ? 0 : 1)
     assert.equal(state.clearingOfflineChannels.value, false)
+  }
+})
+
+
+test('negative and upper-bound priorities submit unchanged', async () => {
+  for (const value of [-1, -9, 9]) {
+    const state = setup()
+    state.selectedRows.value = [row(1, 10)]
+    state.openBatchPriorityDialog()
+    state.priorityValue.value = value
+    await state.submitPriority()
+    assert.deepEqual(state.calls, [[1, value]])
+    assert.equal(state.priorityDialogVisible.value, false)
   }
 })

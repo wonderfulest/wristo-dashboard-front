@@ -23,6 +23,7 @@ test('顶部菜单按业务流程组织', () => {
     'content-production',
     'app-operations',
     'games',
+    'utilities',
     'users-transactions',
     'marketing-growth',
     'credits-ai',
@@ -34,11 +35,13 @@ test('各业务域使用稳定的二级分组顺序', () => {
   assert.deepEqual(getDirectChildKeys('home'), [
     'dashboard-overview',
     'dashboard-users',
+    'dashboard-downloads',
     'dashboard-sales',
     'dashboard-activations',
     'activation-user-detail',
     'dashboard-launch',
     'dashboard-value',
+    'diagnostic-reports',
     'tickets',
     'contact-us',
   ])
@@ -57,9 +60,10 @@ test('各业务域使用稳定的二级分组顺序', () => {
     'app-monitoring',
   ])
   assert.deepEqual(getDirectChildKeys('users-transactions'), [
+    'orders-entitlements',
+    'studio-conversion',
     'user-services',
     'memberships-subscriptions',
-    'orders-entitlements',
     'after-sales-promotions',
     'merchant-settlement',
     'management-settings',
