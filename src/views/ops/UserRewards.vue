@@ -25,6 +25,7 @@
       <el-button type="primary" :loading="saving" @click="save">保存配置</el-button>
       <el-button @click="openHistory">修改历史</el-button>
     </el-form>
+    <SocialShareReview />
     <el-drawer v-model="historyVisible" title="用户积分任务 · 修改历史" size="min(800px, 96vw)">
       <el-alert v-if="historyError" :title="historyError" type="error" :closable="false" />
       <el-table :data="histories" v-loading="historyLoading">
@@ -36,6 +37,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import SocialShareReview from './SocialShareReview.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getUserRewards, saveUserRewards, type UserRewardSettings } from '@/api/userRewards'
