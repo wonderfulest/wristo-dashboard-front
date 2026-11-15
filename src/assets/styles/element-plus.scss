@@ -267,6 +267,14 @@
     .el-date-range-picker__content.is-left { border-right: 0; }
   }
 
+  // 长日期面板在手机上居中，避免锚点靠近屏幕底部时无法选到结束日期。
+  .el-picker__popper:has(.el-date-range-picker) {
+    position: fixed !important;
+    inset: 50% auto auto 50% !important;
+    transform: translate(-50%, -50%) !important;
+    .el-popper__arrow { display: none; }
+  }
+
   .el-picker-panel {
     max-width: calc(100vw - 16px);
     overflow-x: auto;
