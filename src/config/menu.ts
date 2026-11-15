@@ -153,25 +153,6 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
-    key: 'games',
-    title: '小游戏',
-    icon: 'Trophy',
-    basePaths: ['/games'],
-    children: [
-      { key: 'games-overview', title: '运营总览', icon: 'DataAnalysis', path: '/games/overview' },
-      { key: 'games-manage', title: '游戏管理', icon: 'FolderOpened', path: '/games/manage' },
-    ],
-  },
-  {
-    key: 'utilities',
-    title: '实用工具',
-    icon: 'Tools',
-    basePaths: ['/utilities'],
-    children: [
-      { key: 'utilities-manage', title: '工具管理', icon: 'FolderOpened', path: '/utilities/manage' },
-    ],
-  },
-  {
     key: 'users-transactions',
     title: '用户与交易',
     icon: 'User',
@@ -217,6 +198,9 @@ export const topMenus: TopMenuGroup[] = [
     icon: 'Promotion',
     basePaths: ['/marketing', '/ga', '/email-records'],
     children: [
+      { key: 'ios-watchface-push', title: 'iOS 每日精选推送', icon: 'Bell', path: '/marketing/ios-watchface-push' },
+      { key: 'wechat-watchface-push', title: '微信新作品推送', icon: 'ChatDotRound', path: '/marketing/wechat-watchface-push' },
+      { key: 'companion-apps', title: 'Wristo 配套应用地址', icon: 'Link', path: '/marketing/companion-apps' },
       { key: 'user-insights', title: '用户洞察', icon: 'UserFilled', children: [
         { key: 'user-profiles', title: '用户画像', icon: 'Avatar', path: '/marketing/user-profiles' },
         { key: 'segments', title: '用户分群', icon: 'UserFilled', path: '/marketing/segments' },
@@ -235,6 +219,25 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'marketing-assets', title: '营销素材', icon: 'Picture', children: [
         { key: 'watchface-assets', title: '表盘营销资产', icon: 'Picture', path: '/marketing/watchface-assets' },
       ] },
+    ],
+  },
+  {
+    key: 'games',
+    title: '小游戏',
+    icon: 'Trophy',
+    basePaths: ['/games'],
+    children: [
+      { key: 'games-overview', title: '运营总览', icon: 'DataAnalysis', path: '/games/overview' },
+      { key: 'games-manage', title: '游戏管理', icon: 'FolderOpened', path: '/games/manage' },
+    ],
+  },
+  {
+    key: 'utilities',
+    title: '实用工具',
+    icon: 'Tools',
+    basePaths: ['/utilities'],
+    children: [
+      { key: 'utilities-manage', title: '工具管理', icon: 'FolderOpened', path: '/utilities/manage' },
     ],
   },
   {

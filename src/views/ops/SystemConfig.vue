@@ -63,12 +63,6 @@
       </el-table-column>
     </el-table>
 
-
-    <WatchfacePushConfig />
-    <IOSWatchfacePushConfig />
-
-    <CompanionAppsConfig @saved="fetchList" />
-
     <el-dialog v-model="editVisible" :title="isCreate ? '新增配置' : '编辑配置'" width="640px">
       <el-form :model="editForm" label-width="110px">
         <el-form-item label="分类">
@@ -116,9 +110,6 @@
 <script setup lang="ts">
 import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import TableActionColumn from '@/components/common/TableActionColumn.vue'
-import WatchfacePushConfig from '@/components/ops/WatchfacePushConfig.vue'
-import IOSWatchfacePushConfig from '@/components/ops/IOSWatchfacePushConfig.vue'
-import CompanionAppsConfig from '@/components/ops/CompanionAppsConfig.vue'
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { listConfigs, upsertConfig, getConfigHistory, activateConfig } from '@/api/config'

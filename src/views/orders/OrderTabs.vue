@@ -1,7 +1,6 @@
 <template>
   <nav class="order-tabs" aria-label="订单分类">
     <router-link to="/orders/history">购买记录</router-link>
-    <router-link to="/orders/custom">定制订单</router-link>
   </nav>
 </template>
 <style scoped>

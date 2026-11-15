@@ -24,6 +24,7 @@ export interface IOSPushDevice {
   installationId: string
   environment: string
   language: string
+  timeZone: string
   updatedAt: string
 }
 const path = '/admin/ios-watchface-push'

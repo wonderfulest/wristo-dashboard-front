@@ -10,7 +10,7 @@
       <el-form-item label="开启每日推送"><el-switch v-model="form.enabled" /></el-form-item>
       <el-form-item label="每日发送时间">
         <el-time-select v-model="form.sendTime" start="00:00" step="00:01" end="23:59" />
-        <span class="hint time-hint">北京时间（Asia/Shanghai）</span>
+        <span class="hint time-hint">用户当地时间（默认 20:00）</span>
       </el-form-item>
       <el-form-item label="指定作品">
         <AppSearchSelect v-model="selectedAppId" width="100%" />
@@ -20,20 +20,20 @@
       <el-form-item label="通知正文"><el-input v-model="form.body" type="textarea" :rows="3" maxlength="500" show-word-limit /></el-form-item>
       <el-form-item><el-button type="primary" :loading="saving" @click="save">保存 iOS 推送配置</el-button></el-form-item>
     </el-form>
-    <p class="hint">当天任务开始后固定作品与文案，后续修改供下一次任务使用；关闭开关可停止尚未发送的通知。只有在 iOS App 内开启「每日精选」并允许系统通知的用户会收到推送。</p>
+    <p class="hint">同一当地日期共用作品与文案，首个时区任务开始后固定，后续修改供下一日期使用；关闭开关可停止尚未发送的通知。未上报时区的旧设备暂按上海时间发送；App 上报时区后自动调整。只有在 iOS App 内开启「每日精选」并允许系统通知的用户会收到推送。</p>
     <h3>发送到我的测试设备</h3>
     <p class="hint">先在 iPhone 上使用当前后台账号登录 Wristo 并开启「每日精选」。测试使用已保存的文案及当前所选作品，不受每日推送开关限制。</p>
     <el-alert v-if="devicesFailed" title="测试设备加载失败，请刷新重试。" type="warning" :closable="false" />
     <div class="test-row">
       <el-select v-model="testDeviceId" aria-label="测试设备" placeholder="选择我的已订阅设备" :disabled="loading || devicesFailed || testing" class="device-select">
-        <el-option v-for="device in devices" :key="device.id" :value="device.id" :label="`${device.environment === 'production' ? '正式版' : '开发版'} · ${device.installationId.slice(0, 8)} · ${device.language}`" />
+        <el-option v-for="device in devices" :key="device.id" :value="device.id" :label="`${device.environment === 'production' ? '正式版' : '开发版'} · ${device.installationId.slice(0, 8)} · ${device.language} · ${device.timeZone}`" />
       </el-select>
       <el-button :loading="testing" :disabled="loading || saving || failed || !testDeviceId || !selectedAppId" @click="testPush">发送测试通知</el-button>
     </div>
     <h3>最近 30 天发送记录</h3>
     <el-alert v-if="historyFailed" title="发送记录加载失败，请刷新重试。" type="warning" :closable="false" />
     <el-table :data="history" empty-text="暂无推送任务">
-      <el-table-column prop="pushDay" label="日期" width="120" />
+      <el-table-column prop="pushDay" label="用户当地日期" width="140" />
       <el-table-column prop="productName" label="作品" min-width="150" />
       <el-table-column prop="appId" label="appId" width="100" />
       <el-table-column label="任务" min-width="140"><template #default="{ row }">{{ row.status === 'NO_PRODUCT' ? '未指定可用作品' : row.status === 'READY' ? '已创建' : row.status }}</template></el-table-column>
@@ -56,7 +56,7 @@ import {
   type IOSWatchfacePushSettings, type IOSWatchfacePushHistory, type IOSPushDevice,
 } from '@/api/ios-watchface-push'
 
-const form = reactive<IOSWatchfacePushSettings>({ enabled: false, sendTime: '09:00', title: '', body: '', appId: null })
+const form = reactive<IOSWatchfacePushSettings>({ enabled: false, sendTime: '20:00', title: '', body: '', appId: null })
 const configured = ref<boolean | null>(null)
 const selectedAppId = ref<number>()
 const loading = ref(true), saving = ref(false), testing = ref(false)

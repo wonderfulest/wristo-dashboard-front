@@ -33,6 +33,24 @@ const router = createRouter({
       component: () => import('@/views/themes/ThemeConfigs.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/marketing/ios-watchface-push',
+      name: 'IOSWatchfacePush',
+      component: () => import('@/views/marketing/IOSWatchfacePush.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/wechat-watchface-push',
+      name: 'WechatWatchfacePush',
+      component: () => import('@/views/marketing/WechatWatchfacePush.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/companion-apps',
+      name: 'CompanionApps',
+      component: () => import('@/views/marketing/CompanionApps.vue'),
+      meta: { requiresAuth: true }
+    },
     // Marketing Email module (moved under /marketing)
     {
       path: '/marketing/email-templates',
