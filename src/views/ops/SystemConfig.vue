@@ -65,6 +65,7 @@
 
 
     <WatchfacePushConfig />
+    <IOSWatchfacePushConfig />
 
     <CompanionAppsConfig @saved="fetchList" />
 
@@ -116,6 +117,7 @@
 import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import WatchfacePushConfig from '@/components/ops/WatchfacePushConfig.vue'
+import IOSWatchfacePushConfig from '@/components/ops/IOSWatchfacePushConfig.vue'
 import CompanionAppsConfig from '@/components/ops/CompanionAppsConfig.vue'
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
