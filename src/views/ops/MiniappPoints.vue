@@ -1,7 +1,7 @@
 <template>
   <div class="points-settings">
     <h2>{{ mode === 'rewards' ? '小程序任务' : '小程序兑换' }}</h2>
-    <p>使用统一奖励积分兑换表盘权益。每款表盘须单独开启，默认关闭。</p>
+    <p>使用统一奖励积分兑换表盘权益。免费表盘默认开启，默认 50 积分；单款设为 0 积分可直接兑换。</p>
     <el-card v-if="mode === 'rewards'" shadow="never" v-loading="rewardsLoading">
       <template #header>任务奖励积分</template>
       <el-alert v-if="rewardsError" :title="rewardsError" type="error" :closable="false" />

@@ -1,6 +1,7 @@
 import type { ImageVO } from '@/types/image'
 
 export interface Category {
+  nameI18n?: Record<string, string> | null
   id: number
   name: string
   slug: string
@@ -28,6 +29,7 @@ export interface CategoryPageData {
 }
 
 export interface CreateCategoryDto {
+  nameI18n?: Record<string, string>
   name: string
   slug: string
   heroId?: number | null

@@ -2,11 +2,11 @@
   <div class="categories-container">
     <div class="header">
       <div>
-        <p>官网只展示主系列；所有基础分类、细分分类、功能、场景和设备维度统一维护为标签。</p>
+        <p>分类名称与翻译由后端统一维护，供官网和小程序使用；标签独立管理。</p>
       </div>
       <div class="header-actions">
         <el-button v-if="activeTab === 'public'" type="primary" @click="handleAddCategory">
-          新增主系列
+          新增分类
         </el-button>
         <el-button v-else-if="activeTab === 'tags'" type="primary" @click="handleAddTag">新增标签</el-button>
       </div>
@@ -18,11 +18,11 @@
       :closable="false"
       class="system-note"
       title="分类重构规则"
-      description="Categories 下拉和首页系列只使用主系列；Venu/Fenix/Forerunner 等设备维度、Animal/Fantasy/Flower 等细项都统一进入标签体系。"
+      description="默认名称用于缺少翻译时回退；中文、英文名称按客户端语言展示。分类没有可用封面时，小程序首页仍按原规则隐藏卡片。"
     />
 
     <el-tabs v-model="activeTab" class="category-tabs">
-      <el-tab-pane label="官网主系列" name="public">
+      <el-tab-pane label="分类" name="public">
         <el-table :data="publicCategories" style="width: 100%" v-loading="categoryLoading">
           <TableActionColumn>
             <template #default="{ row }">
@@ -30,7 +30,7 @@
             </template>
           </TableActionColumn>
 
-          <el-table-column prop="name" label="主系列" min-width="180">
+          <el-table-column prop="name" label="分类" min-width="180">
             <template #default="{ row }">
               <div class="name-cell">
                 <strong>{{ publicSeriesName(row) }}</strong>
@@ -144,10 +144,16 @@
       <el-tab-pane label="百炼标签生成" name="generation"><TagGeneration /></el-tab-pane>
     </el-tabs>
 
-    <el-dialog v-model="categoryDialogVisible" :title="categoryDialogType === 'add' ? '新增主系列' : '编辑分类'" width="520px">
+    <el-dialog v-model="categoryDialogVisible" :title="categoryDialogType === 'add' ? '新增分类' : '编辑分类'" width="520px">
       <el-form ref="categoryFormRef" :model="categoryForm" :rules="categoryRules" label-width="90px">
         <el-form-item label="名称" prop="name">
           <el-input v-model="categoryForm.name" placeholder="All Watch Faces" />
+        </el-form-item>
+        <el-form-item label="中文名称">
+          <el-input v-model.trim="categoryForm.nameI18n.zh" maxlength="100" placeholder="未填写时显示默认名称" />
+        </el-form-item>
+        <el-form-item label="英文名称">
+          <el-input v-model.trim="categoryForm.nameI18n.en" maxlength="100" placeholder="未填写时显示默认名称" />
         </el-form-item>
         <el-form-item label="Slug" prop="slug">
           <el-input v-model="categoryForm.slug" placeholder="whole" />
@@ -320,6 +326,7 @@ const categoryFormRef = ref<FormInstance>()
 const categoryForm = ref({
   id: 0,
   name: '',
+  nameI18n: { zh: '', en: '' } as Record<string, string>,
   slug: '',
   bannerId: undefined as number | undefined,
   heroId: undefined as number | undefined,
@@ -359,14 +366,7 @@ const tagForm = ref({
   description: '',
 })
 
-const publicCategories = computed(() => {
-  return publicSeries
-    .map((definition) => {
-      const category = allCategories.value.find((item) => item.slug === definition.slug)
-      return category ? { ...category, name: definition.name, sort: category.sort ?? definition.sort } : null
-    })
-    .filter(Boolean) as Category[]
-})
+const publicCategories = computed(() => allCategories.value)
 
 const categoryRules: FormRules = {
   name: [{ required: true, message: '请输入分类名称', trigger: 'blur' }],
@@ -435,7 +435,7 @@ const fetchTags = async () => {
 }
 
 const publicSeriesName = (category: Category) => {
-  return publicSeries.find((item) => item.slug === category.slug)?.name || category.name
+  return category.nameI18n?.zh || category.name
 }
 
 const publicSeriesNote = (slug: string) => {
@@ -454,7 +454,7 @@ const tagGroupType = (group: string) => {
 
 const handleAddCategory = () => {
   categoryDialogType.value = 'add'
-  categoryForm.value = { id: 0, name: '', slug: '', bannerId: undefined, heroId: undefined, sort: 0, isActive: 1 }
+  categoryForm.value = { id: 0, name: '', nameI18n: { zh: '', en: '' }, slug: '', bannerId: undefined, heroId: undefined, sort: 0, isActive: 1 }
   bannerPreviewUrl.value = ''
   heroPreviewUrl.value = ''
   categoryDialogVisible.value = true
@@ -469,6 +469,7 @@ const handleEditCategory = async (row: Category) => {
     categoryForm.value = {
       id: r.id,
       name: r.name,
+      nameI18n: { zh: '', en: '', ...r.nameI18n },
       slug: r.slug,
       bannerId: (r.bannerId ?? r.banner?.id) ?? undefined,
       heroId: (r.heroId ?? r.hero?.id) ?? undefined,
@@ -501,6 +502,7 @@ const handleSubmitCategory = async () => {
       if (categoryDialogType.value === 'add') {
         const created = await createCategory({
           name: categoryForm.value.name,
+          nameI18n: categoryForm.value.nameI18n,
           slug: categoryForm.value.slug,
           heroId: categoryForm.value.heroId,
           bannerId: categoryForm.value.bannerId,
@@ -515,6 +517,7 @@ const handleSubmitCategory = async () => {
       } else {
         await updateCategory(categoryForm.value.id, {
           name: categoryForm.value.name,
+          nameI18n: categoryForm.value.nameI18n,
           slug: categoryForm.value.slug,
           heroId: categoryForm.value.heroId,
           bannerId: categoryForm.value.bannerId,
