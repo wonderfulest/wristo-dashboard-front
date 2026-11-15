@@ -1,6 +1,13 @@
 <template>
   <div>
     <el-table :data="list" style="width: 100%" v-loading="loading" border @sort-change="onSort">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link :disabled="!catalogWritable" @click="$emit('edit', row)">Edit</el-button>
+          <el-button type="danger" link :disabled="!catalogWritable" @click="$emit('delete', row)">Delete</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="valueCode" label="Code" width="70" sortable="custom" />
       <el-table-column prop="metricSymbol" label="Metric Symbol" min-width="280" />
       <el-table-column prop="category" label="Category" width="110" />
@@ -66,12 +73,6 @@
         </template>
       </el-table-column>
       <el-table-column prop="sortOrder" label="Sort" width="90" sortable="custom" />
-      <el-table-column label="Action" width="180" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link :disabled="!catalogWritable" @click="$emit('edit', row)">Edit</el-button>
-          <el-button type="danger" link :disabled="!catalogWritable" @click="$emit('delete', row)">Delete</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -89,6 +90,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, watch } from 'vue'
 import type { PropType } from 'vue'
 import type { DataTypeOptionVO, IconRules } from '@/types/data-type-option'

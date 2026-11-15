@@ -24,6 +24,12 @@
     <el-tabs v-model="activeTab" class="category-tabs">
       <el-tab-pane label="官网主系列" name="public">
         <el-table :data="publicCategories" style="width: 100%" v-loading="categoryLoading">
+          <TableActionColumn>
+            <template #default="{ row }">
+              <el-button type="primary" link @click="handleEditCategory(row)">编辑</el-button>
+            </template>
+          </TableActionColumn>
+
           <el-table-column prop="name" label="主系列" min-width="180">
             <template #default="{ row }">
               <div class="name-cell">
@@ -56,29 +62,42 @@
               <span class="row-note">{{ publicSeriesNote(row.slug) }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="150" fixed="right">
-            <template #default="{ row }">
-              <el-button type="primary" link @click="handleEditCategory(row)">编辑</el-button>
-            </template>
-          </el-table-column>
         </el-table>
       </el-tab-pane>
 
       <el-tab-pane label="标签" name="tags">
-        <div class="tag-toolbar">
-          <el-input v-model.trim="tagQuery.keyword" clearable placeholder="搜索中英文名称或 slug" style="width: 240px" @keyup.enter="fetchTags" />
-          <el-select v-model="tagQuery.tagGroup" clearable placeholder="标签组" style="width: 160px" @change="fetchTags">
-            <el-option v-for="group in tagGroups" :key="group.value" :label="group.label" :value="group.value" />
-          </el-select>
-          <el-select v-model="tagQuery.status" clearable placeholder="状态" style="width: 120px" @change="fetchTags">
-            <el-option label="启用" :value="1" />
-            <el-option label="停用" :value="0" />
-          </el-select>
-          <el-button @click="fetchTags">刷新</el-button>
-        </div>
+        <ListSearchPanel>
+          <div class="list-search-field list-search-field--wide">
+            <span class="list-search-label">中英文名称或 slug</span>
+            <el-input aria-label="中英文名称或 slug" v-model.trim="tagQuery.keyword" clearable placeholder="搜索中英文名称或 slug" style="width: 240px" @keyup.enter="fetchTags" />
+          </div>
+          <div class="list-search-field">
+            <span class="list-search-label">标签组</span>
+            <el-select aria-label="标签组" v-model="tagQuery.tagGroup" clearable placeholder="标签组" style="width: 160px" @change="fetchTags">
+              <el-option v-for="group in tagGroups" :key="group.value" :label="group.label" :value="group.value" />
+            </el-select>
+          </div>
+          <div class="list-search-field">
+            <span class="list-search-label">状态</span>
+            <el-select aria-label="状态" v-model="tagQuery.status" clearable placeholder="状态" style="width: 120px" @change="fetchTags">
+              <el-option label="启用" :value="1" />
+              <el-option label="停用" :value="0" />
+            </el-select>
+          </div>
+          <template #query>
+            <el-button @click="fetchTags">刷新</el-button>
+          </template>
+        </ListSearchPanel>
 
         <el-alert title="标签由统一词库维护。Slug 创建后固定，标签组可调整；停用标签会从产品展示与可选词库中隐藏。" type="info" :closable="false" style="margin-bottom: 12px" />
         <el-table :data="tags" style="width: 100%" v-loading="tagLoading">
+          <TableActionColumn>
+            <template #default="{ row }">
+              <el-button type="primary" link @click="handleEditTag(row)">编辑</el-button>
+              <el-button type="warning" link @click="handleMergeTag(row)">合并</el-button>
+            </template>
+          </TableActionColumn>
+
           <el-table-column prop="nameZh" label="中文名称" min-width="120" />
           <el-table-column prop="name" label="标签" min-width="180">
             <template #default="{ row }">
@@ -106,12 +125,6 @@
                 :inactive-value="0"
                 @change="(val: number) => handleTagStatusChange(row, val)"
               />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="120" fixed="right">
-            <template #default="{ row }">
-              <el-button type="primary" link @click="handleEditTag(row)">编辑</el-button>
-              <el-button type="warning" link @click="handleMergeTag(row)">合并</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -232,6 +245,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'

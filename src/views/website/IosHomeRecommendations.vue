@@ -16,11 +16,19 @@
     </el-form>
     <p>{{ displayMode === 'RANDOM' ? '每次加载首页时随机选取，不重复展示同一应用。' : '按下方列表顺序选取前 N 个，可用上移、下移调整优先级。' }}有效候选不足时展示全部有效应用。</p>
     <div class="actions">
-      <el-input v-model="appId" placeholder="输入 App ID" style="width: 240px" @keyup.enter="add" :disabled="saving" />
+      <AppSearchSelect v-model="appId" width="280px" :disabled="saving" />
       <el-button @click="add" :loading="adding" :disabled="saving">添加应用</el-button>
       <span>候选池：{{ items.length }} 个应用</span>
     </div>
     <el-table :data="items" row-key="appId">
+      <TableActionColumn>
+        <template #default="{ $index }">
+          <el-button link :disabled="saving || $index === 0" @click="move($index, -1)">上移</el-button>
+          <el-button link :disabled="saving || $index === items.length - 1" @click="move($index, 1)">下移</el-button>
+          <el-button link type="danger" :disabled="saving" @click="items.splice($index, 1)">移除</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column label="顺序" type="index" width="70" />
       <el-table-column label="首页横幅" width="290">
         <template #default="{ row }">
@@ -30,19 +38,14 @@
       </el-table-column>
       <el-table-column prop="name" label="应用" />
       <el-table-column prop="appId" label="App ID" width="140" />
-      <el-table-column label="操作" width="230">
-        <template #default="{ $index }">
-          <el-button link :disabled="saving || $index === 0" @click="move($index, -1)">上移</el-button>
-          <el-button link :disabled="saving || $index === items.length - 1" @click="move($index, 1)">下移</el-button>
-          <el-button link type="danger" :disabled="saving" @click="items.splice($index, 1)">移除</el-button>
-        </template>
-      </el-table-column>
     </el-table>
     <el-button type="primary" class="save" :loading="saving" :disabled="loading || adding || !canSave" @click="save">保存配置</el-button>
   </div>
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import instance from '@/config/axios'
@@ -55,7 +58,7 @@ const enabled = ref(false)
 const displayCount = ref(5)
 const displayMode = ref<'TOP_N' | 'RANDOM'>('TOP_N')
 const items = ref<RecommendedApp[]>([])
-const appId = ref('')
+const appId = ref<number>()
 const loading = ref(true)
 const adding = ref(false)
 const saving = ref(false)
@@ -69,11 +72,11 @@ async function candidate(id: number): Promise<RecommendedApp> {
 }
 async function add() {
   if (adding.value || saving.value) return
-  const id = Number(appId.value.trim())
+  const id = Number(appId.value)
   if (!Number.isSafeInteger(id) || id <= 0) { ElMessage.warning('请输入有效的 App ID'); return }
   if (items.value.some(item => item.appId === id)) { ElMessage.warning('该应用已在列表中'); return }
   adding.value = true
-  try { items.value.push(await candidate(id)); appId.value = '' }
+  try { items.value.push(await candidate(id)); appId.value = undefined }
   catch (error) { ElMessage.error(error instanceof Error ? error.message : '无法添加应用') }
   finally { adding.value = false }
 }

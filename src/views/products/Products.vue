@@ -1,107 +1,201 @@
 <template>
   <div class="products-container">
-    <div class="header">
+    <section class="product-search-panel" aria-label="应用搜索与操作">
       <div class="product-filter-bar">
-        <el-input
-          v-model="searchName"
-          placeholder="按商品名称搜索"
-          clearable
-          class="filter-name-input"
-          @keyup.enter.native="handleSearch"
-        />
-      
-        <el-select v-model="sortOrder" placeholder="排序方式" class="filter-sort-select" @change="handleSort">
-          <el-option label="创建时间升序" value="created_at:asc" />
-          <el-option label="创建时间倒序" value="created_at:desc" />
-          <el-option label="更新时间升序" value="updated_at:asc" />
-          <el-option label="更新时间倒序" value="updated_at:desc" />
-          <el-option label="下载量倒序" value="download:desc" />
-          <el-option label="下载量升序" value="download:asc" />
-        </el-select>
-        <el-select
-          v-model="createdAtPreset"
-          placeholder="创建时间"
-          clearable
-          class="filter-date-preset"
-          @change="handleCreatedAtPresetChange"
-        >
-          <el-option
-            v-for="option in createdAtPresetOptions"
-            :key="option.value"
-            :label="option.label"
-            :value="option.value"
-          />
-        </el-select>
-        <el-date-picker
-          v-model="createdAtRange"
-          type="daterange"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          value-format="YYYY-MM-DD"
-          :shortcuts="createdAtShortcuts"
-          class="filter-date-range"
-          @change="handleCreatedAtRangeChange"
-        />
-        <el-select
-          v-model="selectedStatus"
-          placeholder="按状态筛选"
-          clearable
-          class="filter-status-select"
-          @change="handleFilterChange"
-        >
-          <el-option label="已上线" :value="1" />
-          <el-option label="已下线" :value="0" />
-        </el-select>
-        <el-select
-          v-model="selectedCategoryId"
-          placeholder="按分类筛选"
-          clearable
-          filterable
-          class="filter-category-select"
-          @change="handleFilterChange"
-        >
-          <el-option
-            v-for="cat in allCategories"
-            :key="cat.id"
-            :label="cat.name"
-            :value="cat.id"
-          />
-        </el-select>
-        <UserSelect
-          v-model="selectedCreatorId"
-          :role-authorities="['ROLE_DESIGNER']"
-          placeholder="按创作者筛选"
-          class="filter-creator-select"
-          @change="handleFilterChange"
-        />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleRecentOnlineDownloads">近30天上线下载排行</el-button>
-        <el-button type="warning" plain @click="openTrialDurationDialog">批量修改试用时长</el-button>
-        <el-button @click="handleRefreshStats" :loading="refreshingStats">刷新统计</el-button>
-        <el-button type="warning" plain @click="bulkCategoryDialogVisible = true">
-          一键管理分类
-        </el-button>
-        <el-button
-          type="warning"
-          :loading="resettingStoreWeights"
-          @click="handleResetAllStoreWeights"
-        >
-          重置所有应用权重
-        </el-button>
+        <div class="filter-primary-row">
+          <div class="filter-field filter-keyword">
+            <span class="filter-label">应用搜索</span>
+            <AppSearchInput v-model="searchName" class="filter-name-input" aria-label="应用名称或 App ID" :prefix-icon="Search" @search="handleSearch" />
+          </div>
+          <div class="filter-field">
+            <span class="filter-label">状态</span>
+            <el-select
+              v-model="selectedStatus"
+              placeholder="全部状态" aria-label="状态"
+              clearable
+              class="filter-status-select"
+              @change="handleFilterChange"
+            >
+              <el-option label="已上线" :value="1" />
+              <el-option label="已下线" :value="0" />
+            </el-select>
+          </div>
+          <div class="filter-field">
+            <span class="filter-label">分类</span>
+            <el-select
+              v-model="selectedCategoryId"
+              placeholder="全部分类" aria-label="分类"
+              clearable
+              filterable
+              class="filter-category-select"
+              @change="handleFilterChange"
+            >
+              <el-option
+                v-for="cat in allCategories"
+                :key="cat.id"
+                :label="cat.name"
+                :value="cat.id"
+              />
+            </el-select>
+          </div>
+          <div class="filter-field">
+            <span class="filter-label">创作者</span>
+            <UserSelect
+              v-model="selectedCreatorId"
+              :role-authorities="['ROLE_DESIGNER']"
+              placeholder="全部创作者" aria-label="创作者"
+              class="filter-creator-select"
+              @change="handleFilterChange"
+            />
+          </div>
+          <el-button type="primary" :icon="Search" class="filter-search-button" @click="handleSearch">搜索</el-button>
+        </div>
+        <div class="filter-secondary-row">
+          <div class="filter-field">
+            <span class="filter-label">上线时间</span>
+            <el-select v-model="goLivePreset" aria-label="上线时间" class="filter-date-preset" @change="handleGoLiveChange">
+              <el-option label="不限上线时间" value="" />
+              <el-option label="近 7 天" value="last7" />
+              <el-option label="近 30 天" value="last30" />
+              <el-option label="近 90 天" value="last90" />
+            </el-select>
+          </div>
+          <div class="filter-field">
+            <span class="filter-label">创建时间</span>
+            <el-select
+              aria-label="创建时间" v-model="createdAtPreset"
+              placeholder="创建时间"
+              clearable
+              class="filter-date-preset"
+              @change="handleCreatedAtPresetChange"
+            >
+              <el-option
+                v-for="option in createdAtPresetOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </div>
+          <div class="filter-field filter-range-field">
+            <span class="filter-label">日期范围</span>
+            <el-date-picker
+              aria-label="日期范围" v-model="createdAtRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              value-format="YYYY-MM-DD"
+              :shortcuts="createdAtShortcuts"
+              class="filter-date-range"
+              @change="handleCreatedAtRangeChange"
+            />
+          </div>
+          <div class="filter-field">
+            <span class="filter-label">排序方式</span>
+            <el-select aria-label="排序方式" v-model="sortOrder" placeholder="排序方式" class="filter-sort-select" @change="handleSort">
+              <el-option label="上线时间倒序" value="last_go_live:desc" />
+              <el-option label="上线时间升序" value="last_go_live:asc" />
+              <el-option label="创建时间升序" value="created_at:asc" />
+              <el-option label="创建时间倒序" value="created_at:desc" />
+              <el-option label="更新时间升序" value="updated_at:asc" />
+              <el-option label="更新时间倒序" value="updated_at:desc" />
+              <el-option label="下载量倒序" value="download:desc" />
+              <el-option label="下载量升序" value="download:asc" />
+            </el-select>
+          </div>
+        </div>
       </div>
-    </div>
+      <div class="product-actions-bar">
+        <div class="product-actions-group">
+          <el-button :icon="TrendCharts" @click="handleRecentOnlineDownloads">近30天上线下载排行</el-button>
+          <el-button :icon="Refresh" @click="handleRefreshStats" :loading="refreshingStats">刷新统计</el-button>
+        </div>
+        <div class="product-actions-group">
+          <el-button @click="toggleBatchMode" :disabled="selectedBatchSubmitting">{{ batchMode ? '退出批量操作' : '勾选批量操作' }}</el-button>
+          <el-button @click="openTrialDurationDialog">批量修改试用时长</el-button>
+          <el-button @click="bulkCategoryDialogVisible = true">一键管理分类</el-button>
+          <el-dropdown trigger="click" @command="handleResetAllStoreWeights">
+            <el-button :loading="resettingStoreWeights" :disabled="resettingStoreWeights">
+              更多操作<el-icon class="more-actions-icon"><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="reset-weights" :disabled="resettingStoreWeights">
+                  <span class="reset-weights-action">重置所有应用权重</span>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
+    </section>
 
+    <div v-if="batchMode" class="product-actions-bar">
+      <span>已选 {{ selectedProducts.length }} 个应用（仅当前页，翻页或搜索后清空）</span>
+      <el-button type="primary" :disabled="!selectedProducts.length || selectedBatchSubmitting" @click="selectedBatchDialogVisible = true">操作选中应用</el-button>
+    </div>
     <ResponsiveTableShell mobile-mode="cards">
       <template #table>
-        <el-table :data="products" style="width: 100%" v-loading="loading">
+        <el-table ref="productTable" :data="products" row-key="appId" style="width: 100%" v-loading="loading" @selection-change="selectedProducts = $event">
+      <TableActionColumn :selection="batchMode">
+        <template #default="{ row }">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+            <el-button type="primary" link :disabled="!row.garminStoreUrl" @click="openStore(row)">打开商店</el-button>
+            <el-button type="primary" link :disabled="!row.garminStoreUrl" @click="copyToClipboard(row.garminStoreUrl)">复制链接</el-button>
+            <el-button type="primary" link @click="copyAppMeta(row)">复制信息</el-button>
+            <el-button type="primary" link @click="openPoints(row.appId)">积分兑换</el-button>
+            <el-button type="primary" link :loading="syncing.get(row.appId) === 'index'" :disabled="syncing.has(row.appId)" @click="handleSync(row, 'index')">同步索引</el-button>
+            <el-button type="primary" link :loading="syncing.get(row.appId) === 'cn'" :disabled="syncing.has(row.appId)" @click="handleSync(row, 'cn')">同步到国内数据库</el-button>
+            <el-button
+              :type="row.status === 1 ? 'danger' : 'success'"
+              link
+              @click="handleToggleStatus(row)"
+              :loading="statusLoadingMap.get(row.appId)"
+            >
+              {{ row.status === 1 ? '下线' : '上线' }}
+            </el-button>
+            <el-button
+              type="primary"
+              link
+              @click="openTransferDialog(row)"
+            >
+              转移应用
+            </el-button>
+            <el-button
+              type="primary"
+              link
+              @click="handleCreateTicket(row)"
+            >
+              创建工单
+            </el-button>
+            <el-button
+              type="primary"
+              link
+              :loading="repackLoadingMap.get(row.appId)"
+              @click="handleRepack(row)"
+            >
+              重新提交打包
+            </el-button>
+            <el-button
+              type="primary"
+              link
+              @click="handleShare(row)"
+            >
+              Share
+            </el-button>
+          </div>
+        </template>
+      </TableActionColumn>
+
           <el-table-column prop="appId" label="ID" width="80" />
           <el-table-column label="商品信息" min-width="320">
             <template #default="{ row }">
               <AppProductInfo :product="row" :thumb-size="56" />
             </template>
           </el-table-column>
-      
+
       <el-table-column label="作者" width="80">
         <template #default="{ row }">
           {{ row.user?.username || '-' }}
@@ -117,7 +211,7 @@
           />
         </template>
       </el-table-column> -->
-      
+
       <el-table-column label="分类" width="220">
         <template #default="{ row }">
           <span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px;">
@@ -169,57 +263,13 @@
           {{ formatProductGoLive(row.lastGoLive, formatDate) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="440" fixed="right">
-        <template #default="{ row }">
-          <div style="display: flex; gap: 8px;">
-            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="primary" link @click="openPoints(row.appId)">积分兑换</el-button>
-            <el-button 
-              :type="row.status === 1 ? 'danger' : 'success'" 
-              link 
-              @click="handleToggleStatus(row)"
-              :loading="statusLoadingMap.get(row.appId)"
-            >
-              {{ row.status === 1 ? '下线' : '上线' }}
-            </el-button>
-            <el-button 
-              type="primary" 
-              link 
-              @click="openTransferDialog(row)"
-            >
-              转移应用
-            </el-button>
-            <el-button 
-              type="primary" 
-              link 
-              @click="handleCreateTicket(row)"
-            >
-              创建工单
-            </el-button>
-            <el-button
-              type="primary"
-              link
-              :loading="repackLoadingMap.get(row.appId)"
-              @click="handleRepack(row)"
-            >
-              重新提交打包
-            </el-button>
-            <el-button 
-              type="primary" 
-              link 
-              @click="handleShare(row)"
-            >
-              Share
-            </el-button>
-          </div>
-        </template>
-      </el-table-column>
         </el-table>
       </template>
       <template #mobile>
         <MobileRecordList :items="products" row-key="appId" :loading="loading" empty-text="暂无商品">
           <template #default="{ item: row }">
             <div class="product-mobile-card">
+              <el-checkbox v-if="batchMode" :model-value="selectedProducts.some(item => item.appId === row.appId)" @change="toggleSelectedProduct(row)">选择此应用</el-checkbox>
               <AppProductInfo
                 :app-id="row.appId"
                 :title="row.name"
@@ -267,8 +317,14 @@
             </div>
           </template>
           <template #actions="{ item: row }">
+            <template v-if="!batchMode">
             <el-button size="small" type="primary" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="primary" link :disabled="!row.garminStoreUrl" @click="openStore(row)">打开商店</el-button>
+            <el-button type="primary" link :disabled="!row.garminStoreUrl" @click="copyToClipboard(row.garminStoreUrl)">复制链接</el-button>
+            <el-button type="primary" link @click="copyAppMeta(row)">复制信息</el-button>
             <el-button type="primary" link @click="openPoints(row.appId)">积分兑换</el-button>
+            <el-button type="primary" link :loading="syncing.get(row.appId) === 'index'" :disabled="syncing.has(row.appId)" @click="handleSync(row, 'index')">同步索引</el-button>
+            <el-button type="primary" link :loading="syncing.get(row.appId) === 'cn'" :disabled="syncing.has(row.appId)" @click="handleSync(row, 'cn')">同步到国内数据库</el-button>
             <el-button
               size="small"
               :type="row.status === 1 ? 'danger' : 'success'"
@@ -281,6 +337,7 @@
             <el-button size="small" @click="handleCreateTicket(row)">工单</el-button>
             <el-button size="small" :loading="repackLoadingMap.get(row.appId)" @click="handleRepack(row)">打包</el-button>
             <el-button size="small" @click="handleShare(row)">Share</el-button>
+            </template>
           </template>
         </MobileRecordList>
       </template>
@@ -297,6 +354,32 @@
         @current-change="handleCurrentChange"
       />
     </div>
+    <el-dialog v-model="selectedBatchDialogVisible" title="操作选中应用" width="min(520px, 94vw)" :close-on-click-modal="false" :close-on-press-escape="!selectedBatchSubmitting" :show-close="!selectedBatchSubmitting">
+      <el-alert :title="`仅修改勾选的 ${selectedProducts.length} 个应用`" type="info" :closable="false" />
+      <el-form label-width="110px" :disabled="selectedBatchSubmitting" style="margin-top: 20px">
+        <el-form-item label="操作">
+          <el-select v-model="selectedBatchAction">
+            <el-option label="修改试用时长" value="trial" />
+            <el-option label="添加分类" value="add-category" />
+            <el-option label="移除分类" value="remove-category" />
+            <el-option label="重置权重为 20" value="weight" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="selectedBatchAction === 'trial'" label="新时长（小时）">
+          <el-input-number v-model="selectedTrialLasts" :min="0" :precision="2" :step="0.25" />
+        </el-form-item>
+        <el-form-item v-if="selectedBatchAction.includes('category')" label="分类">
+          <el-select v-model="selectedBatchCategoryId" filterable placeholder="请选择分类">
+            <el-option v-for="cat in allCategories" :key="cat.id" :label="cat.name" :value="cat.id" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button :disabled="selectedBatchSubmitting" @click="selectedBatchDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="selectedBatchSubmitting" :disabled="!selectedProducts.length" @click="submitSelectedBatch">确认修改选中应用</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog
       v-model="trialDurationDialogVisible"
       title="批量修改试用时长"
@@ -396,7 +479,7 @@
     <el-dialog
       v-model="dialogVisible"
       title="编辑商品"
-      width="500px"
+      width="min(900px, 94vw)"
     >
       <el-form
         ref="formRef"
@@ -414,9 +497,17 @@
             placeholder="请输入商品描述"
           />
         </el-form-item>
-        <el-form-item label="价格" prop="price">
+        <el-form-item label="支付方式" prop="paymentMethod">
+          <el-select v-model="form.paymentMethod" @change="handlePaymentChange">
+            <el-option label="免费" value="free" />
+            <el-option label="WPay 支付" value="wpay" />
+            <el-option label="Garmin 官方支付" value="garmin" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="金额" prop="price">
           <el-input-number
             v-model="form.price"
+            :disabled="form.paymentMethod === 'free'"
             :precision="2"
             :step="0.1"
             :min="0"
@@ -432,13 +523,17 @@
             :max="99"
           />
         </el-form-item>
-        <el-form-item label="试用时长" prop="trialLasts">
+        <el-form-item label="试用（小时）" prop="trialLasts">
           <el-input-number
             v-model="form.trialLasts"
+            :disabled="form.paymentMethod !== 'wpay'"
             :precision="2"
             :step="0.1"
             :min="0"
           />
+        </el-form-item>
+        <el-form-item label="上线时间" prop="lastGoLive">
+          <el-date-picker v-model="form.lastGoLive" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" :clearable="false" placeholder="选择上线时间" style="width: 100%" />
         </el-form-item>
         <el-form-item label="商品图片" prop="garminImageUrl">
           <el-upload
@@ -485,7 +580,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button type="primary" :loading="saving" @click="handleSubmit">确定</el-button>
         </span>
       </template>
     </el-dialog>
@@ -751,17 +846,23 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
+import AppSearchInput from '@/components/common/AppSearchInput.vue'
+import { appSearchParams } from '@/utils/appSearch'
 import AppPointsSettings from '@/components/AppPointsSettings.vue'
-import { computed, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules, UploadFiles, UploadRawFile, UploadUserFile } from 'element-plus'
-import { Edit, Plus } from '@element-plus/icons-vue'
+import { Edit, Plus, Search, Refresh, TrendCharts, ArrowDown } from '@element-plus/icons-vue'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
 import MobileRecordList from '@/components/common/MobileRecordList.vue'
 import ResponsiveTableShell from '@/components/common/ResponsiveTableShell.vue'
 import { formatDate } from '@/utils/date'
 import { formatProductGoLive } from './productDisplay.mjs'
-import { createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, batchUpdateProductTrialDuration, manageCategoryForAllProducts } from '@/api/products'
+import { rebuildOne } from '@/api/watchface-search'
+import { submitCnCatalogProduct } from '@/api/app-management'
+import { addProductCategory, deleteProductCategory, createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, batchUpdateProductTrialDuration, manageCategoryForAllProducts } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -832,6 +933,61 @@ const handleBatchUpdateTrialDuration = async () => {
     updatingTrialDuration.value = false
   }
 }
+const batchMode = ref(false)
+const productTable = ref<{ clearSelection: () => void; toggleRowSelection: (row: Product, selected: boolean) => void }>()
+const selectedProducts = ref<Product[]>([])
+const selectedBatchDialogVisible = ref(false)
+const selectedBatchSubmitting = ref(false)
+const selectedBatchAction = ref('trial')
+const selectedTrialLasts = ref<number>()
+const selectedBatchCategoryId = ref<number>()
+
+const toggleSelectedProduct = (row: Product) => {
+  productTable.value?.toggleRowSelection(row, !selectedProducts.value.some(item => item.appId === row.appId))
+}
+
+const toggleBatchMode = () => {
+  productTable.value?.clearSelection()
+  selectedProducts.value = []
+  batchMode.value = !batchMode.value
+}
+
+const submitSelectedBatch = async () => {
+  if (selectedBatchSubmitting.value || !selectedProducts.value.length) return
+  const action = selectedBatchAction.value
+  const duration = selectedTrialLasts.value
+  const categoryId = selectedBatchCategoryId.value
+  if (action === 'trial' && (duration == null || !Number.isFinite(duration) || duration < 0)) {
+    ElMessage.warning('请填写有效的非负试用时长（小时）')
+    return
+  }
+  if (action.includes('category') && categoryId == null) {
+    ElMessage.warning('请选择分类')
+    return
+  }
+  const rows = [...selectedProducts.value]
+  selectedBatchSubmitting.value = true
+  let completed = 0
+  try {
+    for (const row of rows) {
+      const response = action === 'add-category'
+        ? await addProductCategory(row.appId, categoryId!)
+        : action === 'remove-category'
+          ? await deleteProductCategory(row.appId, categoryId!)
+          : await updateProduct(row.appId, action === 'trial' ? { trialLasts: duration } : { storeWeight: 20 })
+      if (response.code !== 0) throw new Error(response.msg || '请求失败')
+      completed++
+    }
+    ElMessage.success(`已更新 ${completed} 个选中应用`)
+  } catch (error) {
+    ElMessage.error(`已完成 ${completed}/${rows.length} 个，应用 ${rows[completed]?.appId} 操作失败，已停止：${error instanceof Error ? error.message : '请求失败'}`)
+  } finally {
+    selectedBatchSubmitting.value = false
+    selectedBatchDialogVisible.value = false
+    await fetchProducts()
+  }
+}
+
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -839,6 +995,8 @@ const allCategories = ref<Category[]>([])
 
 // 表单相关
 const dialogVisible = ref(false)
+const saving = ref(false)
+const syncing = reactive(new Map<number, 'index' | 'cn'>())
 const formRef = ref<FormInstance>()
 const pointsDialogVisible = ref(false)
 const pointsAppId = ref<number>()
@@ -847,6 +1005,8 @@ const openPoints = (id: number) => { pointsAppId.value = id; pointsDialogVisible
 const form = ref({
   appId: 0,
   designId: '',
+  paymentMethod: 'free',
+  lastGoLive: '',
   name: '',
   description: '',
   price: 0,
@@ -861,6 +1021,8 @@ const form = ref({
 })
 
 const rules: FormRules = {
+  paymentMethod: [{ required: true, message: '请选择支付方式', trigger: 'change' }],
+  trialLasts: [{ required: true, type: 'number', min: 0, message: '请输入非负试用时长', trigger: 'blur' }],
   name: [
     { required: true, message: '请输入商品名称', trigger: 'blur' },
     { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
@@ -900,10 +1062,13 @@ const productForTransfer = ref<Product | null>(null)
 
 // 搜索和排序相关
 const searchName = ref('')
-const sortOrder = ref('created_at:desc')
+const route = useRoute()
+const recentOnline = route.query.online === 'last30'
+const goLivePreset = ref(recentOnline ? 'last30' : '')
+const sortOrder = ref(recentOnline ? 'last_go_live:desc' : 'created_at:desc')
 const selectedCategoryId = ref<number | undefined>(undefined)
 const selectedCreatorId = ref<number | undefined>(undefined)
-const selectedStatus = ref<number | undefined>(undefined)
+const selectedStatus = ref<number | undefined>(recentOnline ? 1 : undefined)
 const createdAtRange = ref<[string, string] | null>(null)
 const createdAtPreset = ref('')
 
@@ -956,8 +1121,8 @@ const buildDateRange = (preset: string): [string, string] | null => {
     start.setDate(start.getDate() - 6)
     return [formatDateForQuery(start), formatDateForQuery(end)]
   }
-  if (preset === 'last30') {
-    start.setDate(start.getDate() - 29)
+  if (preset === 'last30' || preset === 'last90') {
+    start.setDate(start.getDate() - (preset === 'last90' ? 89 : 29))
     return [formatDateForQuery(start), formatDateForQuery(end)]
   }
   if (preset === 'thisMonth') {
@@ -991,9 +1156,18 @@ const handleCreatedAtRangeChange = () => {
   handleFilterChange()
 }
 
+const handleGoLiveChange = () => {
+  if (goLivePreset.value) {
+    selectedStatus.value = 1
+    sortOrder.value = 'last_go_live:desc'
+  }
+  handleFilterChange()
+}
+
 const handleRecentOnlineDownloads = () => {
-  createdAtPreset.value = 'last30'
-  createdAtRange.value = buildDateRange('last30')
+  createdAtPreset.value = ''
+  createdAtRange.value = null
+  goLivePreset.value = 'last30'
   selectedStatus.value = 1
   sortOrder.value = 'download:desc'
   handleFilterChange()
@@ -1051,17 +1225,22 @@ const handleResetAllStoreWeights = async () => {
 
 // 获取商品列表
 const fetchProducts = async () => {
+  const goLiveRange = buildDateRange(goLivePreset.value)
+  productTable.value?.clearSelection()
+  selectedProducts.value = []
   loading.value = true
   try {
     const res = await fetchProductPage({
       pageNum: currentPage.value,
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
-      name: searchName.value ? searchName.value : undefined,
+      ...appSearchParams(searchName.value),
       populate: 'user,categories,payment',
       categoryId: selectedCategoryId.value || undefined,
       userId: selectedCreatorId.value || undefined,
       status: selectedStatus.value,
+      lastGoLiveStart: goLiveRange ? `${goLiveRange[0]} 00:00:00` : undefined,
+      lastGoLiveEnd: goLiveRange ? `${goLiveRange[1]} 23:59:59` : undefined,
       createdAtStart: createdAtRange.value?.[0] ? `${createdAtRange.value[0]} 00:00:00` : undefined,
       createdAtEnd: createdAtRange.value?.[1] ? `${createdAtRange.value[1]} 23:59:59` : undefined,
     })
@@ -1077,6 +1256,18 @@ const fetchProducts = async () => {
     loading.value = false
   }
 }
+
+const openStore = (row: Product) => {
+  if (row.garminStoreUrl) window.open(row.garminStoreUrl, '_blank', 'noopener,noreferrer')
+}
+
+const copyAppMeta = (row: Product) => copyToClipboard([
+  `Name: ${row.name || '-'}`,
+  `App ID: ${row.appId}`,
+  `Design ID: ${row.designId || '-'}`,
+  `Last go live: ${row.lastGoLive || '-'}`,
+  `Store URL: ${row.garminStoreUrl || '-'}`,
+].join('\n'))
 
 const handleCreateTicket = async (row: Product) => {
   if (!userStore.userInfo?.id) {
@@ -1184,7 +1375,8 @@ const fetchCategories = async () => {
 
 // 编辑商品
 const handleEdit = (row: Product) => {
-  form.value = { ...row, price: row.price ?? row.payment?.price ?? 0, storeWeight: row.storeWeight ?? 20, categories: row.categories || [] } as any
+  form.value = { ...row, paymentMethod: row.payment?.paymentMethod || 'free', lastGoLive: row.lastGoLive || '', price: row.price ?? row.payment?.price ?? 0, storeWeight: row.storeWeight ?? 20, categories: row.categories || [] } as any
+  handlePaymentChange()
   dialogVisible.value = true
 }
 
@@ -1218,31 +1410,56 @@ async function handleImageChange(file: any) {
 }
 
 // 提交表单
+const handlePaymentChange = () => {
+  if (form.value.paymentMethod === 'free') form.value.price = 0
+  if (form.value.paymentMethod !== 'wpay') form.value.trialLasts = 0
+}
+
+const handleSync = async (row: Product, target: 'index' | 'cn') => {
+  if (syncing.has(row.appId)) return
+  syncing.set(row.appId, target)
+  try {
+    const res = target === 'index' ? await rebuildOne(row.appId) : await submitCnCatalogProduct(row.appId)
+    if (res.code !== 0 || res.data !== true) throw new Error(res.msg || '同步请求失败')
+    ElMessage.success(target === 'index' ? '索引同步请求已处理' : '已提交，后台同步中')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '同步失败，请重试')
+  } finally {
+    syncing.delete(row.appId)
+  }
+}
+
 const handleSubmit = async () => {
-  if (!formRef.value) return
-  await formRef.value.validate(async (valid) => {
-    if (valid) {
-      const res = await updateProduct(form.value.appId, {
-        name: form.value.name,
-        description: form.value.description,
-        price: form.value.price,
-        storeWeight: form.value.storeWeight,
-        garminImageUrl: form.value.garminImageUrl,
-        garminStoreUrl: form.value.garminStoreUrl,
-        trialLasts: form.value.trialLasts,
-      })
-      if (res.code === 0) {
-        // 分类保存
-        const categoryIds = (form.value.categories || []).map((c: any) => c.id)
-        await updateProductCategories(form.value.appId, categoryIds)
-        ElMessage.success('更新成功')
-        dialogVisible.value = false
-        fetchProducts()
-      } else {
-        ElMessage.error(res.msg || '更新失败')
-      }
-    }
-  })
+  if (!formRef.value || saving.value) return
+  if (!await formRef.value.validate().catch(() => false)) return
+  if (form.value.paymentMethod !== 'free' && form.value.price < 1.99) {
+    ElMessage.error('付费应用金额不能低于 1.99')
+    return
+  }
+  saving.value = true
+  try {
+    const res = await updateProduct(form.value.appId, {
+      name: form.value.name,
+      description: form.value.description,
+      paymentMethod: form.value.paymentMethod,
+      price: form.value.price,
+      lastGoLive: form.value.lastGoLive || undefined,
+      storeWeight: form.value.storeWeight,
+      garminImageUrl: form.value.garminImageUrl,
+      garminStoreUrl: form.value.garminStoreUrl,
+      trialLasts: form.value.trialLasts,
+    })
+    if (res.code !== 0) throw new Error(res.msg || '更新失败')
+    const categories = await updateProductCategories(form.value.appId, (form.value.categories || []).map(c => c.id))
+    if (categories.code !== 0) throw new Error(categories.msg || '商品已保存，但分类更新失败，请重试')
+    ElMessage.success('更新成功')
+    dialogVisible.value = false
+    await fetchProducts()
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '更新失败')
+  } finally {
+    saving.value = false
+  }
 }
 
 // 分页相关
@@ -1325,7 +1542,7 @@ const handleEditCategories = (row: Product) => {
 
 const handleConfirmCategoryUpdate = async () => {
   if (!productForCategoryEdit.value) return;
-  
+
   try {
     const res = await updateProductCategories(productForCategoryEdit.value.appId, selectedCategoryIds.value);
     if (res.code === 0) {
@@ -1380,10 +1597,10 @@ const handleToggleStatus = async (row: Product) => {
   try {
     // 设置加载状态
     statusLoadingMap.value.set(row.appId, true)
-    
+
     const newStatus = row.status === 1 ? 0 : 1
     const response = await toggleProductStatus(row.appId, newStatus)
-    
+
     if (response.code === 0) {
       // 更新本地状态
       row.status = newStatus
@@ -1564,52 +1781,136 @@ onMounted(() => {
   padding: 20px;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+/* Keep filters aligned independently from the operational actions. */
+.product-search-panel {
   margin-bottom: 20px;
-}
-
-.header h2 {
-  margin: 0;
-  line-height: 32px;
-  white-space: nowrap;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--el-bg-color);
 }
 
 .product-filter-bar {
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
+  box-sizing: border-box;
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.filter-primary-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) repeat(3, minmax(120px, 170px)) auto;
+  justify-content: start;
+  align-items: end;
+  gap: 10px;
+}
+
+.filter-secondary-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 160px) minmax(120px, 160px) minmax(240px, 300px) minmax(150px, 180px);
+  align-items: end;
+  gap: 10px;
+}
+
+.filter-field {
+  display: grid;
+  gap: 4px;
   min-width: 0;
 }
 
-.filter-name-input {
-  width: 88px;
+.filter-label {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
 }
 
-.filter-sort-select {
-  width: 96px;
+.product-search-panel .filter-field > :not(.filter-label) {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-.filter-date-preset {
-  width: 88px;
+.product-search-panel :deep(.el-input__wrapper),
+.product-search-panel :deep(.el-select__wrapper) {
+  min-height: 32px;
+  box-sizing: border-box;
+  border-radius: 6px;
 }
 
-.filter-date-range {
-  width: 180px;
+.filter-search-button {
+  height: 32px;
+  padding-inline: 18px;
 }
 
-.filter-status-select {
-  width: 88px;
+.product-actions-bar {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-light);
 }
 
-.filter-category-select {
-  width: 96px;
+.product-actions-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-actions-group .el-button + .el-button {
+  margin-left: 0;
+}
+
+.more-actions-icon {
+  margin-left: 8px;
+}
+
+.reset-weights-action {
+  color: var(--el-color-warning-dark-2);
+}
+
+@media (max-width: 1200px) {
+  .filter-primary-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .filter-keyword {
+    grid-column: span 2;
+  }
+
+  .filter-secondary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .product-filter-bar {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .filter-primary-row,
+  .filter-secondary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .filter-keyword,
+  .filter-range-field,
+  .filter-search-button {
+    grid-column: 1 / -1;
+  }
+
+  .filter-range-field {
+    grid-row: 2;
+  }
+
+  .product-actions-bar {
+    padding: 12px 16px;
+  }
 }
 
 .bulk-category-select {
@@ -1623,33 +1924,9 @@ onMounted(() => {
   line-height: 1.6;
 }
 
-.filter-creator-select {
-  width: 104px;
-}
-
-@media (max-width: 900px) {
-  .header {
-    flex-direction: column;
-  }
-
-  .product-filter-bar {
-    justify-content: flex-start;
-    width: 100%;
-  }
-}
-
 @media (max-width: 768px) {
   .products-container {
     padding: 0;
-  }
-
-  .header {
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-
-  .header h2 {
-    white-space: normal;
   }
 
   .product-mobile-card {

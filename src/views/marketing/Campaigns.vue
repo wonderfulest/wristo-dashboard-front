@@ -7,20 +7,43 @@
       </div>
     </div>
 
-    <div class="search-filters">
-      <el-input v-model="filters.name" placeholder="活动名称" clearable style="width: 200px; margin-right: 12px;" />
-      <el-select v-model="filters.status" clearable placeholder="活动状态" style="width: 160px; margin-right: 12px;">
-        <el-option v-for="it in campaignStatusOptions" :key="it.value" :label="it.label" :value="it.value" />
-      </el-select>
-      <el-select v-model="filters.isActive" clearable placeholder="启用状态" style="width: 160px; margin-right: 12px;">
-        <el-option label="已启用" :value="1" />
-        <el-option label="已停用" :value="0" />
-      </el-select>
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="resetSearch">重置</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">活动名称</span>
+        <el-input aria-label="活动名称" v-model="filters.name" placeholder="活动名称" clearable style="width: 200px; margin-right: 12px;" />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">活动状态</span>
+        <el-select aria-label="活动状态" v-model="filters.status" clearable placeholder="活动状态" style="width: 160px; margin-right: 12px;">
+          <el-option v-for="it in campaignStatusOptions" :key="it.value" :label="it.label" :value="it.value" />
+        </el-select>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">启用状态</span>
+        <el-select aria-label="启用状态" v-model="filters.isActive" clearable placeholder="启用状态" style="width: 160px; margin-right: 12px;">
+          <el-option label="已启用" :value="1" />
+          <el-option label="已停用" :value="0" />
+        </el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="resetSearch">重置</el-button>
+      </template>
+    </ListSearchPanel>
 
     <el-table :data="list" v-loading="loading" style="width: 100%">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openAnalytics(row)">效果统计</el-button>
+          <el-button v-if="row.status === 'DRAFT' || row.status === 'RUNNING'" type="primary" link @click="openEdit(row)">编辑</el-button>
+          <el-button v-if="row.status === 'DRAFT'" type="danger" link @click="confirmDelete(row)">删除</el-button>
+          <el-button v-if="row.status === 'DRAFT'" type="primary" link @click="openItems(row)">配置应用</el-button>
+          <el-button v-if="row.status === 'DRAFT'" type="success" link @click="handleGeneratePush(row)">生成推送记录</el-button>
+          <el-button v-if="row.status === 'DRAFT'" type="warning" link @click="handleDeleteDraftPush(row)">删除草稿推送记录</el-button>
+          <el-button v-if="row.status === 'RUNNING'" type="warning" link @click="handleTriggerAll(row)">全部推送</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="活动名称" min-width="180" />
       <el-table-column prop="description" label="描述" min-width="220">
@@ -44,17 +67,6 @@
       <el-table-column label="启用" width="110" align="center">
         <template #default="{ row }">
           <el-switch :model-value="row.isActive === 1" @change="(val:any)=>toggleActive(row, val)" />
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="440" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openAnalytics(row)">效果统计</el-button>
-          <el-button v-if="row.status === 'DRAFT' || row.status === 'RUNNING'" type="primary" link @click="openEdit(row)">编辑</el-button>
-          <el-button v-if="row.status === 'DRAFT'" type="danger" link @click="confirmDelete(row)">删除</el-button>
-          <el-button v-if="row.status === 'DRAFT'" type="primary" link @click="openItems(row)">配置应用</el-button>
-          <el-button v-if="row.status === 'DRAFT'" type="success" link @click="handleGeneratePush(row)">生成推送记录</el-button>
-          <el-button v-if="row.status === 'DRAFT'" type="warning" link @click="handleDeleteDraftPush(row)">删除草稿推送记录</el-button>
-          <el-button v-if="row.status === 'RUNNING'" type="warning" link @click="handleTriggerAll(row)">全部推送</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -83,6 +95,12 @@
         <el-button @click="reloadItems" :loading="itemsDialog.loading">刷新</el-button>
       </div>
       <el-table :data="itemsDialog.items" style="width: 100%" v-loading="itemsDialog.loading">
+        <TableActionColumn>
+          <template #default="{ $index }">
+            <el-button type="danger" link @click="removeItem($index)">删除</el-button>
+          </template>
+        </TableActionColumn>
+
         <el-table-column label="#" width="56">
           <template #default="{ $index }">{{ $index + 1 }}</template>
         </el-table-column>
@@ -90,7 +108,6 @@
           <template #default="{ row }">
             <AppSearchSelect
               v-model="row.productId"
-              placeholder="搜索选择应用"
               width="240px"
               @selected="onProductSelected(row, $event)"
             />
@@ -121,11 +138,6 @@
             <el-switch v-model="row.isActive" :active-value="1" :inactive-value="0" />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default="{ $index }">
-            <el-button type="danger" link @click="removeItem($index)">删除</el-button>
-          </template>
-        </el-table-column>
       </el-table>
       <template #footer>
         <span class="dialog-footer">
@@ -138,6 +150,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getCampaignPage, createCampaign, updateCampaign, deleteCampaign, generatePush } from '@/api/promotion'

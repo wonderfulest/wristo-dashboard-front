@@ -2,13 +2,29 @@
   <div class="account-page">
     <OrderTabs />
     <!-- Filters -->
-    <div class="filters">
-      <AppSearchSelect v-model="searchAppId" :width="'260px'" />
-      <input v-model="searchEmail" class="filter-input" placeholder="Search by User Email" />
-      <button class="filter-btn primary" @click="fetchPurchaseRecords(1)">Search</button>
-      <button class="filter-btn" @click="resetFilters">Reset</button>
-    </div>
-    
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">应用名称 / ID</span>
+        <AppSearchSelect aria-label="应用名称 / ID" v-model="searchAppId" :width="'260px'" />
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">用户邮箱</span>
+        <input aria-label="用户邮箱" v-model="searchEmail" class="filter-input" placeholder="Search by User Email" />
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">订单来源</span>
+        <input v-model="searchOrigin" class="filter-input" list="purchase-origins"
+        placeholder="购买订单来源（精确匹配）" aria-label="购买订单来源" @keyup.enter="fetchPurchaseRecords(1)" />
+      </div>
+      <datalist id="purchase-origins">
+        <option v-for="origin in purchaseOrigins" :key="origin" :value="origin" />
+      </datalist>
+      <template #query>
+        <button class="filter-btn primary" @click="fetchPurchaseRecords(1)">Search</button>
+        <button class="filter-btn" @click="resetFilters">Reset</button>
+      </template>
+    </ListSearchPanel>
+
     <!-- Loading state -->
     <div v-if="loading" class="loading-container">
       <p>Loading purchase records...</p>
@@ -25,6 +41,12 @@
       <ResponsiveTableShell mobile-mode="cards">
         <template #table>
           <el-table :data="purchaseRecords" style="width: 100%">
+        <TableActionColumn>
+          <template #default="{ row }">
+            <el-button size="small" @click="openDetail(row)">Details</el-button>
+          </template>
+        </TableActionColumn>
+
             <el-table-column prop="createdAt" label="Timestamp" width="160">
               <template #default="{ row }">
                 {{ formatTimestamp(row.createdAt) }}
@@ -92,11 +114,6 @@
         <el-table-column label="Merchant Name" min-width="140">
           <template #default="{ row }">
             {{ row.user?.username }}
-          </template>
-        </el-table-column>
-        <el-table-column label="Actions" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" @click="openDetail(row)">Details</el-button>
           </template>
         </el-table-column>
           </el-table>
@@ -259,6 +276,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
@@ -278,6 +297,11 @@ const route = useRoute()
 const initialAppId = typeof route.query.appId === 'string' && route.query.appId.trim() ? Number(route.query.appId) : undefined
 const searchAppId = ref<number | null | undefined>(Number.isFinite(initialAppId) ? initialAppId : undefined)
 const searchEmail = ref<string>(typeof route.query.email === 'string' ? route.query.email : '')
+const searchOrigin = ref<string>(typeof route.query.origin === 'string' ? route.query.origin : '')
+const purchaseOrigins = [
+  'store', 'store_cart', 'shop_code', 'promotion', 'webhook', 'crontab', 'studio',
+  'wechat-membership-sync', 'gift:taobao', 'gift:xiaohongshu', 'gift:xianyu', 'gift:wristo_cn', 'gift:other'
+]
 const detailVisible = ref(false)
 const selectedRecord = ref<PurchaseRecordVO | null>(null)
 const pageData = ref<PageResponse<PurchaseRecordVO>>({
@@ -412,18 +436,19 @@ const fetchPurchaseRecords = async (pageNum: number = 1) => {
   try {
     loading.value = true
     error.value = null
-    
+
     const queryDto: PurchaseRecordPageQueryDTO = {
       pageNum,
       pageSize: 10,
       email: searchEmail.value || null,
+      origin: searchOrigin.value.trim() || null,
       appId: searchAppId.value ?? null,
       bundleId: null,
       status: null
     }
-    
+
     const response = await getPurchaseRecordPageList(queryDto)
-    
+
     if (response.code === 0 && response.data) {
       pageData.value = response.data
       purchaseRecords.value = response.data.list
@@ -452,6 +477,7 @@ const openDetail = (record: PurchaseRecordVO) => {
 const resetFilters = () => {
   searchAppId.value = null
   searchEmail.value = ''
+  searchOrigin.value = ''
   fetchPurchaseRecords(1)
 }
 
@@ -805,18 +831,18 @@ onMounted(() => {
   .purchase-table {
     font-size: 12px;
   }
-  
+
   .purchase-table th,
   .purchase-table td {
     padding: 8px 12px;
   }
-  
+
   .product-image,
   .no-image-placeholder {
     width: 32px;
     height: 32px;
   }
-  
+
   .pagination-container {
     flex-direction: column;
     gap: 12px;

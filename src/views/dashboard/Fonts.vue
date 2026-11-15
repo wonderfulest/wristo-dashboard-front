@@ -3,7 +3,58 @@
     <input ref="ttfInputRef" type="file" accept=".ttf" style="display: none" @change="onTtfFileChange" />
     <div class="header">
       <div class="header-toolbar">
-        <div class="header-row index-row">
+        <ListSearchPanel>
+          <div class="list-search-field list-search-field--wide">
+            <span class="list-search-label">名称</span>
+            <el-input aria-label="名称" v-model="searchName" placeholder="按名称搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
+          </div>
+          <div class="list-search-field list-search-field--wide">
+            <span class="list-search-label">Slug</span>
+            <el-input aria-label="Slug" v-model="searchSlug" placeholder="按 slug 搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
+          </div>
+          <div class="list-search-field">
+            <span class="list-search-label">状态</span>
+            <el-select aria-label="状态" v-model="searchStatus" placeholder="状态" clearable style="width: 160px">
+              <el-option label="Submitted" value="submitted" />
+              <el-option label="Pending" value="pending" />
+              <el-option label="Approved" value="approved" />
+              <el-option label="Rejected" value="rejected" />
+            </el-select>
+          </div>
+          <div class="list-search-field">
+            <span class="list-search-label">类型</span>
+            <el-select aria-label="类型" v-model="searchType" placeholder="字体类型" clearable style="width: 180px">
+              <el-option
+                v-for="opt in fontTypeOptions"
+                :key="opt.value"
+                :label="opt.name"
+                :value="opt.value"
+              />
+            </el-select>
+          </div>
+          <div class="list-search-field">
+            <span class="list-search-label">是否系统字体</span>
+            <el-select aria-label="是否系统字体" v-model="searchIsSystem" placeholder="是否系统字体" clearable style="width: 160px">
+              <el-option label="系统字体" :value="1" />
+              <el-option label="普通字体" :value="0" />
+            </el-select>
+          </div>
+          <div class="list-search-field">
+            <span class="list-search-label">排序方式</span>
+            <el-select aria-label="排序方式" v-model="sortOrder" placeholder="排序方式" style="width: 180px" @change="handleSort">
+              <el-option label="更新时间倒序" value="updated_at desc" />
+              <el-option label="更新时间升序" value="updated_at asc" />
+              <el-option label="创建时间倒序" value="created_at desc" />
+              <el-option label="创建时间升序" value="created_at asc" />
+              <el-option label="字形数倒序" value="glyph_count desc" />
+              <el-option label="字形数升序" value="glyph_count asc" />
+            </el-select>
+          </div>
+          <template #query>
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+          </template>
+          <template #actions>
+            <div class="header-row index-row">
           <span class="index-status">字体搜索索引文档数：{{ fontIndexCountText }}</span>
           <el-button size="small" :loading="fontIndexCountLoading" @click="loadFontSearchIndexCount">
             刷新索引状态
@@ -11,10 +62,9 @@
           <el-button size="small" type="warning" :loading="fontIndexRebuildLoading" @click="handleRebuildFontIndex">
             重建字体搜索索引
           </el-button>
-        </div>
-          <div class="header-row header-row-actions">
+            </div>
+            <div class="header-row header-row-actions">
           <el-button type="primary" plain @click="showUploadTtf = true">上传 TTF 字体</el-button>
-          <span style="margin-left: 8px; color: #999;">|</span>
           <el-select v-model="batchStatus" placeholder="批量审核状态" clearable style="width: 180px">
             <el-option label="Submitted" value="submitted" />
             <el-option label="Pending" value="pending" />
@@ -24,43 +74,39 @@
           <el-button type="success" :disabled="!selectedIds.length || !batchStatus" @click="handleBatchReview">
             批量审核<span v-if="selectedIds.length">（{{ selectedIds.length }}）</span>
           </el-button>
-        </div>
-        <div class="header-row header-row-filters">
-          <el-input v-model="searchName" placeholder="按名称搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
-          <el-input v-model="searchSlug" placeholder="按 slug 搜索" clearable style="width: 200px" @keyup.enter.native="handleSearch" />
-          <el-select v-model="searchStatus" placeholder="状态" clearable style="width: 160px">
-            <el-option label="Submitted" value="submitted" />
-            <el-option label="Pending" value="pending" />
-            <el-option label="Approved" value="approved" />
-            <el-option label="Rejected" value="rejected" />
-          </el-select>
-          <el-select v-model="searchType" placeholder="字体类型" clearable style="width: 180px">
-            <el-option
-              v-for="opt in fontTypeOptions"
-              :key="opt.value"
-              :label="opt.name"
-              :value="opt.value"
-            />
-          </el-select>
-          <el-select v-model="searchIsSystem" placeholder="是否系统字体" clearable style="width: 160px">
-            <el-option label="系统字体" :value="1" />
-            <el-option label="普通字体" :value="0" />
-          </el-select>
-          <el-select v-model="sortOrder" placeholder="排序方式" style="width: 180px" @change="handleSort">
-            <el-option label="更新时间倒序" value="updated_at desc" />
-            <el-option label="更新时间升序" value="updated_at asc" />
-            <el-option label="创建时间倒序" value="created_at desc" />
-            <el-option label="创建时间升序" value="created_at asc" />
-            <el-option label="字形数倒序" value="glyph_count desc" />
-            <el-option label="字形数升序" value="glyph_count asc" />
-          </el-select>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-        </div>
-      
+            </div>
+          </template>
+        </ListSearchPanel>
+
       </div>
     </div>
 
     <el-table ref="tableRef" :data="fonts" style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <el-button
+              v-if="row.ttfFile?.url"
+              type="primary"
+              size="small"
+              @click="handleDownload(row)"
+            >
+              下载
+            </el-button>
+            <el-button size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button size="small" @click="handleUpdateTtf(row)">更新 TTF</el-button>
+            <el-button type="info" size="small" @click="handleReview(row, 'submitted')">提交</el-button>
+            <el-button type="success" size="small" @click="handleReview(row, 'approved')">通过</el-button>
+            <el-button type="danger" size="small" @click="handleReview(row, 'rejected')">拒绝</el-button>
+            <el-popconfirm title="确认删除该字体？" confirm-button-text="删除" cancel-button-text="取消" @confirm="() => handleRemove(row)">
+              <template #reference>
+                <el-button type="danger" size="small" link>删除</el-button>
+              </template>
+            </el-popconfirm>
+          </div>
+        </template>
+      </TableActionColumn>
+
       <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="postscriptName" label="PS 名称" min-width="160" />
@@ -111,30 +157,6 @@
           <el-tag :type="tagType(row.status)">{{ row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="460" fixed="right">
-        <template #default="{ row }">
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <el-button
-              v-if="row.ttfFile?.url"
-              type="primary"
-              size="small"
-              @click="handleDownload(row)"
-            >
-              下载
-            </el-button>
-            <el-button size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button size="small" @click="handleUpdateTtf(row)">更新 TTF</el-button>
-            <el-button type="info" size="small" @click="handleReview(row, 'submitted')">提交</el-button>
-            <el-button type="success" size="small" @click="handleReview(row, 'approved')">通过</el-button>
-            <el-button type="danger" size="small" @click="handleReview(row, 'rejected')">拒绝</el-button>
-            <el-popconfirm title="确认删除该字体？" confirm-button-text="删除" cancel-button-text="取消" @confirm="() => handleRemove(row)">
-              <template #reference>
-                <el-button type="danger" size="small" link>删除</el-button>
-              </template>
-            </el-popconfirm>
-          </div>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -162,6 +184,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { TableInstance } from 'element-plus'
@@ -461,6 +485,8 @@ onMounted(() => {
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .pagination { margin-top: 20px; display: flex; justify-content: flex-end; }
 .header-toolbar {
+  width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -474,7 +500,11 @@ onMounted(() => {
 }
 
 .index-row {
-  justify-content: flex-end;
+  justify-content: flex-start;
+}
+
+.header-toolbar :deep(.list-search-panel) {
+  margin-bottom: 0;
 }
 
 .index-status {

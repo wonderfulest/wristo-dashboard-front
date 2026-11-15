@@ -12,7 +12,7 @@
       <h4>表盘兑换积分覆盖</h4>
       <p>仅影响已获准参与国内试点兑换的表盘。未单独设置的表盘使用上方默认兑换积分；删除覆盖后恢复默认值。</p>
       <div v-for="(product, index) in products" :key="product.id" class="product-row">
-        <el-input v-model="product.appId" aria-label="表盘 ID" placeholder="表盘 ID" inputmode="numeric" />
+        <AppSearchSelect :model-value="product.appId ? Number(product.appId) : undefined" @update:model-value="product.appId = $event ? String($event) : ''" aria-label="表盘 ID" width="280px" />
         <el-input-number v-model="product.points" aria-label="兑换积分" :min="1" :max="1000000" :precision="0" />
         <el-button type="danger" plain @click="products.splice(index, 1)">删除覆盖</el-button>
       </div>
@@ -22,6 +22,7 @@
   </el-card>
 </template>
 <script setup lang="ts">
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getCnRewardAmounts, saveCnRewardAmounts, type CnRewardAmounts, type CnRewardAmountsView } from '@/api/cnRewardAmounts'

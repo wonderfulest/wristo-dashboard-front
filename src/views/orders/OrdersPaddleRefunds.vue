@@ -8,28 +8,39 @@
         </div>
       </template>
 
-      <div class="search-form">
-        <el-input
-          v-model="queryForm.id"
-          placeholder="Adjustment ID"
-          clearable
-          style="width: 260px; margin-right: 12px;"
-        />
-        <el-input
-          v-model="queryForm.transaction_id"
-          placeholder="Transaction ID"
-          clearable
-          style="width: 320px; margin-right: 12px;"
-        />
-        <el-input
-          v-model="queryForm.customer_id"
-          placeholder="Customer ID"
-          clearable
-          style="width: 260px; margin-right: 12px;"
-        />
-        <el-button type="primary" :loading="loading" @click="handleSearch">查询</el-button>
-        <el-button @click="handleReset">重置</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">Adjustment ID</span>
+          <el-input aria-label="Adjustment ID"
+            v-model="queryForm.id"
+            placeholder="Adjustment ID"
+            clearable
+            style="width: 260px; margin-right: 12px;"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">Transaction ID</span>
+          <el-input aria-label="Transaction ID"
+            v-model="queryForm.transaction_id"
+            placeholder="Transaction ID"
+            clearable
+            style="width: 320px; margin-right: 12px;"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">Customer ID</span>
+          <el-input aria-label="Customer ID"
+            v-model="queryForm.customer_id"
+            placeholder="Customer ID"
+            clearable
+            style="width: 260px; margin-right: 12px;"
+          />
+        </div>
+        <template #query>
+          <el-button type="primary" :loading="loading" @click="handleSearch">查询</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+      </ListSearchPanel>
     </el-card>
 
     <el-card class="result-card" style="margin-top: 16px;">
@@ -41,6 +52,17 @@
 
       <div class="table-scroll" role="region" aria-label="Paddle 调整记录表格，可横向滚动" tabindex="0">
       <el-table :data="rows" v-loading="loading" style="width: 100%">
+        <TableActionColumn>
+          <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="handleDownloadCreditNote(row)">
+              打印 PDF 凭证
+            </el-button>
+            <el-button type="danger" link size="small" :disabled="isRefunded(row)" @click="openRefundDialog(row)">
+              发起退款
+            </el-button>
+          </template>
+        </TableActionColumn>
+
         <el-table-column prop="id" label="ID" width="220" />
         <el-table-column prop="type" label="类型" width="120" />
         <el-table-column prop="action" label="动作" width="120" />
@@ -61,16 +83,6 @@
         <el-table-column prop="created_at" label="创建时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.created_at) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleDownloadCreditNote(row)">
-              打印 PDF 凭证
-            </el-button>
-            <el-button type="danger" link size="small" :disabled="isRefunded(row)" @click="openRefundDialog(row)">
-              发起退款
-            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -131,6 +143,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { listPaddleAdjustments, getPaddleCreditNotePdf, type PaddleAdjustmentQuery } from '@/api/paddle'

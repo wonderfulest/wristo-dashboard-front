@@ -22,16 +22,18 @@
     </section>
     <el-alert v-if="report && report.accounts.discrepancy !== 0" title="账户余额与累计流水存在差额，请核对历史数据。每日结余按已记录流水计算。" type="warning" :closable="false" show-icon />
 
-    <el-card shadow="never">
-      <el-form inline @submit.prevent="search">
+    <ListSearchPanel>
+      <el-form label-position="top" class="list-search-form" inline @submit.prevent="search">
         <el-form-item label="日期范围">
           <el-date-picker v-model="dates" type="daterange" value-format="YYYY-MM-DD" :clearable="false" :disabled-date="disabledDate" start-placeholder="开始日期" end-placeholder="结束日期" />
         </el-form-item>
         <el-form-item><el-button type="primary" native-type="submit" :loading="loading">查询</el-button><el-button :disabled="loading" @click="reset">最近 30 天</el-button></el-form-item>
       </el-form>
-      <span class="muted">北京时间（UTC+8），含结束日期；每次最多 366 天。今天的结余为查询时的暂计值。</span>
-      <p v-if="rangeError" class="range-error" role="alert">{{ rangeError }}</p>
-    </el-card>
+      <template #actions>
+        <span class="muted">北京时间（UTC+8），含结束日期；每次最多 366 天。今天的结余为查询时的暂计值。</span>
+<p v-if="rangeError" class="range-error" role="alert">{{ rangeError }}</p>
+      </template>
+    </ListSearchPanel>
 
     <el-card v-loading="loading" shadow="never">
       <div class="section-heading"><h3>所选期间</h3><span class="muted">{{ report ? `${report.from} 至 ${report.to}` : '—' }}</span></div>
@@ -65,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { getCreditStatistics, type CreditBreakdown, type CreditStatistics, type CreditTotals } from '@/api/creditStatistics'
 

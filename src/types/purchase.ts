@@ -44,6 +44,7 @@ export interface PurchaseRecordVO {
 }
 
 export interface PurchaseRecordPageQueryDTO {
+  origin?: string | null
   pageNum: number
   pageSize: number
   email?: string | null

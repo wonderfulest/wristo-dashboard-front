@@ -6,22 +6,46 @@
       </div>
     </div>
 
-    <div class="filters">
-      <UserSelect v-model="searchUserId" placeholder="按用户搜索" @change="handleUserChange" />
-      <el-select v-model="sortField" placeholder="排序字段" style="width: 200px; margin-right: 12px;">
-        <el-option label="累计收入($)" value="total_income_to_date" />
-        <el-option label="当前可提现($)" value="current_balance" />
-      </el-select>
-      <el-select v-model="sortOrder" placeholder="排序" style="width: 140px; margin-right: 12px;">
-        <el-option label="降序" value="desc" />
-        <el-option label="升序" value="asc" />
-      </el-select>
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="handleReset">重置</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field">
+        <span class="list-search-label">用户</span>
+        <UserSelect aria-label="用户" v-model="searchUserId" placeholder="按用户搜索" @change="handleUserChange" />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">排序字段</span>
+        <el-select aria-label="排序字段" v-model="sortField" placeholder="排序字段" style="width: 200px; margin-right: 12px;">
+          <el-option label="累计收入($)" value="total_income_to_date" />
+          <el-option label="当前可提现($)" value="current_balance" />
+        </el-select>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">排序方式</span>
+        <el-select aria-label="排序方式" v-model="sortOrder" placeholder="排序" style="width: 140px; margin-right: 12px;">
+          <el-option label="降序" value="desc" />
+          <el-option label="升序" value="asc" />
+        </el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </template>
+    </ListSearchPanel>
 
     <div class="table-scroll" role="region" aria-label="商家结算表格，可横向滚动" tabindex="0">
     <el-table :data="rows" style="width: 100%" :loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button
+            size="small"
+            type="success"
+            :disabled="!canPay(row) || payLoadingId === row.userId"
+            :loading="payLoadingId === row.userId"
+            @click="handlePay(row)"
+            style="margin-left: 8px;"
+          >支付</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" >
         <template #default="{ row }">
           {{ row.user?.id ?? row.id }}
@@ -73,18 +97,6 @@
           {{ formatDateTime(row.updatedAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" width="200">
-        <template #default="{ row }">
-          <el-button
-            size="small"
-            type="success"
-            :disabled="!canPay(row) || payLoadingId === row.userId"
-            :loading="payLoadingId === row.userId"
-            @click="handlePay(row)"
-            style="margin-left: 8px;"
-          >支付</el-button>
-        </template>
-      </el-table-column>
     </el-table>
     </div>
 
@@ -108,6 +120,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { pagePayouts, handlePayoutPaid, type PayoutPageQueryDTO } from '@/api/payout'

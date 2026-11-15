@@ -2,10 +2,15 @@
   <main class="conversion-page" v-loading="loading">
     <header class="heading">
       <div><span class="eyebrow">WRISTO.IO → STUDIO</span><h1>Studio 转化</h1><p>从第一次访问，到做出自己的表盘。</p></div>
-      <div class="filters">
-        <el-date-picker v-model="range" type="daterange" value-format="YYYY-MM-DD" start-placeholder="首次访问开始日期" end-placeholder="结束日期" :clearable="false" />
-        <el-button type="primary" :loading="loading" @click="refresh">查询</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--range">
+          <span class="list-search-label">日期范围</span>
+          <el-date-picker aria-label="日期范围" v-model="range" type="daterange" value-format="YYYY-MM-DD" start-placeholder="首次访问开始日期" end-placeholder="结束日期" :clearable="false" />
+        </div>
+        <template #query>
+          <el-button type="primary" :loading="loading" @click="refresh">查询</el-button>
+        </template>
+      </ListSearchPanel>
     </header>
     <el-alert v-if="error" :title="error" type="error" show-icon :closable="false" />
     <template v-if="report">
@@ -48,6 +53,7 @@
   </main>
 </template>
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getStudioConversion, type StudioConversionReport } from '@/api/studio-conversion'

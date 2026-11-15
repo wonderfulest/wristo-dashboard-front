@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import ImageGalleryUpload from '@/components/common/ImageGalleryUpload.vue'
@@ -89,6 +90,8 @@ onMounted(load)
   <section class="utilities-admin"><header><div><h1>实用工具</h1><p>管理四款实用工具的产品资料、宣传图片、使用指南和网站展示。安装记录指已连接服务的应用安装，不代表商店下载量；个人二维码及配置不在此展示。</p></div><el-button :loading="loading" @click="load">刷新</el-button></header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-table v-loading="loading" :data="items" empty-text="暂无工具">
+      <TableActionColumn><template #default="{ row }"><el-button link type="primary" @click="edit(row)">编辑资料</el-button></template></TableActionColumn>
+
       <el-table-column label="Logo" width="86"><template #default="{ row }"><el-image v-if="row.logoUrl" :src="row.logoUrl" class="logo-preview" fit="contain"/><span v-else>未设置</span></template></el-table-column>
       <el-table-column prop="nameZh" label="工具" min-width="140"/>
       <el-table-column prop="name" label="英文名称" min-width="150"/>
@@ -99,7 +102,6 @@ onMounted(load)
       <el-table-column prop="boundInstallationCount" label="已绑定安装" width="115"/>
       <el-table-column prop="boundUserCount" label="绑定用户" width="100"/>
       <el-table-column prop="sortOrder" label="排序" width="80"/>
-      <el-table-column label="操作" width="110" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="edit(row)">编辑资料</el-button></template></el-table-column>
     </el-table>
     <el-dialog v-model="visible" title="工具资料" width="min(760px, 95vw)" :close-on-click-modal="false" destroy-on-close :show-close="!saving && !Object.values(activeUploads).some(Boolean)" :close-on-press-escape="!saving && !Object.values(activeUploads).some(Boolean)">
       <el-form v-if="form" ref="formRef" :model="form" :inert="saving || undefined" :rules="rules" label-position="top" :disabled="saving">

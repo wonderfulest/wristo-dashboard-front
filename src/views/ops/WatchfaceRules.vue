@@ -46,15 +46,16 @@
         <el-tab-pane label="修改与发布历史" name="history">
           <p>每次保存、发布和回滚均留档。回滚会发布一个新版本，保留现有草稿。</p>
           <el-table :data="history" v-loading="historyLoading">
+            <TableActionColumn><template #default="{ row }">
+              <el-button link @click="selected = row">查看内容</el-button>
+              <el-button v-if="row.action !== 'DRAFT'" link type="warning" :disabled="busy || dirty" @click="rollback(row)">回滚到此版</el-button>
+            </template></TableActionColumn>
+
             <el-table-column prop="revision" label="记录" width="75" />
             <el-table-column label="操作" width="100"><template #default="{ row }">{{ actionLabel(row.action) }}</template></el-table-column>
             <el-table-column prop="note" label="说明" min-width="200" />
             <el-table-column prop="actor" label="操作人" width="120" />
             <el-table-column label="时间" width="180"><template #default="{ row }">{{ new Date(row.createdAt).toLocaleString() }}</template></el-table-column>
-            <el-table-column label="操作" width="170"><template #default="{ row }">
-              <el-button link @click="selected = row">查看内容</el-button>
-              <el-button v-if="row.action !== 'DRAFT'" link type="warning" :disabled="busy || dirty" @click="rollback(row)">回滚到此版</el-button>
-            </template></el-table-column>
           </el-table>
           <div class="pager"><el-button :disabled="page === 1 || historyLoading" @click="changePage(-1)">上一页</el-button><span>第 {{ page }} 页</span><el-button :disabled="history.length < 20 || historyLoading" @click="changePage(1)">下一页</el-button></div>
         </el-tab-pane>
@@ -66,6 +67,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, onMounted, ref } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

@@ -8,57 +8,72 @@
         </div>
       </template>
 
-      <div class="search-form">
-        <el-input
-          v-model.number="searchForm.appId"
-          placeholder="产品 ID"
-          clearable
-          style="width: 160px; margin-right: 12px;"
-        />
-        <el-input
-          v-model.number="searchForm.bundleId"
-          placeholder="套餐 ID"
-          clearable
-          style="width: 160px; margin-right: 12px;"
-        />
-        <el-input
-          v-model="searchForm.email"
-          placeholder="邮箱"
-          clearable
-          style="width: 220px; margin-right: 12px;"
-        />
-        <el-input
-          v-model="searchForm.paymentCode"
-          placeholder="六位激活码"
-          clearable
-          maxlength="6"
-          @input="handlePaymentCodeInput"
-          style="width: 160px; margin-right: 12px;"
-        />
-        <el-input
-          v-model="searchForm.device"
-          placeholder="设备"
-          clearable
-          style="width: 180px; margin-right: 12px;"
-        />
-        <el-select
-          v-model="searchForm.status"
-          placeholder="试用状态"
-          clearable
-          style="width: 200px; margin-right: 12px;"
-        >
-          <el-option :value="1" label="Start Trials" />
-          <el-option :value="2" label="Code Displayed" />
-          <el-option :value="3" label="Code Entered" />
-          <el-option :value="10" label="Start Purchase" />
-          <el-option :value="40" label="App Purchased" />
-          <el-option :value="50" label="Bundle Purchased" />
-          <el-option :value="60" label="Subscribed" />
-          <el-option :value="-1" label="Refunded" />
-        </el-select>
-        <el-button type="primary" :loading="loading" @click="handleSearch">查询</el-button>
-        <el-button @click="handleReset">重置</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">应用名称 / ID</span>
+          <AppSearchSelect aria-label="应用名称 / ID" v-model="searchForm.appId" width="280px" />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">套餐 ID</span>
+          <el-input aria-label="套餐 ID"
+            v-model.number="searchForm.bundleId"
+            placeholder="套餐 ID"
+            clearable
+            style="width: 160px; margin-right: 12px;"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">邮箱</span>
+          <el-input aria-label="邮箱"
+            v-model="searchForm.email"
+            placeholder="邮箱"
+            clearable
+            style="width: 220px; margin-right: 12px;"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">六位激活码</span>
+          <el-input aria-label="六位激活码"
+            v-model="searchForm.paymentCode"
+            placeholder="六位激活码"
+            clearable
+            maxlength="6"
+            @input="handlePaymentCodeInput"
+            style="width: 160px; margin-right: 12px;"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">设备</span>
+          <el-input aria-label="设备"
+            v-model="searchForm.device"
+            placeholder="设备"
+            clearable
+            style="width: 180px; margin-right: 12px;"
+          />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">试用状态</span>
+          <el-select aria-label="试用状态"
+            v-model="searchForm.status"
+            placeholder="试用状态"
+            clearable
+            style="width: 200px; margin-right: 12px;"
+          >
+            <el-option :value="1" label="Start Trials" />
+            <el-option :value="2" label="Code Displayed" />
+            <el-option :value="3" label="Code Entered" />
+            <el-option :value="10" label="Start Purchase" />
+            <el-option :value="40" label="App Purchased" />
+            <el-option :value="50" label="Bundle Purchased" />
+            <el-option :value="60" label="Subscribed" />
+            <el-option :value="-1" label="Refunded" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" :loading="loading" @click="handleSearch">查询</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+      </ListSearchPanel>
     </el-card>
 
     <el-card class="ranking-card" style="margin-top: 16px;">
@@ -233,6 +248,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {

@@ -63,36 +63,50 @@
         </template>
         
         <!-- 搜索过滤器 -->
-        <div class="search-filters">
-          <el-input
-            v-model="searchForm.transactionId"
-            placeholder="交易ID"
-            clearable
-            style="width: 200px; margin-right: 12px;"
-          />
-          <el-input
-            v-model="searchForm.refundReason"
-            placeholder="退款原因"
-            clearable
-            style="width: 200px; margin-right: 12px;"
-          />
-          <el-input
-            v-model="searchForm.adminUsername"
-            placeholder="操作人"
-            clearable
-            style="width: 150px; margin-right: 12px;"
-          />
-          <el-select
-            v-model="searchForm.refundStatus"
-            placeholder="退款状态"
-            clearable
-            style="width: 120px; margin-right: 12px;"
-          >
-            <el-option label="已退款" :value="1" />
-          </el-select>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleResetSearch">重置</el-button>
-        </div>
+        <ListSearchPanel>
+          <div class="list-search-field list-search-field--wide">
+            <span class="list-search-label">交易ID</span>
+            <el-input aria-label="交易ID"
+              v-model="searchForm.transactionId"
+              placeholder="交易ID"
+              clearable
+              style="width: 200px; margin-right: 12px;"
+            />
+          </div>
+          <div class="list-search-field list-search-field--wide">
+            <span class="list-search-label">退款原因</span>
+            <el-input aria-label="退款原因"
+              v-model="searchForm.refundReason"
+              placeholder="退款原因"
+              clearable
+              style="width: 200px; margin-right: 12px;"
+            />
+          </div>
+          <div class="list-search-field list-search-field--wide">
+            <span class="list-search-label">操作人</span>
+            <el-input aria-label="操作人"
+              v-model="searchForm.adminUsername"
+              placeholder="操作人"
+              clearable
+              style="width: 150px; margin-right: 12px;"
+            />
+          </div>
+          <div class="list-search-field">
+            <span class="list-search-label">退款状态</span>
+            <el-select aria-label="退款状态"
+              v-model="searchForm.refundStatus"
+              placeholder="退款状态"
+              clearable
+              style="width: 120px; margin-right: 12px;"
+            >
+              <el-option label="已退款" :value="1" />
+            </el-select>
+          </div>
+          <template #query>
+            <el-button type="primary" @click="handleSearch">查询</el-button>
+            <el-button @click="handleResetSearch">重置</el-button>
+          </template>
+        </ListSearchPanel>
         
         <div class="table-scroll" role="region" aria-label="退款记录表格，可横向滚动" tabindex="0">
         <el-table :data="recentRefunds" style="width: 100%" v-loading="historyLoading">
@@ -144,6 +158,7 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { refundPurchase, getRefundRecordsPage, type PurchaseRefundRequest, type RefundRecordPageQueryDTO, type RefundRecordVO } from '@/api/refund'

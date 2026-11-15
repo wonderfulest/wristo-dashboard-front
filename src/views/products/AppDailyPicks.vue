@@ -1,18 +1,25 @@
 <template>
   <div class="app-daily-picks">
     <div class="header">
-      <div class="actions">
-        <el-date-picker
-          v-model="fromNaturalDay"
-          type="date"
-          placeholder="从自然日开始筛选"
-          value-format="YYYY-MM-DD"
-          style="width: 180px; margin-right: 8px;"
-        />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-        <el-button type="success" :loading="generating" @click="handleGenerate">生成未来记录</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field">
+          <span class="list-search-label">日期</span>
+          <el-date-picker aria-label="日期"
+            v-model="fromNaturalDay"
+            type="date"
+            placeholder="从自然日开始筛选"
+            value-format="YYYY-MM-DD"
+            style="width: 180px; margin-right: 8px;"
+          />
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+        <template #actions>
+          <el-button type="success" :loading="generating" @click="handleGenerate">生成未来记录</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="rows" v-loading="loading" style="width: 100%">
@@ -69,6 +76,7 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

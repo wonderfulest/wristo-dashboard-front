@@ -50,29 +50,43 @@
       <span>{{ total }} 人</span>
     </div>
 
-    <div class="filters">
-      <el-select v-model="query.level" clearable placeholder="按权益筛选" style="width: 180px" @change="handleSearch">
-        <el-option v-for="item in levelOptions" :key="item.value" :label="item.label" :value="item.value" />
-      </el-select>
-      <UserSelect v-model="searchUserId" placeholder="按用户搜索" style="width: 240px" @change="handleUserChange" />
-      <el-input
-        v-model="query.email"
-        clearable
-        placeholder="按邮箱搜索"
-        style="width: 260px"
-        @keyup.enter.native="handleSearch"
-        @clear="handleSearch"
-      />
-      <el-select v-model="query.orderBy" placeholder="排序方式" style="width: 190px" @change="handleSearch">
-        <el-option label="注册时间倒序" value="created_at:desc" />
-        <el-option label="注册时间升序" value="created_at:asc" />
-        <el-option label="应用数倒序" value="design_count:desc" />
-        <el-option label="应用数升序" value="design_count:asc" />
-        <el-option label="最近登录倒序" value="last_login_time:desc" />
-      </el-select>
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="handleReset">重置</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field">
+        <span class="list-search-label">权益</span>
+        <el-select aria-label="权益" v-model="query.level" clearable placeholder="按权益筛选" style="width: 180px" @change="handleSearch">
+          <el-option v-for="item in levelOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">用户</span>
+        <UserSelect aria-label="用户" v-model="searchUserId" placeholder="按用户搜索" style="width: 240px" @change="handleUserChange" />
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">邮箱</span>
+        <el-input aria-label="邮箱"
+          v-model="query.email"
+          clearable
+          placeholder="按邮箱搜索"
+          style="width: 260px"
+          @keyup.enter.native="handleSearch"
+          @clear="handleSearch"
+        />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">排序方式</span>
+        <el-select aria-label="排序方式" v-model="query.orderBy" placeholder="排序方式" style="width: 190px" @change="handleSearch">
+          <el-option label="注册时间倒序" value="created_at:desc" />
+          <el-option label="注册时间升序" value="created_at:asc" />
+          <el-option label="应用数倒序" value="design_count:desc" />
+          <el-option label="应用数升序" value="design_count:asc" />
+          <el-option label="最近登录倒序" value="last_login_time:desc" />
+        </el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </template>
+    </ListSearchPanel>
 
     <el-table :data="members" v-loading="tableLoading" style="width: 100%">
       <el-table-column prop="userId" label="用户ID" width="90" />
@@ -145,6 +159,7 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchStudioMembershipPage, fetchStudioMembershipSummary } from '@/api/studio-membership'

@@ -4,20 +4,48 @@
       <el-button type="success" @click="openCreate">新增标签</el-button>
     </div>
 
-    <div class="filters">
-      <el-input v-model="query.name" placeholder="按名称搜索" clearable style="width: 200px; margin-right: 12px;" />
-      <el-input v-model="query.code" placeholder="按编码搜索" clearable style="width: 200px; margin-right: 12px;" />
-      <el-input v-model="query.category" placeholder="按分类搜索" clearable style="width: 200px; margin-right: 12px;" />
-      <el-input v-model="query.type" placeholder="按类型搜索" clearable style="width: 200px; margin-right: 12px;" />
-      <el-select v-model="query.status" clearable placeholder="状态" style="width: 140px; margin-right: 12px;">
-        <el-option :value="1" label="启用" />
-        <el-option :value="0" label="禁用" />
-      </el-select>
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="handleReset">重置</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">名称</span>
+        <el-input aria-label="名称" v-model="query.name" placeholder="按名称搜索" clearable style="width: 200px; margin-right: 12px;" />
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">编码</span>
+        <el-input aria-label="编码" v-model="query.code" placeholder="按编码搜索" clearable style="width: 200px; margin-right: 12px;" />
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">分类</span>
+        <el-input aria-label="分类" v-model="query.category" placeholder="按分类搜索" clearable style="width: 200px; margin-right: 12px;" />
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">类型</span>
+        <el-input aria-label="类型" v-model="query.type" placeholder="按类型搜索" clearable style="width: 200px; margin-right: 12px;" />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">状态</span>
+        <el-select aria-label="状态" v-model="query.status" clearable placeholder="状态" style="width: 140px; margin-right: 12px;">
+          <el-option :value="1" label="启用" />
+          <el-option :value="0" label="禁用" />
+        </el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </template>
+    </ListSearchPanel>
 
     <el-table :data="list" style="width: 100%" :loading="loading" :default-sort="defaultSort" @sort-change="handleSortChange">
+      <TableActionColumn>
+        <template #default="scope">
+          <el-button size="small" @click="openEdit(scope.row)">编辑</el-button>
+          <el-popconfirm title="确定删除该标签吗？" @confirm="doDelete(scope.row)">
+            <template #reference>
+              <el-button size="small" type="danger">删除</el-button>
+            </template>
+          </el-popconfirm>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" sortable="custom" />
       <el-table-column prop="name" label="名称" min-width="160" sortable="custom" />
       <el-table-column prop="code" label="编码" min-width="160" sortable="custom" />
@@ -30,16 +58,6 @@
       </el-table-column>
       <el-table-column prop="updatedAt" label="更新时间" min-width="180" sortable="custom">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
-      </el-table-column>
-      <el-table-column label="操作" width="200">
-        <template #default="scope">
-          <el-button size="small" @click="openEdit(scope.row)">编辑</el-button>
-          <el-popconfirm title="确定删除该标签吗？" @confirm="doDelete(scope.row)">
-            <template #reference>
-              <el-button size="small" type="danger">删除</el-button>
-            </template>
-          </el-popconfirm>
-        </template>
       </el-table-column>
     </el-table>
 
@@ -92,6 +110,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { pageTags, createTag, updateTag, deleteTag, type TagVO, type TagCreateDTO, type TagUpdateDTO } from '@/api/tag'

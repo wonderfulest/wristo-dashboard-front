@@ -1,11 +1,19 @@
 <template>
   <div class="dict-container">
     <div class="header">
-      <div class="tools">
-        <el-input v-model="enumKeyword" placeholder="搜索枚举名称/类名" clearable style="width: 240px" />
-        <el-input v-model="optionKeyword" placeholder="搜索枚举项 name/value" clearable style="width: 240px" @keyup.enter.native="reloadOptions" />
-        <el-button type="primary" @click="reloadOptions" :disabled="!selectedEnumClassName">刷新枚举项</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">枚举名称/类名</span>
+          <el-input aria-label="枚举名称/类名" v-model="enumKeyword" placeholder="搜索枚举名称/类名" clearable style="width: 240px" />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">枚举项 name/value</span>
+          <el-input aria-label="枚举项 name/value" v-model="optionKeyword" placeholder="搜索枚举项 name/value" clearable style="width: 240px" @keyup.enter.native="reloadOptions" />
+        </div>
+        <template #actions>
+          <el-button type="primary" @click="reloadOptions" :disabled="!selectedEnumClassName">刷新枚举项</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <div class="content">
@@ -52,15 +60,16 @@
         </div>
 
         <el-table :data="filteredOptions" v-loading="loadingOptions" border style="width: 100%">
-          <el-table-column prop="name" label="name" min-width="220" />
-          <el-table-column prop="value" label="value" min-width="200" />
-          <el-table-column prop="description" label="description" min-width="240" />
-          <el-table-column label="操作" width="180" fixed="right">
+          <TableActionColumn>
             <template #default="{ row }">
               <el-button size="small" text type="primary" @click="copyText(row.name)">复制name</el-button>
               <el-button size="small" text type="primary" @click="copyText(row.value)">复制value</el-button>
             </template>
-          </el-table-column>
+          </TableActionColumn>
+
+          <el-table-column prop="name" label="name" min-width="220" />
+          <el-table-column prop="value" label="value" min-width="200" />
+          <el-table-column prop="description" label="description" min-width="240" />
         </el-table>
       </div>
     </div>
@@ -68,6 +77,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types/api'
@@ -195,4 +206,8 @@ onMounted(async () => {
 .category-collapse { width: 100%; }
 .category-title { display: flex; align-items: center; gap: 10px; }
 .category-name { font-weight: 600; }
+.left, .right { min-width: 0; }
+@media (max-width: 1024px) {
+  .content { grid-template-columns: minmax(0, 1fr); }
+}
 </style>

@@ -18,6 +18,12 @@
           style="margin-bottom: 12px"
         />
         <el-table :data="files" v-loading="loading" style="width:100%">
+          <TableActionColumn>
+            <template #default="{ row }">
+              <el-button type="primary" link :loading="downloadingKey === row.key" @click="downloadBackup(row)">下载</el-button>
+            </template>
+          </TableActionColumn>
+
           <el-table-column prop="fileName" label="文件名" min-width="320" />
           <el-table-column label="大小" width="140">
             <template #default="{ row }">{{ formatFileSize(row.size) }}</template>
@@ -26,16 +32,17 @@
             <template #default="{ row }">{{ formatDateTime(row.lastModified) }}</template>
           </el-table-column>
           <el-table-column prop="key" label="S3 Key" min-width="320" show-overflow-tooltip />
-          <el-table-column label="操作" width="120" fixed="right">
-            <template #default="{ row }">
-              <el-button type="primary" link :loading="downloadingKey === row.key" @click="downloadBackup(row)">下载</el-button>
-            </template>
-          </el-table-column>
         </el-table>
       </el-tab-pane>
 
       <el-tab-pane label="执行记录" name="history">
         <el-table :data="jobs" v-loading="loading" style="width:100%">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="viewDetails(row)">详情</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="类型" width="140">
         <template #default="{ row }">
@@ -74,11 +81,6 @@
             <span>创建: {{ formatDateTime(row.createdAt) }}</span>
             <span>更新: {{ formatDateTime(row.updatedAt) || '-' }}</span>
           </div>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="140" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="viewDetails(row)">详情</el-button>
         </template>
       </el-table-column>
         </el-table>
@@ -135,6 +137,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getAvailableDbBackups, getDbBackupDownloadUrl, getRecentDbBackups, getDbBackup } from '@/api/ops-db'

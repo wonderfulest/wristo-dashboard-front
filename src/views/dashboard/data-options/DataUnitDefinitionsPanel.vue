@@ -1,16 +1,37 @@
 <template>
   <section>
-    <div class="toolbar">
-      <el-input v-model="query.keyword" clearable placeholder="Search units" @keyup.enter="search" />
-      <el-select v-model="query.active" clearable placeholder="All states" @change="search">
-        <el-option label="Active" :value="1" /><el-option label="Inactive" :value="0" />
-      </el-select>
-      <el-button type="primary" @click="openAdd">Add Unit</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">Search units</span>
+        <el-input aria-label="Search units" v-model="query.keyword" clearable placeholder="Search units" @keyup.enter="search" />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">All states</span>
+        <el-select aria-label="All states" v-model="query.active" clearable placeholder="All states" @change="search">
+          <el-option label="Active" :value="1" /><el-option label="Inactive" :value="0" />
+        </el-select>
+      </div>
+      <template #actions>
+        <el-button type="primary" @click="openAdd">Add Unit</el-button>
+      </template>
+    </ListSearchPanel>
     <el-alert v-if="loadError" type="error" :closable="false" title="Units could not be loaded. Last good data is preserved.">
       <el-button link type="primary" :loading="loading" @click="loadData()">Retry</el-button>
     </el-alert>
     <el-table :data="list" v-loading="loading" row-key="id">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button link type="primary" @click="openEdit(row)">Edit</el-button>
+          <el-button
+            link
+            type="danger"
+            :loading="deletingIds.has(row.id)"
+            :disabled="deletingIds.has(row.id) || row.referenceCount > 0 || row.unitKey === 'none'"
+            @click="remove(row)"
+          >Delete</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="unitKey" label="Key" min-width="130" />
       <el-table-column prop="name" label="Name" min-width="140" />
       <el-table-column label="Default" min-width="100"><template #default="{ row }">{{ row.defaultVariant || 'none' }}</template></el-table-column>
@@ -24,18 +45,6 @@
             :disabled="activeLoadingIds.has(row.id) || (row.referenceCount > 0 && row.isActive === 1)"
             @change="changeActiveInput(row, $event)"
           />
-        </template>
-      </el-table-column>
-      <el-table-column label="Actions" width="150" fixed="right">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="openEdit(row)">Edit</el-button>
-          <el-button
-            link
-            type="danger"
-            :loading="deletingIds.has(row.id)"
-            :disabled="deletingIds.has(row.id) || row.referenceCount > 0 || row.unitKey === 'none'"
-            @click="remove(row)"
-          >Delete</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -59,6 +68,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { DataUnitDefinitionPageQueryDTO, DataUnitDefinitionVO } from '@/types/data-unit-definition'

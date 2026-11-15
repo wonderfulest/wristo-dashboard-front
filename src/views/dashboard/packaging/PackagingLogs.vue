@@ -1,30 +1,35 @@
 <template>
     <div class="header">
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <el-input
-          v-model="searchProductId"
-          placeholder="按产品ID搜索"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleSearch"
-        />
-        <UserSelect
-          v-model="searchUserId"
-          :role-authorities="['ROLE_DESIGNER']"
-          placeholder="按设计师搜索"
-          @change="handleSearch"
-        />
-        <el-select v-model="searchStatus" placeholder="选择打包状态（可多选）" style="width: 200px" multiple clearable collapse-tags>
-          <el-option 
-            v-for="option in getPackagingStatusOptions()" 
-            :key="option.value" 
-            :label="option.label" 
-            :value="option.value" 
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">应用名称 / ID</span>
+          <AppSearchSelect aria-label="应用名称 / ID" v-model="searchProductId" width="280px" />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">设计师</span>
+          <UserSelect aria-label="设计师"
+            v-model="searchUserId"
+            :role-authorities="['ROLE_DESIGNER']"
+            placeholder="按设计师搜索"
+            @change="handleSearch"
           />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-      </div>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">状态</span>
+          <el-select aria-label="状态" v-model="searchStatus" placeholder="选择打包状态（可多选）" style="width: 200px" multiple clearable collapse-tags>
+            <el-option
+              v-for="option in getPackagingStatusOptions()"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <div class="table-actions">
@@ -47,6 +52,26 @@
       v-loading="loading"
       @selection-change="handleSelectionChange"
     >
+      <TableActionColumn>
+        <template #default="{ row }">
+          <div style="display: flex; gap: 8px;">
+            <el-button type="primary" link @click="handleViewDetails(row)">查看详情</el-button>
+            <el-button type="danger" link :disabled="!row.product?.designId" @click="openRejectDialog(row)">拒绝</el-button>
+            <el-button type="primary" link @click="openRequeueDialog(row)">重新提交打包任务</el-button>
+            <el-popconfirm
+              :title="`确定删除打包记录 ${row.id} 吗？`"
+              confirm-button-text="删除"
+              cancel-button-text="取消"
+              @confirm="deletePackagingLog(row)"
+            >
+              <template #reference>
+                <el-button type="danger" link>删除记录</el-button>
+              </template>
+            </el-popconfirm>
+          </div>
+        </template>
+      </TableActionColumn>
+
       <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="打包类型" width="100">
@@ -106,25 +131,6 @@
         <template #default="{ row }">
           <span v-if="row.priority !== null && row.priority !== undefined">{{ row.priority }}</span>
           <span v-else class="no-error">未在队列中</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="380" fixed="right">
-        <template #default="{ row }">
-          <div style="display: flex; gap: 8px;">
-            <el-button type="primary" link @click="handleViewDetails(row)">查看详情</el-button>
-            <el-button type="danger" link :disabled="!row.product?.designId" @click="openRejectDialog(row)">拒绝</el-button>
-            <el-button type="primary" link @click="openRequeueDialog(row)">重新提交打包任务</el-button>
-            <el-popconfirm
-              :title="`确定删除打包记录 ${row.id} 吗？`"
-              confirm-button-text="删除"
-              cancel-button-text="取消"
-              @confirm="deletePackagingLog(row)"
-            >
-              <template #reference>
-                <el-button type="danger" link>删除记录</el-button>
-              </template>
-            </el-popconfirm>
-          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -271,6 +277,10 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
+import { getProduct } from '@/api/products'
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { deleteProductPackagingLog, getProductPackagingLogsPage, requeueProductPackagingLog } from '@/api/products'
@@ -296,7 +306,7 @@ const pageSize = ref(10)
 const total = ref(0)
 
 // 搜索条件
-const searchProductId = ref('')
+const searchProductId = ref<number>()
 const searchUserId = ref<number | undefined>(undefined)
 const searchStatus = ref<string[]>([
   PACKAGING_STATUS.INIT,
@@ -324,14 +334,21 @@ const submittingRequeue = ref(false)
 const fetchPackagingLogs = async () => {
   loading.value = true
   try {
+    // Packaging logs store the database product ID, not the public appId.
+    let productId: number | null = null
+    if (searchProductId.value) {
+      const product = await getProduct(searchProductId.value)
+      if (product.code !== 0 || !product.data?.id) throw new Error('无法读取应用内部 ID')
+      productId = product.data.id
+    }
     const params = {
       pageNum: currentPage.value,
       pageSize: pageSize.value,
-      productId: searchProductId.value ? parseInt(searchProductId.value) : null,
+      productId,
       userId: typeof searchUserId.value === 'number' ? searchUserId.value : null,
       packagingStatus: searchStatus.value.length > 0 ? formatPackagingStatusArray(searchStatus.value) : null
     }
-    
+
     const response = await getProductPackagingLogsPage(params)
     if (response.code === 0) {
       packagingLogs.value = response.data!.list
@@ -356,7 +373,7 @@ const handleSearch = () => {
 
 // 重置
 const handleReset = () => {
-  searchProductId.value = ''
+  searchProductId.value = undefined
   searchUserId.value = undefined
   searchStatus.value = []
   currentPage.value = 1
@@ -552,7 +569,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  
+
   h2 {
     margin: 0;
     color: #333;
@@ -593,13 +610,13 @@ onMounted(() => {
     a { color: #409EFF; text-decoration: none; }
     a:hover { text-decoration: underline; }
   }
-  
+
   .product-details {
     display: flex;
     gap: 12px;
     font-size: 12px;
     color: #666;
-    
+
     span {
       background: #f5f5f5;
       padding: 2px 6px;
@@ -630,7 +647,7 @@ onMounted(() => {
     color: #f56c6c;
     word-break: break-all;
   }
-  
+
   .no-error {
     color: #909399;
     font-style: italic;
@@ -665,4 +682,4 @@ onMounted(() => {
     border-radius: 6px;
   }
 }
-</style> 
+</style>

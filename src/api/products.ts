@@ -153,7 +153,7 @@ export const replyProductReview = (reviewId: number, reply: string): Promise<Api
 }
 
 // 更新产品
-export const updateProduct = (appId: number, data: Partial<Product>): Promise<ApiResponse<Product>> => {
+export const updateProduct = (appId: number, data: Partial<Product> & { paymentMethod?: string }): Promise<ApiResponse<Product>> => {
   return instance.post(`/admin/products/update/${appId}`, data)
 }
 

@@ -1,24 +1,42 @@
 <template>
   <div class="page">
     <div class="header">
-      <div class="filters">
-        <el-input
-          v-model="displayName"
-          placeholder="设备名称（模糊搜索）"
-          clearable
-          style="width: 240px"
-          @input="onNameInput"
-        />
-        <el-select v-model="orderBy" placeholder="排序" clearable style="width: 180px">
-          <el-option label="创建时间倒序" value="id:desc" />
-          <el-option label="创建时间正序" value="id:asc" />
-        </el-select>
-        <el-button type="primary" @click="loadData">查询</el-button>
-        <el-button type="primary" @click="handleAdd">新增设备</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">设备名称（模糊搜索）</span>
+          <el-input aria-label="设备名称（模糊搜索）"
+            v-model="displayName"
+            placeholder="设备名称（模糊搜索）"
+            clearable
+            style="width: 240px"
+            @input="onNameInput"
+          />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">排序</span>
+          <el-select aria-label="排序" v-model="orderBy" placeholder="排序" clearable style="width: 180px">
+            <el-option label="创建时间倒序" value="id:desc" />
+            <el-option label="创建时间正序" value="id:asc" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" @click="loadData">查询</el-button>
+        </template>
+        <template #actions>
+          <el-button type="primary" @click="handleAdd">新增设备</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="list" border v-loading="loading" style="width: 100%">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button link type="primary" @click="handleDetail(row)">详情</el-button>
+          <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
+          <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column label="图片" width="80" align="center">
         <template #default="{ row }">
@@ -50,13 +68,6 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" align="center">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="handleDetail(row)">详情</el-button>
-          <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-          <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -84,6 +95,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

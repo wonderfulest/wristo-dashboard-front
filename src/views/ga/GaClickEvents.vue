@@ -1,60 +1,86 @@
 <template>
   <div class="ga-click-events-page">
 
-    <div class="filters">
-      <el-input
-        v-model="filters.shortCode"
-        placeholder="短链编码 shortCode"
-        clearable
-        style="width: 200px; margin-right: 12px;"
-        @keyup.enter.native="handleSearch"
-      />
-      <el-input
-        v-model="filters.country"
-        placeholder="国家 (country)"
-        clearable
-        style="width: 160px; margin-right: 12px;"
-        @keyup.enter.native="handleSearch"
-      />
-      <el-select
-        v-model="filters.deviceType"
-        clearable
-        placeholder="设备类型"
-        style="width: 160px; margin-right: 12px;"
-      >
-        <el-option label="Desktop" value="DESKTOP" />
-        <el-option label="Mobile" value="MOBILE" />
-        <el-option label="Tablet" value="TABLET" />
-        <el-option label="Other" value="OTHER" />
-      </el-select>
-      <el-input
-        v-model="filters.utmSource"
-        placeholder="utm_source"
-        clearable
-        style="width: 160px; margin-right: 12px;"
-        @keyup.enter.native="handleSearch"
-      />
-      <el-input
-        v-model="filters.utmCampaign"
-        placeholder="utm_campaign"
-        clearable
-        style="width: 160px; margin-right: 12px;"
-        @keyup.enter.native="handleSearch"
-      />
-      <el-date-picker
-        v-model="clickedAtRange"
-        type="datetimerange"
-        range-separator="至"
-        start-placeholder="点击时间起"
-        end-placeholder="点击时间止"
-        value-format="YYYY-MM-DD HH:mm:ss"
-        style="margin-right: 12px;"
-      />
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="handleReset">重置</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">短链编码 shortCode</span>
+        <el-input aria-label="短链编码 shortCode"
+          v-model="filters.shortCode"
+          placeholder="短链编码 shortCode"
+          clearable
+          style="width: 200px; margin-right: 12px;"
+          @keyup.enter.native="handleSearch"
+        />
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">国家 (country)</span>
+        <el-input aria-label="国家 (country)"
+          v-model="filters.country"
+          placeholder="国家 (country)"
+          clearable
+          style="width: 160px; margin-right: 12px;"
+          @keyup.enter.native="handleSearch"
+        />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">设备类型</span>
+        <el-select aria-label="设备类型"
+          v-model="filters.deviceType"
+          clearable
+          placeholder="设备类型"
+          style="width: 160px; margin-right: 12px;"
+        >
+          <el-option label="Desktop" value="DESKTOP" />
+          <el-option label="Mobile" value="MOBILE" />
+          <el-option label="Tablet" value="TABLET" />
+          <el-option label="Other" value="OTHER" />
+        </el-select>
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">utm_source</span>
+        <el-input aria-label="utm_source"
+          v-model="filters.utmSource"
+          placeholder="utm_source"
+          clearable
+          style="width: 160px; margin-right: 12px;"
+          @keyup.enter.native="handleSearch"
+        />
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">utm_campaign</span>
+        <el-input aria-label="utm_campaign"
+          v-model="filters.utmCampaign"
+          placeholder="utm_campaign"
+          clearable
+          style="width: 160px; margin-right: 12px;"
+          @keyup.enter.native="handleSearch"
+        />
+      </div>
+      <div class="list-search-field list-search-field--range">
+        <span class="list-search-label">日期范围</span>
+        <el-date-picker aria-label="日期范围"
+          v-model="clickedAtRange"
+          type="datetimerange"
+          range-separator="至"
+          start-placeholder="点击时间起"
+          end-placeholder="点击时间止"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          style="margin-right: 12px;"
+        />
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </template>
+    </ListSearchPanel>
 
     <el-table :data="list" style="width: 100%" v-loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link size="small" @click="openDetail(row.id)">详情</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="shortCode" label="短链编码" width="140" />
       <el-table-column prop="clickedAt" label="点击时间" min-width="180">
@@ -79,11 +105,6 @@
             <div class="long-url" :title="row.shortLink.longUrl">{{ row.shortLink.longUrl }}</div>
           </div>
           <span v-else>-</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="120" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link size="small" @click="openDetail(row.id)">详情</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -141,6 +162,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { pageGaClickEvents, getGaClickEventDetail, type GaClickEventVO } from '@/api/gaClickEvent'

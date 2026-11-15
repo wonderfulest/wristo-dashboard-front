@@ -7,58 +7,86 @@
       </div>
     </div>
 
-    <div class="filters">
-      <el-input
-        v-model="filters.keyword"
-        placeholder="按名称或短链搜索"
-        clearable
-        style="width: 260px; margin-right: 12px;"
-        @keyup.enter="handleSearch"
-      />
-      <el-select
-        v-model="filters.channel"
-        clearable
-        placeholder="渠道"
-        style="width: 160px; margin-right: 12px;"
-      >
-        <el-option
-          v-for="opt in channelOptions"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">名称或短链</span>
+        <el-input aria-label="名称或短链"
+          v-model="filters.keyword"
+          placeholder="按名称或短链搜索"
+          clearable
+          style="width: 260px; margin-right: 12px;"
+          @keyup.enter="handleSearch"
         />
-      </el-select>
-      <el-select
-        v-model="filters.platform"
-        clearable
-        placeholder="平台"
-        style="width: 160px; margin-right: 12px;"
-      >
-        <el-option
-          v-for="opt in platformOptions"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
-        />
-      </el-select>
-      <el-select
-        v-model="filters.status"
-        clearable
-        placeholder="状态"
-        style="width: 160px; margin-right: 12px;"
-      >
-        <el-option
-          v-for="opt in statusOptions"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
-        />
-      </el-select>
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="handleReset">重置</el-button>
-    </div>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">渠道</span>
+        <el-select aria-label="渠道"
+          v-model="filters.channel"
+          clearable
+          placeholder="渠道"
+          style="width: 160px; margin-right: 12px;"
+        >
+          <el-option
+            v-for="opt in channelOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">平台</span>
+        <el-select aria-label="平台"
+          v-model="filters.platform"
+          clearable
+          placeholder="平台"
+          style="width: 160px; margin-right: 12px;"
+        >
+          <el-option
+            v-for="opt in platformOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">状态</span>
+        <el-select aria-label="状态"
+          v-model="filters.status"
+          clearable
+          placeholder="状态"
+          style="width: 160px; margin-right: 12px;"
+        >
+          <el-option
+            v-for="opt in statusOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </template>
+    </ListSearchPanel>
 
     <el-table :data="list" style="width: 100%" :loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button size="small" type="primary" link @click="handleToggleStatus(row)">
+            {{ row.status === 'ACTIVE' ? '停用' : '启用' }}
+          </el-button>
+          <el-button size="small" type="primary" link @click="openEdit(row)">编辑</el-button>
+          <el-popconfirm title="确认删除该短链吗？" @confirm="doDelete(row)">
+            <template #reference>
+              <el-button size="small" type="danger" link>删除</el-button>
+            </template>
+          </el-popconfirm>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="shortCode" label="短链编码" min-width="140" />
       <el-table-column prop="longUrl" label="目标链接" min-width="260">
@@ -97,19 +125,6 @@
       <el-table-column prop="uniqueClicks" label="唯一点击" width="100" />
       <el-table-column prop="createdAt" label="创建时间" width="180">
         <template #default="{ row }">{{ row.createdAt }}</template>
-      </el-table-column>
-      <el-table-column label="操作" width="260" fixed="right">
-        <template #default="{ row }">
-          <el-button size="small" type="primary" link @click="handleToggleStatus(row)">
-            {{ row.status === 'ACTIVE' ? '停用' : '启用' }}
-          </el-button>
-          <el-button size="small" type="primary" link @click="openEdit(row)">编辑</el-button>
-          <el-popconfirm title="确认删除该短链吗？" @confirm="doDelete(row)">
-            <template #reference>
-              <el-button size="small" type="danger" link>删除</el-button>
-            </template>
-          </el-popconfirm>
-        </template>
       </el-table-column>
     </el-table>
 
@@ -230,6 +245,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { listEnumOptions } from '@/api/common'

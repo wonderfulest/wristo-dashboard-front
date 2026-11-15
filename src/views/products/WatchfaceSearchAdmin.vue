@@ -36,7 +36,7 @@
 
     <el-card shadow="never" style="margin-bottom: 16px">
       <div class="search-controls">
-        <el-input v-model="syncAppId" aria-label="同步应用 appId" placeholder="输入 appId，例如 172507" style="width: 260px" @keyup.enter="syncAppIndex" />
+        <AppSearchSelect v-model="syncAppId" width="280px" />
         <el-button type="primary" :loading="syncLoading" :disabled="!validSyncAppId" @click="syncAppIndex">同步搜索索引</el-button>
       </div>
       <p>仅同步指定应用；同步后检查索引是否存在。</p>
@@ -46,21 +46,37 @@
       <template #header>
         <div class="search-header">
           <span>文档搜索</span>
-          <div class="search-controls">
-            <el-input
-              v-model="keyword"
-              placeholder="按关键词搜索"
-              clearable
-              style="width: 260px"
-              @keyup.enter.native="handleSearch"
-            />
-            <el-input-number v-model="limit" :min="1" :max="100" label="Limit" />
-            <el-button type="primary" :loading="searchLoading" @click="handleSearch">搜索</el-button>
-          </div>
+          <ListSearchPanel>
+            <div class="list-search-field list-search-field--wide">
+              <span class="list-search-label">关键词</span>
+              <el-input aria-label="关键词"
+                v-model="keyword"
+                placeholder="按关键词搜索"
+                clearable
+                style="width: 260px"
+                @keyup.enter.native="handleSearch"
+              />
+            </div>
+            <div class="list-search-field list-search-field--wide">
+              <span class="list-search-label">结果数量</span>
+              <el-input-number aria-label="结果数量" v-model="limit" :min="1" :max="100" label="Limit" />
+            </div>
+            <template #query>
+              <el-button type="primary" :loading="searchLoading" @click="handleSearch">搜索</el-button>
+            </template>
+          </ListSearchPanel>
         </div>
       </template>
 
       <el-table :data="searchResults" style="width: 100%" v-loading="searchLoading">
+        <TableActionColumn>
+          <template #default="{ row }">
+            <el-button type="primary" link @click="openDoc(row.id)">查看 Doc</el-button>
+            <el-button type="warning" link @click="rebuildOneDoc(row.id)">重建 Doc</el-button>
+            <el-button type="danger" link @click="deleteOneDoc(row.id)">删除 Doc</el-button>
+          </template>
+        </TableActionColumn>
+
         <el-table-column prop="id" label="ID" width="100" />
         <el-table-column prop="name" label="名称" min-width="200" show-overflow-tooltip />
         <el-table-column prop="category" label="分类" width="120" />
@@ -68,13 +84,6 @@
         <el-table-column prop="rating" label="评分" width="120" />
         <el-table-column prop="updatedAt" label="更新时间" width="180">
           <template #default="{ row }">{{ formatTimestamp(row.updatedAt) }}</template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="openDoc(row.id)">查看 Doc</el-button>
-            <el-button type="warning" link @click="rebuildOneDoc(row.id)">重建 Doc</el-button>
-            <el-button type="danger" link @click="deleteOneDoc(row.id)">删除 Doc</el-button>
-          </template>
         </el-table-column>
       </el-table>
     </el-card>
@@ -117,6 +126,9 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type {
@@ -264,9 +276,9 @@ const openDoc = async (id: number) => {
   }
 }
 
-const syncAppId = ref('')
+const syncAppId = ref<number>()
 const syncLoading = ref(false)
-const validSyncAppId = computed(() => /^\d+$/.test(syncAppId.value.trim()) && Number.isSafeInteger(Number(syncAppId.value)) && Number(syncAppId.value) > 0)
+const validSyncAppId = computed(() => Number.isSafeInteger(syncAppId.value) && Number(syncAppId.value) > 0)
 const syncAppIndex = async () => {
   if (!validSyncAppId.value || syncLoading.value) return
   const appId = Number(syncAppId.value)

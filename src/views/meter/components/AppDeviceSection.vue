@@ -61,6 +61,12 @@
         </div>
       </template>
       <el-table :data="activeDevices" v-loading="activeLoading" style="width: 100%" max-height="400">
+        <TableActionColumn>
+          <template #default="{ row }">
+            <el-button type="primary" link @click="emit('open-detail', row.token)">详情</el-button>
+          </template>
+        </TableActionColumn>
+
         <el-table-column type="index" label="#" width="60" />
         <el-table-column prop="token" label="Device Token" min-width="300">
           <template #default="{ row }">
@@ -73,11 +79,6 @@
               <div>{{ formatTs(row.lastOnlineTime) }}</div>
               <div class="time-cell__relative">{{ formatRelativeTime(row.lastOnlineTime) }}</div>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="emit('open-detail', row.token)">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -91,6 +92,12 @@
         </div>
       </template>
       <el-table :data="lostDevices" v-loading="lostLoading" style="width: 100%" max-height="400">
+        <TableActionColumn>
+          <template #default="{ row }">
+            <el-button type="primary" link @click="emit('open-detail', row.token)">详情</el-button>
+          </template>
+        </TableActionColumn>
+
         <el-table-column type="index" label="#" width="60" />
         <el-table-column prop="token" label="Device Token" min-width="300">
           <template #default="{ row }">
@@ -103,11 +110,6 @@
               <div>{{ formatTs(row.lastOnlineTime) }}</div>
               <div class="time-cell__relative">{{ formatRelativeTime(row.lastOnlineTime) }}</div>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="emit('open-detail', row.token)">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -121,6 +123,12 @@
         </div>
       </template>
       <el-table :data="allDevices" v-loading="allLoading" style="width: 100%" max-height="400">
+        <TableActionColumn>
+          <template #default="{ row }">
+            <el-button type="primary" link @click="emit('open-detail', row.token)">详情</el-button>
+          </template>
+        </TableActionColumn>
+
         <el-table-column type="index" label="#" width="60" />
         <el-table-column prop="token" label="Device Token" min-width="300">
           <template #default="{ row }">
@@ -133,11 +141,6 @@
               <div>{{ formatTs(row.lastOnlineTime) }}</div>
               <div class="time-cell__relative">{{ formatRelativeTime(row.lastOnlineTime) }}</div>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="emit('open-detail', row.token)">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -166,6 +169,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { formatDateTime } from '@/utils/date'
 import type { DeviceActiveVO, DeviceDetailVO, DeviceOverviewVO } from '@/types/meter'
 

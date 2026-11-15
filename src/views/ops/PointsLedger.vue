@@ -1,8 +1,8 @@
 <template>
   <div class="credits-page operations-page">
     <header><div><h2>全平台收支流水</h2><p>奖励积分与 AI 点数分账展示，按真实业务编号追溯来源。查询不会创建账户或发放赠送点数。</p></div><el-button @click="$router.push('/ops/points-accounts')">用户账户</el-button></header>
-    <el-card shadow="never">
-      <el-form inline @submit.prevent="search">
+    <ListSearchPanel>
+      <el-form label-position="top" class="list-search-form" inline @submit.prevent="search">
         <el-form-item label="日期"><el-date-picker v-model="dates" type="daterange" value-format="YYYY-MM-DD" :clearable="false" start-placeholder="开始日期" end-placeholder="结束日期" /></el-form-item>
         <el-form-item label="用户"><UserSelect :model-value="numericUserId" placeholder="搜索用户名或邮箱" @update:model-value="setUser" /></el-form-item>
         <el-form-item label="资产"><el-select v-model="filters.asset" clearable placeholder="全部资产"><el-option label="奖励积分" value="REWARD" /><el-option label="AI 点数" value="AI" /></el-select></el-form-item>
@@ -12,9 +12,11 @@
         <el-form-item label="事件编号"><el-input v-model="filters.eventKey" clearable maxlength="191" placeholder="精确匹配业务事件编号" /></el-form-item>
         <el-form-item><el-button type="primary" native-type="submit" :loading="loading">查询</el-button><el-button @click="reset">重置</el-button></el-form-item>
       </el-form>
-      <div class="operations-hint"><el-button size="small" @click="quickRange(1)">今天</el-button><el-button size="small" @click="quickRange(7)">近 7 天</el-button><el-button size="small" @click="quickRange(30)">近 30 天</el-button><span>北京时间，含结束日期；每次最多 366 天。</span></div>
-      <el-alert v-if="validation" :title="validation" type="warning" :closable="false" show-icon />
-    </el-card>
+      <template #actions>
+        <div class="operations-hint"><el-button size="small" @click="quickRange(1)">今天</el-button><el-button size="small" @click="quickRange(7)">近 7 天</el-button><el-button size="small" @click="quickRange(30)">近 30 天</el-button><span>北京时间，含结束日期；每次最多 366 天。</span></div>
+<el-alert v-if="validation" :title="validation" type="warning" :closable="false" show-icon />
+      </template>
+    </ListSearchPanel>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon><el-button link type="primary" @click="retry">重试当前查询</el-button></el-alert>
     <el-card shadow="never">
       <div class="operations-heading"><strong>流水记录 · {{ result ? result.total.toLocaleString('zh-CN') : '—' }} 条</strong><span v-if="applied" class="muted">{{ applied.from }} 至 {{ applied.to }}<template v-if="applied.userId"> · 用户 {{ applied.userId }}</template></span></div>
@@ -33,6 +35,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { useRouter } from 'vue-router'
 import UserSelect from '@/components/users/UserSelect.vue'
 import BusinessReferences from '@/components/credits/BusinessReferences.vue'

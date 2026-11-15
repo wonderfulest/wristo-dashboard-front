@@ -48,12 +48,13 @@
       <el-card v-if="mode === 'models'" shadow="never">
         <template #header><div class="header"><strong>模型目录</strong><el-button :disabled="saving" @click="addModel">新增模型</el-button></div></template>
         <el-table :data="settings.models">
+          <TableActionColumn><template #default="{ row }"><el-button type="danger" link :disabled="saving || isSelected(row.id)" @click="removeModel(row.id)">删除</el-button></template></TableActionColumn>
+
           <el-table-column label="供应商" min-width="150"><template #default="{ row }"><el-select v-model="row.provider" :disabled="saving"><el-option label="阿里云百炼" value="BAILIAN" /><el-option label="OpenAI" value="OPENAI" /></el-select></template></el-table-column>
           <el-table-column label="模型名称" min-width="230"><template #default="{ row }"><el-input v-model="row.model" maxlength="100" :disabled="saving" placeholder="供应商 API 模型名称" /></template></el-table-column>
           <el-table-column label="能力" min-width="190"><template #default="{ row }"><el-select v-model="row.capability" :disabled="saving"><el-option label="文本 / 视觉理解" value="TEXT" /><el-option label="参考图生成图片" value="IMAGE" /></el-select></template></el-table-column>
           <el-table-column label="启用" width="95"><template #default="{ row }"><el-switch v-model="row.enabled" :disabled="saving" /></template></el-table-column>
           <el-table-column label="使用场景" min-width="160"><template #default="{ row }">{{ scenes.filter(scene => settings?.scenes[scene.key].modelId === row.id).map(scene => scene.label).join('、') || '未使用' }}</template></el-table-column>
-          <el-table-column label="操作" width="100"><template #default="{ row }"><el-button type="danger" link :disabled="saving || isSelected(row.id)" @click="removeModel(row.id)">删除</el-button></template></el-table-column>
         </el-table>
         <p class="hint">AI 表盘设计使用视觉文本模型理解提示词和参考图，生成逐元素布局，再由服务端编译为可编辑 WRT；用于应用标签和描述的文本模型还须支持图像输入。OpenAI 文本使用 Responses API，图片使用 GPT Image 编辑接口；百炼沿用兼容文本接口和多模态图片接口。自定义模型需与对应接口兼容。</p>
       </el-card>
@@ -70,6 +71,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import ConfigChanges from '@/components/credits/ConfigChanges.vue'
 import ImageAiPricing from '@/components/ops/ImageAiPricing.vue'
 import { ref, onMounted } from 'vue'

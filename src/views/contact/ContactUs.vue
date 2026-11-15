@@ -1,28 +1,48 @@
 <template>
   <div class="contact-us-page">
-    <div class="filters">
-      <el-input
-        v-model="emailKeyword"
-        placeholder="用户邮箱"
-        clearable
-        class="filter-input"
-        @keyup.enter.native="search(1)"
-      />
-      <el-select
-        v-model="statusFilter"
-        placeholder="状态"
-        clearable
-        class="filter-select"
-      >
-        <el-option :value="0" label="待处理" />
-        <el-option :value="1" label="已回复" />
-        <el-option :value="2" label="已关闭" />
-      </el-select>
-      <el-button type="primary" @click="search(1)">搜索</el-button>
-      <el-button @click="reset">重置</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">用户邮箱</span>
+        <el-input aria-label="用户邮箱"
+          v-model="emailKeyword"
+          placeholder="用户邮箱"
+          clearable
+          class="filter-input"
+          @keyup.enter.native="search(1)"
+        />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">状态</span>
+        <el-select aria-label="状态"
+          v-model="statusFilter"
+          placeholder="状态"
+          clearable
+          class="filter-select"
+        >
+          <el-option :value="0" label="待处理" />
+          <el-option :value="1" label="已回复" />
+          <el-option :value="2" label="已关闭" />
+        </el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="search(1)">搜索</el-button>
+        <el-button @click="reset">重置</el-button>
+      </template>
+    </ListSearchPanel>
 
     <el-table :data="pageData.list" v-loading="loading" border style="width: 100%">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openDetail(row)">查看</el-button>
+          <el-divider direction="vertical" />
+          <el-button type="success" link @click="openReply(row)">回复</el-button>
+          <el-divider direction="vertical" />
+          <el-button type="warning" link @click="markReplied(row)">标记已回复</el-button>
+          <el-divider direction="vertical" />
+          <el-button type="danger" link @click="closeItem(row)">关闭</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="姓名" width="140" />
       <el-table-column prop="email" label="邮箱" min-width="200" />
@@ -33,17 +53,6 @@
         </template>
       </el-table-column>
       <el-table-column prop="createdAt" label="创建时间" width="180" />
-      <el-table-column label="操作" width="320" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openDetail(row)">查看</el-button>
-          <el-divider direction="vertical" />
-          <el-button type="success" link @click="openReply(row)">回复</el-button>
-          <el-divider direction="vertical" />
-          <el-button type="warning" link @click="markReplied(row)">标记已回复</el-button>
-          <el-divider direction="vertical" />
-          <el-button type="danger" link @click="closeItem(row)">关闭</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div class="pagination" v-if="pageData.total > 0">
@@ -88,6 +97,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { PageResponse } from '@/types/api'

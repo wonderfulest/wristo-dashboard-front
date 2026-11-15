@@ -9,14 +9,22 @@
       <p>当前列表沿用概览筛选条件；账号状态和最后登录时间可能随后更新。点击重置可清除全部筛选。</p>
       <details><summary>查看筛选条件</summary><ul><li v-for="filter in overviewFilterDescriptions" :key="filter">{{ filter }}</li></ul></details>
     </el-alert>
-    <div class="filters">
-      <UserSelect v-model="searchUserId" placeholder="按用户搜索" @change="handleUserChange" />
-      <el-select v-model="query.roleId" clearable filterable placeholder="按角色筛选" style="width: 220px; margin-right: 12px;">
-        <el-option v-for="role in roleOptions" :key="role.id" :label="role.roleName" :value="role.id" />
-      </el-select>
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="handleReset">重置</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field">
+        <span class="list-search-label">用户</span>
+        <UserSelect aria-label="用户" v-model="searchUserId" placeholder="按用户搜索" @change="handleUserChange" />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">角色</span>
+        <el-select aria-label="角色" v-model="query.roleId" clearable filterable placeholder="按角色筛选" style="width: 220px; margin-right: 12px;">
+          <el-option v-for="role in roleOptions" :key="role.id" :label="role.roleName" :value="role.id" />
+        </el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </template>
+    </ListSearchPanel>
     <div class="stats-panel">
       <div class="stat-item">
         <div class="stat-label">系统用户</div>
@@ -41,6 +49,12 @@
     </div>
     <div class="table-scroll" role="region" aria-label="用户列表表格，可横向滚动" tabindex="0">
     <el-table :data="users" style="width: 100%" :loading="loading" :default-sort="defaultSort" @sort-change="handleSortChange">
+      <TableActionColumn>
+        <template #default="scope">
+          <el-button size="small" :disabled="scope.row.isDeleted === '1'" @click="handleEdit(scope.row)">编辑</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="60" sortable="custom" />
       <el-table-column prop="username" label="用户名" width="180" sortable="custom" />
       <el-table-column prop="nickname" label="昵称" width="180" sortable="custom" />
@@ -81,11 +95,6 @@
       <el-table-column label="用户删除" width="110">
         <template #default="{ row }">
           <el-tag :type="row.isDeleted === '1' ? 'danger' : 'info'">{{ row.isDeleted === '1' ? '已删除' : row.isDeleted === '0' ? '未删除' : '未知' }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="180">
-        <template #default="scope">
-          <el-button size="small" :disabled="scope.row.isDeleted === '1'" @click="handleEdit(scope.row)">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -149,6 +158,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -345,7 +356,7 @@ const handleSave = async () => {
     ElMessage.error('密码长度必须在6-20个字符之间')
     return
   }
-  
+
   let res
   if (isEdit.value && currentUser.value.id) {
     // 使用强制的 UserUpdateDTO 类型
@@ -378,7 +389,7 @@ const handleSave = async () => {
     }
     res = await registerEmailAccount(createPayload)
   }
-  
+
   if (res.code === 0) {
     ElMessage.success(isEdit.value ? '编辑成功' : '注册成功')
     dialogVisible.value = false

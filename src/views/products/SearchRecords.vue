@@ -1,41 +1,61 @@
 <template>
   <div class="search-records-container">
     <div class="header">
-      <div class="filters">
-        <el-input
-          v-model="keyword"
-          placeholder="关键词"
-          clearable
-          style="width: 220px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-input
-          v-model="userId"
-          placeholder="用户ID"
-          clearable
-          style="width: 160px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-input
-          v-model="deviceId"
-          placeholder="设备ID"
-          clearable
-          style="width: 160px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-input
-          v-model="ip"
-          placeholder="IP"
-          clearable
-          style="width: 180px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">关键词</span>
+          <el-input aria-label="关键词"
+            v-model="keyword"
+            placeholder="关键词"
+            clearable
+            style="width: 220px"
+            @keyup.enter.native="handleSearch"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">用户</span>
+          <el-input aria-label="用户"
+            v-model="userId"
+            placeholder="用户ID"
+            clearable
+            style="width: 160px"
+            @keyup.enter.native="handleSearch"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">设备ID</span>
+          <el-input aria-label="设备ID"
+            v-model="deviceId"
+            placeholder="设备ID"
+            clearable
+            style="width: 160px"
+            @keyup.enter.native="handleSearch"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">IP</span>
+          <el-input aria-label="IP"
+            v-model="ip"
+            placeholder="IP"
+            clearable
+            style="width: 180px"
+            @keyup.enter.native="handleSearch"
+          />
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="pageData.list" style="width: 100%" v-loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openDetail(row)">详情</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="90" />
       <el-table-column prop="keyword" label="关键词" min-width="180" show-overflow-tooltip />
       <el-table-column prop="userId" label="用户ID" width="110" />
@@ -46,11 +66,6 @@
       <el-table-column prop="createdAt" label="时间" width="170">
         <template #default="{ row }">
           {{ fmtDate(row.createdAt) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="100" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openDetail(row)">详情</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -85,6 +100,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { PageResponse } from '@/types/api'

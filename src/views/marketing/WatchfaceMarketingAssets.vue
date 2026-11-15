@@ -10,12 +10,7 @@
       <el-form label-position="top">
         <div class="query-row">
           <el-form-item label="Product ID">
-            <el-input
-              v-model="productId"
-              placeholder="例如 10086"
-              clearable
-              @keyup.enter="handleGenerate"
-            />
+            <AppSearchSelect v-model="productId" width="280px" />
           </el-form-item>
 
           <el-button type="primary" :loading="loading" @click="handleGenerate">获取并生成</el-button>
@@ -102,12 +97,13 @@
 </template>
 
 <script setup lang="ts">
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { generateWatchfaceMarketingAssets } from '@/api/marketing-assets'
 import type { Product } from '@/types/product'
 
-const productId = ref('')
+const productId = ref<number>()
 const extraSellingPoints = ref('')
 const loading = ref(false)
 const errorMessage = ref('')

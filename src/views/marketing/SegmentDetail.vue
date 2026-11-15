@@ -22,11 +22,16 @@
       </el-card>
 
       <el-card shadow="never">
-        <form class="filters" @submit.prevent="searchMembers">
-          <el-input v-model="keyword" placeholder="搜索用户 ID、用户名、昵称或邮箱" clearable :maxlength="200" @clear="searchMembers" />
-          <el-button type="primary" native-type="submit" :disabled="refreshing">搜索</el-button>
-          <el-button :disabled="refreshing" @click="resetSearch">重置</el-button>
-        </form>
+        <ListSearchPanel tag="form" @submit.prevent="searchMembers">
+          <div class="list-search-field list-search-field--wide">
+            <span class="list-search-label">关键词</span>
+            <el-input aria-label="关键词" v-model="keyword" placeholder="搜索用户 ID、用户名、昵称或邮箱" clearable :maxlength="200" @clear="searchMembers" />
+          </div>
+          <template #query>
+            <el-button type="primary" native-type="submit" :disabled="refreshing">搜索</el-button>
+            <el-button :disabled="refreshing" @click="resetSearch">重置</el-button>
+          </template>
+        </ListSearchPanel>
         <p class="hint">{{ appliedKeyword ? '匹配用户' : '全部用户' }}：{{ total }} 人</p>
         <el-alert v-if="membersError" :title="membersError" type="error" :closable="false" show-icon>
           <el-button link type="primary" @click="fetchMembers">重试</el-button>
@@ -58,6 +63,7 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { ref, watch, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'

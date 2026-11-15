@@ -122,6 +122,7 @@ export interface ProductRelease {
 }
 
 export interface ProductPageQuery {
+  appId?: number
   pageNum: number
   pageSize: number
   orderBy?: string

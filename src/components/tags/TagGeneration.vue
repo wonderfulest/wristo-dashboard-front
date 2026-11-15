@@ -24,12 +24,13 @@
   <div class="toolbar"><strong>最近批量任务</strong><el-button :loading="jobsLoading" @click="loadJobs">刷新任务列表</el-button></div>
   <p>平台运营费用由平台承担，不扣用户或管理员积分。提交后异步处理；点击“检查结果”获取百炼进度并写入已完成标签，不会发起新的生成。</p>
   <el-table :data="jobs" row-key="id" empty-text="暂无批量任务">
+    <TableActionColumn><template #default="{ row }"><el-button :loading="refreshing === row.id" :disabled="!!refreshing" @click="checkJob(row.id)">检查结果</el-button></template></TableActionColumn>
+
     <el-table-column type="expand"><template #default="{ row }"><div class="job-items"><p>任务 ID：{{ row.id }} · 百炼任务 ID：{{ row.providerBatchId || '尚未返回' }}</p><p v-for="item in row.items" :key="item.appId">{{ item.appId }}：{{ batchStatus(item.status) }}</p></div></template></el-table-column>
     <el-table-column prop="createdAt" label="提交时间" min-width="180" />
     <el-table-column prop="model" label="模型" min-width="150" />
     <el-table-column label="状态" min-width="130"><template #default="{ row }">{{ batchStatus(row.status) }}</template></el-table-column>
     <el-table-column label="结果" min-width="230"><template #default="{ row }">共 {{ row.total }} · 成功 {{ row.completed }} · 失败 {{ row.failed }} · 跳过 {{ row.skipped }}</template></el-table-column>
-    <el-table-column label="操作" width="130"><template #default="{ row }"><el-button :loading="refreshing === row.id" :disabled="!!refreshing" @click="checkJob(row.id)">检查结果</el-button></template></el-table-column>
   </el-table>
   <el-dialog v-model="confirmVisible" title="确认提交百炼批量任务" width="520px" :close-on-click-modal="false">
     <template v-if="snapshot">
@@ -43,6 +44,7 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getCandidates, getQuote, submitBatch, getBatches, refreshBatch, type BatchJob, type BatchRequest, type Candidate, type Quote, type Thresholds } from '@/api/tagGeneration'

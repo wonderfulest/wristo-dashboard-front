@@ -37,6 +37,14 @@
     </div>
     <p class="refresh-time">编号格式：环境-pack-节点-通道，例如 prod-pack-n01-01。全局与队列开关均允许时，才会领取新任务。</p>
     <el-table :data="channels" row-key="queueId" :empty-text="loaded ? '尚无已登记队列，请为 worker 配置编号并启动' : '尚未获取队列状态'">
+      <TableActionColumn><template #default="{ row }">
+        <el-button type="danger" link :aria-label="`删除队列 ${row.queueId}`"
+          :title="row.online ? '仅离线队列可删除' : '删除队列'"
+          :loading="deletingChannel === row.queueId"
+          :disabled="row.online || !loaded || loading || pausingQueue || !!pausingChannel || !!deletingChannel || clearingOfflineChannels"
+          @click="handleDeleteChannel(row)">删除</el-button>
+      </template></TableActionColumn>
+
       <el-table-column prop="queueId" label="队列编号" min-width="220" />
       <el-table-column label="在线状态" width="110"><template #default="{ row }">
         <el-tag :type="row.online ? 'success' : 'info'">{{ row.online ? '在线' : '离线' }}</el-tag>
@@ -51,13 +59,6 @@
       </template></el-table-column>
       <el-table-column label="当前任务" width="120"><template #default="{ row }">{{ row.taskId || '—' }}</template></el-table-column>
       <el-table-column label="最近心跳" min-width="180"><template #default="{ row }">{{ formatDateTime(row.lastSeenAt) }}</template></el-table-column>
-      <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }">
-        <el-button type="danger" link :aria-label="`删除队列 ${row.queueId}`"
-          :title="row.online ? '仅离线队列可删除' : '删除队列'"
-          :loading="deletingChannel === row.queueId"
-          :disabled="row.online || !loaded || loading || pausingQueue || !!pausingChannel || !!deletingChannel || clearingOfflineChannels"
-          @click="handleDeleteChannel(row)">删除</el-button>
-      </template></el-table-column>
     </el-table>
     <h3>执行中（{{ loaded ? runningTasks.length : '—' }}）</h3>
     <el-table :data="sortedRunningTasks" row-key="id" v-loading="loading" :empty-text="loaded ? '当前没有执行中的任务' : '尚未获取执行中任务'">
@@ -72,27 +73,50 @@
       <el-table-column label="日志" width="100"><template #default="{ row }"><el-link v-if="row.lastBuildLogPath" :href="row.lastBuildLogPath" target="_blank" rel="noopener noreferrer" type="primary">最近日志</el-link><span v-else class="no-error">待上传</span></template></el-table-column>
     </el-table>
     <h3>等待队列</h3>
-    <div class="queue-toolbar">
-      <el-select
-        v-model="designerId"
-        placeholder="全部设计师"
-        clearable
-        filterable
-        :disabled="updatingPriority"
-        style="width: 220px"
-        @change="clearSelection"
-      >
-        <el-option v-for="designer in designers" :key="designer.id"
-          :label="designer.username" :value="designer.id" />
-      </el-select>
-      <span>共 {{ filteredQueue.length }} 条，已选 {{ selectedRows.length }} 条</span>
-      <span v-if="selectedRows.length" class="refresh-time">选择任务期间暂停自动刷新</span>
-      <el-button type="primary" :disabled="!selectedRows.length || loading || updatingPriority"
+    <ListSearchPanel>
+      <div class="list-search-field">
+        <span class="list-search-label">全部设计师</span>
+        <el-select aria-label="全部设计师"
+          v-model="designerId"
+          placeholder="全部设计师"
+          clearable
+          filterable
+          :disabled="updatingPriority"
+          style="width: 220px"
+          @change="clearSelection"
+        >
+          <el-option v-for="designer in designers" :key="designer.id"
+            :label="designer.username" :value="designer.id" />
+        </el-select>
+      </div>
+      <template #actions>
+        <span>共 {{ filteredQueue.length }} 条，已选 {{ selectedRows.length }} 条</span>
+        <span v-if="selectedRows.length" class="refresh-time">选择任务期间暂停自动刷新</span>
+        <el-button type="primary" :disabled="!selectedRows.length || loading || updatingPriority"
         @click="openBatchPriorityDialog">批量调整优先级</el-button>
-      <el-button :disabled="!selectedRows.length || updatingPriority" @click="clearSelection">清空选择</el-button>
-    </div>
+        <el-button :disabled="!selectedRows.length || updatingPriority" @click="clearSelection">清空选择</el-button>
+      </template>
+    </ListSearchPanel>
     <el-table ref="queueTable" :data="filteredQueue" row-key="id" style="width: 100%"
       v-loading="loading || updatingPriority" @selection-change="handleSelectionChange">
+<TableActionColumn>
+        <template #default="{ row }">
+          <div style="display: flex; gap: 8px;">
+            <el-button type="primary" link @click="openPriorityDialog(row)">调整优先级</el-button>
+            <el-popconfirm
+              title="确定要将该任务从队列中移除吗？"
+              confirm-button-text="确定"
+              cancel-button-text="取消"
+              @confirm="removeFromQueue(row)"
+            >
+              <template #reference>
+                <el-button type="danger" link>移除</el-button>
+              </template>
+            </el-popconfirm>
+          </div>
+        </template>
+      </TableActionColumn>
+
       <el-table-column type="selection" width="48" :selectable="isSelectable" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="打包类型" width="100">
@@ -144,23 +168,6 @@
           <span v-else class="no-error">未在队列中</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="260" fixed="right">
-        <template #default="{ row }">
-          <div style="display: flex; gap: 8px;">
-            <el-button type="primary" link @click="openPriorityDialog(row)">调整优先级</el-button>
-            <el-popconfirm
-              title="确定要将该任务从队列中移除吗？"
-              confirm-button-text="确定"
-              cancel-button-text="取消"
-              @confirm="removeFromQueue(row)"
-            >
-              <template #reference>
-                <el-button type="danger" link>移除</el-button>
-              </template>
-            </el-popconfirm>
-          </div>
-        </template>
-      </el-table-column>
     </el-table>
 
     <!-- 调整优先级对话框 -->
@@ -206,6 +213,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox, type TableInstance } from 'element-plus'
 import type { ProductPackagingLogVO } from '@/types/product'

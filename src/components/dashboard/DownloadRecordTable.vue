@@ -2,13 +2,15 @@
   <div class="download-records">
     <p class="description">按设备与表盘的上报记录展示，包含已保留的归档历史。“首次下载”指现存历史中首次出现，不代表首次安装或新增用户。邮箱仅在已上报时显示。应用下载量、购买量为当前累计值。</p>
     <el-card>
-      <el-form inline @submit.prevent="search">
+      <ListSearchPanel>
+        <el-form label-position="top" class="list-search-form" inline @submit.prevent="search">
         <el-form-item label="下载类型"><el-select v-model="downloadType" style="width: 180px"><el-option label="全部上报" value="" /><el-option label="首次下载" value="FIRST" /><el-option label="历史设备重新上报" value="RETURNING" /></el-select></el-form-item>
-        <el-form-item label="应用 ID"><el-input v-model="form.appId" placeholder="应用 ID" clearable /></el-form-item>
+        <el-form-item label="应用 ID"><AppSearchSelect v-model="form.appId" width="280px" /></el-form-item>
         <el-form-item label="设备"><el-input v-model="form.device" placeholder="完整设备标识" clearable /></el-form-item>
         <el-form-item label="邮箱"><el-input v-model="form.email" placeholder="完整邮箱" clearable /></el-form-item>
         <el-form-item><el-button type="primary" native-type="submit" :loading="loading">查询</el-button><el-button @click="reset">重置</el-button></el-form-item>
       </el-form>
+      </ListSearchPanel>
       <el-alert v-if="error" :title="error" type="error" show-icon :closable="false" />
       <el-table v-loading="loading" :data="rows" row-key="id" empty-text="暂无下载记录" style="width: 100%">
         <el-table-column label="下载类型" width="170"><template #default="{ row }"><el-tag :type="row.downloadType === 'FIRST' ? 'success' : 'info'">{{ row.downloadType === 'FIRST' ? '首次下载' : '历史设备重新上报' }}</el-tag></template></el-table-column>
@@ -54,13 +56,15 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getDownloadRecords, type DownloadRecord, type DownloadRecordQuery } from '@/api/downloadRecords'
 
 const props = defineProps<{ startDate: string; endDate: string; revision: number; appId: number | null; initialType?: 'FIRST' | 'RETURNING' | '' }>()
 const downloadType = ref<'FIRST' | 'RETURNING' | ''>(props.initialType || '')
-const form = reactive({ appId: props.appId ? String(props.appId) : '', device: '', email: '' })
+const form = reactive({ appId: props.appId ?? undefined as number | undefined, device: '', email: '' })
 const rows = ref<DownloadRecord[]>([])
 const total = ref(0)
 const pageNum = ref(1)
@@ -102,8 +106,8 @@ async function fetchRecords() {
   }
 }
 function search() {
-  const appId = form.appId.trim()
-  if (appId && (!/^\d+$/.test(appId) || !Number.isSafeInteger(Number(appId)) || Number(appId) <= 0)) {
+  const appId = form.appId
+  if (appId && (!Number.isSafeInteger(appId) || Number(appId) <= 0)) {
     ElMessage.warning('请输入有效的应用 ID')
     return
   }
@@ -113,13 +117,13 @@ function search() {
 }
 function reset() {
   downloadType.value = ''
-  Object.assign(form, { appId: '', device: '', email: '' })
+  Object.assign(form, { appId: undefined, device: '', email: '' })
   search()
 }
 function changePage(page: number) { pageNum.value = page; void fetchRecords() }
 function changeSize(size: number) { pageSize.value = size; pageNum.value = 1; void fetchRecords() }
 watch(() => props.initialType, value => { downloadType.value = value || ''; search() })
-watch(() => props.appId, value => { form.appId = value ? String(value) : ''; search() })
+watch(() => props.appId, value => { form.appId = value ?? undefined; search() })
 watch(() => [props.startDate, props.endDate, props.revision], search, { immediate: true })
 </script>
 

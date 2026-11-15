@@ -340,7 +340,7 @@ const router = createRouter({
     {
       path: '/products/recent-online',
       name: 'ProductsRecentOnline',
-      component: () => import('@/views/products/RecentOnline.vue'),
+      redirect: { path: '/products', query: { online: 'last30' } },
       meta: { requiresAuth: true }
     },
     {

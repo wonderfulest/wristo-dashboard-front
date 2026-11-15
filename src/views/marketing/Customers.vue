@@ -1,13 +1,23 @@
 <template>
   <div class="customers-page">
 
-    <div class="filters">
-      <el-input v-model="query.username" placeholder="按用户名搜索" clearable style="width: 220px; margin-right: 12px;" />
-      <el-input v-model="query.email" placeholder="按邮箱搜索" clearable style="width: 260px; margin-right: 12px;" />
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="handleReset">重置</el-button>
-      <el-button type="warning" @click="openSync" style="margin-left: 8px;">同步 Paddle 客户</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">用户名</span>
+        <el-input aria-label="用户名" v-model="query.username" placeholder="按用户名搜索" clearable style="width: 220px; margin-right: 12px;" />
+      </div>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">邮箱</span>
+        <el-input aria-label="邮箱" v-model="query.email" placeholder="按邮箱搜索" clearable style="width: 260px; margin-right: 12px;" />
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </template>
+      <template #actions>
+        <el-button type="warning" @click="openSync" style="margin-left: 8px;">同步 Paddle 客户</el-button>
+      </template>
+    </ListSearchPanel>
 
     <el-table :data="list" style="width: 100%" :loading="loading" :default-sort="defaultSort" @sort-change="handleSortChange">
       <el-table-column prop="id" label="ID" width="80" sortable="custom" />
@@ -57,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { pageUsers, syncPaddleCustomers, type SyncPaddleCustomersResult } from '@/api/user'

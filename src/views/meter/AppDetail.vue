@@ -34,6 +34,14 @@
         </template>
         <el-empty v-if="!productReviews.length" description="暂无评价" />
         <el-table v-else :data="productReviews" row-key="id" border>
+          <TableActionColumn>
+            <template #default="{ row }">
+              <el-button type="primary" link @click="openReplyDialog(row)">
+                {{ row.adminReply ? '编辑回复' : '回复' }}
+              </el-button>
+            </template>
+          </TableActionColumn>
+
           <el-table-column label="用户" min-width="180">
             <template #default="{ row }">
               <div class="review-user">
@@ -63,13 +71,6 @@
           </el-table-column>
           <el-table-column label="更新时间" width="180">
             <template #default="{ row }">{{ formatReviewTime(row.updatedAt || row.createdAt) }}</template>
-          </el-table-column>
-          <el-table-column label="操作" width="110" fixed="right">
-            <template #default="{ row }">
-              <el-button type="primary" link @click="openReplyDialog(row)">
-                {{ row.adminReply ? '编辑回复' : '回复' }}
-              </el-button>
-            </template>
           </el-table-column>
         </el-table>
       </el-card>
@@ -108,6 +109,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

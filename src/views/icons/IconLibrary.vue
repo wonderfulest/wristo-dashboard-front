@@ -1,50 +1,53 @@
 <template>
   <div class="page">
     <div class="header">
-      <div class="filters">
-        <el-select
-          v-model="query.category"
-          placeholder="Category"
-          clearable
-          style="width: 160px"
-          @change="handleSearch"
-        >
-          <el-option v-for="c in categories" :key="c.value" :label="c.name" :value="c.value" />
-        </el-select>
-        <el-select
-          v-model="query.active"
-          placeholder="Active"
-          clearable
-          style="width: 120px"
-          @change="handleSearch"
-        >
-          <el-option :value="1" label="Active" />
-          <el-option :value="0" label="Inactive" />
-        </el-select>
-        <el-input
-          v-model="query.keyword"
-          placeholder="Keyword (label/symbol)"
-          clearable
-          style="width: 220px"
-          @change="handleSearch"
-        />
-        <el-button type="primary" @click="handleSearch">Search</el-button>
-        <el-button type="primary" @click="handleAdd">Add</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field">
+          <span class="list-search-label">Category</span>
+          <el-select aria-label="Category"
+            v-model="query.category"
+            placeholder="Category"
+            clearable
+            style="width: 160px"
+            @change="handleSearch"
+          >
+            <el-option v-for="c in categories" :key="c.value" :label="c.name" :value="c.value" />
+          </el-select>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">Active</span>
+          <el-select aria-label="Active"
+            v-model="query.active"
+            placeholder="Active"
+            clearable
+            style="width: 120px"
+            @change="handleSearch"
+          >
+            <el-option :value="1" label="Active" />
+            <el-option :value="0" label="Inactive" />
+          </el-select>
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">Keyword (label/symbol)</span>
+          <el-input aria-label="Keyword (label/symbol)"
+            v-model="query.keyword"
+            placeholder="Keyword (label/symbol)"
+            clearable
+            style="width: 220px"
+            @change="handleSearch"
+          />
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">Search</el-button>
+        </template>
+        <template #actions>
+          <el-button type="primary" @click="handleAdd">Add</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="list" style="width: 100%" v-loading="loading" border @sort-change="handleSortChange">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="iconUnicode" label="Icon Unicode" min-width="160" />
-      <el-table-column prop="symbolCode" label="Symbol Code" min-width="160" />
-      <el-table-column prop="category" label="Category" width="140" />
-      <el-table-column prop="label" label="Label" min-width="160" />
-      <el-table-column prop="isActive" label="Active" width="100" sortable="custom">
-        <template #default="{ row }">
-          <el-tag :type="row.isActive === 1 ? 'success' : 'info'">{{ row.isActive === 1 ? 'Yes' : 'No' }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="Action" width="260" fixed="right">
+      <TableActionColumn>
         <template #default="{ row }">
           <el-button type="primary" link @click="handleEdit(row)">Edit</el-button>
           <el-button type="danger" link @click="handleDelete(row)">Delete</el-button>
@@ -54,6 +57,17 @@
             link
             @click="handleTransfer(row)"
           >转移素材</el-button>
+        </template>
+      </TableActionColumn>
+
+      <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column prop="iconUnicode" label="Icon Unicode" min-width="160" />
+      <el-table-column prop="symbolCode" label="Symbol Code" min-width="160" />
+      <el-table-column prop="category" label="Category" width="140" />
+      <el-table-column prop="label" label="Label" min-width="160" />
+      <el-table-column prop="isActive" label="Active" width="100" sortable="custom">
+        <template #default="{ row }">
+          <el-tag :type="row.isActive === 1 ? 'success' : 'info'">{{ row.isActive === 1 ? 'Yes' : 'No' }}</el-tag>
         </template>
       </el-table-column>
     </el-table>
@@ -121,6 +135,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { IconLibraryVO, IconLibraryCreateDTO, IconLibraryUpdateDTO, IconLibraryPageQueryDTO } from '@/types/icon-library'

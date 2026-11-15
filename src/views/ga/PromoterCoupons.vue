@@ -2,33 +2,53 @@
   <div class="promoter-coupons-container">
     <div class="header">
 
-      <div class="filters">
-        <el-input
-          v-model="couponCodeLike"
-          placeholder="口令（支持模糊匹配）"
-          clearable
-          style="width: 220px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-input
-          v-model="promoterIdInput"
-          placeholder="推广员 ID"
-          clearable
-          style="width: 160px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-select v-model="status" placeholder="状态" clearable style="width: 160px" @change="handleSearch">
-          <el-option label="全部" :value="undefined" />
-          <el-option label="启用" :value="1" />
-          <el-option label="禁用" :value="0" />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-        <el-button type="success" @click="openCreateDialog">新建口令</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">口令（支持模糊匹配）</span>
+          <el-input aria-label="口令（支持模糊匹配）"
+            v-model="couponCodeLike"
+            placeholder="口令（支持模糊匹配）"
+            clearable
+            style="width: 220px"
+            @keyup.enter.native="handleSearch"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">推广员 ID</span>
+          <el-input aria-label="推广员 ID"
+            v-model="promoterIdInput"
+            placeholder="推广员 ID"
+            clearable
+            style="width: 160px"
+            @keyup.enter.native="handleSearch"
+          />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">状态</span>
+          <el-select aria-label="状态" v-model="status" placeholder="状态" clearable style="width: 160px" @change="handleSearch">
+            <el-option label="全部" :value="undefined" />
+            <el-option label="启用" :value="1" />
+            <el-option label="禁用" :value="0" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+        <template #actions>
+          <el-button type="success" @click="openCreateDialog">新建口令</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="pageData.list" style="width: 100%" v-loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openEditDialog(row.id)">编辑</el-button>
+          <el-button type="danger" link @click="handleDelete(row.id)">删除</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="100" />
       <el-table-column prop="couponCode" label="口令" min-width="200" show-overflow-tooltip />
       <el-table-column prop="promoterId" label="推广员ID" width="120" />
@@ -48,12 +68,6 @@
       </el-table-column>
       <el-table-column prop="updatedAt" label="更新时间" width="180">
         <template #default="{ row }">{{ fmtDate(row.updatedAt) }}</template>
-      </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openEditDialog(row.id)">编辑</el-button>
-          <el-button type="danger" link @click="handleDelete(row.id)">删除</el-button>
-        </template>
       </el-table-column>
     </el-table>
 
@@ -135,7 +149,7 @@
           <el-form-item label="最大使用次数">
             <el-input-number v-model="editForm.maxUse" :min="1" :step="1" style="width: 200px" />
           </el-form-item>
-         
+
           <el-form-item label="Paddle 折扣ID">
             <el-input disabled v-model="editForm.paddleDiscountId" />
           </el-form-item>
@@ -166,6 +180,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { PageResponse } from '@/types/api'

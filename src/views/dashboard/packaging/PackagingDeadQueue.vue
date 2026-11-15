@@ -1,30 +1,33 @@
 <template>
   <div class="packaging-dead-queue-container">
     <div class="header">
-      <div class="header-actions">
-        <el-button type="danger" :loading="deleting" :disabled="loading || submittingRequeue" @click="clearAll">一键清空</el-button>
-        <el-button
-          type="primary"
-          :disabled="selectedDeadQueue.length === 0 || deleting || submittingRequeue"
-          @click="openBatchRequeueDialog"
-        >
-          批量重提
-        </el-button>
-        <el-button
-          type="warning"
-          :disabled="deadQueue.length === 0 || deleting || submittingRequeue"
-          @click="openRequeueAllDialog"
-        >
-          一键重提
-        </el-button>
-        <el-button
-          type="danger"
-          :disabled="selectedDeadQueue.length === 0 || loading || submittingRequeue"
-          :loading="deleting"
-          @click="deleteDeadTasks(selectedDeadQueue)"
-        >批量删除</el-button>
-        <el-button @click="fetchDeadQueue" :loading="loading" :disabled="deleting || submittingRequeue">刷新</el-button>
-      </div>
+      <ListSearchPanel>
+
+        <template #actions>
+          <el-button type="danger" :loading="deleting" :disabled="loading || submittingRequeue" @click="clearAll">一键清空</el-button>
+          <el-button
+            type="primary"
+            :disabled="selectedDeadQueue.length === 0 || deleting || submittingRequeue"
+            @click="openBatchRequeueDialog"
+          >
+            批量重提
+          </el-button>
+          <el-button
+            type="warning"
+            :disabled="deadQueue.length === 0 || deleting || submittingRequeue"
+            @click="openRequeueAllDialog"
+          >
+            一键重提
+          </el-button>
+          <el-button
+            type="danger"
+            :disabled="selectedDeadQueue.length === 0 || loading || submittingRequeue"
+            :loading="deleting"
+            @click="deleteDeadTasks(selectedDeadQueue)"
+          >批量删除</el-button>
+          <el-button @click="fetchDeadQueue" :loading="loading" :disabled="deleting || submittingRequeue">刷新</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-alert
@@ -45,6 +48,24 @@
       v-loading="loading"
       @selection-change="handleSelectionChange"
     >
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-link
+            v-if="row.lastBuildLogPath"
+            class="build-log-link"
+            type="primary"
+            :underline="false"
+            :href="row.lastBuildLogPath"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="查看该任务最近一次打包日志"
+          >查看日志</el-link>
+          <span v-else class="build-log-empty">暂无日志</span>
+          <el-button type="primary" link :disabled="deleting || submittingRequeue" @click="openRequeueDialog(row)">重新提交</el-button>
+          <el-button type="danger" link :disabled="loading || deleting || submittingRequeue" @click="deleteDeadTasks([row])">删除</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="进入死信时间" width="180">
@@ -99,23 +120,6 @@
           {{ formatDateTime(row.updatedAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="260" fixed="right">
-        <template #default="{ row }">
-          <el-link
-            v-if="row.lastBuildLogPath"
-            class="build-log-link"
-            type="primary"
-            :underline="false"
-            :href="row.lastBuildLogPath"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="查看该任务最近一次打包日志"
-          >查看日志</el-link>
-          <span v-else class="build-log-empty">暂无日志</span>
-          <el-button type="primary" link :disabled="deleting || submittingRequeue" @click="openRequeueDialog(row)">重新提交</el-button>
-          <el-button type="danger" link :disabled="loading || deleting || submittingRequeue" @click="deleteDeadTasks([row])">删除</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <el-dialog v-model="requeueDialogVisible" title="重新提交死信任务" width="420px">
@@ -152,6 +156,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {

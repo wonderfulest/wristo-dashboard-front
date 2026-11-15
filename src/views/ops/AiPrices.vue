@@ -4,8 +4,19 @@
     <el-alert title="每个模型选择按 Token 或按张计费。输入、输出均按录入的最高价计算，不区分缓存、阶梯或图片规格。新版本不改写历史调用成本。" type="info" :closable="false" show-icon />
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-card shadow="never">
-      <div class="filters"><el-input v-model="keyword" placeholder="筛选模型名称" clearable style="max-width:280px" /><el-button :loading="loading" @click="load">刷新</el-button><el-button v-if="selectedVersion" @click="$router.replace('/ops/ai-prices')">查看全部版本</el-button></div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">关键词</span>
+          <el-input aria-label="关键词" v-model="keyword" placeholder="筛选模型名称" clearable style="max-width:280px" />
+        </div>
+        <template #actions>
+          <el-button :loading="loading" @click="load">刷新</el-button>
+          <el-button v-if="selectedVersion" @click="$router.replace('/ops/ai-prices')">查看全部版本</el-button>
+        </template>
+      </ListSearchPanel>
       <el-table :data="filtered" v-loading="loading" empty-text="尚未配置价格，请依据官方来源录入最高单价。" row-key="id">
+        <TableActionColumn><template #default="{row}"><a :href="row.sourceUrl" target="_blank" rel="noopener noreferrer">官方来源</a><el-button link type="primary" @click="openCreate(row)">新建版本</el-button></template></TableActionColumn>
+
         <el-table-column label="模型" min-width="220"><template #default="{row}"><strong>{{ row.model }}</strong><div class="muted">{{ row.provider }}</div></template></el-table-column>
         <el-table-column label="计费方式" width="110"><template #default="{row}">{{ row.rules.mode === 'TOKENS' ? '按 Token' : '按张' }}</template></el-table-column>
         <el-table-column prop="currency" label="币种" width="80" />
@@ -14,7 +25,6 @@
         <el-table-column label="每张最高价" min-width="120"><template #default="{row}">{{ rate(row.rules.image) }}</template></el-table-column>
         <el-table-column label="生效时间（北京时间）" min-width="195"><template #default="{row}">{{ time(row.effectiveAt) }}<div><el-tag :type="versionStatus(row)==='当前生效' ? 'success' : 'info'">{{ versionStatus(row) }}</el-tag></div></template></el-table-column>
         <el-table-column label="版本 / 操作人" min-width="160"><template #default="{row}"><el-tooltip :content="row.id"><span>{{ row.id.slice(0,8) }}</span></el-tooltip><div class="muted">{{ row.createdBy }}</div></template></el-table-column>
-        <el-table-column label="操作" width="170" fixed="right"><template #default="{row}"><a :href="row.sourceUrl" target="_blank" rel="noopener noreferrer">官方来源</a><el-button link type="primary" @click="openCreate(row)">新建版本</el-button></template></el-table-column>
       </el-table>
       <p class="muted">显示最近 1000 个版本。历史版本只读；定价仅用于成本估算，不改变用户 AI 点数扣费。</p>
     </el-card>
@@ -41,6 +51,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'

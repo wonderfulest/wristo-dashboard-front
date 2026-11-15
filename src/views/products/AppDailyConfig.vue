@@ -1,15 +1,32 @@
 <template>
   <div class="app-daily-config-container">
     <div class="header">
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <AppSearchSelect v-model="searchAppId" :width="'240px'" />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-        <el-button type="success" @click="showCreate = true">新增配置</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">应用名称 / ID</span>
+          <AppSearchSelect aria-label="应用名称 / ID" v-model="searchAppId" :width="'240px'" />
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+        <template #actions>
+          <el-button type="success" @click="showCreate = true">新增配置</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="rows" style="width: 100%" v-loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openEdit(row)">编辑配置</el-button>
+          <el-divider direction="vertical" />
+          <el-button type="warning" link @click="goEditRelations(row)">图片库</el-button>
+          <el-divider direction="vertical" />
+          <el-button type="success" link @click="goDailyPicks(row)">每日图片</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="90" />
       <el-table-column label="应用" min-width="200">
         <template #default="{ row }">
@@ -50,15 +67,6 @@
       <el-table-column label="更新时间" width="180">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openEdit(row)">编辑配置</el-button>
-          <el-divider direction="vertical" />
-          <el-button type="warning" link @click="goEditRelations(row)">图片库</el-button>
-          <el-divider direction="vertical" />
-          <el-button type="success" link @click="goDailyPicks(row)">每日图片</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -78,6 +86,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

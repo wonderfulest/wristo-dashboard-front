@@ -1,40 +1,64 @@
 <template>
   <div class="unsupport-container">
     <div class="header">
-      <div class="filters">
-        <el-select
-          v-model="selectedDevice"
-          value-key="id"
-          placeholder="选择设备型号（支持名称模糊搜索）"
-          filterable
-          remote
-          :remote-method="searchDevices"
-          :loading="deviceLoading"
-          clearable
-          style="width: 320px"
-          @visible-change="(v:boolean)=>{ if(v) { searchDevices(searchKeyword); ensureSelectedInOptions() } }"
-          @change="onDeviceSelected"
-        >
-          <el-option
-            v-for="d in deviceOptions"
-            :key="d.id"
-            :label="d.displayName"
-            :value="d"
-          />
-        </el-select>
-        <el-select v-model="sortOrder" placeholder="排序" style="width: 180px">
-          <el-option label="下载量倒序" value="download:desc" />
-          <el-option label="下载量升序" value="download:asc" />
-          <el-option label="创建时间倒序" value="created_at:desc" />
-          <el-option label="创建时间升序" value="created_at:asc" />
-        </el-select>
-        <el-button type="primary" :loading="loading" @click="handleQuery">查询</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field">
+          <span class="list-search-label">选择设备型号（支持名称模糊搜索）</span>
+          <el-select aria-label="选择设备型号（支持名称模糊搜索）"
+            v-model="selectedDevice"
+            value-key="id"
+            placeholder="选择设备型号（支持名称模糊搜索）"
+            filterable
+            remote
+            :remote-method="searchDevices"
+            :loading="deviceLoading"
+            clearable
+            style="width: 320px"
+            @visible-change="(v:boolean)=>{ if(v) { searchDevices(searchKeyword); ensureSelectedInOptions() } }"
+            @change="onDeviceSelected"
+          >
+            <el-option
+              v-for="d in deviceOptions"
+              :key="d.id"
+              :label="d.displayName"
+              :value="d"
+            />
+          </el-select>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">排序方式</span>
+          <el-select aria-label="排序方式" v-model="sortOrder" placeholder="排序" style="width: 180px">
+            <el-option label="下载量倒序" value="download:desc" />
+            <el-option label="下载量升序" value="download:asc" />
+            <el-option label="创建时间倒序" value="created_at:desc" />
+            <el-option label="创建时间升序" value="created_at:asc" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" :loading="loading" @click="handleQuery">查询</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-alert v-if="!deviceId" type="info" show-icon title="请选择设备后进行查询" class="tip" />
 
     <el-table :data="list" v-loading="loading" style="width: 100%" size="small">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <div class="row-actions">
+            <el-button
+              size="small"
+              type="primary"
+              :loading="isRepackSubmitting(row)"
+              @click="submitRepackTask(row)"
+            >
+              重新打包
+            </el-button>
+            <el-button size="small" @click="openCreateTicket(row)">创建工单</el-button>
+          </div>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="appId" label="ID" width="80" />
       <el-table-column label="应用" min-width="300">
         <template #default="{ row }">
@@ -51,22 +75,6 @@
       <el-table-column prop="createdAt" label="创建时间" width="160">
         <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="210">
-        <template #default="{ row }">
-          <div class="row-actions">
-            <el-button
-              size="small"
-              type="primary"
-              :loading="isRepackSubmitting(row)"
-              @click="submitRepackTask(row)"
-            >
-              重新打包
-            </el-button>
-            <el-button size="small" @click="openCreateTicket(row)">创建工单</el-button>
-          </div>
-        </template>
-      </el-table-column>
-      
     </el-table>
 
     <!-- 创建工单弹窗 -->
@@ -130,11 +138,13 @@
       />
     </div>
 
-    
+
   </div>
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createProductPackageTask, fetchUnSupportByDevicePage } from '@/api/products'
@@ -147,7 +157,7 @@ import { useUserStore } from '@/store/user'
 import type { UserInfo } from '@/types/api'
 import type { TicketCreateDTO } from '@/types/api'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
- 
+
 
 const userStore = useUserStore()
 

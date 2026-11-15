@@ -1,14 +1,32 @@
 <template>
   <div class="merchant-page">
 
-    <div class="filters">
-      <UserSelect v-model="searchUserId" placeholder="按商家用户搜索" @change="handleUserChange" />
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="handleReset">重置</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field">
+        <span class="list-search-label">商家用户</span>
+        <UserSelect aria-label="商家用户" v-model="searchUserId" placeholder="按商家用户搜索" @change="handleUserChange" />
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </template>
+    </ListSearchPanel>
 
     <div class="table-scroll" role="region" aria-label="商家列表表格，可横向滚动" tabindex="0">
     <el-table :data="users" style="width: 100%" :loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-switch
+            :model-value="(row?.isActive ?? 0) === 1"
+            :loading="activeLoadingIds.has(Number(row?.id))"
+            @change="(val: any) => handleToggleActive(row, val)"
+            style="margin-right: 10px;"
+          />
+          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
+          <el-button type="primary" link @click="openDesignerConfig(row)">查看默认配置</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="username" label="用户名" width="100" />
       <el-table-column label="头像" width="80">
@@ -51,18 +69,6 @@
       <el-table-column label="应用平均下载量" width="140">
         <template #default="{ row }">
           {{ formatAverageDownloads(row) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="340" fixed="right" >
-        <template #default="{ row }">
-          <el-switch
-            :model-value="(row?.isActive ?? 0) === 1"
-            :loading="activeLoadingIds.has(Number(row?.id))"
-            @change="(val: any) => handleToggleActive(row, val)"
-            style="margin-right: 10px;"
-          />
-          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
-          <el-button type="primary" link @click="openDesignerConfig(row)">查看默认配置</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -177,6 +183,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'

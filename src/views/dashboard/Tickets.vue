@@ -1,46 +1,77 @@
 <template>
   <div class="tickets-page">
-    <div class="filters">
-      <el-select
-        v-model="statusesSelected"
-        placeholder="Status"
-        clearable
-        multiple
-        filterable
-        style="width: 300px"
-      >
-        <el-option v-for="s in statuses" :key="s" :label="formatEnumLabel(s)" :value="s" />
-      </el-select>
-      <el-select
-        v-model="prioritiesSelected"
-        placeholder="Priority"
-        clearable
-        multiple
-        filterable
-        style="width: 240px"
-      >
-        <el-option v-for="p in priorities" :key="p" :label="formatEnumLabel(p)" :value="p" />
-      </el-select>
-      <el-date-picker
-        v-model="dateRange"
-        type="datetimerange"
-        start-placeholder="Begin at"
-        end-placeholder="End at"
-        value-format="YYYY-MM-DD HH:mm:ss"
-      />
-      <el-select v-model="orderBy" placeholder="Sort" clearable style="width: 180px" @change="onSortChange">
-        <el-option label="Created desc" value="id:desc" />
-        <el-option label="Created asc" value="id:asc" />
-      </el-select>
-      <el-button type="primary" @click="search(1)">Search</el-button>
-      <el-button @click="reset">Reset</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field">
+        <span class="list-search-label">Status</span>
+        <el-select aria-label="Status"
+          v-model="statusesSelected"
+          placeholder="Status"
+          clearable
+          multiple
+          filterable
+          style="width: 300px"
+        >
+          <el-option v-for="s in statuses" :key="s" :label="formatEnumLabel(s)" :value="s" />
+        </el-select>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">Priority</span>
+        <el-select aria-label="Priority"
+          v-model="prioritiesSelected"
+          placeholder="Priority"
+          clearable
+          multiple
+          filterable
+          style="width: 240px"
+        >
+          <el-option v-for="p in priorities" :key="p" :label="formatEnumLabel(p)" :value="p" />
+        </el-select>
+      </div>
+      <div class="list-search-field list-search-field--range">
+        <span class="list-search-label">日期范围</span>
+        <el-date-picker aria-label="日期范围"
+          v-model="dateRange"
+          type="datetimerange"
+          start-placeholder="Begin at"
+          end-placeholder="End at"
+          value-format="YYYY-MM-DD HH:mm:ss"
+        />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">Sort</span>
+        <el-select aria-label="Sort" v-model="orderBy" placeholder="Sort" clearable style="width: 180px" @change="onSortChange">
+          <el-option label="Created desc" value="id:desc" />
+          <el-option label="Created asc" value="id:asc" />
+        </el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="search(1)">Search</el-button>
+        <el-button @click="reset">Reset</el-button>
+      </template>
+    </ListSearchPanel>
 
     <div v-if="loading" class="loading">Loading tickets...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
 
     <div v-else class="table-container">
       <el-table :data="pageData.list" style="width: 100%">
+        <TableActionColumn>
+          <template #default="{ row }">
+            <el-button type="primary" link @click="openDetail(row)">查看</el-button>
+            <el-divider direction="vertical" />
+            <el-button type="warning" link @click="openStatusDialog(row)">状态</el-button>
+            <el-divider direction="vertical" />
+            <el-button type="info" link @click="openComment(row)">评论</el-button>
+            <el-divider direction="vertical" />
+            <el-button
+              type="danger"
+              link
+              :disabled="row.status === 'closed' || closingIds.has(row.id)"
+              @click="closeRow(row)"
+            >关闭</el-button>
+          </template>
+        </TableActionColumn>
+
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column label="Title" min-width="240">
           <template #default="{ row }">
@@ -87,22 +118,6 @@
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180">
           <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
-        </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="openDetail(row)">查看</el-button>
-            <el-divider direction="vertical" />
-            <el-button type="warning" link @click="openStatusDialog(row)">状态</el-button>
-            <el-divider direction="vertical" />
-            <el-button type="info" link @click="openComment(row)">评论</el-button>
-            <el-divider direction="vertical" />
-            <el-button
-              type="danger"
-              link
-              :disabled="row.status === 'closed' || closingIds.has(row.id)"
-              @click="closeRow(row)"
-            >关闭</el-button>
-          </template>
         </el-table-column>
       </el-table>
 
@@ -213,6 +228,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { fetchTicketPage, getTicketDetail, fetchTicketComments, fetchTicketHistory, closeTicket, updateTicketStatus, addTicketComment } from '@/api/ticket'

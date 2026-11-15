@@ -1,6 +1,6 @@
 <template>
   <div class="global-layout">
-    <HeaderBar @open-mobile-menu="mobileMenuVisible = true" />
+    <HeaderBar :mobile-menu-open="mobileMenuVisible" @open-mobile-menu="mobileMenuVisible = true" />
     <div class="side-main-wrapper">
       <SideMenu :collapsed="isSideMenuCollapsed" @toggle-collapse="toggleSideMenu" />
       <!-- Main Content -->
@@ -18,7 +18,7 @@
       title="菜单"
       direction="ltr"
       size="82%"
-      custom-class="mobile-menu-drawer"
+      class="mobile-menu-drawer"
     >
       <nav class="mobile-menu-tree" aria-label="手机菜单">
         <section v-for="group in topMenus" :key="group.key" class="mobile-menu-group">
@@ -82,6 +82,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useResponsive } from '@/composables/useResponsive'
 import { useRoute } from 'vue-router'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import HeaderBar from '@/layout/components/HeaderBar.vue'
@@ -95,6 +96,7 @@ const mobileMenuVisible = ref(false)
 const openMobileGroups = ref<Set<string>>(new Set())
 const openMobileSubmenus = ref<Set<string>>(new Set())
 const route = useRoute()
+const { isTablet } = useResponsive()
 const toggleSideMenu = () => {
   isSideMenuCollapsed.value = !isSideMenuCollapsed.value
 }
@@ -126,6 +128,10 @@ const syncActiveMobileMenu = () => {
 
 watch(mobileMenuVisible, (visible) => {
   if (visible) syncActiveMobileMenu()
+})
+watch(() => route.fullPath, closeMobileMenu)
+watch(isTablet, (tablet) => {
+  if (!tablet) closeMobileMenu()
 })
 </script>
 
@@ -202,6 +208,7 @@ watch(mobileMenuVisible, (visible) => {
 }
 .main-content {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 64px);
@@ -210,6 +217,7 @@ watch(mobileMenuVisible, (visible) => {
 
 .content-wrapper {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -217,6 +225,7 @@ watch(mobileMenuVisible, (visible) => {
 
 .page-content {
   flex: 1;
+  min-width: 0;
   padding: 20px;
   overflow-y: auto;
   background: #fff;
@@ -348,6 +357,10 @@ watch(mobileMenuVisible, (visible) => {
 }
 
 @media (max-width: 768px) {
+  .footer {
+    position: static;
+  }
+
   .global-layout {
     width: 100%;
     overflow-x: hidden;
@@ -389,7 +402,7 @@ watch(mobileMenuVisible, (visible) => {
 
 .mobile-menu-group-title {
   display: flex;
-  min-height: 42px;
+  min-height: 44px;
   width: 100%;
   align-items: center;
   justify-content: space-between;
@@ -429,7 +442,7 @@ watch(mobileMenuVisible, (visible) => {
 
 .mobile-menu-subtitle {
   display: flex;
-  min-height: 36px;
+  min-height: 44px;
   width: 100%;
   align-items: center;
   justify-content: space-between;
@@ -451,7 +464,7 @@ watch(mobileMenuVisible, (visible) => {
 
 .mobile-menu-link {
   display: flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   padding: 0 16px;
   border-radius: 8px;
@@ -476,7 +489,7 @@ watch(mobileMenuVisible, (visible) => {
   transform: rotate(90deg);
 }
 
-:deep(.mobile-menu-drawer .el-drawer__header) {
+:global(.mobile-menu-drawer .el-drawer__header) {
   margin-bottom: 8px;
 }
 </style>

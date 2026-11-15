@@ -1,24 +1,48 @@
 <template>
   <div class="page">
     <div class="header">
-      <div class="filters">
-        <el-select v-model="query.category" placeholder="类别" clearable style="width: 160px">
-          <el-option v-for="c in categories" :key="c" :label="c" :value="c" />
-        </el-select>
-        <el-select v-model="query.dataType" placeholder="数据类型" clearable style="width: 160px">
-          <el-option v-for="t in dataTypes" :key="t" :label="t" :value="t" />
-        </el-select>
-        <el-select v-model="query.isActive" placeholder="启用" clearable style="width: 120px">
-          <el-option :value="1" label="启用" />
-          <el-option :value="0" label="禁用" />
-        </el-select>
-        <el-input v-model="query.variableKeyLike" placeholder="变量键关键词" clearable style="width: 220px" />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button type="primary" @click="openAdd">新增</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field">
+          <span class="list-search-label">类别</span>
+          <el-select aria-label="类别" v-model="query.category" placeholder="类别" clearable style="width: 160px">
+            <el-option v-for="c in categories" :key="c" :label="c" :value="c" />
+          </el-select>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">数据类型</span>
+          <el-select aria-label="数据类型" v-model="query.dataType" placeholder="数据类型" clearable style="width: 160px">
+            <el-option v-for="t in dataTypes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">启用</span>
+          <el-select aria-label="启用" v-model="query.isActive" placeholder="启用" clearable style="width: 120px">
+            <el-option :value="1" label="启用" />
+            <el-option :value="0" label="禁用" />
+          </el-select>
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">变量键关键词</span>
+          <el-input aria-label="变量键关键词" v-model="query.variableKeyLike" placeholder="变量键关键词" clearable style="width: 220px" />
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+        </template>
+        <template #actions>
+          <el-button type="primary" @click="openAdd">新增</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="list" style="width: 100%" v-loading="loading" border @sort-change="handleSortChange">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+          <el-button link type="info" @click="openPreview(row)">预览上下文</el-button>
+          <el-button link type="danger" @click="confirmDelete(row)">删除</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" sortable="custom" />
       <el-table-column prop="variableKey" label="变量键" min-width="160" sortable="custom" />
       <el-table-column prop="label" label="标签" min-width="160" />
@@ -34,13 +58,6 @@
         </template>
       </el-table-column>
       <el-table-column prop="sortOrder" label="排序" width="90" sortable="custom" />
-      <el-table-column label="操作" width="240" fixed="right">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-          <el-button link type="info" @click="openPreview(row)">预览上下文</el-button>
-          <el-button link type="danger" @click="confirmDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -121,6 +138,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'

@@ -25,16 +25,17 @@
       <el-button @click="load" :disabled="saving">刷新</el-button>
       <p>仅影响使用全局默认值的表盘，单独设置的积分和历史兑换记录不变。</p>
     </el-card>
-    <el-card shadow="never"><template #header>设置表盘兑换渠道</template><AppSearchSelect v-model="appId" placeholder="选择表盘" width="100%" style="max-width: 480px" /></el-card>
+    <el-card shadow="never"><template #header>设置表盘兑换渠道</template><AppSearchSelect v-model="appId" width="100%" style="max-width: 480px" /></el-card>
     <AppPointsSettings v-if="appId" :key="`${appId}-${version}`" :app-id="appId" />
     <el-card shadow="never" v-loading="resourcesLoading">
       <template #header>资源兑换积分</template>
       <el-alert v-if="resourcesError" :title="resourcesError" type="error" :closable="false" />
       <el-table :data="resources" empty-text="暂无可配置的兑换资源">
+        <TableActionColumn><template #default="{ row }"><el-button type="primary" :loading="resourceSaving === row.id" :disabled="resourceSaving !== null" @click="saveResource(row)">保存</el-button></template></TableActionColumn>
+
         <el-table-column prop="name" label="资源名称" min-width="180" />
         <el-table-column label="兑换状态" width="100"><template #default="{ row }">{{ row.enabled ? '已开放' : '未开放' }}</template></el-table-column>
         <el-table-column label="所需积分" min-width="180"><template #default="{ row }"><el-input-number v-model="row.points" :min="1" :max="100000" :precision="0" :disabled="resourceSaving !== null" /></template></el-table-column>
-        <el-table-column label="操作" width="100"><template #default="{ row }"><el-button type="primary" :loading="resourceSaving === row.id" :disabled="resourceSaving !== null" @click="saveResource(row)">保存</el-button></template></el-table-column>
       </el-table>
       <el-button :disabled="resourceSaving !== null" @click="loadResources">刷新资源</el-button>
     </el-card>
@@ -42,6 +43,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'

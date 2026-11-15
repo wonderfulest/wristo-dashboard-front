@@ -4,8 +4,8 @@
       <div><h2>用量与成本</h2><p>核对 AI 调用和供应商预估成本，用户 AI 点数独立记账。</p></div>
       <div class="actions"><el-button @click="openAccount(filters.userId)">用户账户</el-button><el-button @click="$router.push('/ops/ai-prices')">成本价格</el-button></div>
     </header>
-    <el-card shadow="never" class="filter-card">
-      <el-form inline @submit.prevent="search">
+    <ListSearchPanel>
+      <el-form label-position="top" class="list-search-form" inline @submit.prevent="search">
         <el-form-item label="日期"><el-date-picker v-model="dates" type="daterange" value-format="YYYY-MM-DD" :clearable="false" start-placeholder="开始日期" end-placeholder="结束日期" /></el-form-item>
         <el-form-item label="用户"><UserSelect v-model="filters.userId" placeholder="搜索用户名或邮箱" class="user-filter" /></el-form-item>
         <el-form-item><el-button type="primary" native-type="submit" :loading="loading">查询</el-button><el-button :disabled="loading" @click="reset">重置</el-button><el-button link type="primary" :aria-expanded="moreFilters" @click="moreFilters = !moreFilters">{{ moreFilters ? '收起筛选' : '更多筛选' }}</el-button></el-form-item>
@@ -16,9 +16,11 @@
           <p v-if="modelError" class="muted">{{ modelError }}</p>
         </div>
       </el-form>
-      <div class="filter-footer"><div class="quick-dates"><el-button size="small" @click="quickRange(1)">今天</el-button><el-button size="small" @click="quickRange(7)">近 7 天</el-button><el-button size="small" @click="quickRange(30)">近 30 天</el-button></div><span class="muted">北京时间（UTC+8），含结束日期。</span></div>
-      <p v-if="rangeError" class="range-error" role="alert">{{ rangeError }}</p>
-    </el-card>
+      <template #actions>
+        <div class="filter-footer"><div class="quick-dates"><el-button size="small" @click="quickRange(1)">今天</el-button><el-button size="small" @click="quickRange(7)">近 7 天</el-button><el-button size="small" @click="quickRange(30)">近 30 天</el-button></div><span class="muted">北京时间（UTC+8），含结束日期。</span></div>
+<p v-if="rangeError" class="range-error" role="alert">{{ rangeError }}</p>
+      </template>
+    </ListSearchPanel>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <section class="stats" v-loading="loading">
       <el-card shadow="never"><span>调用次数</span><strong>{{ count(overview?.totals.calls) }}</strong><small>失败 {{ count(overview?.totals.failed_calls) }} · 待完成 {{ count(overview?.totals.pending_calls) }}</small></el-card>
@@ -32,6 +34,8 @@
       <div class="report-heading"><strong>用量明细</strong><span class="muted">{{ applied.from }} 至 {{ applied.to }}</span></div>
       <el-tabs v-model="group" @tab-change="changeGroup"><el-tab-pane label="用户排行" name="users" /><el-tab-pane label="模型汇总" name="models" /><el-tab-pane label="调用明细" name="calls" /></el-tabs>
       <el-table :data="rows" v-loading="loading" :empty-text="error ? '读取失败，请重新查询' : '当前条件下暂无调用记录'" :row-key="rowKey">
+        <TableActionColumn v-if="group === 'users'"><template #default="{row}"><el-button link type="primary" @click="userDetails(row.user_id)">调用明细</el-button><el-button link type="primary" @click="openAccount(Number(row.user_id))">用户账户</el-button></template></TableActionColumn>
+
         <el-table-column v-if="group !== 'models'" label="用户" min-width="210"><template #default="{row}"><strong>{{ row.username || row.user_id }}</strong><div class="muted">{{ row.email || `ID: ${row.user_id}` }}</div></template></el-table-column>
         <el-table-column v-if="group !== 'users'" label="模型" min-width="200"><template #default="{row}">{{ row.model }}<div class="muted">{{ row.provider }}</div></template></el-table-column>
         <el-table-column v-if="group !== 'calls'" prop="calls" label="调用次数" width="95" />
@@ -43,13 +47,14 @@
         <el-table-column label="图片" width="90"><template #default="{row}">{{ amount(row.image_count) }}</template></el-table-column>
         <el-table-column label="预估成本" min-width="180"><template #default="{row}"><strong>{{ row.estimated_cost == null ? '—' : `${row.cost_currency} ${money(row.estimated_cost)}` }}</strong><div class="muted" v-if="group === 'calls'">{{ costStatuses[row.cost_status] || '未估算' }}</div><div class="muted" v-else>未定价 {{ row.unpriced_calls || 0 }} · 缺用量 {{ row.unknown_cost_calls || 0 }}</div></template></el-table-column>
         <el-table-column v-if="group === 'calls'" label="时间 / 价格版本" min-width="210"><template #default="{row}">{{ time(row.created_at) }}<div><el-button v-if="row.pricing_version" link type="primary" @click="$router.push({path:'/ops/ai-prices', query:{version:row.pricing_version}})">查看价格版本</el-button><span v-else class="muted">未关联价格</span></div><el-tooltip :content="row.request_id"><span class="muted">请求 {{ row.request_id?.slice(0,8) }}</span></el-tooltip></template></el-table-column>
-        <el-table-column v-if="group === 'users'" label="操作" width="180" fixed="right"><template #default="{row}"><el-button link type="primary" @click="userDetails(row.user_id)">调用明细</el-button><el-button link type="primary" @click="openAccount(Number(row.user_id))">用户账户</el-button></template></el-table-column>
       </el-table>
       <div class="pagination"><span class="muted">同一用户或模型的不同币种分别列行，未知用量显示“—”。</span><el-pagination v-model:current-page="page" v-model:page-size="pageSize" :page-sizes="[20,50,100]" :total="total" layout="total, sizes, prev, pager, next" @current-change="commitQuery" @size-change="changeGroup" /></div>
     </el-card>
   </div>
 </template>
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserSelect from '@/components/users/UserSelect.vue'
@@ -136,9 +141,7 @@ onUnmounted(() => { sequence++ })
 .actions { justify-content: flex-end; } .actions .el-button + .el-button { margin-left: 0; }
 h2 { margin: 0 0 4px; font-size: 22px; } p { margin: 4px 0; }
 p, .muted, small { color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.7; }
-.filter-card :deep(.el-card__body), .report-card :deep(.el-card__body) { padding: 16px; }
-.filter-card :deep(.el-form-item) { margin-bottom: 12px; margin-right: 20px; }
-.filter-card :deep(.el-date-editor) { width: 260px; }
+.report-card :deep(.el-card__body) { padding: 16px; }
 .user-filter { width: 220px; } .provider-filter, .scene-filter { width: 160px; } .model-filter { width: 260px; }
 .advanced-filters { border-top: 1px solid var(--el-border-color-lighter); padding-top: 12px; }
 .filter-footer { justify-content: flex-start; } .quick-dates { display: flex; gap: 8px; } .quick-dates .el-button + .el-button { margin-left: 0; }
@@ -156,9 +159,7 @@ p, .muted, small { color: var(--el-text-color-secondary); font-size: 12px; line-
 @media(max-width:1100px) { .stats { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) {
   .usage-page { padding: 12px; } .stats { gap: 8px; } .stats strong { font-size: 21px; }
-  .pagination { overflow: auto; } .usage-page :deep(.el-form-item) { display: flex; width: 100%; margin-right: 0; }
-  .usage-page :deep(.el-form-item__label) { width: 52px !important; flex: 0 0 52px; justify-content: flex-start; text-align: left; }
-  .usage-page :deep(.el-form-item__content) { flex: 1; min-width: 0; }
+  .pagination { overflow: auto; }
   .usage-page :deep(.el-form-item__content > .el-select), .usage-page :deep(.el-form-item__content > .el-input), .usage-page :deep(.el-form-item__content > .el-date-editor) { width: 100% !important; min-width: 0; }
 }
 </style>

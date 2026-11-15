@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getGameConfigs, getGameOverview, setGameWebsiteVisibility, type GameConfig, type GameOverviewRow, type GameOverview, type GameMetrics } from '@/api/games'
@@ -84,6 +85,16 @@ onMounted(() => { load(); loadConfigs() })
       <el-card shadow="never"><template #header><div class="filters"><h2>各游戏运营数据</h2><el-input v-model="query" placeholder="搜索游戏名称或标识" clearable style="max-width:280px" aria-label="搜索游戏"/></div></template>
         <el-alert v-if="configError" type="warning" title="游戏配置加载失败，网站展示操作暂不可用" :closable="false"><el-button link type="primary" @click="loadConfigs">重试</el-button></el-alert>
         <el-table :data="rows" stripe empty-text="没有符合条件的游戏">
+          <TableActionColumn>
+            <template #default="{ row }">
+              <div class="game-actions">
+                <el-button link :type="configs[row.key]?.websiteVisible ? 'danger' : 'primary'" :loading="visibilityBusy[row.key]" :disabled="configLoading || configError || typeof configs[row.key]?.websiteVisible !== 'boolean'" @click="toggleWebsiteVisibility(row)">{{ configs[row.key]?.websiteVisible === false ? '重新上线' : '下线' }}</el-button>
+                <router-link :to="`/games/${row.key}`">运营详情</router-link>
+                <el-link v-if="downloadUrls[row.key]" :href="downloadUrls[row.key]" target="_blank" rel="noopener noreferrer" type="primary">跳转到商店 ↗</el-link>
+              </div>
+            </template>
+          </TableActionColumn>
+
           <el-table-column label="游戏" min-width="240" fixed>
             <template #default="{ row }">
               <div class="game-identity">
@@ -109,15 +120,6 @@ onMounted(() => { load(); loadConfigs() })
           <el-table-column prop="metrics.newPlayers" label="新增玩家" min-width="105" sortable />
           <el-table-column prop="metrics.totalPlayers" label="累计玩家" min-width="105" sortable />
           <el-table-column prop="metrics.uploadedRuns" label="上传结算" min-width="105" sortable />
-          <el-table-column label="操作" width="310" fixed="right">
-            <template #default="{ row }">
-              <div class="game-actions">
-                <el-button link :type="configs[row.key]?.websiteVisible ? 'danger' : 'primary'" :loading="visibilityBusy[row.key]" :disabled="configLoading || configError || typeof configs[row.key]?.websiteVisible !== 'boolean'" @click="toggleWebsiteVisibility(row)">{{ configs[row.key]?.websiteVisible === false ? '重新上线' : '下线' }}</el-button>
-                <router-link :to="`/games/${row.key}`">运营详情</router-link>
-                <el-link v-if="downloadUrls[row.key]" :href="downloadUrls[row.key]" target="_blank" rel="noopener noreferrer" type="primary">跳转到商店 ↗</el-link>
-              </div>
-            </template>
-          </el-table-column>
         </el-table>
       </el-card>
     </template>

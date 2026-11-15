@@ -2,19 +2,33 @@
   <section class="custom-orders">
     <div class="page-heading"><div><h1>定制订单</h1><p>查看客户需求和素材，跟进付款与交付。</p></div><el-button :loading="loading" @click="load">刷新</el-button></div>
     <div class="plans"><span><b>$9.90</b> 安装包交付 · 指定型号，不上架</span><span><b>$19.90</b> 包上架交付 · Garmin Connect IQ 商店</span></div>
-    <div class="filters"><el-input v-model="search" clearable placeholder="搜索订单号、邮箱或型号" @keyup.enter="searchOrders" @clear="searchOrders" />
-      <el-select v-model="paymentStatus" clearable placeholder="付款状态" @change="searchOrders"><el-option v-for="(label, value) in paymentLabels" :key="value" :label="label" :value="value" /></el-select>
-      <el-select v-model="workStatus" clearable placeholder="制作状态" @change="searchOrders"><el-option v-for="(label, value) in workLabels" :key="value" :label="label" :value="value" /></el-select><el-button type="primary" @click="searchOrders">查询</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">订单号、邮箱或型号</span>
+        <el-input aria-label="订单号、邮箱或型号" v-model="search" clearable placeholder="搜索订单号、邮箱或型号" @keyup.enter="searchOrders" @clear="searchOrders" />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">付款状态</span>
+        <el-select aria-label="付款状态" v-model="paymentStatus" clearable placeholder="付款状态" @change="searchOrders"><el-option v-for="(label, value) in paymentLabels" :key="value" :label="label" :value="value" /></el-select>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">制作状态</span>
+        <el-select aria-label="制作状态" v-model="workStatus" clearable placeholder="制作状态" @change="searchOrders"><el-option v-for="(label, value) in workLabels" :key="value" :label="label" :value="value" /></el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="searchOrders">查询</el-button>
+      </template>
+    </ListSearchPanel>
     <el-alert v-if="loadError" type="error" title="订单加载失败，请点击刷新重试。" :closable="false" />
     <el-table v-loading="loading" :data="rows" stripe empty-text="暂无定制订单" @row-dblclick="openDetail">
+      <TableActionColumn><template #default="{ row }"><el-button link type="primary" @click="openDetail(row)">查看订单</el-button></template></TableActionColumn>
+
       <el-table-column label="订单 / 时间" min-width="210"><template #default="{ row }"><div class="order-id">{{ row.id }}</div><small>{{ row.createdAt }}</small></template></el-table-column>
       <el-table-column prop="email" label="客户邮箱" min-width="200" show-overflow-tooltip />
       <el-table-column label="交付方案" min-width="145"><template #default="{ row }">{{ planName(row.planCode) }}<div class="price">${{ (row.priceCents / 100).toFixed(2) }} {{ row.currency }}</div></template></el-table-column>
       <el-table-column prop="deviceModel" label="手表型号" min-width="150" show-overflow-tooltip />
       <el-table-column label="付款状态" width="125"><template #default="{ row }"><el-tag :type="row.paymentStatus === 'PAID' ? 'success' : row.paymentStatus === 'PAYMENT_REVIEW' ? 'danger' : 'info'">{{ paymentLabels[row.paymentStatus] || row.paymentStatus }}</el-tag></template></el-table-column>
       <el-table-column label="制作状态" width="115"><template #default="{ row }">{{ workLabels[row.workStatus] || row.workStatus }}</template></el-table-column>
-      <el-table-column label="操作" width="110" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openDetail(row)">查看订单</el-button></template></el-table-column>
     </el-table>
     <el-pagination v-model:current-page="pageNum" class="pagination" :page-size="20" :total="total" layout="total, prev, pager, next" @current-change="load" />
     <el-drawer v-model="drawer" title="定制订单详情" size="min(680px, 100vw)" @closed="clearPreview">
@@ -31,6 +45,8 @@
   </section>
 </template>
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { pageCustomOrders, updateCustomOrder, syncCustomOrder, customOrderAttachment, type CustomOrder } from '@/api/custom-orders'

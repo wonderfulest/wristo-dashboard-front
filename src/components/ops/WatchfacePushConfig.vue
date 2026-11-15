@@ -9,7 +9,7 @@
       <el-form-item label="模板 ID"><el-input v-model="form.templateId" maxlength="128" /><div class="hint">模板需包含更新内容 thing1、来源 thing4。更换模板后，用户需重新订阅。</div></el-form-item>
       <el-form-item label="来源文案"><el-input v-model="form.source" maxlength="20" show-word-limit /></el-form-item>
       <el-form-item label="作品选择"><el-radio-group v-model="form.selectionMode"><el-radio value="AUTO">自动选择新上架作品</el-radio><el-radio value="MANUAL">指定作品</el-radio></el-radio-group></el-form-item>
-      <el-form-item v-if="form.selectionMode === 'MANUAL'" label="作品 appId"><el-input-number v-model="manualAppId" :min="1" :precision="0" /><div class="hint">只允许已公开上架作品，同一作品发送成功或结果未知后不再重复推送。</div></el-form-item>
+      <el-form-item v-if="form.selectionMode === 'MANUAL'" label="作品 appId"><AppSearchSelect v-model="manualAppId" width="100%" /><div class="hint">只允许已公开上架作品，同一作品发送成功或结果未知后不再重复推送。</div></el-form-item>
       <el-form-item v-else label="筛选规则"><span>最近 24 小时上架、符合商店公开规则的最新一款表盘。</span></el-form-item>
       <el-form-item><el-button type="primary" :loading="saving" @click="save">保存推送配置</el-button></el-form-item>
     </el-form>
@@ -30,6 +30,7 @@
   </el-card>
 </template>
 <script setup lang="ts">
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getWatchfacePushSettings, saveWatchfacePushSettings, getWatchfacePushHistory, type WatchfacePushSettings, type WatchfacePushHistory } from '@/api/watchface-push'

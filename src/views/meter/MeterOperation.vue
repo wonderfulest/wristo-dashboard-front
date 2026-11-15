@@ -62,8 +62,9 @@
         </div>
       </template>
       <div class="compute-row">
-        <el-input v-model="computeAppId" placeholder="输入 App ID" style="width: 240px" @keyup.enter="handleCompute" />
-        <el-button type="warning" :loading="computeLoading" @click="handleCompute">触发计算</el-button>
+        <AppSearchSelect v-model="computeAppId" width="280px" />
+        <el-button type="warning" :loading="computeLoading" :disabled="!computeAppId" @click="handleCompute">计算所选应用</el-button>
+        <el-button :loading="computeLoading" @click="handleComputeAll">计算全部应用</el-button>
       </div>
       <div v-if="computeResult" class="compute-result">
         <el-alert :title="computeResult" type="success" show-icon :closable="false" />
@@ -73,6 +74,7 @@
 </template>
 
 <script setup lang="ts">
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getMeterConfig, toggleMeterEnabled, triggerCompute, triggerComputeAll } from '@/api/meter'
@@ -119,12 +121,21 @@ const handleToggle = async (val: boolean | string | number) => {
 }
 
 // ---- Compute ----
-const computeAppId = ref('')
+const computeAppId = ref<number>()
 const computeLoading = ref(false)
 const computeResult = ref('')
 
 const handleCompute = async () => {
-  const id = computeAppId.value.trim()
+  if (!computeAppId.value) {
+    ElMessage.warning('请先选择应用')
+    return
+  }
+  await runCompute(String(computeAppId.value))
+}
+
+const handleComputeAll = () => runCompute()
+
+const runCompute = async (id?: string) => {
  
   computeLoading.value = true
   computeResult.value = ''

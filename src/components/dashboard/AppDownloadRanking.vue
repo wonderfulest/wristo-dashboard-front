@@ -11,6 +11,10 @@
 
     <div class="table-scroll" role="region" aria-label="应用下载量排行榜，可横向滚动" tabindex="0">
       <el-table v-loading="loading" :data="items" border style="width: 100%" empty-text="暂无下载数据">
+        <TableActionColumn>
+          <template #default="{ row }"><el-button link type="primary" @click="emit('view-records', row.appId)">查看明细</el-button></template>
+        </TableActionColumn>
+
         <el-table-column label="排名" width="72" align="center">
           <template #default="{ $index }">
             {{ (pageNum - 1) * pageSize + $index + 1 }}
@@ -40,9 +44,6 @@
         <el-table-column label="首次下载" width="140" align="right"><template #default="{ row }"><el-button link type="primary" @click="emit('view-records', row.appId, 'FIRST')">{{ Number(row.firstDownloadCount || 0).toLocaleString() }}</el-button></template></el-table-column>
         <el-table-column label="历史重新上报" width="150" align="right"><template #default="{ row }"><el-button link type="primary" @click="emit('view-records', row.appId, 'RETURNING')">{{ Number(row.repeatDownloadCount || 0).toLocaleString() }}</el-button></template></el-table-column>
         <el-table-column label="回流占比" width="110" align="right"><template #default="{ row }">{{ row.downloadCount ? (row.repeatDownloadCount / row.downloadCount * 100).toFixed(1) + '%' : '—' }}</template></el-table-column>
-        <el-table-column label="操作" width="120" align="center">
-          <template #default="{ row }"><el-button link type="primary" @click="emit('view-records', row.appId)">查看明细</el-button></template>
-        </el-table-column>
       </el-table>
     </div>
 
@@ -62,6 +63,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, watch } from 'vue'
 import { getAppDownloadSummaryPage } from '@/api/purchase'
 import type { AppDownloadSummaryVO, AppSalesSummaryPageQueryDTO } from '@/types/api'

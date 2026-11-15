@@ -1,16 +1,35 @@
 <template>
   <div class="email-preferences-page">
     <div class="page-header">
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <el-input v-model="searchEmail" placeholder="按邮箱搜索" clearable style="width: 280px" @keyup.enter.native="handleSearch" />
-        <el-input v-model="updatedBy" placeholder="操作人（updatedBy，可选）" clearable style="width: 220px" />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-        <el-button type="primary" @click="openCreate">新建</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">用户邮箱</span>
+          <el-input aria-label="用户邮箱" v-model="searchEmail" placeholder="按邮箱搜索" clearable style="width: 280px" @keyup.enter.native="handleSearch" />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">操作人（updatedBy，可选）</span>
+          <el-input aria-label="操作人（updatedBy，可选）" v-model="updatedBy" placeholder="操作人（updatedBy，可选）" clearable style="width: 220px" />
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+        <template #actions>
+          <el-button type="primary" @click="openCreate">新建</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="records" style="width: 100%" v-loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
+          <el-button type="danger" link @click="confirmDelete(row)">删除</el-button>
+          <el-button type="danger" link @click="confirmUnsubscribeAll(row)">全部退订</el-button>
+          <el-button type="primary" link @click="confirmSubscribeAll(row)">全部订阅</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="90" />
       <el-table-column prop="email" label="Email" min-width="220" />
       <el-table-column label="全局退订" width="110" align="center">
@@ -56,22 +75,6 @@
       <el-table-column prop="lastUpdatedBy" label="最后更新人" width="140" />
       <el-table-column label="更新时间" width="180">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
-      </el-table-column>
-
-      <el-table-column label="操作" fixed="right" width="220">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
-          <el-button type="danger" link @click="confirmDelete(row)">删除</el-button>
-          <el-dropdown trigger="click">
-            <span class="el-dropdown-link" style="cursor: pointer; color: var(--el-color-primary);">更多</span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="confirmUnsubscribeAll(row)">全部退订</el-dropdown-item>
-                <el-dropdown-item @click="confirmSubscribeAll(row)">全部订阅</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </template>
       </el-table-column>
     </el-table>
 
@@ -152,6 +155,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'

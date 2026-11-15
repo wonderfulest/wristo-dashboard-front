@@ -1,23 +1,36 @@
 <template>
   <div class="design-review-container">
     <div class="header">
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <DesignSearchSelect v-model="searchDesignUid" width="320px" />
-        <UserSelect
-          v-model="searchUserId"
-          :role-authorities="['ROLE_DESIGNER']"
-          placeholder="按用户搜索"
-          @change="handleSearch"
-        />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-select v-model="sortOrder" placeholder="排序方式" style="width: 150px" @change="handleSort">
-          <el-option label="创建时间倒序" value="created_at:desc" />
-          <el-option label="创建时间升序" value="created_at:asc" />
-        </el-select>
-        <el-button @click="fetchDesigns">刷新</el-button>
-        <el-button type="success" @click="handleBatchApprove" :disabled="batchRejecting || !multipleSelection.length">批量通过</el-button>
-        <el-button type="danger" @click="handleBatchReject" :loading="batchRejecting" :disabled="loading || batchRejecting || !multipleSelection.length">一键拒绝</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">设计名称 / ID</span>
+          <DesignSearchSelect aria-label="设计名称 / ID" v-model="searchDesignUid" width="320px" />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">用户</span>
+          <UserSelect aria-label="用户"
+            v-model="searchUserId"
+            :role-authorities="['ROLE_DESIGNER']"
+            placeholder="按用户搜索"
+            @change="handleSearch"
+          />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">排序方式</span>
+          <el-select aria-label="排序方式" v-model="sortOrder" placeholder="排序方式" style="width: 150px" @change="handleSort">
+            <el-option label="创建时间倒序" value="created_at:desc" />
+            <el-option label="创建时间升序" value="created_at:asc" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+        </template>
+        <template #actions>
+          <el-button @click="fetchDesigns">刷新</el-button>
+          <el-button type="success" @click="handleBatchApprove" :disabled="batchRejecting || !multipleSelection.length">批量通过</el-button>
+          <el-button type="danger" @click="handleBatchReject" :loading="batchRejecting" :disabled="loading || batchRejecting || !multipleSelection.length">一键拒绝</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
     <el-table
       :data="designs"
@@ -26,6 +39,13 @@
       @selection-change="handleSelectionChange"
       row-key="designUid"
     >
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="success" size="small" :disabled="batchRejecting" @click="handleApprove(row)">通过</el-button>
+          <el-button type="danger" size="small" :disabled="batchRejecting" @click="handleReject(row)">拒绝</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column type="selection" width="55" />
       <el-table-column label="产品信息" min-width="320">
         <template #default="{ row }">
@@ -61,12 +81,6 @@
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180" fixed="right">
-        <template #default="{ row }">
-          <el-button type="success" size="small" :disabled="batchRejecting" @click="handleApprove(row)">通过</el-button>
-          <el-button type="danger" size="small" :disabled="batchRejecting" @click="handleReject(row)">拒绝</el-button>
-        </template>
-      </el-table-column>
     </el-table>
     <div class="pagination">
       <el-pagination
@@ -83,6 +97,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils/date'

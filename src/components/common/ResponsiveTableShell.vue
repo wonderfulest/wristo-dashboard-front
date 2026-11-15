@@ -27,6 +27,13 @@ withDefaults(defineProps<{
 </script>
 
 <style scoped>
+.responsive-table-shell,
+.desktop-table,
+.mobile-table {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .mobile-table {
   display: none;
 }

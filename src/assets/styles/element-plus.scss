@@ -6,12 +6,7 @@
   // 表格整体样式
   font-size: $table-font-size;
 
-  // 修复在超宽屏下表头与表体错位：强制固定布局并占满宽度
-  .el-table__header,
-  .el-table__body {
-    width: 100% !important;
-    table-layout: fixed;
-  }
+  // 列宽和表头/表体同步交给 Element Plus；覆盖其内联宽度会压缩宽表，破坏横向滚动。
   
   // 表头样式
   .el-table__header-wrapper {
@@ -164,23 +159,38 @@
     width: calc(100vw - 24px) !important;
     max-width: calc(100vw - 24px);
     margin: 12px auto !important;
+    max-height: calc(100dvh - 24px);
+    display: flex;
+    flex-direction: column;
 
     .el-dialog__header {
       padding: 14px 16px;
+      flex-shrink: 0;
+      overflow-wrap: anywhere;
     }
 
     .el-dialog__body {
       max-height: calc(100vh - 180px);
+      min-height: 0;
       overflow-y: auto;
       padding: 14px 16px;
     }
 
     .el-dialog__footer {
       padding: 12px 16px 16px;
+      flex-shrink: 0;
+      .dialog-footer, .dialog-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
     }
   }
 
-  .el-drawer {
+  .el-drawer.ltr,
+  .el-drawer.rtl {
+    width: min(92vw, 480px) !important;
     max-width: 92vw;
   }
 
@@ -193,6 +203,9 @@
     .el-form-item {
       display: block;
       margin-bottom: 16px;
+      min-width: 0;
+      max-width: 100%;
+      margin-right: 0;
     }
 
     .el-form-item__label {
@@ -207,8 +220,14 @@
     .el-form-item__content {
       display: flex;
       width: 100%;
+      min-width: 0;
       margin-left: 0 !important;
     }
+  }
+
+  // 编辑表单也可能传送到 body 下，不能只依赖 .page-content 的样式。
+  :is(.el-dialog, .el-drawer) .el-form :is(.form-grid, .label-fields, .variant-grid) {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .el-input,
@@ -220,6 +239,7 @@
   .el-textarea {
     width: 100% !important;
     max-width: 100%;
+    min-width: 0;
   }
 
   .el-date-editor.el-input__wrapper,
@@ -231,11 +251,28 @@
   .el-date-range-picker {
     width: calc(100vw - 16px) !important;
     max-width: calc(100vw - 16px);
+
+    .el-picker-panel__body { min-width: 0; margin-left: 0; }
+    .el-picker-panel__body-wrapper { margin-left: 0; }
+    .el-picker-panel__sidebar {
+      position: static;
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      border-right: 0;
+      border-bottom: 1px solid var(--el-border-color-light);
+    }
+    .el-picker-panel__shortcut { width: auto; }
+    .el-date-range-picker__content { display: block; width: 100%; padding: 12px; }
+    .el-date-range-picker__content.is-left { border-right: 0; }
   }
 
   .el-picker-panel {
     max-width: calc(100vw - 16px);
     overflow-x: auto;
+    max-height: 70vh;
+    max-height: 70dvh;
+    overflow-y: auto;
   }
 
   .el-tabs__nav-scroll {
@@ -256,11 +293,25 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px;
+    max-width: 100%;
+    white-space: normal;
+    .el-pager { flex-wrap: wrap; justify-content: center; }
   }
 
   .el-pagination__sizes,
   .el-pagination__jump {
     margin-left: 0;
+    order: 1;
+  }
+
+  .el-pagination__total { order: 1; }
+  .el-pagination__sizes { flex: 0 0 128px; }
+  .el-pagination .el-pagination__editor { width: 56px !important; }
+
+  .page-content .el-button,
+  .el-dialog .el-button,
+  .el-drawer .el-button {
+    min-height: 40px;
   }
 
   // 手机端固定操作列会像抽屉一样盖住行内容；改为普通列，交给横向滚动承载。

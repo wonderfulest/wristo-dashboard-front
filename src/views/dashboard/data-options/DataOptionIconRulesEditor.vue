@@ -46,6 +46,12 @@
         <el-button size="small" @click="addRange">Add</el-button>
       </div>
       <el-table :data="rulesLocal.ranges || []" size="small" style="width: 100%">
+        <TableActionColumn>
+          <template #default="{ $index }">
+            <el-button link type="danger" size="small" @click="removeRange($index)">Del</el-button>
+          </template>
+        </TableActionColumn>
+
         <el-table-column label="Min" width="220">
           <template #default="{ row }">{{ row.min }}</template>
         </el-table-column>
@@ -55,17 +61,13 @@
         <el-table-column label="Icon">
           <template #default="{ row }">{{ row.icon }}</template>
         </el-table-column>
-        <el-table-column label="" width="80">
-          <template #default="{ $index }">
-            <el-button link type="danger" size="small" @click="removeRange($index)">Del</el-button>
-          </template>
-        </el-table-column>
       </el-table>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { reactive, ref, watch, computed } from 'vue'
 import type { IconRules, IconRange } from '@/types/data-type-option'
 import IconSearchSelect from '@/components/icon/IconSearchSelect.vue'

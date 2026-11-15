@@ -8,6 +8,7 @@
         type="button"
         class="mobile-menu-button"
         aria-label="打开菜单"
+        :aria-expanded="mobileMenuOpen"
         title="打开菜单"
         @click="emit('open-mobile-menu')"
       >
@@ -52,6 +53,7 @@ import { Menu } from '@element-plus/icons-vue'
 const emit = defineEmits<{
   (e: 'open-mobile-menu'): void
 }>()
+defineProps<{ mobileMenuOpen: boolean }>()
 
 const userStore = useUserStore()
 const defaultAvatar = 'https://cdn.wristo.io/test/avatar/561aae25-41bd-47ab-974e-7231f5a850e8.png'
@@ -107,14 +109,15 @@ const getGroupDefaultPath = (group: any) => findFirstPath(group?.children) || '/
   width: 132px;
   height: auto;
 }
-.nav-list { display: flex; gap: 32px; align-items: center; margin-left: 48px; }
+.nav-list { display: flex; gap: 24px; align-items: center; margin-left: 24px; min-width: 0; overflow-x: auto; }
+.nav-item { flex-shrink: 0; }
 .nav-item { color: $color-link; font-weight: 500; text-decoration: none; font-size: 1.1rem; transition: color 0.2s; }
 .nav-item.active, .nav-item:hover { color: $color-success; }
 .header-right { display: flex; gap: 24px; align-items: center; }
 .mobile-menu-button {
   display: none;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -178,7 +181,7 @@ const getGroupDefaultPath = (group: any) => findFirstPath(group?.children) || '/
   .mobile-menu-button {
     display: inline-flex;
     order: -1;
-    flex: 0 0 40px;
+    flex: 0 0 44px;
   }
 
   .nav-list {
@@ -205,7 +208,7 @@ const getGroupDefaultPath = (group: any) => findFirstPath(group?.children) || '/
   }
 
   .user-profile-name {
-    max-width: 88px;
+    max-width: clamp(40px, 18vw, 88px);
     font-size: 12px;
   }
 

@@ -1,21 +1,35 @@
 <template>
   <div class="bundles-page">
     <div class="header">
-      <div class="tools">
-        <el-select v-model="qActive" placeholder="状态" clearable style="width: 140px" @change="handleSearch">
-          <el-option label="启用" :value="1" />
-          <el-option label="禁用" :value="0" />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-        <el-button type="success" @click="openCreate">新增 Bundle</el-button>
-        <el-button type="danger" :loading="cleanupLoading" @click="handleCleanupNonMerchantBundles">
-          物理删除非商家账号级 Bundle
-        </el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field">
+          <span class="list-search-label">状态</span>
+          <el-select aria-label="状态" v-model="qActive" placeholder="状态" clearable style="width: 140px" @change="handleSearch">
+            <el-option label="启用" :value="1" />
+            <el-option label="禁用" :value="0" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+        <template #actions>
+          <el-button type="success" @click="openCreate">新增 Bundle</el-button>
+          <el-button type="danger" :loading="cleanupLoading" @click="handleCleanupNonMerchantBundles">
+            物理删除非商家账号级 Bundle
+          </el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="rows" v-loading="loading" border style="width: 100%">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openDetail(row)">查看</el-button>
+          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="bundleId" label="Bundle ID" width="150" />
       <el-table-column label="级别类型" width="120">
         <template #default="{ row }">
@@ -70,12 +84,6 @@
       </el-table-column>
       <el-table-column prop="updatedAt" label="更新时间" width="180">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
-      </el-table-column>
-      <el-table-column label="操作" width="120" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openDetail(row)">查看</el-button>
-          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
-        </template>
       </el-table-column>
     </el-table>
 
@@ -156,24 +164,7 @@
           <el-input-number v-model="editForm.price" :min="CUSTOM_BUNDLE_DEFAULT_PRICE" :precision="2" :step="1" controls-position="right" style="width: 100%" />
         </el-form-item>
         <el-form-item label="包含应用" prop="appIds">
-          <el-select
-            v-model="editForm.appIds"
-            multiple
-            filterable
-            collapse-tags
-            collapse-tags-tooltip
-            placeholder="选择应用"
-            style="width: 100%"
-            :loading="productsLoading"
-            @change="productsDirty = true"
-          >
-            <el-option
-              v-for="product in productOptions"
-              :key="product.appId"
-              :label="`${product.name || '-'} (#${product.appId})`"
-              :value="product.appId"
-            />
-          </el-select>
+          <AppSearchSelect v-model="editForm.appIds" multiple width="100%" @change="productsDirty = true" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -185,6 +176,9 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import AppProductInfo from '@/components/common/AppProductInfo.vue'
@@ -197,9 +191,7 @@ import {
   updateAdminBundle,
   updateAdminBundleActive
 } from '@/api/bundles'
-import { fetchProductPage } from '@/api/products'
 import type { Bundle } from '@/types/bundle'
-import type { Product } from '@/types/product'
 import { formatDateTime } from '@/utils/date'
 
 const rows = ref<Bundle[]>([])
@@ -216,8 +208,6 @@ const editVisible = ref(false)
 const editFormRef = ref<FormInstance>()
 const submitting = ref(false)
 const productsDirty = ref(false)
-const productsLoading = ref(false)
-const productOptions = ref<Product[]>([])
 const statusLoadingId = ref<number | undefined>(undefined)
 const cleanupLoading = ref(false)
 const editingDesignerText = ref('')
@@ -264,21 +254,6 @@ const fetchPage = async () => {
     total.value = res.data?.total || 0
   } finally {
     loading.value = false
-  }
-}
-
-const loadProducts = async () => {
-  if (productOptions.value.length > 0 || productsLoading.value) return
-  productsLoading.value = true
-  try {
-    const res = await fetchProductPage({
-      pageNum: 1,
-      pageSize: 1000,
-      orderBy: 'created_at:desc'
-    })
-    productOptions.value = res.data?.list || []
-  } finally {
-    productsLoading.value = false
   }
 }
 
@@ -332,13 +307,11 @@ const fillForm = (bundle: Bundle) => {
 const openCreate = async () => {
   resetForm()
   editVisible.value = true
-  await loadProducts()
 }
 
 const openEdit = async (row: Bundle) => {
   resetForm()
   editVisible.value = true
-  await loadProducts()
   const res = await getAdminBundle(row.bundleId)
   if (res.data) fillForm(res.data)
 }

@@ -64,6 +64,17 @@
       </template>
       <div v-if="showRelations">
         <el-table ref="relationsTableRef" :data="relations" v-loading="loadingRelations" style="width: 100%">
+          <TableActionColumn>
+            <template #default="{ row }">
+              <el-button link type="primary" @click="onEditRelation(row)">编辑</el-button>
+              <el-divider direction="vertical" />
+              <el-switch
+                :model-value="row.isActive === 1"
+                @change="(val: boolean) => onToggleActive(row, val)"
+              />
+            </template>
+          </TableActionColumn>
+
           <el-table-column prop="id" label="ID" width="90" />
           <el-table-column label="图片" width="200">
             <template #default="{ row }">
@@ -89,16 +100,6 @@
           <el-table-column label="更新时间" width="180">
             <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="180" fixed="right">
-            <template #default="{ row }">
-              <el-button link type="primary" @click="onEditRelation(row)">编辑</el-button>
-              <el-divider direction="vertical" />
-              <el-switch
-                :model-value="row.isActive === 1"
-                @change="(val: boolean) => onToggleActive(row, val)"
-              />
-            </template>
-          </el-table-column>
         </el-table>
         <div style="display:flex; justify-content:flex-end; margin-top: 12px;">
           <el-pagination
@@ -123,6 +124,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

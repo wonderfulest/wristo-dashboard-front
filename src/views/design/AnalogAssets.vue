@@ -1,45 +1,79 @@
 <template>
   <div class="analog-assets-container">
     <div class="header">
-      <div class="tools">
-        <el-select v-model="queryType" placeholder="素材类型" clearable style="width: 140px" @change="handleSearch">
-          <el-option label="全部" value="" />
-          <el-option
-            v-for="opt in analogAssetTypeOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </el-select>
-        <UserSelect v-model="queryUserId" @change="handleSearch" :role-authorities="['ROLE_DESIGNER']"/>
-        <el-select v-model="queryIsSystem" placeholder="是否系统" clearable style="width: 140px" @change="handleSearch">
-          <el-option label="全部" value="" />
-          <el-option label="系统素材" value="true" />
-          <el-option label="用户素材" value="false" />
-        </el-select>
-        <el-select v-model="queryIsShared" placeholder="是否共享" clearable style="width: 140px" @change="handleSearch">
-          <el-option label="全部" value="" />
-          <el-option label="共享素材" value="true" />
-          <el-option label="私有素材" value="false" />
-        </el-select>
-        <el-select v-model="queryIsActive" placeholder="启用状态" clearable style="width: 140px" @change="handleSearch">
-          <el-option label="全部" value="" />
-          <el-option label="启用" value="true" />
-          <el-option label="禁用" value="false" />
-        </el-select>
-        <el-select v-model="sortOrder" placeholder="排序" style="width: 180px" @change="handleSearch">
-          <el-option label="创建时间倒序" value="createdAt:desc" />
-          <el-option label="创建时间升序" value="createdAt:asc" />
-          <el-option label="更新时间倒序" value="updatedAt:desc" />
-          <el-option label="更新时间升序" value="updatedAt:asc" />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-        <el-button type="success" @click="openCreate">新建素材</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field">
+          <span class="list-search-label">素材类型</span>
+          <el-select aria-label="素材类型" v-model="queryType" placeholder="素材类型" clearable style="width: 140px" @change="handleSearch">
+            <el-option label="全部" value="" />
+            <el-option
+              v-for="opt in analogAssetTypeOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">用户</span>
+          <UserSelect aria-label="用户" v-model="queryUserId" @change="handleSearch" :role-authorities="['ROLE_DESIGNER']"/>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">是否系统</span>
+          <el-select aria-label="是否系统" v-model="queryIsSystem" placeholder="是否系统" clearable style="width: 140px" @change="handleSearch">
+            <el-option label="全部" value="" />
+            <el-option label="系统素材" value="true" />
+            <el-option label="用户素材" value="false" />
+          </el-select>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">是否共享</span>
+          <el-select aria-label="是否共享" v-model="queryIsShared" placeholder="是否共享" clearable style="width: 140px" @change="handleSearch">
+            <el-option label="全部" value="" />
+            <el-option label="共享素材" value="true" />
+            <el-option label="私有素材" value="false" />
+          </el-select>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">启用状态</span>
+          <el-select aria-label="启用状态" v-model="queryIsActive" placeholder="启用状态" clearable style="width: 140px" @change="handleSearch">
+            <el-option label="全部" value="" />
+            <el-option label="启用" value="true" />
+            <el-option label="禁用" value="false" />
+          </el-select>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">排序方式</span>
+          <el-select aria-label="排序方式" v-model="sortOrder" placeholder="排序" style="width: 180px" @change="handleSearch">
+            <el-option label="创建时间倒序" value="createdAt:desc" />
+            <el-option label="创建时间升序" value="createdAt:asc" />
+            <el-option label="更新时间倒序" value="updatedAt:desc" />
+            <el-option label="更新时间升序" value="updatedAt:asc" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+        <template #actions>
+          <el-button type="success" @click="openCreate">新建素材</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="list" v-loading="loading" class="analog-table">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
+          <el-button type="primary" link @click="openPreview(row)" :disabled="!row.file?.url">预览</el-button>
+          <el-popconfirm title="确定删除该素材吗？" @confirm="doDelete(row)">
+            <template #reference>
+              <el-button type="danger" link>删除</el-button>
+            </template>
+          </el-popconfirm>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="预览" width="120">
         <template #default="{ row }">
@@ -107,17 +141,6 @@
           />
         </template>
       </el-table-column>
-      <el-table-column fixed="right" label="操作" width="200">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
-          <el-button type="primary" link @click="openPreview(row)" :disabled="!row.file?.url">预览</el-button>
-          <el-popconfirm title="确定删除该素材吗？" @confirm="doDelete(row)">
-            <template #reference>
-              <el-button type="danger" link>删除</el-button>
-            </template>
-          </el-popconfirm>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -142,6 +165,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import {

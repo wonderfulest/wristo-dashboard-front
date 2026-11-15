@@ -1,20 +1,36 @@
 <template>
   <div class="email-records-container">
     <div class="header">
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <el-input
-          v-model="toEmail"
-          placeholder="按邮箱地址搜索"
-          clearable
-          style="width: 260px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">邮箱地址</span>
+          <el-input aria-label="邮箱地址"
+            v-model="toEmail"
+            placeholder="按邮箱地址搜索"
+            clearable
+            style="width: 260px"
+            @keyup.enter.native="handleSearch"
+          />
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="records" style="width: 100%" v-loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button
+            v-if="row.status !== 1 && row.status !== 0"
+            type="primary"
+            link
+            @click="confirmResend(row)"
+          >重发</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="uuid" label="UUID" min-width="260" />
       <el-table-column prop="templateId" label="模板ID" width="100" />
@@ -44,16 +60,6 @@
       <el-table-column label="更新时间" width="180">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" width="140">
-        <template #default="{ row }">
-          <el-button
-            v-if="row.status !== 1 && row.status !== 0"
-            type="primary"
-            link
-            @click="confirmResend(row)"
-          >重发</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -71,6 +77,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { fetchEmailSendRecordPage, resendEmailRecord } from '@/api/contact'

@@ -8,29 +8,52 @@
       </div>
     </div>
 
-    <div class="search-filters">
-      <el-input-number v-model="filters.campaignId" placeholder="活动ID" clearable style="width: 160px; margin-right: 12px;" :controls="false" />
-      <UserSelect
-        v-model="searchUserId"
-        :role-authorities="['ROLE_USER']"
-        placeholder="按用户搜索"
-        @change="handleUserChange"
-      />
-      <el-select v-model="filters.channel" clearable placeholder="推送渠道" style="width: 160px; margin-right: 12px;">
-        <el-option label="SES" value="SES" />
-        <el-option label="ZOHO" value="ZOHO" />
-      </el-select>
-      <el-select v-model="filters.status" clearable placeholder="状态" style="width: 160px; margin-right: 12px;">
-        <el-option label="草稿" value="DRAFT" />
-        <el-option label="发送中" value="SENDING" />
-        <el-option label="成功" value="SUCCESS" />
-        <el-option label="失败" value="FAILED" />
-      </el-select>
-      <el-button type="primary" @click="handleSearch">查询</el-button>
-      <el-button @click="resetSearch">重置</el-button>
-    </div>
+    <ListSearchPanel>
+      <div class="list-search-field list-search-field--wide">
+        <span class="list-search-label">活动ID</span>
+        <el-input-number aria-label="活动ID" v-model="filters.campaignId" placeholder="活动ID" clearable style="width: 160px; margin-right: 12px;" :controls="false" />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">用户</span>
+        <UserSelect aria-label="用户"
+          v-model="searchUserId"
+          :role-authorities="['ROLE_USER']"
+          placeholder="按用户搜索"
+          @change="handleUserChange"
+        />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">推送渠道</span>
+        <el-select aria-label="推送渠道" v-model="filters.channel" clearable placeholder="推送渠道" style="width: 160px; margin-right: 12px;">
+          <el-option label="SES" value="SES" />
+          <el-option label="ZOHO" value="ZOHO" />
+        </el-select>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">状态</span>
+        <el-select aria-label="状态" v-model="filters.status" clearable placeholder="状态" style="width: 160px; margin-right: 12px;">
+          <el-option label="草稿" value="DRAFT" />
+          <el-option label="发送中" value="SENDING" />
+          <el-option label="成功" value="SUCCESS" />
+          <el-option label="失败" value="FAILED" />
+        </el-select>
+      </div>
+      <template #query>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="resetSearch">重置</el-button>
+      </template>
+    </ListSearchPanel>
 
     <el-table :data="list" v-loading="loading" style="width: 100%" @selection-change="handleSelectionChange">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
+          <el-button type="info" link @click="viewDetail(row)">详情</el-button>
+          <el-button type="success" link :disabled="sending" @click="handleTriggerOne(row)">发送</el-button>
+          <el-button type="danger" link @click="confirmDelete(row)">删除</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column type="selection" width="48" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="campaignId" label="活动ID" width="100" />
@@ -68,14 +91,6 @@
       <el-table-column label="创建时间" width="180">
         <template #default="{ row }">
           {{ formatDateTime(row.createdAt) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="240" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
-          <el-button type="info" link @click="viewDetail(row)">详情</el-button>
-          <el-button type="success" link :disabled="sending" @click="handleTriggerOne(row)">发送</el-button>
-          <el-button type="danger" link @click="confirmDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -227,6 +242,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getCampaignPushPage, createCampaignPush, updateCampaignPush, deleteCampaignPush, triggerCampaignPushOne } from '@/api/campaign-push'

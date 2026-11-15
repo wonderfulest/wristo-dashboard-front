@@ -44,12 +44,13 @@
         <el-button type="primary" :loading="registering" :disabled="!semver.test(newVersion.trim())" @click="registerVersion">登记版本</el-button>
       </el-form>
       <el-table :data="buildVersions" empty-text="暂无版本记录">
+        <TableActionColumn><template #default="{ row }"><el-button link type="primary" @click="form.connectIqAppBuild = row.version">填入配置</el-button></template></TableActionColumn>
+
         <el-table-column prop="version" label="版本号" width="160" />
         <el-table-column label="当前配置" width="120"><template #default="{ row }"><el-tag v-if="row.version === current?.connectIqAppBuild.version" type="success">当前启用</el-tag></template></el-table-column>
         <el-table-column prop="releaseNote" label="更新说明" min-width="240" show-overflow-tooltip />
         <el-table-column prop="recordedBy" label="登记人" width="140" />
         <el-table-column prop="recordedAt" label="登记时间" width="190" />
-        <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="form.connectIqAppBuild = row.version">填入配置</el-button></template></el-table-column>
       </el-table>
     </el-card>
 
@@ -65,6 +66,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'

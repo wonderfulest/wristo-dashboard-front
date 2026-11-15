@@ -1,29 +1,36 @@
 <template>
   <div class="recent-online-container">
     <div class="header">
-      <div class="filters">
-        <el-select v-model="rangePreset" class="range-select" @change="handleRangePresetChange">
-          <el-option label="近 7 天" value="last7" />
-          <el-option label="近 30 天" value="last30" />
-          <el-option label="近 90 天" value="last90" />
-          <el-option label="全部上线记录" value="all" />
-        </el-select>
-        <el-input
-          v-model="searchName"
-          placeholder="按应用名称搜索"
-          clearable
-          class="name-input"
-          @keyup.enter="handleSearch"
-        />
-        <el-select v-model="sortOrder" class="sort-select" @change="handleSearch">
-          <el-option label="上线时间倒序" value="last_go_live:desc" />
-          <el-option label="上线时间升序" value="last_go_live:asc" />
-          <el-option label="下载量倒序" value="download:desc" />
-          <el-option label="创建时间倒序" value="created_at:desc" />
-        </el-select>
-        <el-button type="primary" :loading="loading" @click="handleSearch">查询</el-button>
-        <el-button :loading="loading" @click="fetchProducts">刷新</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field">
+          <span class="list-search-label">上线时间</span>
+          <el-select aria-label="上线时间" v-model="rangePreset" class="range-select" @change="handleRangePresetChange">
+            <el-option label="近 7 天" value="last7" />
+            <el-option label="近 30 天" value="last30" />
+            <el-option label="近 90 天" value="last90" />
+            <el-option label="全部上线记录" value="all" />
+          </el-select>
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">应用名称 / ID</span>
+          <AppSearchInput aria-label="应用名称 / ID" v-model="searchName" class="name-input" @search="handleSearch" />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">排序方式</span>
+          <el-select aria-label="排序方式" v-model="sortOrder" class="sort-select" @change="handleSearch">
+            <el-option label="上线时间倒序" value="last_go_live:desc" />
+            <el-option label="上线时间升序" value="last_go_live:asc" />
+            <el-option label="下载量倒序" value="download:desc" />
+            <el-option label="创建时间倒序" value="created_at:desc" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" :loading="loading" @click="handleSearch">查询</el-button>
+        </template>
+        <template #actions>
+          <el-button :loading="loading" @click="fetchProducts">刷新</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-alert
@@ -37,6 +44,20 @@
     <ResponsiveTableShell mobile-mode="cards">
       <template #table>
         <el-table :data="products" v-loading="loading" style="width: 100%">
+          <TableActionColumn>
+            <template #default="{ row }">
+              <div class="row-actions">
+                <el-button type="primary" link :disabled="!row.garminStoreUrl" @click="openStore(row)">
+                  打开商店
+                </el-button>
+                <el-button type="primary" link :disabled="!row.garminStoreUrl" @click="copyStoreUrl(row)">
+                  复制链接
+                </el-button>
+                <el-button type="primary" link @click="copyAppMeta(row)">复制信息</el-button>
+              </div>
+            </template>
+          </TableActionColumn>
+
           <el-table-column prop="appId" label="App ID" width="90" />
           <el-table-column label="应用" min-width="320">
             <template #default="{ row }">
@@ -62,19 +83,6 @@
           </el-table-column>
           <el-table-column prop="price" label="价格" width="90">
             <template #default="{ row }">${{ row.price }}</template>
-          </el-table-column>
-          <el-table-column label="检查入口" width="260" fixed="right">
-            <template #default="{ row }">
-              <div class="row-actions">
-                <el-button type="primary" link :disabled="!row.garminStoreUrl" @click="openStore(row)">
-                  打开商店
-                </el-button>
-                <el-button type="primary" link :disabled="!row.garminStoreUrl" @click="copyStoreUrl(row)">
-                  复制链接
-                </el-button>
-                <el-button type="primary" link @click="copyAppMeta(row)">复制信息</el-button>
-              </div>
-            </template>
           </el-table-column>
         </el-table>
       </template>
@@ -136,6 +144,10 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
+import AppSearchInput from '@/components/common/AppSearchInput.vue'
+import { appSearchParams } from '@/utils/appSearch'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchProductPage } from '@/api/products'
@@ -176,7 +188,7 @@ const fetchProducts = async () => {
       pageNum: pageNum.value,
       pageSize: pageSize.value,
       orderBy: sortOrder.value,
-      name: searchName.value || undefined,
+      ...appSearchParams(searchName.value),
       status: 1,
       populate: 'user',
       lastGoLiveStart: buildLastGoLiveStart(),

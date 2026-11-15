@@ -1,17 +1,40 @@
 <template>
   <div class="email-templates">
     <div class="header">
-      <div class="actions">
-        <el-input v-model="searchName" placeholder="按模板名搜索" clearable style="width: 220px" @keyup.enter.native="handleSearch" />
-        <el-input v-model="searchFile" placeholder="按文件名搜索" clearable style="width: 220px" @keyup.enter.native="handleSearch" />
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-        <el-button type="primary" @click="scenarioTestVisible = true">按业务场景测试</el-button>
-        <el-button type="success" @click="openCreate">新建模板</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">名称</span>
+          <el-input aria-label="名称" v-model="searchName" placeholder="按模板名搜索" clearable style="width: 220px" @keyup.enter.native="handleSearch" />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">文件名</span>
+          <el-input aria-label="文件名" v-model="searchFile" placeholder="按文件名搜索" clearable style="width: 220px" @keyup.enter.native="handleSearch" />
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+        <template #actions>
+          <el-button type="primary" @click="scenarioTestVisible = true">按业务场景测试</el-button>
+          <el-button type="success" @click="openCreate">新建模板</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="list" v-loading="loading" style="width: 100%">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openPreview(row)">预览</el-button>
+          <el-button type="primary" link @click="goEdit(row)">编辑</el-button>
+          <el-button link @click="openTestSend(row)">测试发送</el-button>
+          <el-popconfirm title="确定删除该模板吗？" @confirm="doDelete(row)">
+            <template #reference>
+              <el-button type="danger" link>删除</el-button>
+            </template>
+          </el-popconfirm>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="模板名称" min-width="180" />
       <el-table-column prop="templateFileName" label="文件名" min-width="220" />
@@ -24,18 +47,6 @@
       <el-table-column prop="lastEditor" label="最后编辑人" width="140" />
       <el-table-column label="更新时间" width="180">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
-      </el-table-column>
-      <el-table-column fixed="right" label="操作" width="260">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openPreview(row)">预览</el-button>
-          <el-button type="primary" link @click="goEdit(row)">编辑</el-button>
-          <el-button link @click="openTestSend(row)">测试发送</el-button>
-          <el-popconfirm title="确定删除该模板吗？" @confirm="doDelete(row)">
-            <template #reference>
-              <el-button type="danger" link>删除</el-button>
-            </template>
-          </el-popconfirm>
-        </template>
       </el-table-column>
     </el-table>
 
@@ -95,6 +106,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

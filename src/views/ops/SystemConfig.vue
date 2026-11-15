@@ -1,19 +1,45 @@
 <template>
   <div class="config-page">
     <div class="header">
-      <div class="filters">
-        <el-select v-model="query.category" placeholder="分类" clearable style="width: 180px" @change="fetchList">
-          <el-option v-for="c in categoryOptions" :key="c.value" :label="c.label" :value="c.value" />
-        </el-select>
-        <el-input v-model="query.keyword" placeholder="按Key过滤 (本地)" clearable style="width: 220px" />
-        <el-button type="primary" :loading="loading" @click="fetchList">刷新</el-button>
-        <el-button @click="resetFilters">重置</el-button>
-        <el-button type="success" @click="openCreate">新增配置</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field">
+          <span class="list-search-label">分类</span>
+          <el-select aria-label="分类" v-model="query.category" placeholder="分类" clearable style="width: 180px" @change="fetchList">
+            <el-option v-for="c in categoryOptions" :key="c.value" :label="c.label" :value="c.value" />
+          </el-select>
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">Key过滤 (本地)</span>
+          <el-input aria-label="Key过滤 (本地)" v-model="query.keyword" placeholder="按Key过滤 (本地)" clearable style="width: 220px" />
+        </div>
+        <template #query>
+          <el-button @click="resetFilters">重置</el-button>
+        </template>
+        <template #actions>
+          <el-button type="primary" :loading="loading" @click="fetchList">刷新</el-button>
+          <el-button type="success" @click="openCreate">新增配置</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
-    
+
     <el-table :data="filteredList" v-loading="loading" style="width:100%">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button size="small" type="primary" link @click="openEdit(row)">编辑</el-button>
+          <el-button size="small" link @click="openHistory(row)">历史</el-button>
+          <el-button
+            size="small"
+            :type="row.isActive ? 'success' : 'danger'"
+            link
+            :loading="activatingKey === row.configKey"
+            @click="toggleActive(row)"
+          >
+            {{ row.isActive ? '禁用' : '激活' }}
+          </el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="category" label="分类" width="120">
         <template #default="{ row }">
           <el-tag>{{ catLabel(row.category) }}</el-tag>
@@ -34,21 +60,6 @@
       <el-table-column prop="updatedBy" label="更新人" width="120" />
       <el-table-column prop="updatedAt" label="更新时间" width="180">
         <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
-      </el-table-column>
-      <el-table-column label="操作" width="220" fixed="right">
-        <template #default="{ row }">
-          <el-button size="small" type="primary" link @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" link @click="openHistory(row)">历史</el-button>
-          <el-button
-            size="small"
-            :type="row.isActive ? 'success' : 'danger'"
-            link
-            :loading="activatingKey === row.configKey"
-            @click="toggleActive(row)"
-          >
-            {{ row.isActive ? '禁用' : '激活' }}
-          </el-button>
-        </template>
       </el-table-column>
     </el-table>
 
@@ -102,6 +113,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import WatchfacePushConfig from '@/components/ops/WatchfacePushConfig.vue'
 import CompanionAppsConfig from '@/components/ops/CompanionAppsConfig.vue'
 import { ref, computed, onMounted } from 'vue'

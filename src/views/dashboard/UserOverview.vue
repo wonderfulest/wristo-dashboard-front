@@ -19,12 +19,14 @@
     <UserActivityPanel />
     <el-card shadow="never">
       <div class="section-heading"><h3>用户增长趋势</h3><span v-if="report" class="muted">{{ report.from }} 至 {{ report.to }} · {{ sourceLabel(report.source || '') || '全部入口' }} · 新增 {{ periodTotal.toLocaleString('zh-CN') }} 人</span></div>
-      <el-form inline @submit.prevent="search">
+      <ListSearchPanel>
+        <el-form label-position="top" class="list-search-form" inline @submit.prevent="search">
         <el-form-item label="日期范围"><el-date-picker v-model="dates" type="daterange" value-format="YYYY-MM-DD" :clearable="false" :disabled-date="disabledDate" start-placeholder="开始日期" end-placeholder="结束日期" /></el-form-item>
         <el-form-item label="粒度"><el-select v-model="granularity" style="width: 100px" aria-label="统计粒度"><el-option label="按日" value="day" /><el-option label="按周" value="week" /><el-option label="按月" value="month" /></el-select></el-form-item>
         <el-form-item label="注册入口"><el-select v-model="source" clearable placeholder="全部入口" style="width: 175px" aria-label="趋势注册入口"><el-option v-for="item in sourceOptions" :key="item.key" :label="sourceLabel(item.key)" :value="item.key" /></el-select></el-form-item>
         <el-form-item><el-button type="primary" native-type="submit" :loading="loading">查询</el-button><el-button :disabled="loading" @click="reset">最近 30 天</el-button></el-form-item>
       </el-form>
+      </ListSearchPanel>
       <p v-if="rangeError" class="range-error" role="alert">{{ rangeError }}</p>
       <p class="muted">北京时间，含结束日期，最多 366 天；周一为每周起点。首尾周/月仅包含所选日期，今天截至查询时刻。历史新增仅计当前未删除账号。</p>
       <div v-loading="loading">
@@ -51,6 +53,7 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserOverview, type UserOverview, type UserOverviewItem, type UserGrowthRow } from '@/api/userOverview'

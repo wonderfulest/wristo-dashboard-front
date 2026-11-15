@@ -12,18 +12,26 @@
       <el-button :loading="saving" @click="save">保存分享配置</el-button>
     </el-form>
     <template v-if="mode === 'records'">
-    <div class="toolbar"><el-select v-model="status" style="width: 160px" :disabled="loading || reviewing" @change="filter"><el-option label="全部状态" value="" /><el-option label="待审核" value="PENDING" /><el-option label="已通过" value="APPROVED" /><el-option label="已驳回" value="REJECTED" /></el-select></div>
+    <ListSearchPanel>
+      <div class="list-search-field">
+        <span class="list-search-label">审核状态</span>
+        <el-select aria-label="审核状态" v-model="status" style="width: 160px" :disabled="loading || reviewing" @change="filter"><el-option label="全部状态" value="" /><el-option label="待审核" value="PENDING" /><el-option label="已通过" value="APPROVED" /><el-option label="已驳回" value="REJECTED" /></el-select>
+      </div>
+    </ListSearchPanel>
     <el-table :data="items" v-loading="loading" empty-text="暂无分享记录">
+      <TableActionColumn><template #default="{ row }"><template v-if="row.status === 'PENDING'"><el-button size="small" type="success" :disabled="reviewing || saving || loading || !settings?.enabled" @click="review(row, true)">通过</el-button><el-button size="small" type="danger" :disabled="reviewing || saving || loading" @click="review(row, false)">驳回</el-button></template></template></TableActionColumn>
+
       <el-table-column label="用户 / 平台" width="150"><template #default="{ row }">{{ row.userId }}<br />{{ row.platform }}</template></el-table-column>
       <el-table-column label="分享证据" min-width="260"><template #default="{ row }"><a v-if="safeLink(row.shareUrl)" :href="row.shareUrl" target="_blank" rel="noopener noreferrer">查看公开分享 ↗</a><p>{{ row.notes }}</p><div class="evidence"><el-image v-for="shot in row.screenshots" :key="shot.id" :src="shot.url" :preview-src-list="row.screenshots.map((s: SocialScreenshot) => s.url)" :initial-index="row.screenshots.indexOf(shot)" preview-teleported fit="contain" /></div></template></el-table-column>
       <el-table-column label="状态 / 时间" width="200"><template #default="{ row }">{{ labels[row.status] || row.status }}<span v-if="row.status === 'APPROVED'"> · +{{ row.credits }} 积分</span><p>提交：{{ row.createdAt }}</p><p v-if="row.reviewedAt">审核：{{ row.reviewedAt }}</p><p v-if="row.reviewNote">{{ row.reviewNote }}</p></template></el-table-column>
-      <el-table-column label="审核" width="160"><template #default="{ row }"><template v-if="row.status === 'PENDING'"><el-button size="small" type="success" :disabled="reviewing || saving || loading || !settings?.enabled" @click="review(row, true)">通过</el-button><el-button size="small" type="danger" :disabled="reviewing || saving || loading" @click="review(row, false)">驳回</el-button></template></template></el-table-column>
     </el-table>
     <el-pagination :current-page="page" :page-size="20" :total="total" layout="total, prev, pager, next" :disabled="loading || reviewing" @current-change="changePage" />
     </template>
   </section>
 </template>
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { socialRewardsApi, type SocialSettings, type SocialSubmission, type SocialScreenshot } from '@/api/socialRewards'

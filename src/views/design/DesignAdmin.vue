@@ -1,39 +1,59 @@
 <template>
   <div class="design-admin-container">
     <div class="header">
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <DesignSearchSelect v-model="searchDesignUid" width="320px" />
-        <UserSelect
-          v-model="searchUserId"
-          placeholder="按设计师搜索"
-          style="width: 220px"
-        />
-        <el-select
-          v-model="searchIsTemplate"
-          placeholder="是否模板"
-          clearable
-          style="width: 140px"
-        >
-          <el-option label="全部" :value="undefined" />
-          <el-option label="是" :value="1" />
-          <el-option label="否" :value="0" />
-        </el-select>
-        <el-select
-          v-model="sortOrder"
-          placeholder="排序方式"
-          style="width: 180px"
-          @change="handleSort"
-        >
-          <el-option label="创建时间倒序" value="created_at:desc" />
-          <el-option label="创建时间升序" value="created_at:asc" />
-          <el-option label="更新时间倒序" value="updated_at:desc" />
-          <el-option label="更新时间升序" value="updated_at:asc" />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">设计名称 / ID</span>
+          <DesignSearchSelect aria-label="设计名称 / ID" v-model="searchDesignUid" width="320px" />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">设计师</span>
+          <UserSelect aria-label="设计师"
+            v-model="searchUserId"
+            placeholder="按设计师搜索"
+            style="width: 220px"
+          />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">是否模板</span>
+          <el-select aria-label="是否模板"
+            v-model="searchIsTemplate"
+            placeholder="是否模板"
+            clearable
+            style="width: 140px"
+          >
+            <el-option label="全部" :value="undefined" />
+            <el-option label="是" :value="1" />
+            <el-option label="否" :value="0" />
+          </el-select>
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">排序方式</span>
+          <el-select aria-label="排序方式"
+            v-model="sortOrder"
+            placeholder="排序方式"
+            style="width: 180px"
+            @change="handleSort"
+          >
+            <el-option label="创建时间倒序" value="created_at:desc" />
+            <el-option label="创建时间升序" value="created_at:asc" />
+            <el-option label="更新时间倒序" value="updated_at:desc" />
+            <el-option label="更新时间升序" value="updated_at:asc" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="designs" style="width: 100%" v-loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="openDetail(row)">查看详情</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column label="设计信息" min-width="360">
         <template #default="{ row }">
           <div class="design-info">
@@ -75,11 +95,6 @@
       <el-table-column prop="updatedAt" label="更新时间" width="160">
         <template #default="{ row }">
           {{ formatDate(row.updatedAt) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="120" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="openDetail(row)">查看详情</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -129,6 +144,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils/date'

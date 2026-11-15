@@ -107,6 +107,33 @@ button, .el-button {
     margin: 0;
     padding: 12px;
   }
+
+  // 页面只保留外壳的一层手机留白，避免列表内再叠加 20–24px 桌面边距。
+  .global-layout .page-content > :first-child {
+    min-width: 0;
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .page-content > :first-child > *,
+  .page-content .el-card__body {
+    min-width: 0;
+  }
+
+  .page-content :is(.header, .page-heading, .page-header, .section-heading, .card-header),
+  .page-content > :first-child > header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .page-content :is(.header, .page-heading, .page-header, .section-heading, .card-header) > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .page-content .el-form .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   
   .breadcrumb-container {
     padding: 10px 16px;

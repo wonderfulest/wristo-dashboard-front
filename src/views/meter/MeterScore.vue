@@ -1,21 +1,41 @@
 <template>
   <div class="meter-score-page">
     <div class="header">
-      <div class="filters">
-        <el-radio-group v-model="mode" @change="fetchData">
-          <el-radio-button value="top">Top N</el-radio-button>
-          <el-radio-button value="page">分页</el-radio-button>
-        </el-radio-group>
-        <el-input-number v-if="mode === 'top'" v-model="topN" :min="1" :max="100" :step="5" style="width: 120px" />
+      <ListSearchPanel>
+        <div class="list-search-field">
+          <span class="list-search-label">展示方式</span>
+          <el-radio-group v-model="mode" aria-label="展示方式" @change="fetchData">
+            <el-radio-button value="top">Top N</el-radio-button>
+            <el-radio-button value="page">分页</el-radio-button>
+          </el-radio-group>
+        </div>
+        <div v-if="mode === 'top'" class="list-search-field">
+          <span class="list-search-label">排行数量</span>
+          <el-input-number v-model="topN" aria-label="排行数量" :min="1" :max="100" :step="5" />
+        </div>
         <template v-if="mode === 'page'">
-          <el-input-number v-model="pageNum" :min="1" :step="1" style="width: 100px" />
-          <el-input-number v-model="pageSize" :min="1" :max="100" :step="10" style="width: 100px" />
+          <div class="list-search-field">
+            <span class="list-search-label">页码</span>
+            <el-input-number v-model="pageNum" aria-label="页码" :min="1" :step="1" />
+          </div>
+          <div class="list-search-field">
+            <span class="list-search-label">每页条数</span>
+            <el-input-number v-model="pageSize" aria-label="每页条数" :min="1" :max="100" :step="10" />
+          </div>
         </template>
-        <el-button type="primary" :loading="loading" @click="fetchData">查询</el-button>
-      </div>
+        <template #query>
+          <el-button type="primary" :loading="loading" @click="fetchData">查询</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="list" v-loading="loading" style="width: 100%" stripe>
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="goDeviceDetail(row.appId)">详情</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column type="index" label="#" width="60" />
       <el-table-column prop="appId" label="App ID" min-width="180" />
       <el-table-column label="健康评分" min-width="200">
@@ -32,11 +52,6 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="goDeviceDetail(row.appId)">详情</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div v-if="mode === 'page'" class="pagination">
@@ -48,6 +63,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

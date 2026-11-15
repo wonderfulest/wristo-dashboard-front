@@ -2,14 +2,15 @@
   <div class="role-management-page">
     <el-button type="success" style="margin-bottom: 16px;" @click="handleAdd">新增角色</el-button>
     <el-table :data="roles" style="width: 100%" :loading="loading">
-      <el-table-column prop="roleName" label="角色名" width="180" />
-      <el-table-column prop="description" label="描述" />
-      <el-table-column label="操作" width="180">
+      <TableActionColumn>
         <template #default="scope">
           <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
-      </el-table-column>
+      </TableActionColumn>
+
+      <el-table-column prop="roleName" label="角色名" width="180" />
+      <el-table-column prop="description" label="描述" />
     </el-table>
     <StudioDesignQuotaSettings />
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑角色' : '新增角色'">
@@ -30,6 +31,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import StudioDesignQuotaSettings from '@/components/StudioDesignQuotaSettings.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'

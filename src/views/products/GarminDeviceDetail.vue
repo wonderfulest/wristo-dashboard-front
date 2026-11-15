@@ -334,4 +334,13 @@ const constellationsSummary = computed(() => {
 /* Fallback: keep header/body widths in sync even if scrollbar-always-on is unsupported */
 :deep(.stable-scroll .el-table__body-wrapper) { overflow-y: scroll; }
 :deep(.stable-scroll .el-table__header-wrapper) { padding-right: var(--el-scrollbar-width, 8px); }
+.detail-grid > *, .fields > *, .value { min-width: 0; }
+.value, .summary { overflow-wrap: anywhere; }
+@media (max-width: 1024px) {
+  .detail-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 768px) {
+  .fields { grid-template-columns: minmax(0, 1fr); }
+  .label { flex: 0 0 100px; }
+}
 </style>

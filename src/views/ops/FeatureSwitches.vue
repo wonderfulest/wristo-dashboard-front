@@ -12,6 +12,13 @@
     <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon class="notice" />
     <el-card v-loading="loading">
       <el-table :data="features" empty-text="暂无可显示的配置，请刷新重试">
+        <TableActionColumn>
+          <template #default="{ row }">
+            <el-button link :type="row.enabled ? 'warning' : 'primary'" :disabled="saving || loading" @click="openChange(row)">{{ row.enabled ? '暂停' : '开启' }}</el-button>
+            <el-button link type="primary" :disabled="saving" @click="openHistory(row)">历史</el-button>
+          </template>
+        </TableActionColumn>
+
         <el-table-column label="功能" min-width="250">
           <template #default="{ row }"><strong>{{ row.name }}</strong><p class="description">{{ row.description }}</p><span class="muted">{{ row.key }}</span></template>
         </el-table-column>
@@ -19,12 +26,6 @@
         <el-table-column prop="reason" label="变更原因" min-width="150" show-overflow-tooltip />
         <el-table-column prop="updatedBy" label="修改人" min-width="110" show-overflow-tooltip />
         <el-table-column prop="updatedAt" label="更新时间" min-width="180" />
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="{ row }">
-            <el-button link :type="row.enabled ? 'warning' : 'primary'" :disabled="saving || loading" @click="openChange(row)">{{ row.enabled ? '暂停' : '开启' }}</el-button>
-            <el-button link type="primary" :disabled="saving" @click="openHistory(row)">历史</el-button>
-          </template>
-        </el-table-column>
       </el-table>
     </el-card>
     <el-dialog v-model="dialogVisible" :title="`${selected?.enabled ? '暂停' : '开启'}功能`" width="min(520px, 94vw)" :close-on-click-modal="false" :close-on-press-escape="!saving" :show-close="!saving" :before-close="beforeClose">
@@ -50,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getFeatureSwitches, getFeatureSwitchHistory, updateFeatureSwitch, type FeatureSwitch, type FeatureSwitchHistory } from '@/api/featureSwitches'

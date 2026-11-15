@@ -1,40 +1,64 @@
 <template>
   <div class="inspiration-container">
     <div class="header">
-      <div class="tools">
-        <el-input
-          v-model="keyword"
-          placeholder="关键词"
-          clearable
-          style="width: 200px"
-          @keyup.enter.native="handleSearch"
-        />
-        <el-input-number
-          v-model="userId"
-          :min="1"
-          placeholder="UserId"
-          controls-position="right"
-          @change="handleSearch"
-        />
-        <el-input-number
-          v-model="rating"
-          :min="1"
-          :max="5"
-          placeholder="评分"
-          controls-position="right"
-          @change="handleSearch"
-        />
-        <el-select v-model="isActive" placeholder="是否启用" clearable style="width: 140px" @change="handleSearch">
-          <el-option label="启用" :value="1" />
-          <el-option label="禁用" :value="0" />
-        </el-select>
-        <el-button type="success" @click="openCreate">新增</el-button>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="fetchPage">刷新</el-button>
-      </div>
+      <ListSearchPanel>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">关键词</span>
+          <el-input aria-label="关键词"
+            v-model="keyword"
+            placeholder="关键词"
+            clearable
+            style="width: 200px"
+            @keyup.enter.native="handleSearch"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">用户</span>
+          <el-input-number aria-label="用户"
+            v-model="userId"
+            :min="1"
+            placeholder="UserId"
+            controls-position="right"
+            @change="handleSearch"
+          />
+        </div>
+        <div class="list-search-field list-search-field--wide">
+          <span class="list-search-label">评分</span>
+          <el-input-number aria-label="评分"
+            v-model="rating"
+            :min="1"
+            :max="5"
+            placeholder="评分"
+            controls-position="right"
+            @change="handleSearch"
+          />
+        </div>
+        <div class="list-search-field">
+          <span class="list-search-label">是否启用</span>
+          <el-select aria-label="是否启用" v-model="isActive" placeholder="是否启用" clearable style="width: 140px" @change="handleSearch">
+            <el-option label="启用" :value="1" />
+            <el-option label="禁用" :value="0" />
+          </el-select>
+        </div>
+        <template #query>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+        </template>
+        <template #actions>
+          <el-button type="success" @click="openCreate">新增</el-button>
+          <el-button @click="fetchPage">刷新</el-button>
+        </template>
+      </ListSearchPanel>
     </div>
 
     <el-table :data="rows" v-loading="loading" border style="width: 100%">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button v-if="row.assetZip?.url" size="small" text type="primary" @click="downloadAsset(row)">下载</el-button>
+          <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
+          <el-button size="small" text type="danger" @click="confirmRemove(row.id)">删除</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="预览" width="140">
         <template #default="{ row }">
@@ -60,13 +84,6 @@
         </template>
       </el-table-column>
       <el-table-column prop="createdAt" label="创建时间" min-width="180" />
-      <el-table-column label="操作" width="220" fixed="right">
-        <template #default="{ row }">
-          <el-button v-if="row.assetZip?.url" size="small" text type="primary" @click="downloadAsset(row)">下载</el-button>
-          <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" text type="danger" @click="confirmRemove(row.id)">删除</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <div class="pagination">
@@ -144,6 +161,8 @@
 </template>
 
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { ApiResponse, PageResponse } from '@/types/api'

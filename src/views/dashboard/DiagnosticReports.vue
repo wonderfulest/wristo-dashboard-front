@@ -2,17 +2,20 @@
   <div class="diagnostics-page">
     <h2>小程序诊断报告</h2>
     <p>用户主动提交的页面异常、接口请求、安装与蓝牙诊断信息，保留30天。时间为 UTC。</p>
-    <el-form inline @submit.prevent="search">
+    <ListSearchPanel>
+        <el-form label-position="top" class="list-search-form" inline @submit.prevent="search">
       <el-form-item label="反馈编号"><el-input v-model="reportNo" placeholder="粘贴 WR- 开头的完整编号" clearable style="width: 380px" /></el-form-item>
       <el-button type="primary" :loading="loading" @click="search">查询</el-button>
     </el-form>
+      </ListSearchPanel>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-table :data="rows" v-loading="loading" border>
+      <TableActionColumn><template #default="{ row }"><el-button link type="primary" @click="open(row.reportNo)">查看报告</el-button></template></TableActionColumn>
+
       <el-table-column prop="reportNo" label="反馈编号" min-width="310" />
       <el-table-column prop="userId" label="用户 ID" width="110" />
       <el-table-column prop="description" label="问题描述" min-width="250" show-overflow-tooltip />
       <el-table-column prop="createdAt" label="提交时间（UTC）" width="210" />
-      <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" @click="open(row.reportNo)">查看报告</el-button></template></el-table-column>
     </el-table>
     <div class="paging"><el-button :disabled="page === 1 || loading" @click="changePage(-1)">上一页</el-button><span>第 {{ page }} 页</span><el-button :disabled="!hasNext || loading" @click="changePage(1)">下一页</el-button></div>
     <el-dialog v-model="visible" title="诊断报告" width="min(1000px, 94vw)">
@@ -37,6 +40,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, onMounted, ref } from 'vue'
 import instance from '@/config/axios'
 import type { ApiResponse } from '@/types/api'

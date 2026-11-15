@@ -26,3 +26,6 @@ export const refreshDownloads = (): Promise<ApiResponse<boolean>> =>
 
 export const refreshPurchases = (): Promise<ApiResponse<boolean>> =>
   instance.post('/admin/products/stats/purchases/refresh', null, { timeout: 30 * 60 * 1000 })
+
+export const submitCnCatalogProduct = (appId: number): Promise<ApiResponse<boolean>> =>
+  instance.post(`/admin/catalog-cn/products/${appId}`)

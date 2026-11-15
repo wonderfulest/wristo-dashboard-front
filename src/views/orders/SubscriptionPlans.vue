@@ -4,6 +4,22 @@
       <el-button type="primary" @click="handleAdd">新增订阅计划</el-button>
     </div>
     <el-table :data="subscriptionPlans" style="width: 100%" v-loading="loading">
+      <TableActionColumn>
+        <template #default="{ row }">
+          <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+          <el-button
+            type="success"
+            link
+            :loading="syncLoadingId === row.id"
+            :disabled="row.isGift || Number(row.originalPrice) <= 0"
+            @click="handleSyncPaddle(row)"
+          >
+            同步 Paddle
+          </el-button>
+          <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
+        </template>
+      </TableActionColumn>
+
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="scene" label="场景" width="100">
         <template #default="{ row }">
@@ -89,21 +105,6 @@
               <el-tag v-else type="warning" size="small">未同步</el-tag>
             </div>
           </div>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="280" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-          <el-button
-            type="success"
-            link
-            :loading="syncLoadingId === row.id"
-            :disabled="row.isGift || Number(row.originalPrice) <= 0"
-            @click="handleSyncPaddle(row)"
-          >
-            同步 Paddle
-          </el-button>
-          <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -213,6 +214,7 @@
 </template>
 
 <script setup lang="ts">
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -285,7 +287,7 @@ const rules: FormRules = {
 // 格式化价格显示
 const formatPrice = (price: number, currencyCode: string): string => {
   if (price === undefined || price === null) return '-'
-  
+
   const currencySymbols: Record<string, string> = {
     USD: '$',
     CNY: '¥',
@@ -293,7 +295,7 @@ const formatPrice = (price: number, currencyCode: string): string => {
     GBP: '£',
     JPY: '¥'
   }
-  
+
   const symbol = currencySymbols[currencyCode] || currencyCode
   return `${symbol}${price.toFixed(2)}`
 }
