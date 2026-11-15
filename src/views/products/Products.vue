@@ -250,7 +250,7 @@
       </el-table-column>
       <el-table-column prop="trialLasts" label="试用时长" width="100">
         <template #default="{ row }">
-          {{ row.trialLasts }}小时
+          {{ row.trialLasts === -1 ? '永远不弹码' : `${row.trialLasts}小时` }}
         </template>
       </el-table-column>
       <el-table-column prop="createdAt" label="创建时间" width="120">
@@ -297,7 +297,7 @@
                 </div>
                 <div class="mobile-field">
                   <div class="mobile-field-label">试用时长</div>
-                  <div class="mobile-field-value">{{ row.trialLasts }}小时</div>
+                  <div class="mobile-field-value">{{ row.trialLasts === -1 ? '永远不弹码' : `${row.trialLasts}小时` }}</div>
                 </div>
                 <div class="mobile-field">
                   <div class="mobile-field-label">创建时间</div>
@@ -366,7 +366,7 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="selectedBatchAction === 'trial'" label="新时长（小时）">
-          <el-input-number v-model="selectedTrialLasts" :min="0" :precision="2" :step="0.25" />
+          <el-input-number v-model="selectedTrialLasts" :min="-1" :precision="2" :step="0.25" />
         </el-form-item>
         <el-form-item v-if="selectedBatchAction.includes('category')" label="分类">
           <el-select v-model="selectedBatchCategoryId" filterable placeholder="请选择分类">
@@ -396,10 +396,10 @@
       />
       <el-form label-width="110px" style="margin-top: 20px" :disabled="updatingTrialDuration">
         <el-form-item label="原时长（小时）" required>
-          <el-input-number v-model="sourceTrialLasts" :min="0" :precision="2" :step="0.25" />
+          <el-input-number v-model="sourceTrialLasts" :min="-1" :precision="2" :step="0.25" />
         </el-form-item>
         <el-form-item label="新时长（小时）" required>
-          <el-input-number v-model="targetTrialLasts" :min="0" :precision="2" :step="0.25" />
+          <el-input-number v-model="targetTrialLasts" :min="-1" :precision="2" :step="0.25" />
         </el-form-item>
       </el-form>
       <p>例如：0.25 小时为 15 分钟。本操作修改应用试用配置，不直接改写用户试用记录。</p>
@@ -523,14 +523,15 @@
             :max="99"
           />
         </el-form-item>
-        <el-form-item label="试用（小时）" prop="trialLasts">
+        <el-form-item :label="form.paymentMethod === 'free' ? '弹码时长（小时）' : '试用（小时）'" prop="trialLasts">
           <el-input-number
             v-model="form.trialLasts"
-            :disabled="form.paymentMethod !== 'wpay'"
+            :disabled="form.paymentMethod === 'garmin'"
             :precision="2"
             :step="0.1"
-            :min="0"
+            :min="-1"
           />
+          <div>-1 永远不弹码；0 立即弹码；正数为等待小时数。</div>
         </el-form-item>
         <el-form-item label="上线时间" prop="lastGoLive">
           <el-date-picker v-model="form.lastGoLive" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" :clearable="false" placeholder="选择上线时间" style="width: 100%" />
@@ -900,8 +901,8 @@ const handleBatchUpdateTrialDuration = async () => {
   if (updatingTrialDuration.value) return
   const source = sourceTrialLasts.value
   const target = targetTrialLasts.value
-  if (source == null || target == null || !Number.isFinite(source) || !Number.isFinite(target) || source < 0 || target < 0) {
-    ElMessage.warning('请填写有效的非负试用时长（小时）')
+  if (source == null || target == null || !Number.isFinite(source) || !Number.isFinite(target) || (source < 0 && source !== -1) || (target < 0 && target !== -1)) {
+    ElMessage.warning('请填写 -1 或非负时长（小时）')
     return
   }
   if (source === target) {
@@ -957,8 +958,8 @@ const submitSelectedBatch = async () => {
   const action = selectedBatchAction.value
   const duration = selectedTrialLasts.value
   const categoryId = selectedBatchCategoryId.value
-  if (action === 'trial' && (duration == null || !Number.isFinite(duration) || duration < 0)) {
-    ElMessage.warning('请填写有效的非负试用时长（小时）')
+  if (action === 'trial' && (duration == null || !Number.isFinite(duration) || (duration < 0 && duration !== -1))) {
+    ElMessage.warning('请填写 -1 或非负时长（小时）')
     return
   }
   if (action.includes('category') && categoryId == null) {
@@ -1022,7 +1023,7 @@ const form = ref({
 
 const rules: FormRules = {
   paymentMethod: [{ required: true, message: '请选择支付方式', trigger: 'change' }],
-  trialLasts: [{ required: true, type: 'number', min: 0, message: '请输入非负试用时长', trigger: 'blur' }],
+  trialLasts: [{ validator: (_rule: unknown, value: number, callback: (error?: Error) => void) => callback(Number.isFinite(value) && (value === -1 || value >= 0) ? undefined : new Error('请输入 -1 或非负时长')), trigger: 'blur' }],
   name: [
     { required: true, message: '请输入商品名称', trigger: 'blur' },
     { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
@@ -1412,7 +1413,7 @@ async function handleImageChange(file: any) {
 // 提交表单
 const handlePaymentChange = () => {
   if (form.value.paymentMethod === 'free') form.value.price = 0
-  if (form.value.paymentMethod !== 'wpay') form.value.trialLasts = 0
+  if (form.value.paymentMethod === 'garmin') form.value.trialLasts = 0
 }
 
 const handleSync = async (row: Product, target: 'index' | 'cn') => {
