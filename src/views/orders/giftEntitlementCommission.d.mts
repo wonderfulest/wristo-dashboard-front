@@ -5,7 +5,7 @@ export function calculateGiftCommissionUsd(
 
 export function formatGiftPayoutStatus(record: {
   commissionEnabled?: boolean
-  inPayout: number
+  inPayout: number | null
 }): 'No commission' | 'Yes' | 'No'
 
 export function validateGiftPaymentMethod(

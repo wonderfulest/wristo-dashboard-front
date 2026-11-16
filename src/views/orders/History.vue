@@ -103,12 +103,12 @@
         </el-table-column>
         <el-table-column label="Tax" width="120" align="right">
           <template #default="{ row }">
-            {{ row.tax > 0 ? '$' + formatCurrency(row.tax / 100) : 'N/A' }}
+            {{ row.tax == null ? '—' : row.tax > 0 ? formatOrderAmount(row.tax, row.currencyCode) : 'N/A' }}
           </template>
         </el-table-column>
         <el-table-column label="Wristo Share" width="140" align="right">
           <template #default="{ row }">
-            ${{ formatCurrency(row.earnings / 100) }}
+            {{ formatOrderAmount(row.earnings, row.currencyCode) }}
           </template>
         </el-table-column>
         <el-table-column label="Merchant Name" min-width="140">
@@ -119,7 +119,7 @@
           </el-table>
         </template>
         <template #mobile>
-          <MobileRecordList :items="purchaseRecords" row-key="id" empty-text="No purchase records">
+          <MobileRecordList :items="purchaseRecords" :row-key="(row) => row.id ?? row.transactionId" empty-text="No purchase records">
             <template #default="{ item: row }">
               <div class="order-mobile-card">
                 <div class="order-mobile-title">
@@ -147,7 +147,7 @@
                   </div>
                   <div class="mobile-field">
                     <div class="mobile-field-label">Amount</div>
-                    <div class="mobile-field-value">${{ formatCurrency(row.grandTotal / 100) }}</div>
+                    <div class="mobile-field-value">{{ formatOrderAmount(row.grandTotal, row.currencyCode) }}</div>
                   </div>
                   <div class="mobile-field">
                     <div class="mobile-field-label">Device</div>
@@ -195,13 +195,13 @@
                 {{ selectedRecord.statusDesc }}
               </el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="Subtotal">${{ formatCurrency(selectedRecord.subtotal / 100) }}</el-descriptions-item>
-            <el-descriptions-item label="Tax">{{ selectedRecord.tax > 0 ? '$' + formatCurrency(selectedRecord.tax / 100) : 'N/A' }}</el-descriptions-item>
-            <el-descriptions-item label="Fee">${{ formatCurrency(selectedRecord.fee / 100) }}</el-descriptions-item>
-            <el-descriptions-item label="Discount">${{ formatCurrency(selectedRecord.discount / 100) }}</el-descriptions-item>
-            <el-descriptions-item label="Grand Total">${{ formatCurrency(selectedRecord.grandTotal / 100) }}</el-descriptions-item>
-            <el-descriptions-item label="Earnings (Wristo)">${{ formatCurrency(selectedRecord.earnings / 100) }}</el-descriptions-item>
-            <el-descriptions-item label="Credit Used">${{ formatCurrency(selectedRecord.credit / 100) }}</el-descriptions-item>
+            <el-descriptions-item label="Subtotal">{{ formatOrderAmount(selectedRecord.subtotal, selectedRecord.currencyCode) }}</el-descriptions-item>
+            <el-descriptions-item label="Tax">{{ selectedRecord.tax == null ? '—' : selectedRecord.tax > 0 ? formatOrderAmount(selectedRecord.tax, selectedRecord.currencyCode) : 'N/A' }}</el-descriptions-item>
+            <el-descriptions-item label="Fee">{{ formatOrderAmount(selectedRecord.fee, selectedRecord.currencyCode) }}</el-descriptions-item>
+            <el-descriptions-item label="Discount">{{ formatOrderAmount(selectedRecord.discount, selectedRecord.currencyCode) }}</el-descriptions-item>
+            <el-descriptions-item label="Grand Total">{{ formatOrderAmount(selectedRecord.grandTotal, selectedRecord.currencyCode) }}</el-descriptions-item>
+            <el-descriptions-item label="Earnings (Wristo)">{{ formatOrderAmount(selectedRecord.earnings, selectedRecord.currencyCode) }}</el-descriptions-item>
+            <el-descriptions-item label="Credit Used">{{ formatOrderAmount(selectedRecord.credit, selectedRecord.currencyCode) }}</el-descriptions-item>
             <el-descriptions-item label="Currency">{{ selectedRecord.currencyCode }}</el-descriptions-item>
             <el-descriptions-item label="Country">{{ formatCountry(selectedRecord.countryCode) }}</el-descriptions-item>
             <el-descriptions-item label="Device">{{ formatDevice(selectedRecord) }}</el-descriptions-item>
@@ -226,7 +226,7 @@
               </el-descriptions-item>
             </el-descriptions>
           </div>
-          <div v-else class="empty-sub">No product info</div>
+          <div v-else class="empty-sub">{{ selectedRecord.orderProductName || 'No product info' }}</div>
 
           <el-divider content-position="left">App Bundles</el-divider>
           <div v-if="recordBundles(selectedRecord).length" class="bundle-list-detail">
@@ -299,7 +299,7 @@ const searchAppId = ref<number | null | undefined>(Number.isFinite(initialAppId)
 const searchEmail = ref<string>(typeof route.query.email === 'string' ? route.query.email : '')
 const searchOrigin = ref<string>(typeof route.query.origin === 'string' ? route.query.origin : '')
 const purchaseOrigins = [
-  'store', 'store_cart', 'shop_code', 'promotion', 'webhook', 'crontab', 'studio',
+  'app_store', 'store', 'store_cart', 'shop_code', 'promotion', 'webhook', 'crontab', 'studio',
   'wechat-membership-sync', 'gift:taobao', 'gift:xiaohongshu', 'gift:xianyu', 'gift:wristo_cn', 'gift:other'
 ]
 const detailVisible = ref(false)
@@ -326,6 +326,7 @@ const formatTimestamp = (dateString: string): string => {
 // removed masked username helper; we display full email per requirement
 
 const formatProduct = (record: PurchaseRecordVO): string => {
+  if (record.orderProductName) return record.orderProductName
   if (record.isBundle && record.bundle) {
     return record.bundle.bundleName
   } else if (record.product) {
@@ -367,6 +368,8 @@ const paymentMeta = (method?: string | null): PaymentMeta => {
       return { label: 'Card', color: '#635bff', bg: 'rgba(99,91,255,0.1)', border: 'rgba(99,91,255,0.35)' }
     case 'paypal':
       return { label: 'PayPal', color: '#003087', bg: 'rgba(0,48,135,0.08)', border: 'rgba(0,48,135,0.3)' }
+    case 'apple':
+      return { label: 'App Store', color: '#000000', bg: 'rgba(0,0,0,0.08)', border: 'rgba(0,0,0,0.25)' }
     case 'apple_pay':
     case 'applepay':
       return { label: 'Apple Pay', color: '#000000', bg: 'rgba(0,0,0,0.08)', border: 'rgba(0,0,0,0.25)' }
@@ -398,6 +401,7 @@ const paymentTagStyle = (method?: string | null) => {
 
 const formatInPayout = (record: PurchaseRecordVO | null): string => {
   if (!record) return '-'
+  if (record.paymentMethod === 'apple') return 'N/A'
   if ((record.paymentMethod || '').toLowerCase() === 'gift') return formatGiftPayoutStatus(record)
   return record.inPayout === 1 ? 'Yes' : 'No'
 }
@@ -426,6 +430,11 @@ const originBadgeStyle = (origin?: string | null) => {
     backgroundColor: style.bg,
     borderColor: style.border,
   } as Record<string, string>
+}
+
+const formatOrderAmount = (amount: number | null | undefined, currency?: string | null): string => {
+  if (amount == null) return '—'
+  return `${currency || 'USD'} ${(amount / 100).toFixed(2)}`
 }
 
 const formatCurrency = (amount: number): string => {

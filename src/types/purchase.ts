@@ -3,7 +3,7 @@ import type { Bundle } from './bundle'
 import type { UserBase } from './user'
 
 export interface PurchaseRecordVO {
-  id: number
+  id: number | null
   userId: number
   email: string
   accountToken: string
@@ -18,21 +18,22 @@ export interface PurchaseRecordVO {
   customerId: string
   addressId: string
   countryCode: string
+  orderProductName?: string | null
   deviceDisplayName?: string | null
   paymentMethod: string
-  fee: number
-  tax: number
-  total: number
-  credit: number
-  balance: number
-  discount: number
-  earnings: number
-  subtotal: number
-  grandTotal: number
-  currencyCode: string
-  creditToBalance: number
+  fee: number | null
+  tax: number | null
+  total: number | null
+  credit: number | null
+  balance: number | null
+  discount: number | null
+  earnings: number | null
+  subtotal: number | null
+  grandTotal: number | null
+  currencyCode: string | null
+  creditToBalance: number | null
   status: number
-  inPayout: number
+  inPayout: number | null
   commissionEnabled?: boolean
   giftAmountCny?: number | null
   giftExchangeRate?: number | null

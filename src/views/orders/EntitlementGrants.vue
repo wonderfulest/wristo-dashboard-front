@@ -168,7 +168,7 @@
         <el-descriptions-item label="Commission">{{ result.commissionEnabled ? 'Commissioned' : 'No commission' }}</el-descriptions-item>
         <el-descriptions-item v-if="result.commissionEnabled" label="CNY Total">¥{{ formatCurrency(result.giftAmountCny) }}</el-descriptions-item>
         <el-descriptions-item v-if="result.commissionEnabled" label="Exchange Rate">{{ result.giftExchangeRate }} CNY/USD</el-descriptions-item>
-        <el-descriptions-item v-if="result.commissionEnabled" label="Merchant Earnings">${{ formatCurrency(result.earnings / 100) }} USD</el-descriptions-item>
+        <el-descriptions-item v-if="result.commissionEnabled" label="Merchant Earnings">{{ result.earnings == null ? '—' : '$' + formatCurrency(result.earnings / 100) + ' USD' }}</el-descriptions-item>
         <el-descriptions-item label="App ID">{{ result.appId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="Bundle ID">{{ result.bundleId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="Product" :span="2">{{ result.product?.name || result.bundle?.bundleName || '-' }}</el-descriptions-item>
