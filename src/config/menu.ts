@@ -77,7 +77,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'activation-user-detail', title: '邮箱激活详情', icon: 'User', path: '/dashboard/activations/user' },
       { key: 'dashboard-launch', title: '上线策略', icon: 'Promotion', path: '/dashboard/launch' },
       { key: 'dashboard-value', title: '价值分析', icon: 'Histogram', path: '/dashboard/value' },
-      { key: 'diagnostic-reports', title: '小程序诊断', icon: 'Tickets', path: '/diagnostic-reports' },
+      { key: 'diagnostic-reports', title: '用户错误日志上传', icon: 'Tickets', path: '/diagnostic-reports' },
       { key: 'tickets', title: '工单管理', icon: 'Tickets', path: '/tickets' },
       { key: 'contact-us', title: '用户反馈', icon: 'ChatDotRound', path: '/contact-us' },
     ],
