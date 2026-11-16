@@ -27,6 +27,8 @@
           <p><strong>{{ detail.reportNo }}</strong> · 用户 {{ detail.userId }} · {{ detail.createdAt }} UTC</p>
           <p class="description">{{ detail.description }}</p>
           <el-descriptions :column="2" border>
+            <el-descriptions-item label="用户名字">{{ detail.userName || '未设置' }}</el-descriptions-item>
+            <el-descriptions-item label="用户邮箱">{{ detail.email || '未设置' }}</el-descriptions-item>
             <el-descriptions-item label="上传来源">{{ parsed.sessions?.[0]?.kind === 'ios' ? 'iOS App' : '微信小程序' }}</el-descriptions-item>
             <el-descriptions-item v-for="(value, key) in environment" :key="key" :label="String(key)">{{ value }}</el-descriptions-item>
           </el-descriptions>
@@ -37,7 +39,14 @@
             <el-table-column prop="name" label="事件" min-width="180" />
             <el-table-column label="详情" min-width="360"><template #default="{ row }"><span class="event-data">{{ row.data }}</span></template></el-table-column>
           </el-table>
-          <el-collapse class="raw-report"><el-collapse-item title="完整诊断日志" name="raw"><pre>{{ formatted }}</pre></el-collapse-item></el-collapse>
+          <el-collapse class="raw-report">
+            <el-collapse-item title="完整诊断日志" name="raw">
+              <div class="raw-report-actions">
+                <el-button size="small" :loading="copying" :disabled="!formatted" @click="copyDiagnostics">复制</el-button>
+              </div>
+              <pre>{{ formatted }}</pre>
+            </el-collapse-item>
+          </el-collapse>
         </template>
       </div>
     </el-dialog>
@@ -47,14 +56,16 @@
 import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import instance from '@/config/axios'
 import type { ApiResponse } from '@/types/api'
 import { diagnosticEvents } from './diagnosticEvents.mjs'
 interface Summary { reportNo: string; userId: number; description: string; createdAt: string; platform: string }
-interface Detail extends Summary { diagnostics: string }
+interface Detail extends Summary { diagnostics: string; userName?: string | null; email?: string | null }
 const platform = ref(''), userId = ref('')
 const reportNo = ref(''), page = ref(1), rows = ref<Summary[]>([]), hasNext = ref(false), loading = ref(false), error = ref('')
 const visible = ref(false), detailLoading = ref(false), detail = ref<Detail | null>(null)
+const copying = ref(false)
 let listRun = 0, detailRun = 0
 const parsed = computed(() => {
   try { const value = JSON.parse(detail.value?.diagnostics || '{}'); return value && typeof value === 'object' ? value : {} } catch { return {} }
@@ -62,6 +73,18 @@ const parsed = computed(() => {
 const environment = computed(() => parsed.value.environment && typeof parsed.value.environment === 'object' ? parsed.value.environment : {})
 const events = computed(() => diagnosticEvents(parsed.value))
 const formatted = computed(() => { try { return JSON.stringify(JSON.parse(detail.value?.diagnostics || '{}'), null, 2) } catch { return detail.value?.diagnostics || '' } })
+async function copyDiagnostics() {
+  if (!formatted.value || copying.value) return
+  copying.value = true
+  try {
+    await navigator.clipboard.writeText(formatted.value)
+    ElMessage.success('完整诊断日志已复制')
+  } catch {
+    ElMessage.error('复制失败，请手动选择日志复制')
+  } finally {
+    copying.value = false
+  }
+}
 async function load() {
   const run = ++listRun; loading.value = true; error.value = ''
   try {
@@ -93,6 +116,7 @@ onMounted(load)
 .paging { display: flex; gap: 16px; align-items: center; margin-top: 20px; }
 .event-data { white-space: pre-wrap; overflow-wrap: anywhere; font-family: monospace; }
 .raw-report { margin-top: 20px; }
+.raw-report-actions { display: flex; justify-content: flex-end; }
 .description { white-space: pre-wrap; overflow-wrap: anywhere; }
 pre { padding: 16px; border-radius: 8px; background: var(--el-fill-color-light); max-height: 60vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
 </style>
