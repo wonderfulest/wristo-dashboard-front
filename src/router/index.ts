@@ -6,6 +6,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/looks/reports", name: "LooksReports", component: () => import("@/views/looks/LooksReports.vue"), meta: { requiresAuth: true } },
+    { path: "/looks/reviews", name: "LooksReviews", component: () => import("@/views/looks/LooksReviews.vue"), meta: { requiresAuth: true } },
     { path: '/website/games', redirect: '/games/manage' },
     { path: '/games', redirect: '/games/overview' },
     { path: '/games/overview', name: 'GamesOverview', component: () => import('@/views/games/GameOverview.vue'), meta: { requiresAuth: true } },

@@ -67,7 +67,7 @@ export const topMenus: TopMenuGroup[] = [
     key: 'home',
     title: '首页',
     icon: 'House',
-    basePaths: ['/dashboard', '/tickets', '/contact-us', '/diagnostic-reports', '/looks/reports'],
+    basePaths: ['/dashboard', '/tickets', '/contact-us', '/diagnostic-reports', '/looks/reports', '/looks/reviews'],
     children: [
       { key: 'dashboard-overview', title: '业务概览', icon: 'DataBoard', path: '/dashboard' },
       { key: 'dashboard-users', title: '用户统计', icon: 'User', path: '/dashboard/users' },
@@ -79,6 +79,7 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'dashboard-value', title: '价值分析', icon: 'Histogram', path: '/dashboard/value' },
       { key: 'diagnostic-reports', title: '用户错误日志上传', icon: 'Tickets', path: '/diagnostic-reports' },
       { key: 'tickets', title: '工单管理', icon: 'Tickets', path: '/tickets' },
+      { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
       { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },
       { key: 'contact-us', title: '用户反馈', icon: 'ChatDotRound', path: '/contact-us' },
     ],

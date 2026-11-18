@@ -27,6 +27,8 @@ instance.interceptors.request.use(config => {
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
+    if (response.config.responseType === 'blob' && response.data instanceof Blob
+      && /^(image|video)\//.test(response.data.type)) return response.data
     const res: ApiResponse<any> = response.data
     if (res.code === BizErrorCode.SUCCESS) {
       return response.data // 返回原始 response
@@ -36,6 +38,7 @@ instance.interceptors.response.use(
     }
   },
   error => {
+    if (axios.isCancel(error)) return Promise.reject(error)
     const status = error.response?.status
     if (status === 401) {
       const userStore = useUserStore()

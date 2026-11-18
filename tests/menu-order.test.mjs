@@ -43,6 +43,8 @@ test('各业务域使用稳定的二级分组顺序', () => {
     'dashboard-value',
     'diagnostic-reports',
     'tickets',
+    'looks-reviews',
+    'looks-reports',
     'contact-us',
   ])
   assert.deepEqual(getDirectChildKeys('content-production'), [
