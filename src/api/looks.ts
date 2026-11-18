@@ -70,8 +70,8 @@ export interface LookReview {
   post_caption?: string
 }
 export interface ReviewPage { items: LookReview[]; hasMore: boolean; page: number }
-export function listLookReviews(type: LookReviewType, state: LookReviewState, page: number, method: LookReviewMethod = 'all'): Promise<ApiResponse<ReviewPage>> {
-  return instance.get('/admin/looks/reviews', { params: { type, state, method, page, pageSize: 20 } })
+export function listLookReviews(type: LookReviewType, state: LookReviewState, page: number, method: LookReviewMethod = 'all', publisherId?: number, appId?: number): Promise<ApiResponse<ReviewPage>> {
+  return instance.get('/admin/looks/reviews', { params: { type, state, method, publisherId, appId, page, pageSize: 20 } })
 }
 export function getLookReview(type: LookReviewType, id: number): Promise<ApiResponse<LookReview>> {
   return instance.get(`/admin/looks/reviews/${type}/${id}`)
@@ -85,4 +85,11 @@ export function getLookReviewMedia(mediaId: string, thumbnail: boolean, signal: 
 
 export function changeLookVisibility(type: LookReviewType, id: number, current: string, target: string): Promise<ApiResponse<boolean>> {
   return instance.put(`/admin/looks/reviews/${type}/${id}/visibility`, { current, target })
+}
+
+export function getLookAutoReview(): Promise<ApiResponse<{ enabled: boolean }>> {
+  return instance.get('/admin/looks/auto-review')
+}
+export function saveLookAutoReview(enabled: boolean): Promise<ApiResponse<{ enabled: boolean }>> {
+  return instance.put('/admin/looks/auto-review', { enabled })
 }

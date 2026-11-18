@@ -19,12 +19,13 @@ function setup(api = {}) {
     ref: value => ({ value }), onMounted() {}, onBeforeUnmount: fn => { unmount = fn },
     watch: (ref, fn) => watches.push({ ref, fn }), URL: MediaURL, AbortController,
     ElMessage: { success() {} },
+    ElMessageBox: { confirm: async () => {}, prompt: async () => ({ value: '  内容违规  ' }) },
     listLookReviews: async (_, __, page) => ({ data: { items: [], hasMore: false, page } }),
     getLookReview: async (_, id) => ({ data: { ...review, id } }),
     getLookReviewMedia: async () => new Blob(['photo'], { type: 'image/jpeg' }),
     decideLookReview: async () => ({ data: true }), ...api,
   })
-  vm.runInContext(`${js}\nthis.page = { method, changeMethod, setVisibility, thumbnails, load, openDetail, decide, type, state, items, current, visible, imageUrl, videoUrl, reason, detailError, saving }`, context)
+  vm.runInContext(`${js}\nthis.page = { publisherId, appId, decideBatch, selected, batchResult, canSelect, selectionChanged, batchCompleted, method, changeMethod, setVisibility, thumbnails, load, openDetail, decide, type, state, items, current, visible, imageUrl, videoUrl, reason, detailError, saving }`, context)
   return { p: context.page, created, revoked, unmount: () => unmount(), close: () => watches.forEach(({ ref, fn }) => { if (ref === context.page.visible) fn(false) }) }
 }
 
@@ -105,6 +106,79 @@ test('selecting automatic review leaves the pending queue and preserves the filt
   p.changeMethod()
   p.current.value = { ...review, state: 'visible' }
   await p.setVisibility('unlisted')
-  assert.deepEqual(requests, Array(2).fill(['posts', 'all', 1, 'auto']))
+  assert.deepEqual(requests, Array(2).fill(['posts', 'all', 1, 'auto', undefined, undefined]))
   assert.deepEqual(changes, [['posts', 1, 'visible', 'unlisted']])
+})
+
+
+test('batch preserves versions, continues after failures and clears selection', async () => {
+  const calls = []
+  const { p } = setup({ decideLookReview: async (...args) => {
+    calls.push(args)
+    if (args[1] === 2) throw new Error('conflict')
+    return { data: args[1] !== 3 }
+  } })
+  p.selected.value = [1, 2, 3, 4].map(id => ({ ...review, id, submission_version: `v${id}` }))
+  await p.decideBatch(true)
+  assert.deepEqual(calls, [1, 2, 3, 4].map(id => ['posts', id, true, '', `v${id}`]))
+  assert.equal(p.batchResult.value.succeeded, 2)
+  assert.deepEqual(Array.from(p.batchResult.value.failed), [2, 3])
+  assert.equal(p.selected.value.length, 0)
+  assert.equal(p.saving.value, false)
+})
+
+test('batch rejection uses a trimmed shared reason for comments', async () => {
+  const calls = []
+  const { p } = setup({ decideLookReview: async (...args) => { calls.push(args); return { data: true } } })
+  p.type.value = 'comments'
+  p.selected.value = [review, { ...review, id: 2 }]
+  await p.decideBatch(false)
+  assert.deepEqual(calls, [1, 2].map(id => ['comments', id, false, '内容违规', undefined]))
+})
+
+test('cancelled batch keeps selection and sends no decisions', async () => {
+  let calls = 0
+  const { p } = setup({ ElMessageBox: { confirm: async () => { throw new Error('cancel') } }, decideLookReview: async () => { calls++ } })
+  p.selected.value = [review]
+  await p.decideBatch(true)
+  assert.equal(calls, 0)
+  assert.equal(p.selected.value.length, 1)
+  assert.equal(p.saving.value, false)
+})
+
+test('batch prevents duplicate execution and missing post versions fail safely', async () => {
+  let resolveDecision, calls = 0
+  const { p } = setup({ decideLookReview: () => { calls++; return new Promise(resolve => { resolveDecision = resolve }) } })
+  p.selected.value = [{ ...review, submission_version: 'v1' }, { ...review, id: 2 }]
+  const pending = p.decideBatch(true)
+  await new Promise(resolve => setImmediate(resolve))
+  await p.decideBatch(true)
+  assert.equal(calls, 1)
+  assert.equal(p.canSelect(review), false)
+  resolveDecision({ data: true }); await pending
+  assert.deepEqual(Array.from(p.batchResult.value.failed), [2])
+})
+
+test('selection excludes reviewed items and clears on list changes', async () => {
+  const { p } = setup()
+  assert.equal(p.canSelect({ ...review, state: 'visible' }), false)
+  p.selectionChanged([review, { ...review, id: 2, state: 'visible' }])
+  assert.equal(p.selected.value.length, 1)
+  await p.load(2)
+  assert.equal(p.selected.value.length, 0)
+})
+
+
+test('publisher and app filters survive review refresh and can be cleared', async () => {
+  const requests = []
+  const { p } = setup({ listLookReviews: async (...args) => { requests.push(args); return { data: { items: [], hasMore: false, page: args[2] } } } })
+  p.publisherId.value = 42; p.appId.value = 101
+  p.selected.value = [{ ...review, submission_version: 'v1' }]
+  await p.decideBatch(true)
+  assert.deepEqual(requests[0], ['posts', 'pending', 1, 'all', 42, 101])
+  assert.equal(p.selected.value.length, 0)
+  p.type.value = 'comments'; await p.load(2)
+  assert.deepEqual(requests[1], ['comments', 'pending', 2, 'all', 42, 101])
+  p.publisherId.value = undefined; p.appId.value = undefined; await p.load(1)
+  assert.deepEqual(requests[2], ['comments', 'pending', 1, 'all', undefined, undefined])
 })

@@ -1,5 +1,11 @@
 <template>
   <div class="looks-reviews">
+    <div class="auto-review-setting">
+      <span>超过 24 小时自动审核</span>
+      <el-switch v-model="autoReviewEnabled" :disabled="!autoReviewReady" :loading="autoReviewSaving" :before-change="toggleAutoReview" aria-label="自动审核开关" />
+      <span v-if="autoReviewError">{{ autoReviewError }}</span>
+      <el-button v-if="autoReviewError" link @click="loadAutoReview">重试</el-button>
+    </div>
     <ListSearchPanel>
       <div class="list-search-field">
         <span class="list-search-label">内容类型</span>
@@ -20,12 +26,31 @@
           <el-option value="all" label="全部方式" /><el-option value="auto" label="自动通过" /><el-option value="manual" label="人工审核" />
         </el-select>
       </div>
+      <div class="list-search-field">
+        <span class="list-search-label">发布者</span>
+        <UserSelect v-model="publisherId" placeholder="搜索用户名或邮箱" aria-label="发布者" style="width: 260px" :disabled="saving" @change="load(1)" />
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">应用</span>
+        <AppSearchSelect v-model="appId" aria-label="应用" width="260px" :disabled="saving" @change="load(1)" />
+      </div>
       <template #query><el-button type="primary" :loading="loading" :disabled="saving" @click="load(1)">刷新</el-button></template>
     </ListSearchPanel>
     <p v-if="state === 'pending'">待审核内容按提交时间从早到晚排列，审核通过后才会公开展示。</p>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
-    <el-table v-loading="loading" :data="items" border empty-text="暂无内容">
+    <div class="batch-actions">
+      <span>已选择 {{ selected.length }} 条（仅当前页待审核内容）</span>
+      <el-button type="primary" :disabled="!selected.length || loading || saving" @click="decideBatch(true)">批量通过</el-button>
+      <el-button type="danger" :disabled="!selected.length || loading || saving" @click="decideBatch(false)">批量拒绝</el-button>
+      <span v-if="saving && batchTotal">正在处理 {{ batchCompleted }} / {{ batchTotal }}</span>
+    </div>
+    <el-alert v-if="batchResult" :type="batchResult.failed.length ? 'warning' : 'success'" :closable="false" class="batch-result">
+      <template #title>批量{{ batchResult.approved ? '通过' : '拒绝' }}：成功 {{ batchResult.succeeded }} 条，失败 {{ batchResult.failed.length }} 条</template>
+      <p v-if="batchResult.failed.length">失败条目：{{ batchResult.failed.map(id => `#${id}`).join('、') }}。内容可能已变更或请求失败，请刷新并查看当前状态后重试。</p>
+    </el-alert>
+    <el-table ref="reviewTable" v-loading="loading" :data="items" row-key="id" border empty-text="暂无内容" @selection-change="selectionChanged">
       <TableActionColumn><template #default="{ row }"><el-button link type="primary" :disabled="loading || saving" @click="openDetail(row)">查看审核</el-button></template></TableActionColumn>
+      <el-table-column type="selection" width="48" :selectable="canSelect" />
       <el-table-column prop="id" label="ID" width="90" />
       <el-table-column v-if="type === 'posts'" label="图片 / 视频封面" width="150">
         <template #default="{ row }">
@@ -92,12 +117,84 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import UserSelect from '@/components/users/UserSelect.vue'
+import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import TableActionColumn from '@/components/common/TableActionColumn.vue'
-import { changeLookVisibility, type LookReviewMethod, listLookReviews, getLookReview, decideLookReview, getLookReviewMedia, type LookReview, type LookReviewType, type LookReviewState } from '@/api/looks'
+import { getLookAutoReview, saveLookAutoReview, changeLookVisibility, type LookReviewMethod, listLookReviews, getLookReview, decideLookReview, getLookReviewMedia, type LookReview, type LookReviewType, type LookReviewState } from '@/api/looks'
+const autoReviewEnabled = ref(false), autoReviewReady = ref(false), autoReviewSaving = ref(false), autoReviewError = ref('')
+async function loadAutoReview() {
+  autoReviewReady.value = false
+  try {
+    const result = await getLookAutoReview()
+    if (typeof result.data?.enabled !== 'boolean') throw new Error()
+    autoReviewEnabled.value = result.data.enabled
+    autoReviewReady.value = true
+    autoReviewError.value = ''
+  } catch { autoReviewError.value = '自动审核设置加载失败' }
+}
+async function toggleAutoReview() {
+  if (autoReviewSaving.value) return false
+  autoReviewSaving.value = true
+  try {
+    const target = !autoReviewEnabled.value
+    const result = await saveLookAutoReview(target)
+    if (result.data?.enabled !== target) throw new Error()
+    autoReviewError.value = ''
+    ElMessage.success(target ? '自动审核已开启' : '自动审核已关闭')
+    return true
+  } catch { autoReviewError.value = '保存失败，请重试'; return false }
+  finally { autoReviewSaving.value = false }
+}
+const publisherId = ref<number | undefined>(), appId = ref<number | undefined>()
 const type = ref<LookReviewType>('posts'), state = ref<LookReviewState>('pending'), detailType = ref<LookReviewType>('posts')
 const items = ref<LookReview[]>([]), current = ref<LookReview | null>(null)
 const page = ref(1), hasMore = ref(false), loading = ref(false), saving = ref(false), visible = ref(false)
+const reviewTable = ref<{ clearSelection: () => void } | null>(null)
+const selected = ref<LookReview[]>([])
+const batchTotal = ref(0), batchCompleted = ref(0)
+const batchResult = ref<{ approved: boolean; succeeded: number; failed: number[] } | null>(null)
+function canSelect(row: LookReview) { return row.state === 'pending' && !loading.value && !saving.value }
+function selectionChanged(rows: LookReview[]) { selected.value = rows.filter(row => row.state === 'pending') }
+async function decideBatch(approved: boolean) {
+  if (saving.value || loading.value || !selected.value.length) return
+  const rows = selected.value.filter(row => row.state === 'pending').map(row => ({ ...row }))
+  if (!rows.length) return
+  const reviewType = type.value
+  saving.value = true
+  batchTotal.value = 0
+  try {
+    let rejectionReason = ''
+    try {
+      if (approved) {
+        await ElMessageBox.confirm(`确定通过所选的 ${rows.length} 条内容？通过后将公开展示。`, '批量审核通过', { type: 'warning', confirmButtonText: '确认通过', cancelButtonText: '取消' })
+      } else {
+        const input = await ElMessageBox.prompt(`将拒绝所选的 ${rows.length} 条内容，请填写统一拒绝原因。`, '批量拒绝', {
+          inputType: 'textarea', confirmButtonText: '确认拒绝', cancelButtonText: '取消',
+          inputValidator: (value: string) => !!value?.trim() && value.trim().length <= 500 || '请填写 1 至 500 字的拒绝原因。',
+        })
+        rejectionReason = input.value.trim()
+        if (!rejectionReason || rejectionReason.length > 500) return
+      }
+    } catch { return }
+    batchResult.value = null
+    batchTotal.value = rows.length
+    batchCompleted.value = 0
+    const result = { approved, succeeded: 0, failed: [] as number[] }
+    for (const row of rows) {
+      try {
+        // Never review a newer post submission than the one selected in the list.
+        if (reviewType === 'posts' && !row.submission_version) throw new Error('Missing submission version')
+        const response = await decideLookReview(reviewType, row.id, approved, rejectionReason, row.submission_version)
+        if (response.data !== true) throw new Error('Decision not saved')
+        result.succeeded++
+      } catch { result.failed.push(row.id) }
+      batchCompleted.value++
+    }
+    await load(page.value)
+    batchResult.value = result
+  } finally { saving.value = false; batchTotal.value = 0 }
+}
 const error = ref(''), detailError = ref(''), mediaError = ref(''), reason = ref('')
 const detailLoading = ref(false), mediaLoading = ref(false), imageUrl = ref(''), videoUrl = ref('')
 const thumbnails = ref<Record<number, { url: string; loading: boolean }>>({})
@@ -164,10 +261,11 @@ async function loadThumbnails(rows: LookReview[], revision: number) {
 }
 async function load(next = 1) {
   const revision = ++listRevision
+  selected.value = []; reviewTable.value?.clearSelection(); batchResult.value = null
   releaseThumbnails()
   loading.value = true; error.value = ''; items.value = []; hasMore.value = false
   try {
-    const result = await listLookReviews(type.value, state.value, next, method.value)
+    const result = await listLookReviews(type.value, state.value, next, method.value, publisherId.value, appId.value)
     if (!result.data) throw new Error('Missing page')
     if (revision !== listRevision) return
     items.value = result.data.items; page.value = result.data.page; hasMore.value = result.data.hasMore
@@ -229,10 +327,13 @@ async function decide(approved: boolean) {
 }
 watch(visible, value => { if (!value) { ++detailRevision; releaseMedia(); current.value = null; detailLoading.value = false } })
 onBeforeUnmount(() => { ++listRevision; ++detailRevision; releaseMedia(); releaseThumbnails() })
-onMounted(() => load())
+onMounted(() => { void load(); void loadAutoReview() })
 </script>
 
 <style scoped>
+.batch-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.batch-result { margin-bottom: 16px; }
+.auto-review-setting { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .looks-reviews { padding: 20px; }
 .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 16px; }
 .preview { margin: 16px 0; min-height: 20px; }
