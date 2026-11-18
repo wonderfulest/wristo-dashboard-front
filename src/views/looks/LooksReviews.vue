@@ -20,6 +20,17 @@
     <el-table v-loading="loading" :data="items" border empty-text="暂无内容">
       <TableActionColumn><template #default="{ row }"><el-button link type="primary" :disabled="loading || saving" @click="openDetail(row)">查看审核</el-button></template></TableActionColumn>
       <el-table-column prop="id" label="ID" width="90" />
+      <el-table-column v-if="type === 'posts'" label="图片 / 视频封面" width="150">
+        <template #default="{ row }">
+          <div v-loading="thumbnails[row.id]?.loading" class="list-preview">
+            <img v-if="thumbnails[row.id]?.url" :src="thumbnails[row.id].url" :alt="row.media_type === 'video' ? '视频封面' : '作品图片'" @error="thumbnailFailed(row.id)" />
+            <span v-else>{{ thumbnails[row.id]?.loading ? '加载中' : '暂无预览' }}</span>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="内容形式" width="110">
+        <template #default="{ row }"><el-tag :type="type === 'posts' && row.media_type === 'video' ? 'warning' : 'info'">{{ type === 'comments' ? (row.parent_id != null ? '回复' : '评论') : (row.media_type === 'video' ? '视频' : '图片') }}</el-tag></template>
+      </el-table-column>
       <el-table-column label="作者" min-width="160"><template #default="{ row }">{{ row.author_name || '用户' }} (#{{ row.user_id }})</template></el-table-column>
       <el-table-column label="内容" min-width="240" show-overflow-tooltip><template #default="{ row }">{{ row.body || row.caption || '无文字' }}</template></el-table-column>
       <el-table-column label="状态" width="110"><template #default="{ row }">{{ stateLabel(row.state) }}</template></el-table-column>
@@ -76,6 +87,9 @@ const items = ref<LookReview[]>([]), current = ref<LookReview | null>(null)
 const page = ref(1), hasMore = ref(false), loading = ref(false), saving = ref(false), visible = ref(false)
 const error = ref(''), detailError = ref(''), mediaError = ref(''), reason = ref('')
 const detailLoading = ref(false), mediaLoading = ref(false), imageUrl = ref(''), videoUrl = ref('')
+const thumbnails = ref<Record<number, { url: string; loading: boolean }>>({})
+let thumbnailController: AbortController | undefined
+let thumbnailObjectUrls: string[] = []
 let listRevision = 0, detailRevision = 0
 let mediaController: AbortController | undefined
 let objectUrls: string[] = []
@@ -88,14 +102,40 @@ function releaseMedia() {
   objectUrls.forEach(url => URL.revokeObjectURL(url)); objectUrls = []
   imageUrl.value = ''; videoUrl.value = ''; mediaLoading.value = false
 }
+function releaseThumbnails() {
+  thumbnailController?.abort(); thumbnailController = undefined
+  thumbnailObjectUrls.forEach(url => URL.revokeObjectURL(url)); thumbnailObjectUrls = []
+  thumbnails.value = {}
+}
+function thumbnailFailed(id: number) {
+  if (thumbnails.value[id]) thumbnails.value[id] = { url: '', loading: false }
+}
+async function loadThumbnails(rows: LookReview[], revision: number) {
+  const controller = new AbortController(); thumbnailController = controller
+  await Promise.all(rows.map(async row => {
+    const publicUrl = safeMedia(row.image_url)
+    thumbnails.value[row.id] = { url: publicUrl, loading: !publicUrl && !!row.media_id }
+    if (publicUrl || !row.media_id) return
+    try {
+      const blob = await getLookReviewMedia(row.media_id, true, controller.signal)
+      if (controller.signal.aborted || revision !== listRevision) return
+      const url = URL.createObjectURL(blob); thumbnailObjectUrls.push(url)
+      thumbnails.value[row.id] = { url, loading: false }
+    } catch {
+      if (!controller.signal.aborted && revision === listRevision) thumbnailFailed(row.id)
+    }
+  }))
+}
 async function load(next = 1) {
   const revision = ++listRevision
+  releaseThumbnails()
   loading.value = true; error.value = ''; items.value = []; hasMore.value = false
   try {
     const result = await listLookReviews(type.value, state.value, next)
     if (!result.data) throw new Error('Missing page')
     if (revision !== listRevision) return
     items.value = result.data.items; page.value = result.data.page; hasMore.value = result.data.hasMore
+    if (type.value === 'posts') void loadThumbnails(items.value, revision)
   } catch { if (revision === listRevision) error.value = '列表加载失败，请刷新重试。' }
   finally { if (revision === listRevision) loading.value = false }
 }
@@ -151,7 +191,7 @@ async function decide(approved: boolean) {
   finally { saving.value = false }
 }
 watch(visible, value => { if (!value) { ++detailRevision; releaseMedia(); current.value = null; detailLoading.value = false } })
-onBeforeUnmount(() => { ++listRevision; ++detailRevision; releaseMedia() })
+onBeforeUnmount(() => { ++listRevision; ++detailRevision; releaseMedia(); releaseThumbnails() })
 onMounted(() => load())
 </script>
 
@@ -160,5 +200,7 @@ onMounted(() => load())
 .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 16px; }
 .preview { margin: 16px 0; min-height: 20px; }
 .media { display: block; max-width: 100%; max-height: 420px; margin: auto; }
+.list-preview { width: 110px; height: 90px; display: flex; align-items: center; justify-content: center; background: var(--el-fill-color-light); border-radius: 6px; overflow: hidden; color: var(--el-text-color-secondary); font-size: 12px; }
+.list-preview img { width: 100%; height: 100%; object-fit: contain; }
 .content-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 </style>

@@ -67,7 +67,7 @@ export const topMenus: TopMenuGroup[] = [
     key: 'home',
     title: '首页',
     icon: 'House',
-    basePaths: ['/dashboard', '/tickets', '/contact-us', '/diagnostic-reports', '/looks/reports', '/looks/reviews'],
+    basePaths: ['/dashboard', '/tickets', '/contact-us', '/diagnostic-reports'],
     children: [
       { key: 'dashboard-overview', title: '业务概览', icon: 'DataBoard', path: '/dashboard' },
       { key: 'dashboard-users', title: '用户统计', icon: 'User', path: '/dashboard/users' },
@@ -79,8 +79,6 @@ export const topMenus: TopMenuGroup[] = [
       { key: 'dashboard-value', title: '价值分析', icon: 'Histogram', path: '/dashboard/value' },
       { key: 'diagnostic-reports', title: '用户错误日志上传', icon: 'Tickets', path: '/diagnostic-reports' },
       { key: 'tickets', title: '工单管理', icon: 'Tickets', path: '/tickets' },
-      { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
-      { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },
       { key: 'contact-us', title: '用户反馈', icon: 'ChatDotRound', path: '/contact-us' },
     ],
   },
@@ -196,10 +194,14 @@ export const topMenus: TopMenuGroup[] = [
   },
   {
     key: 'marketing-growth',
-    title: '营销增长',
+    title: '社区运营',
     icon: 'Promotion',
-    basePaths: ['/marketing', '/ga', '/email-records'],
+    basePaths: ['/marketing', '/ga', '/email-records', '/looks'],
     children: [
+      { key: 'looks', title: 'Looks', icon: 'Picture', children: [
+        { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
+        { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },
+      ] },
       { key: 'ios-watchface-push', title: 'iOS 每日精选推送', icon: 'Bell', path: '/marketing/ios-watchface-push' },
       { key: 'wechat-watchface-push', title: '微信新作品推送', icon: 'ChatDotRound', path: '/marketing/wechat-watchface-push' },
       { key: 'companion-apps', title: 'Wristo 配套应用地址', icon: 'Link', path: '/marketing/companion-apps' },

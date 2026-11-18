@@ -24,7 +24,7 @@ function setup(api = {}) {
     getLookReviewMedia: async () => new Blob(['photo'], { type: 'image/jpeg' }),
     decideLookReview: async () => ({ data: true }), ...api,
   })
-  vm.runInContext(`${js}\nthis.page = { load, openDetail, decide, type, state, items, current, visible, imageUrl, videoUrl, reason, detailError, saving }`, context)
+  vm.runInContext(`${js}\nthis.page = { thumbnails, load, openDetail, decide, type, state, items, current, visible, imageUrl, videoUrl, reason, detailError, saving }`, context)
   return { p: context.page, created, revoked, unmount: () => unmount(), close: () => watches.forEach(({ ref, fn }) => { if (ref === context.page.visible) fn(false) }) }
 }
 
@@ -67,4 +67,30 @@ test('reject requires a bounded reason and only one in-flight decision is sent',
   assert.equal(calls.length, 1); assert.deepEqual(calls[0], ['posts', 1, false, '内容违规']); assert.equal(p.saving.value, true)
   resolveDecision({ data: false }); await pending
   assert.equal(p.visible.value, true); assert.ok(p.detailError.value); assert.equal(p.saving.value, false)
+})
+
+
+test('list loads private thumbnails only and releases them on reload', async () => {
+  const calls = []
+  const { p, created, revoked } = setup({
+    listLookReviews: async () => ({ data: { items: [{ ...review, media_type: 'video' }], page: 1, hasMore: false } }),
+    getLookReviewMedia: async (id, thumbnail) => { calls.push({ id, thumbnail }); return new Blob(['cover']) },
+  })
+  await p.load(); await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(calls, [{ id: review.media_id, thumbnail: true }])
+  assert.equal(p.thumbnails.value[1].url, created[0].url)
+  p.type.value = 'comments'; await p.load()
+  assert.deepEqual(revoked, [created[0].url]); assert.equal(calls.length, 1)
+})
+
+test('late thumbnail downloads cannot populate a new list', async () => {
+  let resolveMedia, signal
+  const { p, created } = setup({
+    listLookReviews: async () => ({ data: { items: [review], page: 1, hasMore: false } }),
+    getLookReviewMedia: (_, __, s) => { signal = s; return new Promise(resolve => { resolveMedia = resolve }) },
+  })
+  await p.load(); p.type.value = 'comments'; await p.load()
+  assert.equal(signal.aborted, true)
+  resolveMedia(new Blob(['late'])); await new Promise(resolve => setImmediate(resolve))
+  assert.equal(created.length, 0); assert.equal(Object.keys(p.thumbnails.value).length, 0)
 })
