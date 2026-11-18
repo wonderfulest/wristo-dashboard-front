@@ -24,7 +24,7 @@ function setup(api = {}) {
     getLookReviewMedia: async () => new Blob(['photo'], { type: 'image/jpeg' }),
     decideLookReview: async () => ({ data: true }), ...api,
   })
-  vm.runInContext(`${js}\nthis.page = { thumbnails, load, openDetail, decide, type, state, items, current, visible, imageUrl, videoUrl, reason, detailError, saving }`, context)
+  vm.runInContext(`${js}\nthis.page = { method, changeMethod, setVisibility, thumbnails, load, openDetail, decide, type, state, items, current, visible, imageUrl, videoUrl, reason, detailError, saving }`, context)
   return { p: context.page, created, revoked, unmount: () => unmount(), close: () => watches.forEach(({ ref, fn }) => { if (ref === context.page.visible) fn(false) }) }
 }
 
@@ -64,7 +64,7 @@ test('reject requires a bounded reason and only one in-flight decision is sent',
   p.reason.value = '  '; await p.decide(false); assert.equal(calls.length, 0)
   p.reason.value = 'x'.repeat(501); await p.decide(false); assert.equal(calls.length, 0)
   p.reason.value = '  内容违规  '; const pending = p.decide(false); await p.decide(true)
-  assert.equal(calls.length, 1); assert.deepEqual(calls[0], ['posts', 1, false, '内容违规']); assert.equal(p.saving.value, true)
+  assert.equal(calls.length, 1); assert.deepEqual(calls[0], ['posts', 1, false, '内容违规', undefined]); assert.equal(p.saving.value, true)
   resolveDecision({ data: false }); await pending
   assert.equal(p.visible.value, true); assert.ok(p.detailError.value); assert.equal(p.saving.value, false)
 })
@@ -93,4 +93,18 @@ test('late thumbnail downloads cannot populate a new list', async () => {
   assert.equal(signal.aborted, true)
   resolveMedia(new Blob(['late'])); await new Promise(resolve => setImmediate(resolve))
   assert.equal(created.length, 0); assert.equal(Object.keys(p.thumbnails.value).length, 0)
+})
+
+test('selecting automatic review leaves the pending queue and preserves the filter after hiding', async () => {
+  const requests = [], changes = []
+  const { p } = setup({
+    listLookReviews: async (...args) => { requests.push(args); return { data: { items: [], hasMore: false, page: 1 } } },
+    changeLookVisibility: async (...args) => { changes.push(args); return { data: true } },
+  })
+  p.method.value = 'auto'
+  p.changeMethod()
+  p.current.value = { ...review, state: 'visible' }
+  await p.setVisibility('unlisted')
+  assert.deepEqual(requests, Array(2).fill(['posts', 'all', 1, 'auto']))
+  assert.deepEqual(changes, [['posts', 1, 'visible', 'unlisted']])
 })

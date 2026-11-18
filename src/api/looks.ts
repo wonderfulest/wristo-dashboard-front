@@ -43,13 +43,15 @@ export function moderateLookReport(report: LookReport): Promise<ApiResponse<bool
 }
 
 export type LookReviewType = 'posts' | 'comments'
-export type LookReviewState = 'pending' | 'visible' | 'rejected'
+export type LookReviewState = 'all' | 'pending' | 'visible' | 'rejected' | 'unlisted' | 'hidden' | 'deleted'
+export type LookReviewMethod = 'all' | 'auto' | 'manual'
 export interface LookReview {
   id: number
   user_id: number
   author_name?: string
   created_at: string
   state: string
+  submission_version?: string
   reviewed_by?: number | null
   reviewed_at?: string | null
   review_reason?: string | null
@@ -68,15 +70,19 @@ export interface LookReview {
   post_caption?: string
 }
 export interface ReviewPage { items: LookReview[]; hasMore: boolean; page: number }
-export function listLookReviews(type: LookReviewType, state: LookReviewState, page: number): Promise<ApiResponse<ReviewPage>> {
-  return instance.get('/admin/looks/reviews', { params: { type, state, page, pageSize: 20 } })
+export function listLookReviews(type: LookReviewType, state: LookReviewState, page: number, method: LookReviewMethod = 'all'): Promise<ApiResponse<ReviewPage>> {
+  return instance.get('/admin/looks/reviews', { params: { type, state, method, page, pageSize: 20 } })
 }
 export function getLookReview(type: LookReviewType, id: number): Promise<ApiResponse<LookReview>> {
   return instance.get(`/admin/looks/reviews/${type}/${id}`)
 }
-export function decideLookReview(type: LookReviewType, id: number, approved: boolean, reason: string): Promise<ApiResponse<boolean>> {
-  return instance.put(`/admin/looks/reviews/${type}/${id}`, { approved, reason })
+export function decideLookReview(type: LookReviewType, id: number, approved: boolean, reason: string, submissionVersion?: string): Promise<ApiResponse<boolean>> {
+  return instance.put(`/admin/looks/reviews/${type}/${id}`, { approved, reason, submissionVersion })
 }
 export function getLookReviewMedia(mediaId: string, thumbnail: boolean, signal: AbortSignal): Promise<Blob> {
   return instance.get(`/admin/looks/media/${mediaId}`, { params: { thumbnail }, responseType: 'blob', signal })
+}
+
+export function changeLookVisibility(type: LookReviewType, id: number, current: string, target: string): Promise<ApiResponse<boolean>> {
+  return instance.put(`/admin/looks/reviews/${type}/${id}/visibility`, { current, target })
 }

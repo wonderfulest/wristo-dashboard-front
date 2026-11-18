@@ -10,7 +10,14 @@
       <div class="list-search-field">
         <span class="list-search-label">审核状态</span>
         <el-select v-model="state" aria-label="审核状态" style="width: 150px" :disabled="saving" @change="load(1)">
+          <el-option value="all" label="全部状态" /><el-option value="unlisted" label="已下架 / 隐藏" /><el-option value="hidden" label="举报隐藏" /><el-option value="deleted" label="已删除" />
           <el-option value="pending" label="待审核" /><el-option value="visible" label="已通过" /><el-option value="rejected" label="已拒绝" />
+        </el-select>
+      </div>
+      <div class="list-search-field">
+        <span class="list-search-label">审核方式</span>
+        <el-select v-model="method" aria-label="审核方式" style="width: 150px" :disabled="saving" @change="changeMethod">
+          <el-option value="all" label="全部方式" /><el-option value="auto" label="自动通过" /><el-option value="manual" label="人工审核" />
         </el-select>
       </div>
       <template #query><el-button type="primary" :loading="loading" :disabled="saving" @click="load(1)">刷新</el-button></template>
@@ -35,6 +42,7 @@
       <el-table-column label="内容" min-width="240" show-overflow-tooltip><template #default="{ row }">{{ row.body || row.caption || '无文字' }}</template></el-table-column>
       <el-table-column label="状态" width="110"><template #default="{ row }">{{ stateLabel(row.state) }}</template></el-table-column>
       <el-table-column prop="created_at" label="提交时间 (UTC)" width="210" />
+      <el-table-column label="审核方式" width="110"><template #default="{ row }">{{ methodLabel(row) }}</template></el-table-column>
       <el-table-column prop="reviewed_by" label="审核人 ID" width="110" />
       <el-table-column prop="reviewed_at" label="审核时间 (UTC)" width="210" />
     </el-table>
@@ -54,8 +62,10 @@
             </template>
             <el-descriptions-item label="提交时间">{{ current.created_at }} UTC</el-descriptions-item>
             <el-descriptions-item label="审核状态">{{ stateLabel(current.state) }}</el-descriptions-item>
-            <el-descriptions-item v-if="current.reviewed_by != null" label="审核记录">管理员 #{{ current.reviewed_by }} · {{ current.reviewed_at }} UTC</el-descriptions-item>
-            <el-descriptions-item v-if="current.review_reason" label="拒绝原因"><div class="content-text">{{ current.review_reason }}</div></el-descriptions-item>
+            <el-descriptions-item label="审核方式">{{ methodLabel(current) }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.reviewed_at" label="审核时间">{{ current.reviewed_at }} UTC</el-descriptions-item>
+            <el-descriptions-item v-if="current.reviewed_by != null" label="审核记录">管理员 #{{ current.reviewed_by }}</el-descriptions-item>
+            <el-descriptions-item v-if="current.review_reason" label="审核说明"><div class="content-text">{{ current.review_reason }}</div></el-descriptions-item>
           </el-descriptions>
           <div v-loading="mediaLoading" class="preview">
             <el-alert v-if="mediaError" :title="mediaError" type="error" :closable="false" />
@@ -67,6 +77,9 @@
       </div>
       <template #footer>
         <el-button :disabled="saving" @click="visible = false">关闭</el-button>
+        <el-button v-if="current?.state === 'visible'" :disabled="saving" @click="setVisibility('unlisted')">{{ detailType === 'posts' ? '下架作品' : '隐藏评论' }}</el-button>
+        <el-button v-if="current?.state === 'unlisted'" :disabled="saving" @click="setVisibility('visible')">恢复展示</el-button>
+        <el-button v-if="current && ['visible','unlisted','hidden','rejected'].includes(current.state)" type="danger" :disabled="saving" @click="setVisibility('deleted')">删除</el-button>
         <template v-if="current?.state === 'pending'">
           <el-button type="danger" :disabled="saving || detailLoading || !reason.trim()" @click="decide(false)">拒绝</el-button>
           <el-button type="primary" :loading="saving" :disabled="detailLoading || mediaLoading || !!mediaError || !!detailError" @click="decide(true)">审核通过</el-button>
@@ -78,10 +91,10 @@
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import TableActionColumn from '@/components/common/TableActionColumn.vue'
-import { listLookReviews, getLookReview, decideLookReview, getLookReviewMedia, type LookReview, type LookReviewType, type LookReviewState } from '@/api/looks'
+import { changeLookVisibility, type LookReviewMethod, listLookReviews, getLookReview, decideLookReview, getLookReviewMedia, type LookReview, type LookReviewType, type LookReviewState } from '@/api/looks'
 const type = ref<LookReviewType>('posts'), state = ref<LookReviewState>('pending'), detailType = ref<LookReviewType>('posts')
 const items = ref<LookReview[]>([]), current = ref<LookReview | null>(null)
 const page = ref(1), hasMore = ref(false), loading = ref(false), saving = ref(false), visible = ref(false)
@@ -93,7 +106,30 @@ let thumbnailObjectUrls: string[] = []
 let listRevision = 0, detailRevision = 0
 let mediaController: AbortController | undefined
 let objectUrls: string[] = []
-const stateLabel = (value: string) => ({ pending: '待审核', visible: '已通过', rejected: '已拒绝', hidden: '已隐藏', deleted: '已删除' }[value] || value)
+const stateLabel = (value: string) => ({ pending: '待审核', visible: '已通过', rejected: '已拒绝', unlisted: '已下架 / 隐藏', hidden: '举报隐藏', deleted: '已删除' }[value] || value)
+const method = ref<LookReviewMethod>('all')
+const methodLabel = (row: LookReview) => row.reviewed_by != null ? '人工审核' : row.reviewed_at ? '自动通过' : '未审核'
+function changeMethod() {
+  if (state.value === 'pending' && method.value !== 'all') state.value = 'all'
+  void load(1)
+}
+async function setVisibility(target: 'visible' | 'unlisted' | 'deleted') {
+  const row = current.value
+  if (!row || saving.value) return
+  saving.value = true
+  try {
+    if (target === 'deleted') {
+      try { await ElMessageBox.confirm('删除后无法恢复展示，确定删除这条内容？', '删除内容', { type: 'warning' }) }
+      catch { return }
+    }
+    const result = await changeLookVisibility(detailType.value, row.id, row.state, target)
+    if (result.data !== true) throw new Error()
+    visible.value = false
+    ElMessage.success(stateLabel(target))
+    await load(page.value)
+  } catch { detailError.value = '操作失败，请关闭并重新查看当前状态。' }
+  finally { saving.value = false }
+}
 function safeMedia(value?: string) {
   try { const url = new URL(value || ''); return url.protocol === 'https:' ? url.href : '' } catch { return '' }
 }
@@ -113,7 +149,7 @@ function thumbnailFailed(id: number) {
 async function loadThumbnails(rows: LookReview[], revision: number) {
   const controller = new AbortController(); thumbnailController = controller
   await Promise.all(rows.map(async row => {
-    const publicUrl = safeMedia(row.image_url)
+    const publicUrl = row.state === 'visible' ? safeMedia(row.image_url) : ''
     thumbnails.value[row.id] = { url: publicUrl, loading: !publicUrl && !!row.media_id }
     if (publicUrl || !row.media_id) return
     try {
@@ -131,7 +167,7 @@ async function load(next = 1) {
   releaseThumbnails()
   loading.value = true; error.value = ''; items.value = []; hasMore.value = false
   try {
-    const result = await listLookReviews(type.value, state.value, next)
+    const result = await listLookReviews(type.value, state.value, next, method.value)
     if (!result.data) throw new Error('Missing page')
     if (revision !== listRevision) return
     items.value = result.data.items; page.value = result.data.page; hasMore.value = result.data.hasMore
@@ -154,7 +190,8 @@ async function openDetail(row: LookReview) {
   finally { if (revision === detailRevision) detailLoading.value = false }
 }
 async function loadMedia(review: LookReview, revision: number) {
-  imageUrl.value = safeMedia(review.image_url); videoUrl.value = safeMedia(review.video_url)
+  const publiclyVisible = (review.post_state || review.state) === 'visible'
+  imageUrl.value = publiclyVisible ? safeMedia(review.image_url) : ''; videoUrl.value = publiclyVisible ? safeMedia(review.video_url) : ''
   if (detailType.value !== 'posts' || (imageUrl.value && (review.media_type !== 'video' || videoUrl.value))) return
   if (!review.media_id) { mediaError.value = '作品缺少媒体，无法预览。'; return }
   const controller = new AbortController(); mediaController = controller; mediaLoading.value = true
@@ -183,7 +220,7 @@ async function decide(approved: boolean) {
   if (!approved && (!trimmed || trimmed.length > 500)) { detailError.value = '请填写 1 至 500 字的拒绝原因。'; return }
   saving.value = true; detailError.value = ''
   try {
-    const result = await decideLookReview(detailType.value, current.value.id, approved, approved ? '' : trimmed)
+    const result = await decideLookReview(detailType.value, current.value.id, approved, approved ? '' : trimmed, current.value.submission_version)
     if (result.data !== true) throw new Error('Decision not saved')
     ElMessage.success(approved ? '审核通过' : '已拒绝'); visible.value = false
     await load(page.value)
