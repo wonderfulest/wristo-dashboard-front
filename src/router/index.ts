@@ -103,6 +103,18 @@ const router = createRouter({
       meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
+      path: '/marketing/miniapp/single-face-purchase',
+      name: 'MiniappSingleFacePurchase',
+      component: () => import('@/views/ops/SingleFacePurchase.vue'),
+      meta: { requiresAuth: true, creditsWorkspace: true }
+    },
+    {
+      path: '/marketing/cn/single-face-purchase',
+      name: 'SingleFacePurchase',
+      component: () => import('@/views/ops/SingleFacePurchase.vue'),
+      meta: { requiresAuth: true, creditsWorkspace: true }
+    },
+    {
       path: '/marketing/cn/points-recharge',
       name: 'PointsRecharge',
       component: () => import('@/views/ops/PointsRecharge.vue'),

@@ -89,6 +89,7 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/marketing', '/ga', '/email-records', '/looks', '/website/home-banners', '/website/ios-home-recommendations', '/website/studio-memberships', '/website/studio-conversion', '/ops/credit-grants', '/ops/miniapp-points', '/ops/user-rewards', '/ops/share-rewards', '/ops/creator-rewards'],
     children: [
       { key: 'wechat-miniapp', title: '微信小程序', icon: 'ChatDotRound', children: [
+        { key: 'miniapp-single-face-purchase', title: '单表盘购买', icon: 'ShoppingCart', path: '/marketing/miniapp/single-face-purchase' },
         { key: 'website-home-banners', title: '首页 Banner', icon: 'Picture', path: '/website/home-banners' },
         { key: 'miniapp-rewards', title: '任务奖励', icon: 'Coin', path: '/marketing/miniapp/rewards' },
         { key: 'miniapp-redemptions', title: '兑换配置', icon: 'Coin', path: '/marketing/miniapp/redemptions' },
@@ -112,6 +113,7 @@ export const topMenus: TopMenuGroup[] = [
         { key: 'ga-promoter-coupons', title: '口令管理', icon: 'Discount', path: '/ga/promoter-coupons' },
       ] },
       { key: 'cn-website', title: '国内网站', icon: 'Monitor', children: [
+        { key: 'single-face-purchase', title: '单表盘购买', icon: 'ShoppingCart', path: '/marketing/cn/single-face-purchase' },
         { key: 'points-recharge', title: '积分充值', icon: 'Coin', path: '/marketing/cn/points-recharge' },
         { key: 'cn-rewards', title: '奖励与兑换配置', icon: 'Coin', path: '/marketing/cn/rewards' },
         { key: 'redemptions', title: '兑换记录与管理', icon: 'Coin', path: '/ops/redemptions' },
