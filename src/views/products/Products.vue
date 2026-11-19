@@ -179,6 +179,15 @@
               重新提交打包
             </el-button>
             <el-button
+              type="danger"
+              link
+              :loading="repackLoadingMap.get(row.appId)"
+              :disabled="repackLoadingMap.get(row.appId)"
+              @click="handleResetGarminAndRepack(row)"
+            >
+              清除历史佳明信息并重新打包
+            </el-button>
+            <el-button
               type="primary"
               link
               @click="handleShare(row)"
@@ -863,7 +872,7 @@ import { formatDate } from '@/utils/date'
 import { formatProductGoLive } from './productDisplay.mjs'
 import { rebuildOne } from '@/api/watchface-search'
 import { submitCnCatalogProduct } from '@/api/app-management'
-import { addProductCategory, deleteProductCategory, createProductPackageTask, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, batchUpdateProductTrialDuration, manageCategoryForAllProducts } from '@/api/products'
+import { addProductCategory, deleteProductCategory, createProductPackageTask, resetGarminAndRepack, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, batchUpdateProductTrialDuration, manageCategoryForAllProducts } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -1485,6 +1494,7 @@ const setRepackLoading = (appId: number, loading: boolean) => {
 }
 
 const handleRepack = async (row: Product) => {
+  if (repackLoadingMap.value.get(row.appId)) return
   if (!row.designId) {
     ElMessage.error('该应用缺少 designId，无法重新提交打包')
     return
@@ -1514,6 +1524,37 @@ const handleRepack = async (row: Product) => {
     }
   } catch (error) {
     ElMessage.error('重新提交失败')
+  } finally {
+    setRepackLoading(row.appId, false)
+  }
+}
+
+const handleResetGarminAndRepack = async (row: Product) => {
+  if (repackLoadingMap.value.get(row.appId)) return
+  if (!row.designId) {
+    ElMessage.error('该应用缺少 designId，无法重新提交打包')
+    return
+  }
+  setRepackLoading(row.appId, true)
+  try {
+    try {
+      await ElMessageBox.confirm(
+        `确认清空「${row.name || row.appId}」（ID：${row.appId}）的佳明 UUID 和佳明商店地址，并提交新的 IQ 打包任务？此操作保留 Wristo 应用，不会删除佳明商店条目或自动上架。`,
+        '清除历史佳明信息并重新打包',
+        { confirmButtonText: '清空并打包', cancelButtonText: '取消', type: 'warning' }
+      )
+    } catch {
+      return
+    }
+    const res = await resetGarminAndRepack(row.appId)
+    if (res.code !== 0) {
+      ElMessage.error(res.msg || '清空佳明信息并提交打包失败')
+      return
+    }
+    ElMessage.success('已清空佳明信息并提交打包任务')
+    await fetchProducts()
+  } catch {
+    ElMessage.error('操作失败，请刷新列表并检查打包任务状态')
   } finally {
     setRepackLoading(row.appId, false)
   }

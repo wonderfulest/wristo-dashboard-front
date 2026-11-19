@@ -22,10 +22,10 @@ test('顶部菜单按业务流程组织', () => {
     'home',
     'content-production',
     'app-operations',
-    'games',
-    'utilities',
     'users-transactions',
     'marketing-growth',
+    'games',
+    'utilities',
     'credits-ai',
     'platform-operations',
   ])
@@ -71,6 +71,11 @@ test('各业务域使用稳定的二级分组顺序', () => {
   ])
 })
 
-test('社区运营包含 Looks 分组', () => {
-  assert.ok(getDirectChildKeys('marketing-growth').includes('looks'))
+test('产品运营按产品线和公共资源分组', () => {
+  assert.deepEqual(getDirectChildKeys('marketing-growth'), [
+    'overseas-website',
+    'wechat-miniapp',
+    'ios-operations',
+    'shared-resources',
+  ])
 })

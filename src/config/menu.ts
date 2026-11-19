@@ -194,34 +194,32 @@ export const topMenus: TopMenuGroup[] = [
   },
   {
     key: 'marketing-growth',
-    title: '社区运营',
+    title: '产品运营',
     icon: 'Promotion',
     basePaths: ['/marketing', '/ga', '/email-records', '/looks'],
     children: [
-      { key: 'looks', title: 'Looks', icon: 'Picture', children: [
-        { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
-        { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },
-      ] },
-      { key: 'ios-watchface-push', title: 'iOS 每日精选推送', icon: 'Bell', path: '/marketing/ios-watchface-push' },
-      { key: 'wechat-watchface-push', title: '微信新作品推送', icon: 'ChatDotRound', path: '/marketing/wechat-watchface-push' },
-      { key: 'companion-apps', title: 'Wristo 配套应用地址', icon: 'Link', path: '/marketing/companion-apps' },
-      { key: 'user-insights', title: '用户洞察', icon: 'UserFilled', children: [
+      { key: 'overseas-website', title: '国外网站', icon: 'Monitor', children: [
         { key: 'user-profiles', title: '用户画像', icon: 'Avatar', path: '/marketing/user-profiles' },
         { key: 'segments', title: '用户分群', icon: 'UserFilled', path: '/marketing/segments' },
-      ] },
-      { key: 'campaign-delivery', title: '活动触达', icon: 'Promotion', children: [
         { key: 'promotion-campaigns', title: '营销活动', icon: 'Promotion', path: '/marketing/campaigns' },
         { key: 'email-templates', title: '邮件模板', icon: 'MessageBox', path: '/marketing/email-templates' },
         { key: 'push-records', title: '推送记录', icon: 'Bell', path: '/marketing/push-records' },
         { key: 'email-records', title: '邮件发送历史', icon: 'Message', path: '/email-records' },
-      ] },
-      { key: 'promotion-analytics', title: '推广分析', icon: 'DataAnalysis', children: [
         { key: 'ga-short-links', title: '短链配置', icon: 'Link', path: '/ga/short-links' },
         { key: 'ga-click-events', title: '点击事件', icon: 'Aim', path: '/ga/click-events' },
         { key: 'ga-promoter-coupons', title: '口令管理', icon: 'Discount', path: '/ga/promoter-coupons' },
       ] },
-      { key: 'marketing-assets', title: '营销素材', icon: 'Picture', children: [
+      { key: 'wechat-miniapp', title: '微信小程序', icon: 'ChatDotRound', children: [
+        { key: 'wechat-watchface-push', title: '微信新作品推送', icon: 'ChatDotRound', path: '/marketing/wechat-watchface-push' },
+      ] },
+      { key: 'ios-operations', title: 'iOS', icon: 'Bell', children: [
+        { key: 'ios-watchface-push', title: 'iOS 每日精选推送', icon: 'Bell', path: '/marketing/ios-watchface-push' },
+        { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
+        { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },
+      ] },
+      { key: 'shared-resources', title: '公共资源', icon: 'FolderOpened', children: [
         { key: 'watchface-assets', title: '表盘营销资产', icon: 'Picture', path: '/marketing/watchface-assets' },
+        { key: 'companion-apps', title: 'Wristo 配套应用地址', icon: 'Link', path: '/marketing/companion-apps' },
       ] },
     ],
   },

@@ -267,3 +267,8 @@ export const clearFinishedProductPackagingLogs = (): Promise<ApiResponse<number>
 export const clearProductPackagingDeadQueue = (): Promise<ApiResponse<number>> => {
   return instance.delete('/admin/product-packaging-logs/queue/dead')
 }
+
+// 清空历史佳明身份并提交新的 IQ 打包任务
+export const resetGarminAndRepack = (appId: number): Promise<ApiResponse<void>> => {
+  return instance.post(`/admin/products/${appId}/reset-garmin-and-repack`)
+}
