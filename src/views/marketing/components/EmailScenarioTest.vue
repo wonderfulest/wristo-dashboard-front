@@ -11,6 +11,9 @@
         </el-select>
         <div class="hint">{{ selected?.description }}</div>
       </el-form-item>
+      <el-form-item label="邮件语言">
+        <el-select v-model="language" :disabled="busy"><el-option label="简体中文" value="zh" /><el-option label="English" value="en" /></el-select>
+      </el-form-item>
       <el-button :loading="previewing" :disabled="busy" @click="preview">预览邮件</el-button>
     </el-form>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
@@ -44,6 +47,7 @@ const visible = defineModel<boolean>({ default: false })
 const scenarios = ref<Scenario[]>([])
 const scenarioId = ref('')
 const email = ref('')
+const language = ref('zh')
 const loading = ref(false)
 const previewing = ref(false)
 const sending = ref(false)
@@ -52,7 +56,7 @@ const selected = computed(() => scenarios.value.find(item => item.id === scenari
 const rendered = ref<Preview | null>(null)
 const result = ref<SendResult | null>(null)
 const error = ref('')
-watch([email, scenarioId], () => { rendered.value = null; result.value = null; error.value = '' })
+watch([email, scenarioId, language], () => { rendered.value = null; result.value = null; error.value = '' })
 watch(visible, async value => {
   if (!value || scenarios.value.length) return
   loading.value = true
@@ -71,7 +75,7 @@ function request() {
   const toEmail = email.value.trim()
   if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(toEmail)) throw new Error('请输入有效的单个邮箱地址')
   if (!scenarioId.value) throw new Error('请选择邮件场景')
-  return { scenarioId: scenarioId.value, toEmail }
+  return { scenarioId: scenarioId.value, toEmail, language: language.value }
 }
 async function preview() {
   if (busy.value) return
