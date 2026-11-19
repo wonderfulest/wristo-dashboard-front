@@ -15,6 +15,7 @@
       <el-button type="primary" :loading="rewardsSaving" :disabled="!rewards || rewardsLoading" @click="saveRewards">保存任务奖励</el-button>
       <el-button :disabled="rewardsSaving" @click="loadRewards">刷新</el-button>
     </el-card>
+    <ManualPointsTasks v-if="mode === 'rewards'" />
     <template v-if="mode === 'redemptions'">
     <el-card shadow="never" v-loading="loading">
       <template #header>全局默认兑换积分</template>
@@ -44,6 +45,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import ManualPointsTasks from '@/components/ManualPointsTasks.vue'
 import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
