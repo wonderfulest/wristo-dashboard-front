@@ -5,7 +5,7 @@
     <el-card v-else shadow="never">
       <template #header><strong>国内站兑换配置</strong></template>
       <p>国内站奖励与兑换作为同一组策略启用。首次保存需同时核对奖励、默认兑换额度和表盘覆盖值，统一在完整配置页编辑。</p>
-      <el-button type="primary" @click="$router.push('/ops/reward-rules?tab=cn')">管理国内站奖励与兑换</el-button>
+      <el-button type="primary" @click="$router.push('/marketing/cn/rewards')">管理国内站奖励与兑换</el-button>
     </el-card>
   </CreditsSection>
 </template>

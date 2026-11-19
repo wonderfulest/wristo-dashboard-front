@@ -1,5 +1,5 @@
 <template>
-  <CreditsSection title="奖励规则" description="按业务和渠道管理积分。首次登录欢迎礼与充值到账 AI 点数在「点数发放与套餐」管理。" :tabs="tabs" v-slot="{ selected }">
+  <CreditsSection title="奖励规则" description="按业务和渠道管理积分。积分充值在国内网站管理，套餐 AI 点数在 Studio 管理。" :tabs="tabs" v-slot="{ selected }">
     <UserRewards v-if="selected === 'users'" />
     <MiniappPoints v-else-if="selected === 'miniapp'" mode="rewards" />
     <CnRewardAmountsSettings v-else-if="selected === 'cn'" />

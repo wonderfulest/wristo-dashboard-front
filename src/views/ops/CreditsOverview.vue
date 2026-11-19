@@ -1,6 +1,6 @@
 <template>
   <div class="credits-page overview">
-    <header><div><h2>积分与 AI 运营总览</h2><p>积分、AI 点数和供应商成本分别核对。{{ rangeLabel }}</p></div><el-button :loading="loading" @click="load">刷新概览</el-button></header>
+    <header><div><h2>综合运营总览</h2><p>积分、AI 点数和供应商成本分别核对。{{ rangeLabel }}</p></div><el-button :loading="loading" @click="load">刷新概览</el-button></header>
     <div class="quick-actions">
       <router-link to="/ops/points-ledger"><strong>核对全平台流水</strong><span>积分 · AI 点数 · 业务关联</span></router-link>
       <router-link to="/ops/reward-rules"><strong>配置奖励</strong><span>用户 · 小程序 · 分享 · 创作者</span></router-link>

@@ -83,6 +83,59 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
+    key: 'marketing-growth',
+    title: '产品运营',
+    icon: 'Promotion',
+    basePaths: ['/marketing', '/ga', '/email-records', '/looks', '/website/ios-home-recommendations', '/website/studio-memberships', '/website/studio-conversion', '/ops/credit-grants', '/ops/miniapp-points', '/ops/user-rewards', '/ops/share-rewards', '/ops/creator-rewards'],
+    children: [
+      { key: 'overseas-website', title: '国外网站', icon: 'Monitor', children: [
+        { key: 'user-profiles', title: '用户画像', icon: 'Avatar', path: '/marketing/user-profiles' },
+        { key: 'segments', title: '用户分群', icon: 'UserFilled', path: '/marketing/segments' },
+        { key: 'promotion-campaigns', title: '营销活动', icon: 'Promotion', path: '/marketing/campaigns' },
+        { key: 'email-templates', title: '邮件模板', icon: 'MessageBox', path: '/marketing/email-templates' },
+        { key: 'push-records', title: '推送记录', icon: 'Bell', path: '/marketing/push-records' },
+        { key: 'email-records', title: '邮件发送历史', icon: 'Message', path: '/email-records' },
+        { key: 'ga-short-links', title: '短链配置', icon: 'Link', path: '/ga/short-links' },
+        { key: 'ga-click-events', title: '点击事件', icon: 'Aim', path: '/ga/click-events' },
+        { key: 'ga-promoter-coupons', title: '口令管理', icon: 'Discount', path: '/ga/promoter-coupons' },
+      ] },
+      { key: 'cn-website', title: '国内网站', icon: 'Monitor', children: [
+        { key: 'points-recharge', title: '积分充值', icon: 'Coin', path: '/marketing/cn/points-recharge' },
+        { key: 'cn-rewards', title: '奖励与兑换配置', icon: 'Coin', path: '/marketing/cn/rewards' },
+        { key: 'redemptions', title: '兑换记录与管理', icon: 'Coin', path: '/ops/redemptions' },
+      ] },
+      { key: 'studio-operations', title: 'Studio', icon: 'Monitor', children: [
+        { key: 'studio-memberships', title: 'Studio 会员', icon: 'Coin', path: '/website/studio-memberships' },
+        { key: 'studio-conversion', title: 'Studio 转化', icon: 'Coin', path: '/website/studio-conversion' },
+        { key: 'studio-credit-amounts', title: '套餐 AI 点数', icon: 'Coin', path: '/marketing/studio/credit-amounts' },
+        { key: 'credit-statistics', title: 'AI 点数收支', icon: 'Coin', path: '/ops/credit-statistics' },
+        { key: 'ai-scenes', title: '场景与扣点', icon: 'Coin', path: '/ops/ai-scenes' },
+        { key: 'ai-usage', title: '用量与成本', icon: 'Coin', path: '/ops/ai-usage' },
+        { key: 'ai-models', title: '模型与供应商', icon: 'Coin', path: '/ops/ai-models' },
+        { key: 'ai-prices', title: '成本价格', icon: 'Coin', path: '/ops/ai-prices' },
+        { key: 'watchface-rules', title: '表盘生成规则', icon: 'Coin', path: '/ops/watchface-rules' },
+      ] },
+      { key: 'wechat-miniapp', title: '微信小程序', icon: 'ChatDotRound', children: [
+        { key: 'miniapp-rewards', title: '任务奖励', icon: 'Coin', path: '/marketing/miniapp/rewards' },
+        { key: 'miniapp-redemptions', title: '兑换配置', icon: 'Coin', path: '/marketing/miniapp/redemptions' },
+        { key: 'wechat-watchface-push', title: '微信新作品推送', icon: 'ChatDotRound', path: '/marketing/wechat-watchface-push' },
+      ] },
+      { key: 'ios-operations', title: 'iOS', icon: 'Bell', children: [
+        { key: 'ios-home-recommendations', title: '首页 Banner', icon: 'Picture', path: '/website/ios-home-recommendations' },
+        { key: 'ios-watchface-push', title: 'iOS 每日精选推送', icon: 'Bell', path: '/marketing/ios-watchface-push' },
+        { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
+        { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },
+      ] },
+      { key: 'shared-resources', title: '公共资源', icon: 'FolderOpened', children: [
+        { key: 'credits-overview', title: '综合运营总览', icon: 'Coin', path: '/ops/credits-overview' },
+        { key: 'reward-rules', title: '跨产品奖励规则', icon: 'Coin', path: '/ops/reward-rules' },
+        { key: 'reward-records', title: '奖励记录与审核', icon: 'Coin', path: '/ops/reward-records' },
+        { key: 'watchface-assets', title: '表盘营销资产', icon: 'Picture', path: '/marketing/watchface-assets' },
+        { key: 'companion-apps', title: 'Wristo 配套应用地址', icon: 'Link', path: '/marketing/companion-apps' },
+      ] },
+    ],
+  },
+  {
     key: 'content-production',
     title: '内容生产',
     icon: 'Brush',
@@ -112,6 +165,46 @@ export const topMenus: TopMenuGroup[] = [
         { key: 'packaging-queue', title: '打包任务队列', icon: 'Box', path: '/packaging/packaging-queue' },
         { key: 'packaging-dead-queue', title: '死信队列', icon: 'Warning', path: '/packaging/packaging-dead-queue' },
       ] },
+    ],
+  },
+  {
+    key: 'users-transactions',
+    title: '用户与交易',
+    icon: 'User',
+    basePaths: ['/users', '/orders', '/merchant', '/website/subscription-plans', '/profile'],
+    children: [
+      { key: 'orders-entitlements', title: '订单与权益', icon: 'CreditCard', children: [
+        { key: 'history', title: '订单记录', icon: 'Document', path: '/orders/history' },
+        { key: 'custom-watchface-orders', title: '定制订单', icon: 'EditPen', path: '/orders/custom' },
+        { key: 'entitlement-grants', title: '赠送权益', icon: 'Key', path: '/orders/entitlement-grants' },
+        { key: 'trial-records', title: '试用记录', icon: 'Tickets', path: '/orders/trials' },
+      ] },
+      { key: 'user-services', title: '用户服务', icon: 'User', children: [
+        { key: 'points-accounts', title: '统一用户账户', icon: 'Coin', path: '/ops/points-accounts' },
+        { key: 'points-ledger', title: '全平台收支流水', icon: 'Coin', path: '/ops/points-ledger' },
+        { key: 'user-management', title: '用户管理', icon: 'User', path: '/users/user-management' },
+        { key: 'change-user-email', title: '变更用户邮箱', icon: 'Message', path: '/users/user-management/change-email' },
+        { key: 'email-preferences', title: '用户隐私', icon: 'Lock', path: '/users/email-preferences' },
+      ] },
+      { key: 'memberships-subscriptions', title: '会员与订阅', icon: 'CreditCard', children: [
+        { key: 'subscription-plans', title: '订阅计划', icon: 'Notebook', path: '/website/subscription-plans' },
+      ] },
+      { key: 'after-sales-promotions', title: '售后与优惠', icon: 'Money', children: [
+        { key: 'refund', title: '订单退款', icon: 'Money', path: '/orders/refund' },
+        { key: 'paddle-refunds', title: 'Paddle 退款查询', icon: 'CreditCard', path: '/orders/paddle-refunds' },
+        { key: 'discounts', title: '优惠管理', icon: 'Discount', path: '/orders/discounts' },
+      ] },
+      { key: 'merchant-settlement', title: '商家与结算', icon: 'OfficeBuilding', children: [
+        { key: 'merchant', title: '商家管理', icon: 'OfficeBuilding', path: '/merchant' },
+        { key: 'merchant-tools', title: '商家工具', icon: 'Tools', path: '/merchant/tools' },
+        { key: 'merchant-payouts', title: '结算管理', icon: 'Money', path: '/merchant/payouts' },
+      ] },
+      { key: 'management-settings', title: '管理配置', icon: 'Setting', children: [
+        { key: 'paddle-sync', title: 'Paddle 用户同步', icon: 'CreditCard', path: '/users/paddle-sync' },
+        { key: 'role-management', title: '角色管理', icon: 'Key', path: '/users/role-management' },
+        { key: 'dict', title: '字典管理', icon: 'Collection', path: '/users/dict' },
+      ] },
+      { key: 'profile', title: '个人资料', icon: 'Avatar', path: '/profile' },
     ],
   },
   {
@@ -152,78 +245,6 @@ export const topMenus: TopMenuGroup[] = [
     ],
   },
   {
-    key: 'users-transactions',
-    title: '用户与交易',
-    icon: 'User',
-    basePaths: ['/users', '/orders', '/merchant', '/website/studio-memberships', '/website/studio-conversion', '/website/subscription-plans', '/profile'],
-    children: [
-      { key: 'orders-entitlements', title: '订单与权益', icon: 'CreditCard', children: [
-        { key: 'history', title: '订单记录', icon: 'Document', path: '/orders/history' },
-        { key: 'custom-watchface-orders', title: '定制订单', icon: 'EditPen', path: '/orders/custom' },
-        { key: 'entitlement-grants', title: '赠送权益', icon: 'Key', path: '/orders/entitlement-grants' },
-        { key: 'trial-records', title: '试用记录', icon: 'Tickets', path: '/orders/trials' },
-      ] },
-      { key: 'studio-conversion', title: 'Studio 转化', icon: 'DataAnalysis', path: '/website/studio-conversion' },
-      { key: 'user-services', title: '用户服务', icon: 'User', children: [
-        { key: 'user-management', title: '用户管理', icon: 'User', path: '/users/user-management' },
-        { key: 'change-user-email', title: '变更用户邮箱', icon: 'Message', path: '/users/user-management/change-email' },
-        { key: 'email-preferences', title: '用户隐私', icon: 'Lock', path: '/users/email-preferences' },
-      ] },
-      { key: 'memberships-subscriptions', title: '会员与订阅', icon: 'CreditCard', children: [
-        { key: 'studio-memberships', title: 'Studio 会员', icon: 'CreditCard', path: '/website/studio-memberships' },
-        { key: 'subscription-plans', title: '订阅计划', icon: 'Notebook', path: '/website/subscription-plans' },
-      ] },
-      { key: 'after-sales-promotions', title: '售后与优惠', icon: 'Money', children: [
-        { key: 'refund', title: '订单退款', icon: 'Money', path: '/orders/refund' },
-        { key: 'paddle-refunds', title: 'Paddle 退款查询', icon: 'CreditCard', path: '/orders/paddle-refunds' },
-        { key: 'discounts', title: '优惠管理', icon: 'Discount', path: '/orders/discounts' },
-      ] },
-      { key: 'merchant-settlement', title: '商家与结算', icon: 'OfficeBuilding', children: [
-        { key: 'merchant', title: '商家管理', icon: 'OfficeBuilding', path: '/merchant' },
-        { key: 'merchant-tools', title: '商家工具', icon: 'Tools', path: '/merchant/tools' },
-        { key: 'merchant-payouts', title: '结算管理', icon: 'Money', path: '/merchant/payouts' },
-      ] },
-      { key: 'management-settings', title: '管理配置', icon: 'Setting', children: [
-        { key: 'paddle-sync', title: 'Paddle 用户同步', icon: 'CreditCard', path: '/users/paddle-sync' },
-        { key: 'role-management', title: '角色管理', icon: 'Key', path: '/users/role-management' },
-        { key: 'dict', title: '字典管理', icon: 'Collection', path: '/users/dict' },
-      ] },
-      { key: 'profile', title: '个人资料', icon: 'Avatar', path: '/profile' },
-    ],
-  },
-  {
-    key: 'marketing-growth',
-    title: '产品运营',
-    icon: 'Promotion',
-    basePaths: ['/marketing', '/ga', '/email-records', '/looks', '/website/ios-home-recommendations'],
-    children: [
-      { key: 'overseas-website', title: '国外网站', icon: 'Monitor', children: [
-        { key: 'user-profiles', title: '用户画像', icon: 'Avatar', path: '/marketing/user-profiles' },
-        { key: 'segments', title: '用户分群', icon: 'UserFilled', path: '/marketing/segments' },
-        { key: 'promotion-campaigns', title: '营销活动', icon: 'Promotion', path: '/marketing/campaigns' },
-        { key: 'email-templates', title: '邮件模板', icon: 'MessageBox', path: '/marketing/email-templates' },
-        { key: 'push-records', title: '推送记录', icon: 'Bell', path: '/marketing/push-records' },
-        { key: 'email-records', title: '邮件发送历史', icon: 'Message', path: '/email-records' },
-        { key: 'ga-short-links', title: '短链配置', icon: 'Link', path: '/ga/short-links' },
-        { key: 'ga-click-events', title: '点击事件', icon: 'Aim', path: '/ga/click-events' },
-        { key: 'ga-promoter-coupons', title: '口令管理', icon: 'Discount', path: '/ga/promoter-coupons' },
-      ] },
-      { key: 'wechat-miniapp', title: '微信小程序', icon: 'ChatDotRound', children: [
-        { key: 'wechat-watchface-push', title: '微信新作品推送', icon: 'ChatDotRound', path: '/marketing/wechat-watchface-push' },
-      ] },
-      { key: 'ios-operations', title: 'iOS', icon: 'Bell', children: [
-        { key: 'ios-home-recommendations', title: '首页 Banner', icon: 'Picture', path: '/website/ios-home-recommendations' },
-        { key: 'ios-watchface-push', title: 'iOS 每日精选推送', icon: 'Bell', path: '/marketing/ios-watchface-push' },
-        { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
-        { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },
-      ] },
-      { key: 'shared-resources', title: '公共资源', icon: 'FolderOpened', children: [
-        { key: 'watchface-assets', title: '表盘营销资产', icon: 'Picture', path: '/marketing/watchface-assets' },
-        { key: 'companion-apps', title: 'Wristo 配套应用地址', icon: 'Link', path: '/marketing/companion-apps' },
-      ] },
-    ],
-  },
-  {
     key: 'games',
     title: '小游戏',
     icon: 'Trophy',
@@ -240,35 +261,6 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/utilities'],
     children: [
       { key: 'utilities-manage', title: '工具管理', icon: 'FolderOpened', path: '/utilities/manage' },
-    ],
-  },
-  {
-    key: 'credits-ai',
-    title: '积分与 AI',
-    icon: 'Coin',
-    basePaths: ['/ops/points-ledger', '/ops/credits-overview', '/ops/points-accounts', '/ops/miniapp-points', '/ops/ai-usage', '/ops/credit-statistics', '/ops/ai-prices', '/ops/user-rewards', '/ops/share-rewards', '/ops/creator-rewards', '/ops/ai-models', '/ops/watchface-rules', '/ops/reward-rules', '/ops/reward-records', '/ops/redemptions', '/ops/credit-grants', '/ops/ai-scenes'],
-    children: [
-      { key: 'credits-overview', title: '运营总览', icon: 'DataBoard', path: '/ops/credits-overview' },
-      { key: 'credits-accounts', title: '账户与收支', icon: 'User', children: [
-        { key: 'points-accounts', title: '用户账户', icon: 'User', path: '/ops/points-accounts' },
-        { key: 'points-ledger', title: '全平台收支流水', icon: 'Tickets', path: '/ops/points-ledger' },
-        { key: 'credit-statistics', title: 'AI 点数收支', icon: 'Histogram', path: '/ops/credit-statistics' },
-      ] },
-      { key: 'credits-rewards', title: '奖励与兑换', icon: 'Star', children: [
-        { key: 'reward-rules', title: '奖励规则', icon: 'Setting', path: '/ops/reward-rules' },
-        { key: 'reward-records', title: '奖励记录与审核', icon: 'DocumentChecked', path: '/ops/reward-records' },
-        { key: 'redemptions', title: '兑换管理', icon: 'Tickets', path: '/ops/redemptions' },
-      ] },
-      { key: 'credits-ai-operations', title: 'AI 运营', icon: 'DataAnalysis', children: [
-        { key: 'credit-grants', title: '点数发放与套餐', icon: 'CreditCard', path: '/ops/credit-grants' },
-        { key: 'ai-scenes', title: '场景与扣点', icon: 'Operation', path: '/ops/ai-scenes' },
-        { key: 'ai-usage', title: '用量与成本', icon: 'DataAnalysis', path: '/ops/ai-usage' },
-      ] },
-      { key: 'credits-ai-settings', title: 'AI 配置', icon: 'Setting', children: [
-        { key: 'ai-models', title: '模型与供应商', icon: 'MagicStick', path: '/ops/ai-models' },
-        { key: 'ai-prices', title: '成本价格', icon: 'Money', path: '/ops/ai-prices' },
-        { key: 'watchface-rules', title: '表盘生成规则', icon: 'Document', path: '/ops/watchface-rules' },
-      ] },
     ],
   },
   {

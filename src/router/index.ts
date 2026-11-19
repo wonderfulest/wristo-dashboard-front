@@ -103,6 +103,38 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/marketing/cn/points-recharge',
+      name: 'PointsRecharge',
+      component: () => import('@/views/ops/PointsRecharge.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/studio/credit-amounts',
+      name: 'StudioCreditAmounts',
+      component: () => import('@/views/ops/StudioCreditAmounts.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/cn/rewards',
+      name: 'CnProductRewards',
+      component: () => import('@/views/ops/CnProductRewards.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/miniapp/rewards',
+      name: 'MiniappProductRewards',
+      component: () => import('@/views/ops/MiniappPoints.vue'),
+      props: { mode: 'rewards' },
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketing/miniapp/redemptions',
+      name: 'MiniappProductRedemptions',
+      component: () => import('@/views/ops/MiniappPoints.vue'),
+      props: { mode: 'redemptions' },
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/ops/credit-grants',
       name: 'CreditGrants',
       component: () => import('@/views/ops/CreditGrants.vue'),

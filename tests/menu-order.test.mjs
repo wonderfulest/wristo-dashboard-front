@@ -20,13 +20,12 @@ function getDirectChildKeys(sectionKey) {
 test('顶部菜单按业务流程组织', () => {
   assert.deepEqual(getTopMenuKeys(), [
     'home',
-    'content-production',
-    'app-operations',
-    'users-transactions',
     'marketing-growth',
+    'content-production',
+    'users-transactions',
+    'app-operations',
     'games',
     'utilities',
-    'credits-ai',
     'platform-operations',
   ])
 })
@@ -61,7 +60,6 @@ test('各业务域使用稳定的二级分组顺序', () => {
   ])
   assert.deepEqual(getDirectChildKeys('users-transactions'), [
     'orders-entitlements',
-    'studio-conversion',
     'user-services',
     'memberships-subscriptions',
     'after-sales-promotions',
@@ -74,6 +72,8 @@ test('各业务域使用稳定的二级分组顺序', () => {
 test('产品运营按产品线和公共资源分组', () => {
   assert.deepEqual(getDirectChildKeys('marketing-growth'), [
     'overseas-website',
+    'cn-website',
+    'studio-operations',
     'wechat-miniapp',
     'ios-operations',
     'shared-resources',
