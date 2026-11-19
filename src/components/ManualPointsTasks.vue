@@ -1,17 +1,22 @@
 <template>
   <el-card shadow="never" v-loading="configLoading">
-    <template #header>好评与社媒发帖奖励</template>
+    <template #header>自定义积分任务</template>
     <el-alert v-if="configError" :title="configError" type="error" :closable="false" />
-    <p>好评可多次提交，以每次审核结果为准；社媒发帖每个账号限领一次。提交时固定奖励额度，调整配置不影响已有申请。</p>
+    <p>每个任务独立设置领取次数，0 表示不限次数。提交时固定奖励额度，调整配置不影响已有申请。</p>
     <el-form label-position="top">
-      <el-form-item v-for="item in configs" :key="item.kind" :label="names[item.kind]">
-        <el-switch v-model="item.enabled" active-text="开放任务" :disabled="configSaving" />
+      <el-form-item v-for="item in configs" :key="item.kind" :label="item.name || '新任务'">
+        <el-input v-model="item.name" placeholder="任务名称" :maxlength="120" :disabled="configSaving" />
+        <el-input v-model="item.description" type="textarea" placeholder="任务说明" :maxlength="2000" :disabled="configSaving" />
+        <el-switch :model-value="item.enabled" active-text="开放任务" :disabled="configSaving || configLoading || configUncertain || !saved.has(item.kind)" @change="toggleConfig(item, Boolean($event))" />
+        <span>领取次数（0 不限）</span><el-input-number v-model="item.maxClaims" :min="0" :precision="0" :disabled="configSaving" />
+        <span>排序</span><el-input-number v-model="item.sortOrder" :min="0" :precision="0" :disabled="configSaving" />
         <el-input-number v-model="item.points" :min="1" :max="100000" :precision="0" :disabled="configSaving" />
         <span>积分</span>
-        <el-button :disabled="configSaving" @click="saveConfig(item)">保存</el-button>
+        <el-button :disabled="configSaving || configUncertain" @click="saveConfig(item)">保存</el-button>
       </el-form-item>
     </el-form>
-    <el-button :disabled="configSaving" @click="loadConfig">刷新配置</el-button>
+    <el-button :disabled="configSaving || configLoading" @click="addConfig">新增任务</el-button>
+    <el-button :disabled="configSaving || configLoading" @click="loadConfig">刷新配置</el-button>
   </el-card>
   <el-card shadow="never" v-loading="loading">
     <template #header>任务凭证审核</template>
@@ -28,7 +33,7 @@
         <el-button :disabled="busy" @click="open(row)">查看凭证 / 审核</el-button>
       </template></el-table-column>
       <el-table-column prop="userId" label="账号 ID" width="110" />
-      <el-table-column label="任务" width="110"><template #default="{ row }">{{ names[row.kind as keyof typeof names] }}</template></el-table-column>
+      <el-table-column label="任务" width="110"><template #default="{ row }">{{ row.taskName || row.kind }}</template></el-table-column>
       <el-table-column prop="points" label="积分" width="90" />
       <el-table-column label="状态" width="100"><template #default="{ row }">{{ statuses[row.status as keyof typeof statuses] }}</template></el-table-column>
       <el-table-column label="提交时间" min-width="180"><template #default="{ row }">{{ date(row.createdAt) }}</template></el-table-column>
@@ -39,7 +44,7 @@
   </el-card>
   <el-dialog v-model="dialog" title="任务凭证" width="min(720px, 94vw)" :close-on-click-modal="!busy" :show-close="!busy" :close-on-press-escape="!busy">
     <template v-if="selected">
-      <p>{{ names[selected.kind] }} · {{ selected.points }} 积分 · {{ statuses[selected.status] }}</p>
+      <p>{{ selected.taskName || selected.kind }} · {{ selected.points }} 积分 · {{ statuses[selected.status] }}</p>
       <p>账号 {{ selected.userId }} · 提交于 {{ date(selected.createdAt) }}</p>
       <p v-if="selected.link"><a :href="selected.link" target="_blank" rel="noopener noreferrer">{{ selected.link }}</a></p>
       <p class="note">{{ selected.note || '无备注' }}</p>
@@ -61,8 +66,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getManualTaskConfig, saveManualTaskConfig, getManualTasks, reviewManualTask, getManualTaskEvidence, type ManualTaskConfig, type ManualSubmission } from '@/api/manualPointsTasks'
-const names = { REVIEW: '好评', SOCIAL: '社媒发帖' }
+import { getManualTaskConfig, createManualTaskConfig, saveManualTaskConfig, getManualTasks, reviewManualTask, getManualTaskEvidence, type ManualTaskConfig, type ManualSubmission } from '@/api/manualPointsTasks'
+const saved = ref(new Map<string, ManualTaskConfig>())
+const configUncertain = ref(false)
 const statuses = { PENDING: '待审核', APPROVED: '已通过', REJECTED: '已驳回' }
 const date = (value: string) => new Date(value).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
 const configs = ref<ManualTaskConfig[]>([]), configLoading = ref(false), configSaving = ref(false), configError = ref('')
@@ -70,17 +76,40 @@ const items = ref<ManualSubmission[]>([]), page = ref(1), total = ref(0), status
 const selected = ref<ManualSubmission>(), dialog = ref(false), reason = ref(''), image = ref(''), evidenceLoading = ref(false), evidenceError = ref('')
 let revision = 0, evidenceRevision = 0
 async function loadConfig() {
+  if (configLoading.value || configSaving.value) return
   configLoading.value = true; configError.value = ''
-  try { const r = await getManualTaskConfig(); if (r.code !== 0 || !r.data) throw new Error(); configs.value = r.data }
+  try { const r = await getManualTaskConfig(); if (r.code !== 0 || !r.data) throw new Error(); configs.value = r.data; configUncertain.value = false; saved.value.clear(); r.data.forEach(item => saved.value.set(item.kind, { ...item })) }
   catch { configError.value = '配置读取失败，请重试。' }
   finally { configLoading.value = false }
 }
-async function saveConfig(item: ManualTaskConfig) {
-  if (configSaving.value) return
-  if (!Number.isInteger(item.points) || item.points < 1 || item.points > 100000) { ElMessage.warning('积分须为 1 至 100000 的整数'); return }
+function addConfig() {
+  configs.value.push({ kind: 'TASK_' + crypto.randomUUID().replace(/-/g, '').slice(0, 24).toUpperCase(), name: '', description: '', points: 50, enabled: false, maxClaims: 0, sortOrder: 0 })
+}
+async function toggleConfig(item: ManualTaskConfig, enabled: boolean) {
+  const previous = saved.value.get(item.kind)
+  if (!previous || configSaving.value || configLoading.value || configUncertain.value) return
   configSaving.value = true; configError.value = ''
-  try { const r = await saveManualTaskConfig({ ...item }); if (r.code !== 0 || !r.data) throw new Error(); Object.assign(item, r.data); ElMessage.success('已保存') }
-  catch { configError.value = '未能确认保存结果，请刷新配置核对。' }
+  try {
+    const r = await saveManualTaskConfig({ ...previous, enabled })
+    if (r.code !== 0 || !r.data) throw new Error()
+    saved.value.set(item.kind, { ...r.data }); item.enabled = r.data.enabled
+  } catch {
+    item.enabled = previous.enabled; configUncertain.value = true
+    configError.value = '未能确认开关保存结果，请刷新配置核对。'
+  } finally { configSaving.value = false }
+}
+async function saveConfig(item: ManualTaskConfig) {
+  if (configSaving.value || configLoading.value || configUncertain.value) return
+  if (!item.name.trim() || item.name.length > 120 || item.description.length > 2000) { ElMessage.warning('请填写任务名称，并检查名称和说明长度'); return }
+  if (!Number.isInteger(item.points) || item.points < 1 || item.points > 100000) { ElMessage.warning('积分须为 1 至 100000 的整数'); return }
+  if (![item.maxClaims, item.sortOrder].every(value => Number.isInteger(value) && value >= 0 && value <= 100000)) { ElMessage.warning('次数和排序须为非负整数'); return }
+  configSaving.value = true; configError.value = ''
+  try {
+    const write = saved.value.has(item.kind) ? saveManualTaskConfig : createManualTaskConfig
+    const r = await write({ ...item, name: item.name.trim(), description: item.description.trim() })
+    if (r.code !== 0 || !r.data) throw new Error()
+    Object.assign(item, r.data); saved.value.set(item.kind, { ...r.data }); ElMessage.success('已保存')
+  } catch { configUncertain.value = true; configError.value = '未能确认保存结果，请刷新配置核对。' }
   finally { configSaving.value = false }
 }
 async function load() {

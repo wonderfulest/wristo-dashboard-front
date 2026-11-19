@@ -3,7 +3,16 @@
     <h2>{{ mode === 'rewards' ? '小程序任务' : '小程序兑换' }}</h2>
     <p>国内网站和微信小程序使用统一积分兑换表盘权益。是否开启由每款表盘配置决定，开启后所需积分必须大于 0；会员权益覆盖和已拥有的表盘不扣积分。</p>
     <el-card v-if="mode === 'rewards'" shadow="never" v-loading="rewardsLoading">
-      <template #header>任务积分</template>
+      <template #header>
+        <div class="rewards-header">
+          <span>任务积分</span>
+          <el-tag v-if="weeklyRewardSummary" type="success" size="large">整周任务可得 {{ weeklyRewardSummary.total }} 积分</el-tag>
+        </div>
+      </template>
+      <div v-if="weeklyRewardSummary" class="weekly-summary">
+        <p>每日任务 × 7 天：{{ weeklyRewardSummary.daily }} 积分 + 每周奖励：{{ weeklyRewardSummary.weekly }} 积分 + 广告每天 3 次 × 7 天：{{ weeklyRewardSummary.ads }} 积分</p>
+        <small>按当前表单计算，修改后需保存才生效。每周奖励可叠加；不含首次登录、新手教程、首次安装、额外发布的任务及 AI 点数。</small>
+      </div>
       <el-alert v-if="rewardsError" :title="rewardsError" type="error" :closable="false" />
       <el-form v-if="rewards" label-position="top" :disabled="rewardsSaving || rewardsLoading" class="reward-form">
         <el-form-item v-for="field in rewardFields" :key="field.key" :label="field.label">
@@ -47,7 +56,7 @@
 <script setup lang="ts">
 import ManualPointsTasks from '@/components/ManualPointsTasks.vue'
 import TableActionColumn from '@/components/common/TableActionColumn.vue'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import AppPointsSettings from '@/components/AppPointsSettings.vue'
@@ -88,6 +97,16 @@ const rewardFields: { key: keyof PointsRewards; label: string; description: stri
 const resources = ref<PointsResource[]>([]), resourcesLoading = ref(false), resourcesError = ref('')
 const resourceSaving = ref<number | null>(null)
 const validPoints = (value: number) => Number.isInteger(value) && value >= 1 && value <= 100000
+const weeklyRewardSummary = computed(() => {
+  const r = rewards.value
+  if (!r) return null
+  const values = [r.checkInPoints, r.dailyInstallPoints, r.weeklyInstallPoints, r.weeklyCheckIn3Points, r.weeklyCheckIn5Points, r.weeklyCheckInFullPoints, r.weeklyInstallFullPoints, r.adPoints]
+  if (!values.every(validPoints)) return null
+  const daily = (r.checkInPoints + r.dailyInstallPoints) * 7
+  const weekly = r.weeklyInstallPoints + r.weeklyCheckIn3Points + r.weeklyCheckIn5Points + r.weeklyCheckInFullPoints + r.weeklyInstallFullPoints
+  const ads = r.adPoints * 3 * 7
+  return { daily, weekly, ads, total: daily + weekly + ads }
+})
 async function loadRewards() {
   rewardsLoading.value = true; rewardsError.value = ''; rewards.value = undefined
   try {
@@ -132,4 +151,4 @@ async function saveResource(resource: PointsResource) {
 }
 onMounted(() => { if (mode === 'rewards') void loadRewards(); else { void load(); void loadResources() } })
 </script>
-<style scoped>.reward-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 24px; } small { display: block; width: 100%; color: var(--el-text-color-secondary); } .points-settings { padding: 24px; display: flex; flex-direction: column; gap: 20px; } h2,p { margin: 0; } p { color: var(--el-text-color-secondary); line-height: 1.6; }@media (max-width: 600px) { .points-settings { padding: 12px; } .points-settings :deep(.el-input-number) { width: 100%; } }</style>
+<style scoped>.rewards-header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; } .weekly-summary { margin-bottom: 20px; padding: 12px 16px; background: var(--el-fill-color-light); border-radius: 6px; } .reward-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 24px; } small { display: block; width: 100%; color: var(--el-text-color-secondary); } .points-settings { padding: 24px; display: flex; flex-direction: column; gap: 20px; } h2,p { margin: 0; } p { color: var(--el-text-color-secondary); line-height: 1.6; }@media (max-width: 600px) { .points-settings { padding: 12px; } .points-settings :deep(.el-input-number) { width: 100%; } }</style>

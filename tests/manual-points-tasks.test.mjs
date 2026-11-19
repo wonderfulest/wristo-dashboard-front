@@ -7,28 +7,29 @@ const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES
 function setup() {
   const writes=[],warnings=[]
   const api={
-    getManualTaskConfig:async()=>({code:0,data:[{kind:'REVIEW',points:50,enabled:false}]}),
+    getManualTaskConfig:async()=>({code:0,data:[{kind:'REVIEW',name:'好评',description:'说明',maxClaims:0,sortOrder:0,points:50,enabled:false}]}),
     saveManualTaskConfig:async data=>{writes.push(data);return {code:0,data}},
+    createManualTaskConfig:async data=>{writes.push(data);return {code:0,data}},
     getManualTasks:async()=>({code:0,data:{items:[],total:0}}),
     reviewManualTask:async(id,approve,reason)=>{writes.push({id,approve,reason});return {code:0,data:{id,status:approve?'APPROVED':'REJECTED'}}},
     getManualTaskEvidence:async()=>({code:0,data:{imageBase64:'AA=='}}),
   }
   const context={ref:value=>({value}),onMounted(){},ElMessage:{warning:m=>warnings.push(m),success(){}},ElMessageBox:{confirm:async()=>true},...Object.fromEntries(Object.keys(api).map(key=>[key,(...args)=>api[key](...args)]))}
-  return {...new Function(...Object.keys(context),`${code}; return { configs, configError, configSaving, items, selected, error, busy, reason, dialog, image, evidenceError, loadConfig, saveConfig, load, open, review };`)(...Object.values(context)),api,writes,warnings}
+  return {...new Function(...Object.keys(context),`${code}; return { configs, configError, configSaving, items, selected, error, busy, reason, dialog, image, evidenceError, loadConfig, saveConfig, toggleConfig, addConfig, load, open, review };`)(...Object.values(context)),api,writes,warnings}
 }
 test('configuration loads authoritative values and rejects invalid amount',async()=>{
   const h=setup();await h.loadConfig();assert.equal(h.configs.value[0].enabled,false)
-  for(const points of [0,1.5,100001,NaN])await h.saveConfig({kind:'REVIEW',points,enabled:true})
-  assert.equal(h.writes.length,0);await h.saveConfig({kind:'REVIEW',points:25,enabled:true});assert.equal(h.writes[0].points,25)
+  for(const points of [0,1.5,100001,NaN])await h.saveConfig({kind:'REVIEW',name:'好评',description:'说明',maxClaims:0,sortOrder:0,points,enabled:true})
+  assert.equal(h.writes.length,0);await h.saveConfig({kind:'REVIEW',name:'好评',description:'说明',maxClaims:0,sortOrder:0,points:25,enabled:true});assert.equal(h.writes[0].points,25)
 })
 test('reject requires reason and approval carries only id decision and reason',async()=>{
-  const h=setup();await h.open({id:'a',kind:'REVIEW',points:30,status:'PENDING',hasImage:false})
+  const h=setup();await h.open({id:'a',kind:'REVIEW',name:'好评',description:'说明',maxClaims:0,sortOrder:0,points:30,status:'PENDING',hasImage:false})
   await h.review(false);assert.equal(h.writes.length,0)
   await h.review(true);assert.deepEqual(h.writes,[{id:'a',approve:true,reason:''}]);assert.equal(h.dialog.value,false)
 })
 test('duplicate review clicks send only one mutation',async()=>{
   const h=setup();let finish;h.api.reviewManualTask=async(...args)=>{h.writes.push(args);return new Promise(resolve=>finish=resolve)}
-  await h.open({id:'a',kind:'REVIEW',points:30,status:'PENDING',hasImage:false})
+  await h.open({id:'a',kind:'REVIEW',name:'好评',description:'说明',maxClaims:0,sortOrder:0,points:30,status:'PENDING',hasImage:false})
   const first=h.review(true);await new Promise(resolve=>setImmediate(resolve));await h.review(true)
   assert.equal(h.writes.length,1);finish({code:0,data:{id:'a',status:'APPROVED'}});await first;assert.equal(h.busy.value,false)
 })
@@ -39,6 +40,29 @@ test('late evidence cannot replace a different selected application',async()=>{
 })
 test('uncertain review refreshes queue without reporting success',async()=>{
   const h=setup();h.api.reviewManualTask=async()=>{throw new Error('network')}
-  await h.open({id:'a',kind:'REVIEW',points:30,status:'PENDING',hasImage:false});await h.review(true)
+  await h.open({id:'a',kind:'REVIEW',name:'好评',description:'说明',maxClaims:0,sortOrder:0,points:30,status:'PENDING',hasImage:false});await h.review(true)
   assert.match(h.error.value,/未能确认/);assert.equal(h.dialog.value,false);assert.equal(h.busy.value,false)
+})
+
+test('switch persists immediately without accidentally saving draft fields and rolls back failure',async()=>{
+ const h=setup();await h.loadConfig();const item=h.configs.value[0];item.points=999
+ await h.toggleConfig(item,true);assert.equal(h.writes[0].enabled,true);assert.equal(h.writes[0].points,50);assert.equal(item.points,999)
+ h.api.saveManualTaskConfig=async()=>{throw Error('offline')};await h.toggleConfig(item,false)
+ assert.equal(item.enabled,true);assert.match(h.configError.value,/刷新/)
+ const count=h.writes.length;await h.saveConfig(item);assert.equal(h.writes.length,count)
+ await h.loadConfig();h.api.saveManualTaskConfig=async data=>{h.writes.push(data);return {code:0,data}};await h.toggleConfig(h.configs.value[0],true);assert.equal(h.writes.length,count+1)
+})
+test('switch waits for server confirmation and blocks a second mutation',async()=>{
+ const h=setup();await h.loadConfig();const item=h.configs.value[0];let finish
+ h.api.saveManualTaskConfig=data=>{h.writes.push(data);return new Promise(resolve=>finish=resolve)}
+ const pending=h.toggleConfig(item,true);assert.equal(item.enabled,false);assert.equal(h.configSaving.value,true)
+ await h.toggleConfig(item,true);assert.equal(h.writes.length,1)
+ finish({code:0,data:{...item,enabled:true}});await pending;assert.equal(item.enabled,true)
+})
+test('new custom task creates once then updates by stable kind',async()=>{
+ const h=setup();let creates=0,updates=0
+ h.api.createManualTaskConfig=async data=>{creates++;return {code:0,data}}
+ h.api.saveManualTaskConfig=async data=>{updates++;return {code:0,data}}
+ const item={kind:'TASK_XHS',name:'小红书',description:'发布分享',points:50,enabled:false,maxClaims:1,sortOrder:2}
+ await h.saveConfig(item);await h.saveConfig({...item,points:60});assert.equal(creates,1);assert.equal(updates,1)
 })
