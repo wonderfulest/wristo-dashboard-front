@@ -1,7 +1,7 @@
 import instance from '@/config/axios'
 import type { ApiResponse } from '@/types/api'
 export interface PointsSettings { defaultPoints: number }
-export interface AppPointsSettings { enabled: boolean; points: number | null; effectivePoints: number; itemId: number | null }
+export interface AppPointsSettings { enabled: boolean; points: number | null; effectivePoints: number; defaultPoints: number; itemId: number | null }
 export const getPointsSettings = (): Promise<ApiResponse<PointsSettings>> => instance.get('/admin/miniapp-points/settings')
 export const savePointsSettings = (data: PointsSettings): Promise<ApiResponse<PointsSettings>> => instance.put('/admin/miniapp-points/settings', data)
 export const getAppPoints = (id: number): Promise<ApiResponse<AppPointsSettings>> => instance.get(`/admin/miniapp-points/apps/${id}`)

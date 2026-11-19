@@ -4,9 +4,9 @@
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-form v-if="settings" label-position="top" :disabled="saving || loading">
       <el-form-item label="国内网站和微信小程序积分兑换"><el-switch v-model="settings.enabled" /></el-form-item>
-      <el-form-item label="使用全局默认"><el-switch v-model="inherit" /></el-form-item>
+      <el-form-item label="使用默认规则"><el-switch v-model="inherit" /></el-form-item>
       <el-form-item v-if="!inherit" label="兑换所需积分"><el-input-number v-model="customPoints" :min="settings.enabled ? 1 : 0" :max="100000" :precision="0" /></el-form-item>
-      <p>{{ inherit ? `使用全局默认 ${defaultPoints} 积分，随全局设置变化。` : '单独定价，不受全局默认值调整影响。' }}</p>
+      <p>{{ inherit ? `默认 ${defaultPoints} 积分：付费表盘按人民币售价 × 10，免费表盘使用免费默认值。` : '单独定价，不受全局默认值调整影响。' }}</p>
       <p>开启后，国内免费表盘也需积分兑换；会员权益覆盖或已拥有时不扣积分。海外免费表盘直接解锁。关闭后停止新兑换，已兑换权益不受影响。</p>
       <el-button type="primary" :loading="saving" @click="save">保存兑换设置</el-button>
       <el-button @click="load">重新读取</el-button>
@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getAppPoints, saveAppPoints, getPointsSettings, type AppPointsSettings } from '@/api/miniappPoints'
+import { getAppPoints, saveAppPoints, type AppPointsSettings } from '@/api/miniappPoints'
 const props = defineProps<{ appId: number }>()
 const settings = ref<AppPointsSettings>(), loading = ref(false), saving = ref(false), error = ref('')
 const inherit = ref(true), customPoints = ref<number | undefined>(50), defaultPoints = ref(50)
@@ -26,11 +26,11 @@ async function load() {
   const current = ++revision, id = props.appId
   settings.value = undefined; error.value = ''; loading.value = true
   try {
-    const [app, global] = await Promise.all([getAppPoints(id), getPointsSettings()])
+    const app = await getAppPoints(id)
     if (current !== revision) return
-    if (app.code !== 0 || !app.data || global.code !== 0 || !global.data) throw new Error()
-    settings.value = app.data; defaultPoints.value = global.data.defaultPoints
-    inherit.value = app.data.points === null; customPoints.value = app.data.points ?? global.data.defaultPoints
+    if (app.code !== 0 || !app.data) throw new Error()
+    settings.value = app.data; defaultPoints.value = app.data.defaultPoints
+    inherit.value = app.data.points === null; customPoints.value = app.data.points ?? app.data.defaultPoints
   } catch { if (current === revision) error.value = '无法读取兑换设置，请重试。' }
   finally { if (current === revision) loading.value = false }
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="points-settings">
     <h2>{{ mode === 'rewards' ? '小程序任务' : '小程序兑换' }}</h2>
-    <p>国内网站和微信小程序使用统一积分兑换表盘权益。是否开启由每款表盘配置决定，开启后所需积分必须大于 0；会员权益覆盖和已拥有的表盘不扣积分。</p>
+    <p>国内网站和微信小程序使用统一积分兑换表盘权益。付费和免费表盘默认开启兑换，付费按人民币售价 × 10，免费默认 50 积分。每款表盘可单独调整，开启后所需积分必须大于 0；会员权益覆盖和已拥有的表盘不扣积分。</p>
     <el-card v-if="mode === 'rewards'" shadow="never" v-loading="rewardsLoading">
       <template #header>
         <div class="rewards-header">
@@ -27,14 +27,14 @@
     <ManualPointsTasks v-if="mode === 'rewards'" />
     <template v-if="mode === 'redemptions'">
     <el-card shadow="never" v-loading="loading">
-      <template #header>全局默认兑换积分</template>
+      <template #header>免费表盘默认兑换积分</template>
       <el-alert v-if="error" :title="error" type="error" :closable="false" />
       <el-form v-if="settings" label-position="top" :disabled="saving || loading">
         <el-form-item label="默认所需积分"><el-input-number v-model="settings.defaultPoints" :min="1" :max="100000" :precision="0" /></el-form-item>
         <el-button type="primary" :loading="saving" @click="save">保存默认值</el-button>
       </el-form>
       <el-button @click="load" :disabled="saving">刷新</el-button>
-      <p>仅影响使用全局默认值的表盘，单独设置的积分和历史兑换记录不变。</p>
+      <p>仅影响使用默认值的免费表盘；付费表盘按人民币售价 × 10 计算，单独设置的积分和历史兑换记录不变。</p>
     </el-card>
     <el-card shadow="never"><template #header>设置表盘兑换渠道</template><AppSearchSelect v-model="appId" width="100%" style="max-width: 480px" /></el-card>
     <AppPointsSettings v-if="appId" :key="`${appId}-${version}`" :app-id="appId" />
