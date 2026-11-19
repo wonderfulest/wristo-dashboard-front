@@ -82,71 +82,71 @@ const router = createRouter({
       path: '/ops/credits-overview',
       name: 'CreditsOverview',
       component: () => import('@/views/ops/CreditsOverview.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/reward-rules',
       name: 'RewardRules',
       component: () => import('@/views/ops/RewardRules.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/reward-records',
       name: 'RewardRecords',
       component: () => import('@/views/ops/RewardRecords.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/redemptions',
       name: 'Redemptions',
       component: () => import('@/views/ops/Redemptions.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/marketing/cn/points-recharge',
       name: 'PointsRecharge',
       component: () => import('@/views/ops/PointsRecharge.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/marketing/studio/credit-amounts',
       name: 'StudioCreditAmounts',
       component: () => import('@/views/ops/StudioCreditAmounts.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/marketing/cn/rewards',
       name: 'CnProductRewards',
       component: () => import('@/views/ops/CnProductRewards.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/marketing/miniapp/rewards',
       name: 'MiniappProductRewards',
       component: () => import('@/views/ops/MiniappPoints.vue'),
       props: { mode: 'rewards' },
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/marketing/miniapp/redemptions',
       name: 'MiniappProductRedemptions',
       component: () => import('@/views/ops/MiniappPoints.vue'),
       props: { mode: 'redemptions' },
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/credit-grants',
       name: 'CreditGrants',
       component: () => import('@/views/ops/CreditGrants.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/ai-scenes',
       name: 'AiScenes',
       component: () => import('@/views/ops/AiScenes.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
-    { path: '/ops/points-ledger', name: 'PointsLedger', component: () => import('@/views/ops/PointsLedger.vue'), meta: { requiresAuth: true } },
+    { path: '/ops/points-ledger', name: 'PointsLedger', component: () => import('@/views/ops/PointsLedger.vue'), meta: { requiresAuth: true, creditsWorkspace: true } },
     // Ops module (new nested paths)
     {
       path: '/ops/db-backups',
@@ -158,25 +158,25 @@ const router = createRouter({
       path: '/ops/ai-usage',
       name: 'AiUsage',
       component: () => import('@/views/ops/AiUsage.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/points-accounts',
       name: 'PointsAccounts',
       component: () => import('@/views/ops/PointsAccounts.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/credit-statistics',
       name: 'CreditStatistics',
       component: () => import('@/views/ops/CreditStatistics.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/ai-prices',
       name: 'AiPrices',
       component: () => import('@/views/ops/AiPrices.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/miniapp-points',
@@ -206,13 +206,13 @@ const router = createRouter({
       path: '/ops/watchface-rules',
       name: 'WatchfaceRules',
       component: () => import('@/views/ops/WatchfaceRules.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/ai-models',
       name: 'StudioAiModels',
       component: () => import('@/views/ops/StudioAiModels.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, creditsWorkspace: true }
     },
     {
       path: '/ops/system-config',

@@ -55,3 +55,22 @@ test('套餐配置分别加载产品组件，旧地址保留两个新入口', ()
   assert.ok(source.includes('/marketing/cn/points-recharge'))
   assert.ok(source.includes('/marketing/studio/credit-amounts'))
 })
+
+test('布局在首页正常渲染，积分页面跨菜单保留专用样式', () => {
+  const layout = fs.readFileSync(new URL('../src/layout/Layout.vue', import.meta.url), 'utf8')
+  const expression = layout.match(/:class="\{ 'credits-workspace': (.*?) \}"/)[1]
+  const evaluate = new Function('route', 'topMenus', 'isTopMenuActive', transpile(`return (${expression})`))
+  for (const [path, expected] of [
+    ['/dashboard', false],
+    ['/ops/points-accounts', true],
+    ['/ops/ai-usage', true],
+    ['/ops/ai-models', true],
+    ['/ops/watchface-rules', true],
+    ['/marketing/cn/points-recharge', true],
+    ['/marketing/miniapp/rewards', true],
+    ['/ops/db-backups', false],
+  ]) {
+    const route = routes.find(item => item.path === path)
+    assert.equal(Boolean(evaluate(route, menu.topMenus, menu.isTopMenuActive)), expected, path)
+  }
+})
