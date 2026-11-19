@@ -7,6 +7,7 @@ export const savePointsSettings = (data: PointsSettings): Promise<ApiResponse<Po
 export const getAppPoints = (id: number): Promise<ApiResponse<AppPointsSettings>> => instance.get(`/admin/miniapp-points/apps/${id}`)
 export const saveAppPoints = (id: number, data: Pick<AppPointsSettings, 'enabled' | 'points'>): Promise<ApiResponse<AppPointsSettings>> => instance.put(`/admin/miniapp-points/apps/${id}`, data)
 export interface PointsRewards {
+  makeupEnabled: boolean
   checkInPoints: number
   loginPoints: number
   tutorialPoints: number

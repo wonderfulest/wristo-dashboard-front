@@ -10,7 +10,7 @@
         <el-time-select v-model="form.sendTime" start="00:00" step="00:01" end="23:59" />
         <div class="hint">建议晚间 19:35。全球只配置一次：按用户设备时区发送，自动适配夏令时，无需换算北京时间。</div>
       </el-form-item>
-      <el-form-item label="指定表盘"><AppSearchSelect v-model="selectedAppId" width="100%" /></el-form-item>
+      <el-form-item label="立即 / 测试表盘"><AppSearchSelect v-model="selectedAppId" width="100%" /></el-form-item>
       <el-form-item label="消息模板">
         <el-select v-model="form.templateId" placeholder="选择模板，填入全部语言文案" @change="applyTemplate">
           <el-option v-for="template in templates" :key="template.id" :label="template.name" :value="template.id" />
@@ -37,7 +37,8 @@
         </div>
       </el-form-item>
     </el-form>
-    <p class="hint">定时配置在当天首个时区任务开始时固定，之后修改用于下一当地日期；关闭定时开关停止尚未发送的定时通知。立即推送使用当前编辑内容，不更改已保存的定时配置，也不受定时开关影响。两种方式都只向已订阅用户发送，普通用户共享北京时间当天的 iOS 额度；管理员不受每日额度和重复表盘限制。</p>
+    <p class="hint">每日定时默认自动选择新上架作品；日历中指定作品后优先使用该日期排期，移除后恢复自动选择。上方表盘选择仅用于立即 / 测试推送。定时配置在当天首个时区任务开始时固定；关闭定时开关停止尚未发送的定时通知。立即推送使用当前编辑内容，不更改已保存的定时配置，也不受定时开关影响。两种方式都只向已订阅用户发送，普通用户共享北京时间当天的 iOS 额度；管理员不受每日额度和重复表盘限制。</p>
+    <IOSWatchfacePushCalendar :settings="savedSettings" :templates="templates" :revision="calendarRevision" @snapshot="viewSnapshot" />
     <h3>发送到我的测试设备</h3>
     <p class="hint">在 iPhone 上用当前后台账号登录并开启「每日精选」。测试使用当前编辑内容和设备语言，不占正式额度。</p>
     <el-alert v-if="devicesFailed" title="测试设备加载失败，请刷新重试。" type="warning" :closable="false" />
@@ -81,10 +82,13 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import IOSWatchfacePushCalendar from './IOSWatchfacePushCalendar.vue'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { getIOSPushStatus, getIOSPushConfig, saveIOSPushConfig, getIOSPushHistory, getIOSPushDevices, sendIOSPushTest,
   getIOSPushTemplates, previewIOSPush, sendIOSPushNow, getIOSImmediateHistory,
   type IOSWatchfacePushSettings, type IOSWatchfacePushHistory, type IOSPushDevice, type IOSPushMessage, type IOSPushTemplate, type IOSImmediateTask } from '@/api/ios-watchface-push'
+const savedSettings = ref<IOSWatchfacePushSettings>()
+const calendarRevision = ref(0)
 const languages = [{ code: 'zh-Hans', name: '简体中文' }, { code: 'en', name: 'English' }, { code: 'de', name: 'Deutsch' }, { code: 'es', name: 'Español' }, { code: 'fr', name: 'Français' }, { code: 'it', name: 'Italiano' }, { code: 'nl', name: 'Nederlands' }, { code: 'pl', name: 'Polski' }, { code: 'pt-BR', name: 'Português (Brasil)' }]
 const messages = reactive<Record<string, IOSPushMessage>>(Object.fromEntries(languages.map(l => [l.code, { title: '', body: '' }])))
 const form = reactive<IOSWatchfacePushSettings>({ enabled: false, sendTime: '19:35', title: '', body: '', appId: null, templateId: 'custom' })
@@ -116,6 +120,7 @@ function draft(): IOSWatchfacePushSettings {
 function errorMessage(error: unknown) { ElMessage.error(error instanceof Error ? error.message : '操作失败，请重试') }
 async function load() {
   loading.value = true
+  savedSettings.value = undefined
   failed.value = historyFailed.value = devicesFailed.value = false
   await Promise.all([
     (async () => { try { const r = await getIOSPushStatus(); configured.value = r.code === 0 && r.data ? r.data.configured : null } catch { configured.value = null } })(),
@@ -124,6 +129,7 @@ async function load() {
       if (c.code !== 0 || !c.data || t.code !== 0 || !t.data) throw new Error()
       templates.value = t.data
       Object.assign(form, c.data)
+      savedSettings.value = JSON.parse(JSON.stringify(c.data))
       selectedAppId.value = c.data.appId ?? undefined
       legacy.value = !c.data.messages || Object.keys(c.data.messages).length === 0
       for (const l of languages) messages[l.code] = c.data.messages?.[l.code] ?? { title: '', body: '' }
@@ -141,13 +147,16 @@ async function load() {
     } catch { devicesFailed.value = true } })(),
   ])
   loading.value = false
+  calendarRevision.value++
 }
 async function save() {
   saving.value = true
   try {
-    const r = await saveIOSPushConfig(draft())
+    const r = await saveIOSPushConfig({ ...draft(), appId: null })
     if (r.code !== 0 || !r.data) throw new Error(r.msg || '保存失败')
     Object.assign(form, r.data); legacy.value = false
+    savedSettings.value = JSON.parse(JSON.stringify(r.data))
+    calendarRevision.value++
     ElMessage.success('已保存一份全球定时配置，按用户当地时间发送')
   } catch (e) { errorMessage(e) } finally { saving.value = false }
 }

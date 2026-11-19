@@ -46,3 +46,19 @@ export const getIOSPushTemplates = (): Promise<ApiResponse<IOSPushTemplate[]>> =
 export const previewIOSPush = (data: IOSWatchfacePushSettings): Promise<ApiResponse<{ productName: string; messages: Record<string, IOSPushMessage> }>> => instance.post(`${path}/preview`, data)
 export const sendIOSPushNow = (requestId: string, config: IOSWatchfacePushSettings): Promise<ApiResponse<{ requestId: string }>> => instance.post(`${path}/send-now`, { requestId, config })
 export const getIOSImmediateHistory = (): Promise<ApiResponse<IOSImmediateTask[]>> => instance.get(`${path}/immediate-history`)
+
+export interface IOSPushCalendarDay {
+  pushDay: string
+  appId: number | null
+  productName: string | null
+  status: string
+  config: IOSWatchfacePushSettings
+  attempted: number
+  sent: number
+  rejected: number
+  uncertain: number
+  clicked: number
+}
+export const getIOSPushCalendar = (month: string): Promise<ApiResponse<IOSPushCalendarDay[]>> => instance.get(`${path}/calendar`, { params: { month } })
+export const saveIOSPushPlan = (day: string, config: IOSWatchfacePushSettings): Promise<ApiResponse<void>> => instance.put(`${path}/calendar/${day}`, config)
+export const cancelIOSPushPlan = (day: string): Promise<ApiResponse<void>> => instance.delete(`${path}/calendar/${day}`)

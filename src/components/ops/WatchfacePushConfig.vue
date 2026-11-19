@@ -8,12 +8,13 @@
       <el-form-item label="每日发送时间"><el-time-select v-model="form.sendTime" start="00:00" step="00:01" end="23:59" /><span class="hint">北京时间（Asia/Shanghai）</span></el-form-item>
       <el-form-item label="模板 ID"><el-input v-model="form.templateId" maxlength="128" /><div class="hint">模板需包含更新内容 thing1、来源 thing4。更换模板后，用户需重新订阅。</div></el-form-item>
       <el-form-item label="来源文案"><el-input v-model="form.source" maxlength="20" show-word-limit /></el-form-item>
-      <el-form-item label="作品选择"><el-radio-group v-model="form.selectionMode"><el-radio value="AUTO">自动选择新上架作品</el-radio><el-radio value="MANUAL">指定作品</el-radio></el-radio-group></el-form-item>
+      <el-form-item label="立即任务作品"><el-radio-group v-model="form.selectionMode"><el-radio value="AUTO">自动选择新上架作品</el-radio><el-radio value="MANUAL">指定作品</el-radio></el-radio-group></el-form-item>
       <el-form-item v-if="form.selectionMode === 'MANUAL'" label="作品 appId"><AppSearchSelect v-model="manualAppId" width="100%" /><div class="hint">只允许已公开上架作品，普通用户收到同一作品后不再重复推荐；管理员可重复测试。</div></el-form-item>
       <el-form-item v-else label="筛选规则"><span>最近 24 小时上架、符合商店公开规则的最新一款表盘。</span></el-form-item>
       <el-form-item><el-button type="primary" :loading="saving" @click="save">保存推送配置</el-button><el-button type="success" :loading="sending" :disabled="!form.enabled" @click="sendNow">创建立即推送任务</el-button></el-form-item>
     </el-form>
-    <p class="hint">每个任务固定作品与文案。立即任务使用当前编辑内容，当天可创建多次；定时快照每天创建一次。关闭开关会停止后续发送；任务开始后新增的订阅可参与下一任务。</p>
+    <p class="hint">每日定时推送默认自动选择；日历中指定作品后优先使用当天排期。上方作品选择仅用于立即任务。每个任务固定作品与文案，定时快照每天创建一次。关闭开关会停止后续发送；任务开始后新增的订阅可参与下一任务。</p>
+    <WatchfacePushCalendar :settings="savedSettings" :revision="calendarRevision" />
     <h3>最近 30 个任务</h3>
     <el-alert v-if="historyFailed" title="发送记录加载失败，请刷新重试。" type="warning" :closable="false" />
     <el-table :data="history" empty-text="暂无推送任务">
@@ -31,10 +32,13 @@
   </el-card>
 </template>
 <script setup lang="ts">
+import WatchfacePushCalendar from './WatchfacePushCalendar.vue'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getWatchfacePushSettings, saveWatchfacePushSettings, getWatchfacePushHistory, sendWatchfacePushNow, type WatchfacePushSettings, type WatchfacePushHistory } from '@/api/watchface-push'
+const savedSettings = ref<WatchfacePushSettings>()
+const calendarRevision = ref(0)
 const sending = ref(false)
 let pendingRequest: { id: string; fingerprint: string } | undefined
 const taskStatuses: Record<string, string> = { READY: '已创建 / 发送中', COMPLETED: '已处理完成', EXPIRED: '已过期', NO_NEW_PRODUCT: '无可推送作品' }
@@ -45,12 +49,14 @@ const history = ref<WatchfacePushHistory[]>([])
 async function load() {
   loading.value = true
   failed.value = false
+  savedSettings.value = undefined
   historyFailed.value = false
   await Promise.all([
     (async () => { try {
       const result = await getWatchfacePushSettings()
       if (result.code !== 0 || !result.data) throw new Error()
       Object.assign(form, result.data)
+      savedSettings.value = { ...result.data }
       manualAppId.value = result.data.appId ?? undefined
     } catch { failed.value = true } })(),
     (async () => { try {
@@ -60,6 +66,7 @@ async function load() {
     } catch { historyFailed.value = true } })(),
   ])
   loading.value = false
+  calendarRevision.value++
 }
 async function save() {
   if (loading.value || failed.value || saving.value || sending.value) return
@@ -69,8 +76,9 @@ async function save() {
   saving.value = true
   try {
     const result = await saveWatchfacePushSettings({ ...form, templateId: form.templateId.trim(), source: form.source.trim(), appId: form.selectionMode === 'MANUAL' ? manualAppId.value! : null })
-    if (result.code !== 0) throw new Error(result.msg || '保存失败')
+    if (result.code !== 0 || !result.data) throw new Error(result.msg || '保存失败')
     Object.assign(form, result.data)
+      savedSettings.value = { ...result.data }
     ElMessage.success('推送配置已保存')
   } catch (error) { ElMessage.error(error instanceof Error ? error.message : '保存失败，请重试') }
   finally { saving.value = false }

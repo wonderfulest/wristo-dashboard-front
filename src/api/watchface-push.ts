@@ -17,3 +17,9 @@ export const saveWatchfacePushSettings = (data: WatchfacePushSettings): Promise<
 export const getWatchfacePushHistory = (): Promise<ApiResponse<WatchfacePushHistory[]>> => instance.get('/admin/watchface-push/history')
 
 export const sendWatchfacePushNow = (requestId: string, config: WatchfacePushSettings): Promise<ApiResponse<{ requestId: string }>> => instance.post('/admin/watchface-push/send-now', { requestId, config })
+
+export interface WatchfacePushCalendarTask extends WatchfacePushHistory { config: WatchfacePushSettings }
+export const getWatchfacePushCalendar = (month: string): Promise<ApiResponse<WatchfacePushCalendarTask[]>> => instance.get('/admin/watchface-push/calendar', { params: { month } })
+
+export const saveWatchfacePushPlan = (day: string, config: WatchfacePushSettings): Promise<ApiResponse<void>> => instance.put(`/admin/watchface-push/calendar/${day}`, config)
+export const cancelWatchfacePushPlan = (day: string): Promise<ApiResponse<void>> => instance.delete(`/admin/watchface-push/calendar/${day}`)

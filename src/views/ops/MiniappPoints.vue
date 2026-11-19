@@ -15,6 +15,10 @@
       </div>
       <el-alert v-if="rewardsError" :title="rewardsError" type="error" :closable="false" />
       <el-form v-if="rewards" label-position="top" :disabled="rewardsSaving || rewardsLoading" class="reward-form">
+        <el-form-item label="视频补签">
+          <el-switch v-model="rewards.makeupEnabled" active-text="开启" inactive-text="关闭" />
+          <small>开启后可观看视频补签本周漏签日期；关闭后小程序隐藏补签入口，已有签到及补签进度保留。保存后生效。</small>
+        </el-form-item>
         <el-form-item v-for="field in rewardFields" :key="field.key" :label="field.label">
           <span v-if="field.key === 'loginPoints'">100 积分（固定） + 50 AI 点数</span>
           <el-input-number v-else v-model="rewards[field.key]" :min="1" :max="100000" :precision="0" />
@@ -81,7 +85,7 @@ async function save() {
 }
 const rewards = ref<PointsRewards>()
 const rewardsLoading = ref(false), rewardsSaving = ref(false), rewardsError = ref('')
-const rewardFields: { key: keyof PointsRewards; label: string; description: string }[] = [
+const rewardFields: { key: Exclude<keyof PointsRewards, 'makeupEnabled'>; label: string; description: string }[] = [
   { key: 'loginPoints', label: '首次登录', description: '国内网站或微信小程序首次登录自动发放，同一账号全平台仅一次；AI 点数仅用于 Studio' },
   { key: 'tutorialPoints', label: '新手教程', description: '完成教程，每位用户一次' },
   { key: 'firstInstallPoints', label: '首次安装表盘', description: '每位用户一次' },
