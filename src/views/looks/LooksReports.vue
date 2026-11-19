@@ -14,9 +14,9 @@
     </ListSearchPanel>
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-table v-loading="loading" :data="items" border empty-text="暂无举报">
-      <el-table-column label="操作" width="100" fixed="left">
+      <TableActionColumn>
         <template #default="{ row }"><el-button link type="primary" :disabled="saving" @click="openDetail(row)">查看处理</el-button></template>
-      </el-table-column>
+      </TableActionColumn>
       <el-table-column prop="id" label="举报 ID" width="95" />
       <el-table-column label="举报对象" width="160">
         <template #default="{ row }">作品 #{{ row.post_id }}<br v-if="row.comment_id != null" /><span v-if="row.comment_id != null">评论 #{{ row.comment_id }}</span></template>
@@ -70,6 +70,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import ListSearchPanel from '@/components/common/ListSearchPanel.vue'
 import { listLookReports, getLookReport, dismissLookReport, moderateLookReport, type LookReport } from '@/api/looks'
 const status = ref('open')
