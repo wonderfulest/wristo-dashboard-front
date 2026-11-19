@@ -1,5 +1,6 @@
 <template>
   <div class="dashboard">
+    <ReviewCenter />
     <ReviewTimeControl />
     <AppManagement />
     <DashboardFilterBar />
@@ -10,6 +11,7 @@
 </template>
 
 <script setup lang="ts">
+import ReviewCenter from '@/components/dashboard/ReviewCenter.vue'
 import AppManagement from '@/components/dashboard/AppManagement.vue'
 import ReviewTimeControl from '@/components/dashboard/ReviewTimeControl.vue'
 import DashboardFilterBar from '@/components/dashboard/DashboardFilterBar.vue'

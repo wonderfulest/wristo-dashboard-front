@@ -16,6 +16,7 @@ function setup(api = {}) {
     static revokeObjectURL(url) { revoked.push(url) }
   }
   const context = vm.createContext({
+    useRoute: () => ({ query: {} }),
     ref: value => ({ value }), onMounted() {}, onBeforeUnmount: fn => { unmount = fn },
     watch: (ref, fn) => watches.push({ ref, fn }), URL: MediaURL, AbortController,
     ElMessage: { success() {} },
@@ -181,4 +182,12 @@ test('publisher and app filters survive review refresh and can be cleared', asyn
   assert.deepEqual(requests[1], ['comments', 'pending', 2, 'all', 42, 101])
   p.publisherId.value = undefined; p.appId.value = undefined; await p.load(1)
   assert.deepEqual(requests[2], ['comments', 'pending', 1, 'all', undefined, undefined])
+})
+
+
+test('dashboard comments link initializes the pending comments queue', async () => {
+  const calls = []
+  const { p } = setup({ useRoute: () => ({ query: { type: 'comments', state: 'pending' } }), listLookReviews: async (...args) => { calls.push(args); return { data: { items: [], hasMore: false, page: 1 } } } })
+  await p.load()
+  assert.deepEqual(calls, [['comments', 'pending', 1, 'all', undefined, undefined]])
 })

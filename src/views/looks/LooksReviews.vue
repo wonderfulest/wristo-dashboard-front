@@ -116,6 +116,7 @@
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import UserSelect from '@/components/users/UserSelect.vue'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
@@ -146,8 +147,9 @@ async function toggleAutoReview() {
   } catch { autoReviewError.value = '保存失败，请重试'; return false }
   finally { autoReviewSaving.value = false }
 }
+const route = useRoute()
 const publisherId = ref<number | undefined>(), appId = ref<number | undefined>()
-const type = ref<LookReviewType>('posts'), state = ref<LookReviewState>('pending'), detailType = ref<LookReviewType>('posts')
+const type = ref<LookReviewType>(route.query.type === 'comments' ? 'comments' : 'posts'), state = ref<LookReviewState>('pending'), detailType = ref<LookReviewType>('posts')
 const items = ref<LookReview[]>([]), current = ref<LookReview | null>(null)
 const page = ref(1), hasMore = ref(false), loading = ref(false), saving = ref(false), visible = ref(false)
 const reviewTable = ref<{ clearSelection: () => void } | null>(null)
@@ -327,6 +329,14 @@ async function decide(approved: boolean) {
 }
 watch(visible, value => { if (!value) { ++detailRevision; releaseMedia(); current.value = null; detailLoading.value = false } })
 onBeforeUnmount(() => { ++listRevision; ++detailRevision; releaseMedia(); releaseThumbnails() })
+watch(() => [route.query.type, route.query.state], () => {
+  type.value = route.query.type === 'comments' ? 'comments' : 'posts'
+  state.value = 'pending'
+  method.value = 'all'
+  publisherId.value = undefined
+  appId.value = undefined
+  void load(1)
+})
 onMounted(() => { void load(); void loadAutoReview() })
 </script>
 
