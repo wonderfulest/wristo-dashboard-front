@@ -2,18 +2,13 @@
   <el-card shadow="never" v-loading="configLoading">
     <template #header>自定义积分任务</template>
     <el-alert v-if="configError" :title="configError" type="error" :closable="false" />
-    <p>每个任务独立设置领取次数，0 表示不限次数。提交时固定奖励额度，调整配置不影响已有申请。</p>
+    <p>每个任务按账号累计设置领取次数，0 表示不限次数。待审核和已通过的申请占用次数，驳回后释放。提交时固定奖励额度，调整配置不影响已有申请。</p>
     <el-form label-position="top">
-      <el-form-item v-for="item in configs" :key="item.kind" :label="item.name || '新任务'">
-        <el-input v-model="item.name" placeholder="任务名称" :maxlength="120" :disabled="configSaving" />
-        <el-input v-model="item.description" type="textarea" placeholder="任务说明" :maxlength="2000" :disabled="configSaving" />
-        <el-switch :model-value="item.enabled" active-text="开放任务" :disabled="configSaving || configLoading || configUncertain || !saved.has(item.kind)" @change="toggleConfig(item, Boolean($event))" />
-        <span>领取次数（0 不限）</span><el-input-number v-model="item.maxClaims" :min="0" :precision="0" :disabled="configSaving" />
-        <span>排序</span><el-input-number v-model="item.sortOrder" :min="0" :precision="0" :disabled="configSaving" />
-        <el-input-number v-model="item.points" :min="1" :max="100000" :precision="0" :disabled="configSaving" />
-        <span>积分</span>
-        <el-button :disabled="configSaving || configUncertain" @click="saveConfig(item)">保存</el-button>
-      </el-form-item>
+      <PointsTaskFields v-for="item in configs" :key="item.kind" :task="item" period="ACCOUNT"
+        :disabled="configSaving || configLoading || configUncertain" :switch-disabled="!saved.has(item.kind)"
+        @toggle="toggleConfig(item, $event)" @save="saveConfig(item)">
+        <el-form-item label="排序"><el-input-number v-model="item.sortOrder" :min="0" :max="100000" :precision="0" :disabled="configSaving" /></el-form-item>
+      </PointsTaskFields>
     </el-form>
     <el-button :disabled="configSaving || configLoading" @click="addConfig">新增任务</el-button>
     <el-button :disabled="configSaving || configLoading" @click="loadConfig">刷新配置</el-button>
@@ -65,6 +60,7 @@
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import PointsTaskFields from '@/components/PointsTaskFields.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getManualTaskConfig, createManualTaskConfig, saveManualTaskConfig, getManualTasks, reviewManualTask, getManualTaskEvidence, type ManualTaskConfig, type ManualSubmission } from '@/api/manualPointsTasks'
 const saved = ref(new Map<string, ManualTaskConfig>())

@@ -25,3 +25,20 @@ export const getPointsRewards = (): Promise<ApiResponse<PointsRewards>> => insta
 export const savePointsRewards = (data: PointsRewards): Promise<ApiResponse<PointsRewards>> => instance.put('/admin/miniapp-points/rewards', data)
 export const getPointsResources = (): Promise<ApiResponse<PointsResource[]>> => instance.get('/admin/miniapp-points/resources')
 export const savePointsResource = (id: number, points: number): Promise<ApiResponse<PointsResource>> => instance.put(`/admin/miniapp-points/resources/${id}`, { points })
+
+export interface PointsTaskConfig {
+  key: string
+  enabled: boolean
+  name: string
+  description: string
+  points: number
+  maxClaims: number
+  period: 'DAY' | 'WEEK' | 'ACCOUNT'
+  fixed: boolean
+  claimCap: number
+  aiPoints?: number
+}
+export const getPointsTasks = (): Promise<ApiResponse<PointsTaskConfig[]>> => instance.get('/admin/miniapp-points/tasks')
+export const savePointsTask = (task: PointsTaskConfig): Promise<ApiResponse<PointsTaskConfig>> => instance.put(`/admin/miniapp-points/tasks/${encodeURIComponent(task.key)}`, task)
+
+export const savePointsMakeup = (enabled: boolean): Promise<ApiResponse<{enabled: boolean}>> => instance.put('/admin/miniapp-points/makeup', { enabled })

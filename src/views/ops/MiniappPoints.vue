@@ -1,32 +1,31 @@
 <template>
   <div class="points-settings">
     <h2>{{ mode === 'rewards' ? '小程序任务' : '小程序兑换' }}</h2>
-    <p>国内网站和微信小程序使用统一积分兑换表盘权益。付费和免费表盘默认开启兑换，付费按人民币售价 × 10，免费默认 50 积分。每款表盘可单独调整，开启后所需积分必须大于 0；会员权益覆盖和已拥有的表盘不扣积分。</p>
+    <p v-if="mode === 'redemptions'">国内网站和微信小程序使用统一积分兑换表盘权益。付费和免费表盘默认开启兑换，付费按人民币售价 × 10，免费默认 50 积分。每款表盘可单独调整，开启后所需积分必须大于 0；会员权益覆盖和已拥有的表盘不扣积分。</p>
     <el-card v-if="mode === 'rewards'" shadow="never" v-loading="rewardsLoading">
       <template #header>
         <div class="rewards-header">
           <span>任务积分</span>
+          <el-tag v-if="weeklyRewardSummary" size="large">每日任务可得 {{ weeklyRewardSummary.dailyTotal }} 积分</el-tag>
           <el-tag v-if="weeklyRewardSummary" type="success" size="large">整周任务可得 {{ weeklyRewardSummary.total }} 积分</el-tag>
         </div>
       </template>
-      <div v-if="weeklyRewardSummary" class="weekly-summary">
-        <p>每日任务 × 7 天：{{ weeklyRewardSummary.daily }} 积分 + 每周奖励：{{ weeklyRewardSummary.weekly }} 积分 + 广告每天 3 次 × 7 天：{{ weeklyRewardSummary.ads }} 积分</p>
-        <small>按当前表单计算，修改后需保存才生效。每周奖励可叠加；不含首次登录、新手教程、首次安装、额外发布的任务及 AI 点数。</small>
+      <div class="weekly-summary">
+        <p v-if="weeklyRewardSummary">每日任务 × 7 天：{{ weeklyRewardSummary.daily }} 积分 + 每周奖励：{{ weeklyRewardSummary.weekly }} 积分</p>
+        <p v-else>部分任务不限领取次数，无法计算固定的整周积分上限。</p>
+        <small>按当前表单中的开启状态、每次积分和领取次数估算，修改后需保存才生效；不含每账号任务、自定义任务及 AI 点数。任务仍需满足完成条件。</small>
       </div>
       <el-alert v-if="rewardsError" :title="rewardsError" type="error" :closable="false" />
-      <el-form v-if="rewards" label-position="top" :disabled="rewardsSaving || rewardsLoading" class="reward-form">
+      <el-form v-if="rewards" label-position="top">
         <el-form-item label="视频补签">
-          <el-switch v-model="rewards.makeupEnabled" active-text="开启" inactive-text="关闭" />
-          <small>开启后可观看视频补签本周漏签日期；关闭后小程序隐藏补签入口，已有签到及补签进度保留。保存后生效。</small>
+          <el-switch v-model="rewards.makeupEnabled" active-text="开启" inactive-text="关闭" :disabled="rewardsSaving || rewardsLoading" />
+          <el-button :loading="rewardsSaving" :disabled="rewardsLoading || rewardsUncertain" @click="saveRewards">保存补签设置</el-button>
+          <small>观看视频补签本周漏签日期；已有进度保留。签到任务关闭时补签同步暂停。</small>
         </el-form-item>
-        <el-form-item v-for="field in rewardFields" :key="field.key" :label="field.label">
-          <span v-if="field.key === 'loginPoints'">100 积分（固定） + 50 AI 点数</span>
-          <el-input-number v-else v-model="rewards[field.key]" :min="1" :max="100000" :precision="0" />
-          <small>{{ field.description }}</small>
-        </el-form-item>
+        <PointsTaskFields v-for="task in tasks" :key="task.key" :task="task" :period="task.period" :fixed="task.fixed" :claim-cap="task.claimCap"
+          :disabled="rewardsSaving || rewardsLoading || rewardsUncertain" @toggle="toggleTask(task, $event)" @save="saveTask(task)" />
       </el-form>
-      <el-button type="primary" :loading="rewardsSaving" :disabled="!rewards || rewardsLoading" @click="saveRewards">保存任务奖励</el-button>
-      <el-button :disabled="rewardsSaving" @click="loadRewards">刷新</el-button>
+      <el-button :disabled="rewardsSaving || rewardsLoading" @click="loadRewards">刷新任务配置</el-button>
     </el-card>
     <ManualPointsTasks v-if="mode === 'rewards'" />
     <template v-if="mode === 'redemptions'">
@@ -59,12 +58,14 @@
 </template>
 <script setup lang="ts">
 import ManualPointsTasks from '@/components/ManualPointsTasks.vue'
+import PointsTaskFields from '@/components/PointsTaskFields.vue'
+import { getPointsTasks, savePointsTask, savePointsMakeup, type PointsTaskConfig } from '@/api/miniappPoints'
 import TableActionColumn from '@/components/common/TableActionColumn.vue'
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import AppPointsSettings from '@/components/AppPointsSettings.vue'
-import { getPointsSettings, savePointsSettings, getPointsRewards, savePointsRewards, getPointsResources, savePointsResource, type PointsSettings, type PointsRewards, type PointsResource } from '@/api/miniappPoints'
+import { getPointsSettings, savePointsSettings, getPointsRewards, getPointsResources, savePointsResource, type PointsSettings, type PointsRewards, type PointsResource } from '@/api/miniappPoints'
 const { mode = 'rewards' } = defineProps<{ mode?: 'rewards' | 'redemptions' }>()
 const settings = ref<PointsSettings>(), appId = ref<number | null>(), version = ref(0)
 const loading = ref(false), saving = ref(false), error = ref('')
@@ -85,52 +86,60 @@ async function save() {
 }
 const rewards = ref<PointsRewards>()
 const rewardsLoading = ref(false), rewardsSaving = ref(false), rewardsError = ref('')
-const rewardFields: { key: Exclude<keyof PointsRewards, 'makeupEnabled'>; label: string; description: string }[] = [
-  { key: 'loginPoints', label: '首次登录', description: '国内网站或微信小程序首次登录自动发放，同一账号全平台仅一次；AI 点数仅用于 Studio' },
-  { key: 'tutorialPoints', label: '新手教程', description: '完成教程，每位用户一次' },
-  { key: 'firstInstallPoints', label: '首次安装表盘', description: '每位用户一次' },
-  { key: 'checkInPoints', label: '每日签到', description: '每天一次' },
-  { key: 'dailyInstallPoints', label: '每日安装表盘', description: '每天一次' },
-  { key: 'weeklyInstallPoints', label: '每周安装 3 次', description: '每周一次' },
-  { key: 'weeklyCheckIn3Points', label: '每周签到 3 天', description: '每周一次，可与其他签到奖励叠加' },
-  { key: 'weeklyCheckIn5Points', label: '每周签到 5 天', description: '每周一次，可与其他签到奖励叠加' },
-  { key: 'weeklyCheckInFullPoints', label: '每周签到全勤', description: '每周签到 7 天' },
-  { key: 'weeklyInstallFullPoints', label: '每周安装全勤', description: '每周 7 天均安装成功' },
-  { key: 'adPoints', label: '完整观看广告', description: '每次奖励，每天最多 3 次' },
-]
+const tasks = ref<PointsTaskConfig[]>([])
+const savedTasks = ref(new Map<string, PointsTaskConfig>())
+const rewardsUncertain = ref(false)
 const resources = ref<PointsResource[]>([]), resourcesLoading = ref(false), resourcesError = ref('')
 const resourceSaving = ref<number | null>(null)
 const validPoints = (value: number) => Number.isInteger(value) && value >= 1 && value <= 100000
 const weeklyRewardSummary = computed(() => {
-  const r = rewards.value
-  if (!r) return null
-  const values = [r.checkInPoints, r.dailyInstallPoints, r.weeklyInstallPoints, r.weeklyCheckIn3Points, r.weeklyCheckIn5Points, r.weeklyCheckInFullPoints, r.weeklyInstallFullPoints, r.adPoints]
-  if (!values.every(validPoints)) return null
-  const daily = (r.checkInPoints + r.dailyInstallPoints) * 7
-  const weekly = r.weeklyInstallPoints + r.weeklyCheckIn3Points + r.weeklyCheckIn5Points + r.weeklyCheckInFullPoints + r.weeklyInstallFullPoints
-  const ads = r.adPoints * 3 * 7
-  return { daily, weekly, ads, total: daily + weekly + ads }
+  if (!tasks.value.length) return null
+  const active = tasks.value.filter(task => task.enabled && task.period !== 'ACCOUNT')
+  if (active.some(task => !validPoints(task.points) || !Number.isInteger(task.maxClaims) || task.maxClaims <= 0)) return null
+  const daily = active.filter(task => task.period === 'DAY').reduce((sum, task) => sum + task.points * task.maxClaims * 7, 0)
+  const weekly = active.filter(task => task.period === 'WEEK').reduce((sum, task) => sum + task.points * task.maxClaims, 0)
+  return { dailyTotal: daily / 7, daily, weekly, total: daily + weekly }
 })
 async function loadRewards() {
-  rewardsLoading.value = true; rewardsError.value = ''; rewards.value = undefined
+  if (rewardsLoading.value || rewardsSaving.value) return
+  rewardsLoading.value = true; rewardsError.value = ''; rewards.value = undefined; tasks.value = []
   try {
-    const response = await getPointsRewards()
-    if (response.code !== 0 || !response.data) throw new Error()
-    rewards.value = response.data
-  } catch { rewardsError.value = '无法读取任务奖励，请刷新重试。' }
+    const [response, taskResponse] = await Promise.all([getPointsRewards(), getPointsTasks()])
+    if (response.code !== 0 || !response.data || taskResponse.code !== 0 || !taskResponse.data) throw new Error()
+    rewards.value = response.data; tasks.value = taskResponse.data
+    savedTasks.value = new Map(tasks.value.map(task => [task.key, { ...task }]))
+    rewardsUncertain.value = false
+  } catch { rewardsError.value = '无法读取任务配置，请刷新重试。' }
   finally { rewardsLoading.value = false }
 }
-async function saveRewards() {
-  if (!rewards.value || rewardsSaving.value) return
-  if (rewardFields.some(field => field.key !== 'loginPoints' && !validPoints(rewards.value![field.key]))) {
-    ElMessage.warning('任务奖励须为 1 至 100000 的整数'); return
+async function saveTask(task: PointsTaskConfig, enabled?: boolean) {
+  if (rewardsSaving.value || rewardsLoading.value || rewardsUncertain.value || task.fixed) return
+  // A switch only changes the last saved configuration; other draft fields stay untouched.
+  const input = enabled === undefined ? { ...task } : { ...savedTasks.value.get(task.key)!, enabled }
+  if (!input.name?.trim() || input.name.length > 120 || input.description.length > 2000 || !validPoints(input.points)
+      || !Number.isInteger(input.maxClaims) || input.maxClaims < (input.claimCap === 1 ? 1 : 0) || input.maxClaims > (input.claimCap || 100000)) {
+    ElMessage.warning('请检查标题、说明、积分及领取次数'); return
   }
   rewardsSaving.value = true; rewardsError.value = ''
   try {
-    const response = await savePointsRewards({ ...rewards.value, loginPoints: 100 })
+    const response = await savePointsTask({ ...input, name: input.name.trim(), description: input.description.trim() })
     if (response.code !== 0 || !response.data) throw new Error()
-    rewards.value = response.data; ElMessage.success('已保存，后续任务按新额度发放')
-  } catch { rewardsError.value = '未能确认保存结果，请刷新核对任务奖励后重试。' }
+    savedTasks.value.set(task.key, { ...response.data })
+    if (enabled === undefined) Object.assign(task, response.data)
+    else task.enabled = response.data.enabled
+    ElMessage.success('任务配置已保存')
+  } catch { rewardsUncertain.value = true; rewardsError.value = '未能确认保存结果，请刷新核对任务配置后重试。' }
+  finally { rewardsSaving.value = false }
+}
+function toggleTask(task: PointsTaskConfig, enabled: boolean) { return saveTask(task, enabled) }
+async function saveRewards() {
+  if (!rewards.value || rewardsSaving.value || rewardsLoading.value || rewardsUncertain.value) return
+  rewardsSaving.value = true; rewardsError.value = ''
+  try {
+    const response = await savePointsMakeup(rewards.value.makeupEnabled)
+    if (response.code !== 0 || !response.data) throw new Error()
+    rewards.value.makeupEnabled = response.data.enabled; ElMessage.success('补签设置已保存')
+  } catch { rewardsUncertain.value = true; rewardsError.value = '未能确认保存结果，请刷新核对补签设置后重试。' }
   finally { rewardsSaving.value = false }
 }
 async function loadResources() {
