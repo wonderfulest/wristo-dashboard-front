@@ -8,7 +8,10 @@
         <template #date-cell="{ data }">
           <div class="day-cell"><strong>{{ Number(data.day.slice(-2)) }}</strong>
             <div v-for="task in (byDay[data.day] || []).slice(0, 2)" :key="task.taskId" class="day-task" :class="{ planned: task.status === 'PLANNED', cancelled: task.status === 'CANCELLED' }">
-              <span>{{ task.productName || '无可推送作品' }}</span><small>{{ statuses[task.status] || task.status }}</small>
+              <el-image v-if="task.appId" class="day-app-image" :src="appImage(task)" :alt="appName(task)" fit="contain">
+                <template #error><span class="image-placeholder">暂无图片</span></template>
+              </el-image>
+              <div class="day-task-info"><span :title="appName(task)">{{ appName(task) }}</span><small>{{ statuses[task.status] || task.status }}</small></div>
             </div><small v-if="(byDay[data.day]?.length || 0) > 2">另有 {{ byDay[data.day].length - 2 }} 个任务</small>
           </div>
         </template>
@@ -38,6 +41,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getProduct } from '@/api/products'
+import type { Product } from '@/types/product'
 import AppSearchSelect from '@/components/common/AppSearchSelect.vue'
 import { getWatchfacePushCalendar, saveWatchfacePushPlan, cancelWatchfacePushPlan, type WatchfacePushCalendarTask, type WatchfacePushSettings } from '@/api/watchface-push'
 const props = defineProps<{ settings?: WatchfacePushSettings; revision: number }>()
@@ -52,11 +57,26 @@ const daily = computed(() => byDay.value[day.value] || [])
 const canPlan = computed(() => day.value >= beijingDay())
 const appId = ref<number>()
 const draft = reactive<WatchfacePushSettings>({ enabled: true, sendTime: '09:00', source: 'Wristo', templateId: '', selectionMode: 'MANUAL', appId: null })
+const products = ref<Record<number, Product>>({})
+const appName = (task: WatchfacePushCalendarTask) => task.productName || (task.appId ? products.value[task.appId]?.name || '#' + task.appId : '无可推送作品')
+const appImage = (task: WatchfacePushCalendarTask) => {
+  const product = task.appId ? products.value[task.appId] : undefined
+  return product?.rawImageUrl || product?.garminImageUrl || product?.productImages?.find(image => image.imageUrl)?.imageUrl || ''
+}
+async function loadProducts(items: WatchfacePushCalendarTask[], requestId: number) {
+  const appIds = [...new Set(items.flatMap(task => task.appId ? [task.appId] : []))]
+  await Promise.all(appIds.map(async appId => {
+    try {
+      const result = await getProduct(appId)
+      if (requestId === request && result.code === 0 && result.data) products.value[appId] = result.data
+    } catch { /* Keep the task name and image placeholder when product details are unavailable. */ }
+  }))
+}
 let request = 0
 async function load() {
   const id = ++request
   loading.value = true; error.value = ''; tasks.value = []
-  try { const result = await getWatchfacePushCalendar(month.value); if (result.code !== 0) throw new Error(result.msg || '日历加载失败'); if (id === request) tasks.value = result.data || [] }
+  try { const result = await getWatchfacePushCalendar(month.value); if (result.code !== 0) throw new Error(result.msg || '日历加载失败'); if (id === request) { tasks.value = result.data || []; void loadProducts(tasks.value, id) } }
   catch (e) { if (id === request) error.value = e instanceof Error ? e.message : '日历加载失败，请重试' }
   finally { if (id === request) loading.value = false }
 }
@@ -90,9 +110,12 @@ h3 { margin: 0 0 12px; font-size: 16px; }
 .hint { color: var(--el-text-color-secondary); font-size: 13px; line-height: 1.7; }
 .calendar-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; margin-top: 16px; }
 .day-cell { min-height: 110px; font-size: 12px; }
-.day-task { background: var(--el-fill-color-light); border-left: 3px solid var(--el-color-primary); padding: 3px 5px; margin-top: 5px; border-radius: 4px; }
-.day-task span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.day-task small { color: var(--el-text-color-secondary); }
+.day-task { display: flex; align-items: center; gap: 6px; background: var(--el-fill-color-light); border-left: 3px solid var(--el-color-primary); padding: 3px 5px; margin-top: 5px; border-radius: 4px; }
+.day-app-image { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 4px; background: var(--el-fill-color-blank); }
+.image-placeholder { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--el-text-color-secondary); font-size: 10px; }
+.day-task-info { min-width: 0; flex: 1; }
+.day-task-info span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day-task small { display: block; overflow-wrap: anywhere; color: var(--el-text-color-secondary); }
 .planned { background: var(--el-color-success-light-9); border-color: var(--el-color-success); }
 .cancelled { opacity: .6; border-color: var(--el-text-color-placeholder); }
 .day-detail { border: 1px solid var(--el-border-color-light); border-radius: 8px; padding: 16px; min-width: 0; }
@@ -102,7 +125,7 @@ dt { color: var(--el-text-color-secondary); } dd { margin: 0; overflow-wrap: any
 .template-id { overflow-wrap: anywhere; }
 :deep(.el-calendar) { --el-calendar-cell-width: auto; }
 :deep(.el-calendar__body) { padding: 12px 0; }
-:deep(.el-calendar-day) { min-height: 140px; }
+:deep(.el-calendar-day) { height: auto; min-height: 160px; }
 @media(max-width: 1200px) { .calendar-layout { grid-template-columns: minmax(0,1fr); } }
 @media(max-width: 650px) { .calendar-layout { overflow-x: auto; } :deep(.el-calendar) { min-width: 600px; } .calendar-heading { align-items: flex-start; } }
 </style>
