@@ -8,6 +8,8 @@
       </div>
     </div>
 
+    <el-alert title="普通用户每天最多收到一条营销活动推送（北京时间），与微信、iOS 独立计数；管理员不受每日上限限制。" type="info" :closable="false" />
+
     <ListSearchPanel>
       <div class="list-search-field list-search-field--wide">
         <span class="list-search-label">活动ID</span>
@@ -35,6 +37,7 @@
           <el-option label="草稿" value="DRAFT" />
           <el-option label="发送中" value="SENDING" />
           <el-option label="成功" value="SUCCESS" />
+          <el-option label="已达每日上限" value="SKIPPED_DAILY_LIMIT" />
           <el-option label="失败" value="FAILED" />
         </el-select>
       </div>
@@ -75,7 +78,7 @@
       </el-table-column>
       <el-table-column prop="status" label="状态" width="120">
         <template #default="{ row }">
-          <el-tag :type="statusType(row.status)">{{ row.status || '-' }}</el-tag>
+          <el-tag :type="statusType(row.status)">{{ row.status === 'SKIPPED_DAILY_LIMIT' ? '已达每日上限' : row.status || '-' }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="开始时间" width="180">
@@ -227,7 +230,7 @@
         <el-table-column prop="id" label="推送ID" width="100" />
         <el-table-column prop="status" label="结果" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'success' ? 'success' : 'danger'">{{ row.status === 'success' ? '成功' : '失败' }}</el-tag>
+            <el-tag :type="row.status === 'success' ? 'success' : row.status === 'skipped' ? 'info' : 'danger'">{{ row.status === 'success' ? '成功' : row.status === 'skipped' ? '已跳过' : '失败' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="message" label="信息" min-width="200" />
@@ -269,7 +272,7 @@ const sendProgress = reactive<{
   total: number
   done: number
   currentId?: number
-  results: Array<{ id: number; status: 'success' | 'fail'; message?: string }>
+  results: Array<{ id: number; status: 'success' | 'fail' | 'skipped'; message?: string }>
 }>({
   visible: false,
   total: 0,
@@ -348,8 +351,16 @@ const doTriggerList = async (rows: CampaignPushVO[]) => {
     if (!id) continue
     sendProgress.currentId = id
     try {
-      await triggerCampaignPushOne(id)
-      sendProgress.results.push({ id, status: 'success', message: '' })
+      const result = await triggerCampaignPushOne(id)
+      if (result.code !== 0) throw new Error(result.msg || '发送失败')
+      const status = result.data?.status
+      if (status === 'SKIPPED_DAILY_LIMIT' || status === 'REJECTED') {
+        sendProgress.results.push({ id, status: 'skipped', message: status === 'SKIPPED_DAILY_LIMIT' ? '已达今日营销推送上限（北京时间）' : '收件人未允许营销推送' })
+      } else if (status === 'SUCCESS') {
+        sendProgress.results.push({ id, status: 'success', message: '' })
+      } else {
+        sendProgress.results.push({ id, status: 'fail', message: '未确认发送成功，请刷新记录查看状态' })
+      }
     } catch (e: any) {
       sendProgress.results.push({ id, status: 'fail', message: e?.msg || e?.message || '发送失败' })
     } finally {

@@ -9,9 +9,11 @@ export interface WatchfacePushSettings {
   appId: number | null
 }
 export interface WatchfacePushHistory {
-  pushDay: string; appId: number | null; productName: string | null
+  taskId: string; createdAt: string; pushDay: string; appId: number | null; productName: string | null
   status: string; attempted: number; sent: number; rejected: number; uncertain: number
 }
 export const getWatchfacePushSettings = (): Promise<ApiResponse<WatchfacePushSettings>> => instance.get('/admin/watchface-push/config')
 export const saveWatchfacePushSettings = (data: WatchfacePushSettings): Promise<ApiResponse<WatchfacePushSettings>> => instance.post('/admin/watchface-push/config', data)
 export const getWatchfacePushHistory = (): Promise<ApiResponse<WatchfacePushHistory[]>> => instance.get('/admin/watchface-push/history')
+
+export const sendWatchfacePushNow = (requestId: string, config: WatchfacePushSettings): Promise<ApiResponse<{ requestId: string }>> => instance.post('/admin/watchface-push/send-now', { requestId, config })

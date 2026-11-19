@@ -4,7 +4,7 @@
       <el-button type="success" @click="openCreate">新增画像</el-button>
     </div>
 
-    <ListSearchPanel>
+    <ListSearchPanel class="user-profiles-search">
       <div class="list-search-field list-search-field--wide">
         <span class="list-search-label">用户ID</span>
         <el-input aria-label="用户ID" v-model.number="query.userId" placeholder="按用户ID搜索" clearable style="width: 160px; margin-right: 12px;" />
@@ -284,6 +284,10 @@ onMounted(fetchPage)
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+.user-profiles-search {
+  flex: 0 0 auto;
 }
 
 .page-header {

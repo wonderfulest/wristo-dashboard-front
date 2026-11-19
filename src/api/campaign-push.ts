@@ -36,7 +36,7 @@ export const deleteCampaignPushByCampaignId = (campaignId: number): Promise<ApiR
   return instance.post(`${BASE}/delete/by-campaign`, null, { params: { campaignId } })
 }
 
-export const triggerCampaignPushOne = (pushId: number): Promise<ApiResponse<void>> => {
+export const triggerCampaignPushOne = (pushId: number): Promise<ApiResponse<CampaignPushVO>> => {
   return instance.post(`${BASE}/trigger/one`, null, { params: { pushId } })
 }
 

@@ -118,7 +118,7 @@ export const topMenus: TopMenuGroup[] = [
     key: 'app-operations',
     title: '应用运营',
     icon: 'Grid',
-    basePaths: ['/products', '/website/home-banners', '/website/ios-home-recommendations', '/website/categories', '/meter'],
+    basePaths: ['/products', '/website/home-banners', '/website/categories', '/meter'],
     children: [
       { key: 'app-management', title: '应用管理', icon: 'Grid', children: [
         { key: 'products', title: '应用列表', icon: 'Grid', path: '/products' },
@@ -127,7 +127,6 @@ export const topMenus: TopMenuGroup[] = [
       ] },
       { key: 'content-operations', title: '内容运营', icon: 'Picture', children: [
         { key: 'app-daily-config', title: '每日一图配置', icon: 'Picture', path: '/products/app-daily/config' },
-        { key: 'ios-home-recommendations', title: 'iOS 首页推荐', icon: 'Picture', path: '/website/ios-home-recommendations' },
         { key: 'website-home-banners', title: '首页 Banner', icon: 'Picture', path: '/website/home-banners' },
       ] },
       { key: 'garmin-ecosystem', title: 'Garmin 生态', icon: 'Monitor', children: [
@@ -196,7 +195,7 @@ export const topMenus: TopMenuGroup[] = [
     key: 'marketing-growth',
     title: '产品运营',
     icon: 'Promotion',
-    basePaths: ['/marketing', '/ga', '/email-records', '/looks'],
+    basePaths: ['/marketing', '/ga', '/email-records', '/looks', '/website/ios-home-recommendations'],
     children: [
       { key: 'overseas-website', title: '国外网站', icon: 'Monitor', children: [
         { key: 'user-profiles', title: '用户画像', icon: 'Avatar', path: '/marketing/user-profiles' },
@@ -213,6 +212,7 @@ export const topMenus: TopMenuGroup[] = [
         { key: 'wechat-watchface-push', title: '微信新作品推送', icon: 'ChatDotRound', path: '/marketing/wechat-watchface-push' },
       ] },
       { key: 'ios-operations', title: 'iOS', icon: 'Bell', children: [
+        { key: 'ios-home-recommendations', title: '首页 Banner', icon: 'Picture', path: '/website/ios-home-recommendations' },
         { key: 'ios-watchface-push', title: 'iOS 每日精选推送', icon: 'Bell', path: '/marketing/ios-watchface-push' },
         { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
         { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },

@@ -1,6 +1,6 @@
 <template>
   <div class="recommendations" v-loading="loading">
-    <h2>iOS 首页应用推荐</h2>
+    <h2>iOS 首页 Banner</h2>
     <p>添加已上架应用到候选池，数量不限，首页轮播直接展示应用的「首页横幅」。请在 Studio 上架设置中上传 1440 × 720 横幅。</p>
     <el-switch v-model="enabled" active-text="启用轮播" :disabled="saving" />
     <el-form class="display-settings" label-position="top" :disabled="saving">

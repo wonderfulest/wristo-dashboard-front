@@ -78,7 +78,7 @@ export interface PromotionItemDTO {
 
 export type CampaignPushChannel = 'SES' | 'ZOHO'
 
-export type CampaignPushStatus = 'DRAFT' | 'SENDING' | 'SUCCESS' | 'FAILED'
+export type CampaignPushStatus = 'DRAFT' | 'SENDING' | 'SUCCESS' | 'FAILED' | 'REJECTED' | 'SKIPPED_DAILY_LIMIT'
 
 export interface CampaignPushVO {
   id: number

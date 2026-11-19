@@ -1,7 +1,7 @@
 <template>
   <el-card class="ios-push" shadow="never">
     <template #header><div class="push-header"><span>iOS 每日精选推送</span><el-button :loading="loading" :disabled="busy" @click="load">刷新配置与记录</el-button></div></template>
-    <el-alert title="一份配置，按 App 语言发送。立即与定时推送共用每天一条的额度，同一表盘不重复推荐。" type="info" :closable="false" />
+    <el-alert title="每天可创建多个任务。普通用户每天最多一条 iOS 推送（北京时间），与微信、营销活动独立计数；管理员可接收所有任务，包括重复表盘。" type="info" :closable="false" />
     <el-alert v-if="configured === false" title="APNs 尚未配置，暂时无法发送。" type="warning" :closable="false" />
     <el-alert v-if="failed" title="配置或模板加载失败，请刷新后重试。" type="error" :closable="false" />
     <el-form label-width="140px" :disabled="loading || busy || failed" class="push-form">
@@ -37,7 +37,7 @@
         </div>
       </el-form-item>
     </el-form>
-    <p class="hint">定时配置在当天首个时区任务开始时固定，之后修改用于下一当地日期；关闭定时开关停止尚未发送的定时通知。立即推送使用当前编辑内容，不更改已保存的定时配置，也不受定时开关影响。两种方式都只向已订阅用户发送，并保留至少 20 小时的发送间隔。</p>
+    <p class="hint">定时配置在当天首个时区任务开始时固定，之后修改用于下一当地日期；关闭定时开关停止尚未发送的定时通知。立即推送使用当前编辑内容，不更改已保存的定时配置，也不受定时开关影响。两种方式都只向已订阅用户发送，普通用户共享北京时间当天的 iOS 额度；管理员不受每日额度和重复表盘限制。</p>
     <h3>发送到我的测试设备</h3>
     <p class="hint">在 iPhone 上用当前后台账号登录并开启「每日精选」。测试使用当前编辑内容和设备语言，不占正式额度。</p>
     <el-alert v-if="devicesFailed" title="测试设备加载失败，请刷新重试。" type="warning" :closable="false" />
@@ -57,7 +57,7 @@
     <h3>最近发送记录（最多 30 组）</h3>
     <el-alert v-if="historyFailed" title="发送记录加载失败，请刷新重试。" type="warning" :closable="false" />
     <el-table :data="history" empty-text="暂无发送记录">
-      <el-table-column prop="pushDay" label="用户当地日期" width="140" />
+      <el-table-column prop="pushDay" label="北京时间日期" width="140" />
       <el-table-column label="方式" width="90"><template #default="{ row }">{{ row.sendMode === 'IMMEDIATE' ? '立即' : '定时' }}</template></el-table-column>
       <el-table-column prop="productName" label="表盘" min-width="140" />
       <el-table-column prop="appId" label="appId" width="90" />
@@ -71,7 +71,7 @@
     <p class="hint">苹果已接收不代表已送达。未知结果不自动重发；立即任务异常时停止，超过一小时未完成的任务过期。完成表示已检查符合条件的设备，不表示每位订阅用户都获得发送额度。</p>
     <el-dialog v-model="previewOpen" :title="confirmSend ? '确认立即推送' : '多语言消息预览'" width="min(900px, 95vw)" :close-on-click-modal="!sending" :close-on-press-escape="!sending" :show-close="!sending">
       <p><strong>{{ previewName }}</strong> · {{ previewTemplateName }}</p>
-      <el-alert v-if="confirmSend" title="发送给所有符合条件的已订阅用户，立即执行，不等待当地晚间。占用每位用户当天额度，已推送过此表盘或未满间隔的用户会跳过。" type="warning" :closable="false" />
+      <el-alert v-if="confirmSend" title="发送给所有符合条件的已订阅用户，立即执行，不等待当地晚间。普通用户当天已收到 iOS 推送或已推送过此表盘时会跳过；管理员不受这两项限制。" type="warning" :closable="false" />
       <div class="preview-grid"><article v-for="locale in languages" :key="locale.code" class="notification-preview"><small>{{ locale.name }}</small><strong>{{ previewMessages[locale.code]?.title }}</strong><p>{{ previewMessages[locale.code]?.body }}</p></article></div>
       <template #footer><el-button :disabled="sending" @click="previewOpen = false">关闭</el-button><el-button v-if="confirmSend" type="primary" :loading="sending" @click="sendNow">确认立即推送</el-button></template>
     </el-dialog>
