@@ -702,7 +702,7 @@ const router = createRouter({
     {
       path: '/website/home-banners',
       name: 'WebsiteHomeBanners',
-      component: () => import('@/views/website/HomeBanners.vue'),
+      component: () => import('@/components/ops/WechatHomeBanners.vue'),
       meta: { requiresAuth: true }
     },
     {

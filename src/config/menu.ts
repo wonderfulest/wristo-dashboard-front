@@ -88,6 +88,18 @@ export const topMenus: TopMenuGroup[] = [
     icon: 'Promotion',
     basePaths: ['/marketing', '/ga', '/email-records', '/looks', '/website/home-banners', '/website/ios-home-recommendations', '/website/studio-memberships', '/website/studio-conversion', '/ops/credit-grants', '/ops/miniapp-points', '/ops/user-rewards', '/ops/share-rewards', '/ops/creator-rewards'],
     children: [
+      { key: 'wechat-miniapp', title: '微信小程序', icon: 'ChatDotRound', children: [
+        { key: 'website-home-banners', title: '首页 Banner', icon: 'Picture', path: '/website/home-banners' },
+        { key: 'miniapp-rewards', title: '任务奖励', icon: 'Coin', path: '/marketing/miniapp/rewards' },
+        { key: 'miniapp-redemptions', title: '兑换配置', icon: 'Coin', path: '/marketing/miniapp/redemptions' },
+        { key: 'wechat-watchface-push', title: '微信新作品推送', icon: 'ChatDotRound', path: '/marketing/wechat-watchface-push' },
+      ] },
+      { key: 'ios-operations', title: 'iOS', icon: 'Bell', children: [
+        { key: 'ios-home-recommendations', title: '首页 Banner', icon: 'Picture', path: '/website/ios-home-recommendations' },
+        { key: 'ios-watchface-push', title: 'iOS 每日精选推送', icon: 'Bell', path: '/marketing/ios-watchface-push' },
+        { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
+        { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },
+      ] },
       { key: 'overseas-website', title: '国外网站', icon: 'Monitor', children: [
         { key: 'user-profiles', title: '用户画像', icon: 'Avatar', path: '/marketing/user-profiles' },
         { key: 'segments', title: '用户分群', icon: 'UserFilled', path: '/marketing/segments' },
@@ -114,18 +126,6 @@ export const topMenus: TopMenuGroup[] = [
         { key: 'ai-models', title: '模型与供应商', icon: 'Coin', path: '/ops/ai-models' },
         { key: 'ai-prices', title: '成本价格', icon: 'Coin', path: '/ops/ai-prices' },
         { key: 'watchface-rules', title: '表盘生成规则', icon: 'Coin', path: '/ops/watchface-rules' },
-      ] },
-      { key: 'wechat-miniapp', title: '微信小程序', icon: 'ChatDotRound', children: [
-        { key: 'website-home-banners', title: '首页 Banner', icon: 'Picture', path: '/website/home-banners' },
-        { key: 'miniapp-rewards', title: '任务奖励', icon: 'Coin', path: '/marketing/miniapp/rewards' },
-        { key: 'miniapp-redemptions', title: '兑换配置', icon: 'Coin', path: '/marketing/miniapp/redemptions' },
-        { key: 'wechat-watchface-push', title: '微信新作品推送', icon: 'ChatDotRound', path: '/marketing/wechat-watchface-push' },
-      ] },
-      { key: 'ios-operations', title: 'iOS', icon: 'Bell', children: [
-        { key: 'ios-home-recommendations', title: '首页 Banner', icon: 'Picture', path: '/website/ios-home-recommendations' },
-        { key: 'ios-watchface-push', title: 'iOS 每日精选推送', icon: 'Bell', path: '/marketing/ios-watchface-push' },
-        { key: 'looks-reviews', title: 'Looks 内容审核', icon: 'DocumentChecked', path: '/looks/reviews' },
-        { key: 'looks-reports', title: 'Looks 举报', icon: 'Warning', path: '/looks/reports' },
       ] },
       { key: 'shared-resources', title: '公共资源', icon: 'FolderOpened', children: [
         { key: 'credits-overview', title: '综合运营总览', icon: 'Coin', path: '/ops/credits-overview' },

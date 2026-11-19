@@ -71,11 +71,11 @@ test('各业务域使用稳定的二级分组顺序', () => {
 
 test('产品运营按产品线和公共资源分组', () => {
   assert.deepEqual(getDirectChildKeys('marketing-growth'), [
+    'wechat-miniapp',
+    'ios-operations',
     'overseas-website',
     'cn-website',
     'studio-operations',
-    'wechat-miniapp',
-    'ios-operations',
     'shared-resources',
   ])
 })
