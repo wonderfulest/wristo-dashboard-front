@@ -90,7 +90,7 @@ const rewardFields: { key: Exclude<keyof PointsRewards, 'makeupEnabled'>; label:
   { key: 'tutorialPoints', label: '新手教程', description: '完成教程，每位用户一次' },
   { key: 'firstInstallPoints', label: '首次安装表盘', description: '每位用户一次' },
   { key: 'checkInPoints', label: '每日签到', description: '每天一次' },
-  { key: 'dailyInstallPoints', label: '每日安装表盘', description: '每天一次' },
+  { key: 'dailyInstallPoints', label: '每日安装表盘', description: '每天成功安装 3 次，奖励一次' },
   { key: 'weeklyInstallPoints', label: '每周安装 3 次', description: '每周一次' },
   { key: 'weeklyCheckIn3Points', label: '每周签到 3 天', description: '每周一次，可与其他签到奖励叠加' },
   { key: 'weeklyCheckIn5Points', label: '每周签到 5 天', description: '每周一次，可与其他签到奖励叠加' },

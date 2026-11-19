@@ -2,50 +2,55 @@
   <el-card class="review-card" shadow="never" v-loading="loading">
     <template #header>
       <div class="card-header">
-        <span>应用上线审核时间</span>
+        <span class="card-title">应用上线审核时间</span>
+        <span class="scope-tag">网站 · 微信小程序</span>
       </div>
     </template>
 
-    <p class="review-rule">仅控制网站和微信小程序的“最新上线”：收费应用的上线时间须早于此时间，免费应用不受审核时间限制。应用详情和下单不受此限制。</p>
     <div class="review-body">
       <div class="current-box">
-        <div class="label">当前审核时间：</div>
-        <div class="value mono">{{ reviewTime || '未设置，最新上线仅展示免费应用' }}</div>
+        <div class="label">当前审核时间</div>
+        <div class="value" :class="{ mono: reviewTime, 'is-empty': !reviewTime }">{{ reviewTime || '未设置，最新上线仅展示免费应用' }}</div>
         <div class="meta">
           <span>最近修改人：{{ current?.updatedBy || '-' }}</span>
           <span>最近修改时间：{{ current?.updatedAt ? formatDateTime(current!.updatedAt) : '-' }}</span>
         </div>
       </div>
+      <div class="refresh">
+        <el-button class="refresh-btn" type="primary" :loading="refreshing" @click="onRefreshNow">
+          刷新为当前时间
+        </el-button>
+        <span class="refresh-hint">依次执行下方三个步骤</span>
+      </div>
+    </div>
 
-      <div class="actions">
-        <div class="operation-steps" aria-label="刷新审核时间执行步骤">
-          <div v-for="(step, index) in refreshSteps" :key="step.label" class="operation-step" :class="`is-${step.status}`">
-            <span class="step-index">{{ step.status === 'success' ? '✓' : step.status === 'failed' ? '!' : index + 1 }}</span>
-            <div><strong>{{ step.label }}</strong><small>{{ step.description }}</small></div>
-          </div>
-        </div>
-        <div class="refresh">
-          <el-button class="circle-btn" type="primary" :loading="refreshing" @click="onRefreshNow">
-            刷新为当前时间
-          </el-button>
-        
-        </div>
-
-        <div class="manual-set">
-          <div class="label">手动指定时间</div>
-          <el-date-picker
-            v-model="setInput"
-            type="datetime"
-            placeholder="选择日期时间"
-            format="YYYY-MM-DD HH:mm:ss"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            style="width: 260px"
-          />
-          <el-button type="primary" :loading="saving" @click="onSaveManual">保存</el-button>
-          <el-button @click="setInput = nowString()">设为当前</el-button>
+    <div class="operation-steps" aria-label="刷新审核时间执行步骤" aria-live="polite">
+      <div v-for="(step, index) in refreshSteps" :key="step.label" class="operation-step" :class="`is-${step.status}`">
+        <span class="step-index">{{ step.status === 'success' ? '✓' : step.status === 'failed' ? '!' : index + 1 }}</span>
+        <div class="step-content">
+          <strong>{{ step.label }}<span v-if="step.status !== 'pending'" class="step-status">{{ step.status === 'running' ? '执行中' : step.status === 'success' ? '已完成' : '失败' }}</span></strong>
+          <small>{{ step.description }}</small>
         </div>
       </div>
     </div>
+
+    <div class="manual-set">
+      <label class="manual-label" for="review-time-input">手动指定时间</label>
+      <el-date-picker
+        id="review-time-input"
+        v-model="setInput"
+        class="manual-picker"
+        type="datetime"
+        placeholder="选择日期时间"
+        format="YYYY-MM-DD HH:mm:ss"
+        value-format="YYYY-MM-DD HH:mm:ss"
+      />
+      <div class="manual-buttons">
+        <el-button type="primary" plain :loading="saving" @click="onSaveManual">保存时间</el-button>
+        <el-button @click="setInput = nowString()">设为当前</el-button>
+      </div>
+    </div>
+    <p class="review-rule">仅控制“最新上线”列表：收费应用的上线时间须早于审核时间，免费应用不受限制。应用详情和下单不受影响。</p>
   </el-card>
 </template>
 
@@ -166,31 +171,50 @@ onMounted(fetchCurrent)
 </script>
 
 <style scoped>
-.review-card { margin-bottom: 20px; border: 2px solid var(--el-color-primary); }
-.review-rule { margin: 0 0 16px; line-height: 1.7; color: var(--el-text-color-regular); }
-.card-header { display: flex; align-items: center; justify-content: space-between; }
-.review-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; }
-.current-box { display: flex; flex-direction: column; gap: 6px; }
-.current-box .label { color: var(--el-text-color-secondary); }
-.current-box .value { font-size: 20px; font-weight: 600; }
-.current-box .meta { display: flex; gap: 16px; color: var(--el-text-color-secondary); font-size: 12px; }
-.actions { display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
-.operation-steps { display: grid; gap: 8px; }
-.operation-step { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid #e5ebe8; border-radius: 10px; background: #fafcfb; }
-.operation-step .step-index { display: grid; width: 25px; height: 25px; flex: 0 0 25px; place-items: center; border-radius: 50%; background: #e7eeea; color: #607069; font-size: 12px; font-weight: 800; }
-.operation-step div { display: flex; min-width: 0; flex-direction: column; }.operation-step strong { color: #34473e; font-size: 13px; }.operation-step small { color: #8a9790; font-size: 11px; }
-.operation-step.is-running { border-color: #8fcdb0; background: #f1faf5; }.operation-step.is-running .step-index { background: #15915f; color: #fff; }
-.operation-step.is-success .step-index { background: #15915f; color: #fff; }.operation-step.is-failed { border-color: #e8a8a1; background: #fff7f6; }.operation-step.is-failed .step-index { background: #c94f43; color: #fff; }
-.refresh { display: flex; justify-content: center; }
-.circle-btn { font-size: 16px; font-weight: 600; }
-.manual-set { display: flex; align-items: center; gap: 12px; }
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+.review-card { margin-bottom: 20px; border: 1px solid var(--el-border-color-light); border-radius: 14px; }
+.review-card :deep(.el-card__header) { padding: 18px 24px; border-bottom: 1px solid var(--el-border-color-lighter); }
+.review-card :deep(.el-card__body) { padding: 24px; }
+.card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card-title { font-size: 16px; font-weight: 600; color: var(--el-text-color-primary); }
+.scope-tag { padding: 4px 10px; border-radius: 6px; background: var(--el-fill-color-light); color: var(--el-text-color-regular); font-size: 12px; white-space: nowrap; }
+.review-body { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.current-box { min-width: 0; }
+.current-box .label { color: var(--el-text-color-regular); font-size: 13px; margin-bottom: 8px; }
+.current-box .value { color: var(--el-text-color-primary); font-size: clamp(20px, 2.2vw, 28px); font-weight: 600; line-height: 1.4; letter-spacing: -.5px; overflow-wrap: anywhere; }
+.current-box .value.is-empty { font-size: 18px; letter-spacing: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 10px; color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.6; }
+.refresh { display: flex; flex: 0 0 auto; flex-direction: column; align-items: center; gap: 8px; }
+.refresh-btn { height: 40px; padding: 0 22px; border-radius: 8px; font-weight: 600; }
+.refresh-hint { color: var(--el-text-color-secondary); font-size: 12px; }
+.operation-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+.operation-step { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border: 1px solid var(--el-border-color-lighter); border-radius: 10px; background: var(--el-fill-color-light); }
+.step-index { display: grid; width: 26px; height: 26px; flex: 0 0 26px; place-items: center; border-radius: 8px; background: var(--el-bg-color); border: 1px solid var(--el-border-color-light); color: var(--el-text-color-regular); font-size: 12px; font-weight: 600; }
+.step-content { min-width: 0; }
+.operation-step strong { display: block; color: var(--el-text-color-primary); font-size: 13px; font-weight: 600; line-height: 26px; }
+.operation-step small { display: block; margin-top: 3px; color: var(--el-text-color-regular); font-size: 12px; line-height: 1.6; }
+.step-status { margin-left: 8px; font-size: 11px; font-weight: 400; }
+.operation-step.is-running { border-color: var(--el-color-primary-light-5); background: var(--el-color-primary-light-9); }
+.operation-step.is-running .step-index { background: var(--el-color-primary); border-color: var(--el-color-primary); color: white; }
+.operation-step.is-success .step-index { background: var(--el-color-success); border-color: var(--el-color-success); color: white; }
+.operation-step.is-failed { border-color: var(--el-color-danger-light-5); background: var(--el-color-danger-light-9); }
+.operation-step.is-failed .step-index { background: var(--el-color-danger); border-color: var(--el-color-danger); color: white; }
+.manual-set { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 20px; border-top: 1px solid var(--el-border-color-lighter); }
+.manual-label { color: var(--el-text-color-regular); font-size: 13px; white-space: nowrap; margin-right: 4px; }
+.manual-set :deep(.manual-picker) { width: 240px; flex: 0 1 240px; }
+.manual-buttons { display: flex; gap: 8px; }
+.manual-buttons .el-button + .el-button { margin-left: 0; }
+.review-rule { margin: 16px 0 0; line-height: 1.7; color: var(--el-text-color-secondary); font-size: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-variant-numeric: tabular-nums; }
 @media (max-width: 960px) {
-  .review-body { grid-template-columns: 1fr; }
+  .operation-steps { grid-template-columns: 1fr; gap: 8px; }
+  .operation-step { padding: 12px 14px; }
 }
-@media (max-width: 768px) {
-  .card-header { align-items: flex-start; flex-direction: column; gap: 8px; }
-  .current-box .meta { flex-wrap: wrap; gap: 6px 12px; }
-  .manual-set { width: 100%; align-items: stretch; flex-direction: column; }
+@media (max-width: 600px) {
+  .review-card :deep(.el-card__header), .review-card :deep(.el-card__body) { padding: 16px; }
+  .card-header { flex-wrap: wrap; }
+  .review-body { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .refresh { align-items: flex-start; }
+  .manual-label { width: 100%; }
+  .manual-set :deep(.manual-picker) { width: 100%; flex: 1 1 100%; }
 }
 </style>
