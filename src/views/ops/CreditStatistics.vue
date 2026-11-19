@@ -82,7 +82,7 @@ const metrics: { key: keyof CreditTotals; label: string }[] = [
 ]
 const typeLabels: Record<string, string> = {
   DESIGN_SLOT: '设计栏位兑换',
-  REGISTRATION_GIFT: '注册赠送', PURCHASE: '购买充值', PURCHASE_REFUND: '购买退款回收', PURCHASE_REFUND_REVERSAL: '购买退款回收撤销',
+  DOMESTIC_WELCOME: '国内首次登录欢迎礼', REGISTRATION_GIFT: '注册赠送', PURCHASE: '购买充值', PURCHASE_REFUND: '购买退款回收', PURCHASE_REFUND_REVERSAL: '购买退款回收撤销',
   ADMIN_CREDIT: '后台增加', ADMIN_DEBIT: '后台扣减', SHARE_VISIT_REWARD: '分享访问奖励',
   USER_SOCIAL_SHARE: '社交分享奖励', USER_CHECK_IN: '每日签到', USER_DOWNLOAD: '首次下载奖励', USER_PURCHASE: '用户购买奖励', USER_PURCHASE_REFUND: '用户购买奖励追回',
   CREATOR_DOWNLOAD: '创作者下载奖励', CREATOR_PURCHASE: '创作者购买奖励', CREATOR_PURCHASE_REFUND: '创作者购买奖励追回',

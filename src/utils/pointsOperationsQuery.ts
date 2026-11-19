@@ -26,7 +26,7 @@ export function parseOperationsQuery(input: Record<string, unknown>, mode: Opera
   if (keyword) query.keyword = keyword
   if (mode === 'ledger') {
     const asset = text('asset'), direction = text('direction'), type = text('type'), eventKey = text('eventKey')
-    if (asset && !['REWARD', 'AI'].includes(asset)) throw new Error('请选择奖励积分或 AI 点数。')
+    if (asset && !['REWARD', 'AI'].includes(asset)) throw new Error('请选择积分或 AI 点数。')
     if (direction && !['IN', 'OUT', 'ZERO'].includes(direction)) throw new Error('收支方向无效。')
     if (type && !/^[A-Za-z0-9_:-]{1,64}$/.test(type)) throw new Error('流水类型无效。')
     if (eventKey.length > 191) throw new Error('业务事件编号最多 191 字。')

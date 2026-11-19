@@ -32,9 +32,9 @@ const loading = ref(false), saving = ref(false), error = ref('')
 const products = ref<{ id: number; appId: string; points: number }[]>([])
 let nextId = 0
 const fields: { key: Exclude<keyof CnRewardAmounts, 'productPoints'>; label: string }[] = [
-  { key: 'checkInPoints', label: '每日签到奖励积分' }, { key: 'trialPoints', label: '每次试用奖励积分' },
-  { key: 'trialDailyLimit', label: '每日试用奖励积分上限' }, { key: 'referralPoints', label: '推荐有效首单奖励积分' },
-  { key: 'monthlyCap', label: '每月推荐奖励积分上限' }, { key: 'defaultRedemptionPoints', label: '默认表盘兑换积分' },
+  { key: 'checkInPoints', label: '每日签到积分' }, { key: 'trialPoints', label: '每次试用积分' },
+  { key: 'trialDailyLimit', label: '每日试用积分上限' }, { key: 'referralPoints', label: '推荐有效首单积分' },
+  { key: 'monthlyCap', label: '每月推荐积分上限' }, { key: 'defaultRedemptionPoints', label: '默认表盘兑换积分' },
 ]
 function apply(view: CnRewardAmountsView) {
   loadedVersion = view.version

@@ -21,7 +21,7 @@
         <el-table-column label="套餐价格（美分）"><template #default="{ row }"><el-input-number v-model="row.priceCents" :min="1" :max="1000000" :precision="0" /></template></el-table-column>
         <el-table-column label="Paddle Price ID"><template #default="{ row }"><el-input v-model="row.paddlePriceId" placeholder="pri_…（套餐总价）" /></template></el-table-column>
       </el-table>
-      <el-alert title="每档使用独立的 Paddle Price ID，未配置的档位不开放现金购买。开启现金购买前，请配置同金额、USD、一次性、税外计价的 Paddle Price，并复用 Studio 积分的签名 Webhook。服务器会核验价格和付款，配置不匹配时拒绝购买。" type="info" :closable="false" />
+      <el-alert title="每档使用独立的 Paddle Price ID，未配置的档位不开放现金购买。开启现金购买前，请配置同金额、USD、一次性、税外计价的 Paddle Price，并复用 AI 点数的签名 Webhook。服务器会核验价格和付款，配置不匹配时拒绝购买。" type="info" :closable="false" />
       <el-button type="primary" :loading="saving" style="margin-top: 16px" @click="save">保存设计额度配置</el-button>
     </el-form>
     <el-button v-else-if="!loading" @click="load">重新加载</el-button>

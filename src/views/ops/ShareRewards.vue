@@ -1,7 +1,7 @@
 <template>
   <div class="rewards-page" v-loading="loading">
     <header>
-      <div><h2>分享访问奖励</h2><p>用户通过专属链接分享网站，访客完成有效浏览后自动向分享者发放奖励积分。</p></div>
+      <div><h2>分享访问奖励</h2><p>用户通过专属链接分享网站，访客完成有效浏览后自动向分享者发放积分。</p></div>
       <div class="actions"><el-button :disabled="saving" @click="load">刷新</el-button><el-button v-if="mode === 'rules'" @click="openHistory">修改历史</el-button><el-button type="primary" :loading="saving" :disabled="!settings || loading" v-if="mode === 'rules'" @click="save">保存配置</el-button></div>
     </header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
@@ -41,7 +41,7 @@
         <el-table-column prop="channel" label="渠道" width="100" />
         <el-table-column label="访问时间" min-width="180"><template #default="{ row }">{{ formatTime(row.startedAt) }}</template></el-table-column>
         <el-table-column label="结果 / 未发奖原因" min-width="180"><template #default="{ row }">{{ statuses[row.status] || row.status }}</template></el-table-column>
-        <el-table-column prop="credits" label="奖励积分" width="100" />
+        <el-table-column prop="credits" label="积分" width="100" />
         <el-table-column label="规则快照" width="140"><template #default="{ row }"><el-popover v-if="row.rulesJson" trigger="click" width="420"><pre>{{ row.rulesJson }}</pre><template #reference><el-button link>查看规则</el-button></template></el-popover></template></el-table-column>
       </el-table>
       <el-pagination v-model:current-page="page" :page-size="20" :total="total" layout="prev, pager, next" @current-change="loadVisits" />

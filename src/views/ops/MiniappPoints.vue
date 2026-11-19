@@ -1,13 +1,14 @@
 <template>
   <div class="points-settings">
     <h2>{{ mode === 'rewards' ? '小程序任务' : '小程序兑换' }}</h2>
-    <p>国内网站和微信小程序使用统一奖励积分兑换表盘权益。是否开启由每款表盘配置决定，开启后所需积分必须大于 0；会员权益覆盖和已拥有的表盘不扣积分。</p>
+    <p>国内网站和微信小程序使用统一积分兑换表盘权益。是否开启由每款表盘配置决定，开启后所需积分必须大于 0；会员权益覆盖和已拥有的表盘不扣积分。</p>
     <el-card v-if="mode === 'rewards'" shadow="never" v-loading="rewardsLoading">
-      <template #header>任务奖励积分</template>
+      <template #header>任务积分</template>
       <el-alert v-if="rewardsError" :title="rewardsError" type="error" :closable="false" />
       <el-form v-if="rewards" label-position="top" :disabled="rewardsSaving || rewardsLoading" class="reward-form">
         <el-form-item v-for="field in rewardFields" :key="field.key" :label="field.label">
-          <el-input-number v-model="rewards[field.key]" :min="1" :max="100000" :precision="0" />
+          <span v-if="field.key === 'loginPoints'">100 积分（固定） + 50 AI 点数</span>
+          <el-input-number v-else v-model="rewards[field.key]" :min="1" :max="100000" :precision="0" />
           <small>{{ field.description }}</small>
         </el-form-item>
       </el-form>
@@ -70,7 +71,7 @@ async function save() {
 const rewards = ref<PointsRewards>()
 const rewardsLoading = ref(false), rewardsSaving = ref(false), rewardsError = ref('')
 const rewardFields: { key: keyof PointsRewards; label: string; description: string }[] = [
-  { key: 'loginPoints', label: '首次登录', description: '每位用户一次' },
+  { key: 'loginPoints', label: '首次登录', description: '国内网站或微信小程序首次登录自动发放，同一账号全平台仅一次；AI 点数仅用于 Studio' },
   { key: 'tutorialPoints', label: '新手教程', description: '完成教程，每位用户一次' },
   { key: 'firstInstallPoints', label: '首次安装表盘', description: '每位用户一次' },
   { key: 'checkInPoints', label: '每日签到', description: '每天一次' },
@@ -96,12 +97,12 @@ async function loadRewards() {
 }
 async function saveRewards() {
   if (!rewards.value || rewardsSaving.value) return
-  if (rewardFields.some(field => !validPoints(rewards.value![field.key]))) {
+  if (rewardFields.some(field => field.key !== 'loginPoints' && !validPoints(rewards.value![field.key]))) {
     ElMessage.warning('任务奖励须为 1 至 100000 的整数'); return
   }
   rewardsSaving.value = true; rewardsError.value = ''
   try {
-    const response = await savePointsRewards({ ...rewards.value })
+    const response = await savePointsRewards({ ...rewards.value, loginPoints: 100 })
     if (response.code !== 0 || !response.data) throw new Error()
     rewards.value = response.data; ElMessage.success('已保存，后续任务按新额度发放')
   } catch { rewardsError.value = '未能确认保存结果，请刷新核对任务奖励后重试。' }

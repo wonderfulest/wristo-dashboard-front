@@ -1,7 +1,7 @@
 <template>
   <div class="rewards-page" v-loading="loading">
     <header>
-      <div><h2>创作者奖励</h2><p>每天北京时间 02:00 结算前一天及遗漏的未结算记录，奖励发放至创作者的奖励积分账户。</p></div>
+      <div><h2>创作者奖励</h2><p>每天北京时间 02:00 结算前一天及遗漏的未结算记录，奖励发放至创作者的积分账户。</p></div>
       <div class="actions">
         <el-button :disabled="loading || saving" @click="load">刷新</el-button>
         <el-button :disabled="loading || saving" v-if="mode === 'rules'" @click="openHistory">修改历史</el-button>
@@ -76,7 +76,7 @@ async function load() {
 async function save() {
   if (!settings.value || saving.value) return
   if ([settings.value.downloadsPerReward, settings.value.downloadCredits, settings.value.purchaseCredits].some(n => !Number.isInteger(n) || n < 1 || n > 10000)) {
-    ElMessage.warning('下载次数和奖励积分须为 1 至 10000 的整数'); return
+    ElMessage.warning('下载次数和积分须为 1 至 10000 的整数'); return
   }
   saving.value = true; error.value = ''
   try {

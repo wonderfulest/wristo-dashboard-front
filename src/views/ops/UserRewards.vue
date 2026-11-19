@@ -1,25 +1,25 @@
 <template>
   <div class="rewards-page" v-loading="loading">
-    <header><div><h2>用户任务</h2><p>奖励发放至用户的奖励积分余额；修改额度只影响后续发放。</p></div><el-button @click="load" :disabled="saving">刷新</el-button></header>
+    <header><div><h2>用户任务</h2><p>奖励发放至用户的积分余额；修改额度只影响后续发放。</p></div><el-button @click="load" :disabled="saving">刷新</el-button></header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-form v-if="settings" label-width="130px" :disabled="saving || loading">
       <div class="task-grid">
       <el-card shadow="never">
         <template #header>每日签到</template>
         <el-form-item label="启用奖励"><el-switch v-model="settings.checkInEnabled" /></el-form-item>
-        <el-form-item label="每日奖励积分"><el-input-number v-model="settings.checkInCredits" :min="1" :max="10000" :precision="0" /></el-form-item>
+        <el-form-item label="每日积分"><el-input-number v-model="settings.checkInCredits" :min="1" :max="10000" :precision="0" /></el-form-item>
         <p>按北京时间，每位用户每天主动签到领取一次。</p>
       </el-card>
       <el-card shadow="never">
         <template #header>购买奖励</template>
         <el-form-item label="启用奖励"><el-switch v-model="settings.purchaseEnabled" /></el-form-item>
-        <el-form-item label="每笔奖励积分"><el-input-number v-model="settings.purchaseCredits" :min="1" :max="10000" :precision="0" /></el-form-item>
+        <el-form-item label="每笔积分"><el-input-number v-model="settings.purchaseCredits" :min="1" :max="10000" :precision="0" /></el-form-item>
         <p>有效支付成功后，按订单邮箱关联已验证用户。同一支付交易只奖励一次；零金额和赠送订单不计入。同一交易发生退款即撤回原奖励，关闭开关后仍处理退款。</p>
       </el-card>
       <el-card shadow="never">
         <template #header>首次下载</template>
         <el-form-item label="启用奖励"><el-switch v-model="settings.downloadEnabled" /></el-form-item>
-        <el-form-item label="每次奖励积分"><el-input-number v-model="settings.downloadCredits" :min="1" :max="10000" :precision="0" /></el-form-item>
+        <el-form-item label="每次积分"><el-input-number v-model="settings.downloadCredits" :min="1" :max="10000" :precision="0" /></el-form-item>
         <el-form-item label="每日积分上限"><el-input-number v-model="settings.downloadDailyLimit" :min="1" :max="10000" :precision="0" /></el-form-item>
         <p>用户登录后在商店点击下载即可获得奖励，免费表盘也计入。同一用户、同一表盘只奖励一次；每日剩余额度不足一次奖励时，当天不再发放。此任务记录下载点击，不代表已安装到手表。</p>
       </el-card>

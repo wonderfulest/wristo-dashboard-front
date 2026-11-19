@@ -1,8 +1,8 @@
 <template>
   <div class="credits-page overview">
-    <header><div><h2>积分与 AI 运营总览</h2><p>奖励积分、AI 点数和供应商成本分别核对。{{ rangeLabel }}</p></div><el-button :loading="loading" @click="load">刷新概览</el-button></header>
+    <header><div><h2>积分与 AI 运营总览</h2><p>积分、AI 点数和供应商成本分别核对。{{ rangeLabel }}</p></div><el-button :loading="loading" @click="load">刷新概览</el-button></header>
     <div class="quick-actions">
-      <router-link to="/ops/points-ledger"><strong>核对全平台流水</strong><span>奖励积分 · AI 点数 · 业务关联</span></router-link>
+      <router-link to="/ops/points-ledger"><strong>核对全平台流水</strong><span>积分 · AI 点数 · 业务关联</span></router-link>
       <router-link to="/ops/reward-rules"><strong>配置奖励</strong><span>用户 · 小程序 · 分享 · 创作者</span></router-link>
       <router-link to="/ops/redemptions"><strong>管理兑换</strong><span>默认额度 · 表盘覆盖 · 资源</span></router-link>
       <router-link to="/ops/ai-scenes"><strong>调整 AI 扣点</strong><span>场景开关 · 模型 · 点数</span></router-link>
@@ -25,8 +25,8 @@
         <el-alert v-if="errors.social" :title="errors.social" type="error" :closable="false" />
         <router-link class="operation-row" to="/ops/reward-records?tab=social"><span>社交分享待审核</span><strong>{{ count(pendingReviews) }}</strong></router-link>
         <el-alert v-if="errors.visits" :title="errors.visits" type="error" :closable="false" />
-        <router-link class="operation-row" to="/ops/reward-records?tab=visits"><span>今日分享访问发放 · 奖励积分</span><strong>{{ count(visits?.stats.credits) }}</strong></router-link>
-        <p class="muted">分享统计仅覆盖分享访问奖励，不代表全平台奖励积分发放总额。今日按北京时间统计。</p>
+        <router-link class="operation-row" to="/ops/reward-records?tab=visits"><span>今日分享访问发放 · 积分</span><strong>{{ count(visits?.stats.credits) }}</strong></router-link>
+        <p class="muted">分享统计仅覆盖分享访问奖励，不代表全平台积分发放总额。今日按北京时间统计。</p>
         <el-alert v-if="errors.creator" :title="errors.creator" type="error" :closable="false" />
         <router-link class="operation-row" to="/ops/reward-records?tab=creators"><span>创作者结算</span><el-tag v-if="creator" :type="creator.job.failure ? 'danger' : 'info'">{{ creator.job.running ? '运行中' : jobLabels[creator.job.status] || creator.job.status }}</el-tag><span v-else>—</span></router-link>
         <p class="muted">最近结算至 {{ creator?.settlement.lastSettledDay || '—' }}</p>

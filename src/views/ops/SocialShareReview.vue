@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h2>社交分享奖励</h2><p>人工审核通过后发放奖励积分；按北京时间自然月计算通过次数。请核对分享内容、截图和重复提交。</p>
+    <h2>社交分享奖励</h2><p>人工审核通过后发放积分；按北京时间自然月计算通过次数。请核对分享内容、截图和重复提交。</p>
     <el-button :disabled="loading || saving || reviewing" @click="refresh">刷新</el-button>
     <el-alert v-if="mode === 'records' && settings && !settings.enabled" title="社交分享奖励已暂停，暂不能审核通过；仍可驳回不符合要求的提交。" type="warning" :closable="false" show-icon />
     <el-button v-if="mode === 'records'" link type="primary" @click="$router.push('/ops/reward-rules?tab=social')">查看社交分享奖励规则</el-button>
