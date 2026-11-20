@@ -17,7 +17,7 @@
         placeholder="购买订单来源（精确匹配）" aria-label="购买订单来源" @keyup.enter="fetchPurchaseRecords(1)" />
       </div>
       <datalist id="purchase-origins">
-        <option v-for="origin in purchaseOrigins" :key="origin" :value="origin" />
+        <option v-for="origin in purchaseOrigins" :key="origin.value" :value="origin.value" :label="origin.label" />
       </datalist>
       <template #query>
         <button class="filter-btn primary" @click="fetchPurchaseRecords(1)">Search</button>
@@ -299,8 +299,13 @@ const searchAppId = ref<number | null | undefined>(Number.isFinite(initialAppId)
 const searchEmail = ref<string>(typeof route.query.email === 'string' ? route.query.email : '')
 const searchOrigin = ref<string>(typeof route.query.origin === 'string' ? route.query.origin : '')
 const purchaseOrigins = [
-  'app_store', 'store', 'store_cart', 'shop_code', 'promotion', 'webhook', 'crontab', 'studio',
-  'wechat-membership-sync', 'gift:taobao', 'gift:xiaohongshu', 'gift:xianyu', 'gift:wristo_cn', 'gift:other'
+  { value: 'wristo-cn-points', label: '积分' },
+  { value: 'wristo-cn-api', label: '国内网站支付宝' },
+  { value: 'wechat-virtual', label: '微信虚拟支付' },
+  ...[
+    'app_store', 'store', 'store_cart', 'shop_code', 'promotion', 'webhook', 'crontab', 'studio',
+    'wechat-membership-sync', 'gift:taobao', 'gift:xiaohongshu', 'gift:xianyu', 'gift:wristo_cn', 'gift:other'
+  ].map(value => ({ value, label: value }))
 ]
 const detailVisible = ref(false)
 const selectedRecord = ref<PurchaseRecordVO | null>(null)
