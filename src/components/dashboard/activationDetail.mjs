@@ -1,7 +1,7 @@
 export const activationDetailRoute = email => ({ path: '/dashboard/activations/user', query: { email: email.trim().toLowerCase() } })
 export const activationTime = value => value ? value.replace('T', ' ').replace(/\.\d+$/, '') + ' UTC' : '未知（历史未记录）'
 export const activationSourceLabel = source => ({ DIRECT_PURCHASE: '直接购买', EXISTING_BUNDLE: '已有套餐权益',
-  EXISTING_APP: '已有单应用权益', GIFT: '赠送', SUBSCRIPTION: '订阅', UNKNOWN: '未知来源' }[source] || '未知来源')
+  EXISTING_APP: '已有单应用权益', GIFT: '赠送', MEMBERSHIP: '会员权益', SUBSCRIPTION: '订阅', UNKNOWN: '未知来源' }[source] || '未知来源')
 export function activationLocation(item) {
   const parts = [item.countryName || item.countryCode, item.region, item.city].filter(value => value?.trim())
   const place = [...new Set(parts)].join(' · ')

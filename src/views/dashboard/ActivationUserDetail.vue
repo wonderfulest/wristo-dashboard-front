@@ -68,8 +68,9 @@
                 </div>
                 <el-tag size="small" effect="plain">{{ activationSourceLabel(item.source) }}</el-tag>
               </div>
-              <p class="muted">App ID：{{ item.appId ?? '未知' }} · 激活记录 #{{ item.trialId }} · {{ item.channel === 'SIX_DIGIT' ? '六位码激活' : item.channel === 'OTHER' ? '其他入口' : '入口未知' }}</p>
+              <p class="muted">App ID：{{ item.appId ?? '未知' }} · 激活记录 #{{ item.trialId }} · {{ item.channel === 'MINIAPP_BLUETOOTH' ? '小程序蓝牙自动激活' : item.channel === 'SIX_DIGIT' ? '六位码激活' : item.channel === 'OTHER' ? '其他入口' : '入口未知' }}</p>
               <dl class="event-facts">
+                <div v-if="item.activationUserId"><dt>激活会员账号</dt><dd>用户 #{{ item.activationUserId }}<small>{{ item.membershipLifetime ? '终身会员' : '有效期至 ' + (item.membershipExpiresAt || '未记录') }}（激活时）</small></dd></div>
                 <div><dt>激活平台来源</dt><dd>{{ activationPlatformLabel(item.activationPlatform, item.miniProgram) }}</dd></div>
                 <div><dt>激活设备</dt><dd>{{ item.deviceName || '未知型号' }}<small v-if="item.partNumber">部件号：{{ item.partNumber }}</small></dd></div>
                 <div><dt>地点</dt><dd>{{ activationLocation(item).place }}<small v-if="activationLocation(item).label">{{ activationLocation(item).label }}<br />采集于 {{ activationTime(item.locationCapturedAt) }}</small></dd></div>

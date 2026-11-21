@@ -23,6 +23,9 @@ export interface ActivationTimelineItem {
   miniProgram: string | null
   source: string
   channel: string
+  activationUserId?: number | null
+  membershipLifetime?: boolean | null
+  membershipExpiresAt?: string | null
   activatedAt: string | null
   countryCode: string | null
   countryName: string | null
