@@ -148,6 +148,7 @@
             <el-button type="primary" link @click="openPoints(row.appId)">积分兑换</el-button>
             <el-button type="primary" link :loading="syncing.get(row.appId) === 'index'" :disabled="syncing.has(row.appId)" @click="handleSync(row, 'index')">同步索引</el-button>
             <el-button type="primary" link :loading="syncing.get(row.appId) === 'cn'" :disabled="syncing.has(row.appId)" @click="handleSync(row, 'cn')">同步到国内数据库</el-button>
+            <el-button type="warning" link :disabled="row.status !== 1" :loading="publishingEarly.has(row.appId)" @click="handlePublishEarly(row)">提前上线</el-button>
             <el-button
               :type="row.status === 1 ? 'danger' : 'success'"
               link
@@ -334,6 +335,7 @@
             <el-button type="primary" link @click="openPoints(row.appId)">积分兑换</el-button>
             <el-button type="primary" link :loading="syncing.get(row.appId) === 'index'" :disabled="syncing.has(row.appId)" @click="handleSync(row, 'index')">同步索引</el-button>
             <el-button type="primary" link :loading="syncing.get(row.appId) === 'cn'" :disabled="syncing.has(row.appId)" @click="handleSync(row, 'cn')">同步到国内数据库</el-button>
+            <el-button type="warning" link :disabled="row.status !== 1" :loading="publishingEarly.has(row.appId)" @click="handlePublishEarly(row)">提前上线</el-button>
             <el-button
               size="small"
               :type="row.status === 1 ? 'danger' : 'success'"
@@ -872,7 +874,7 @@ import { formatDate } from '@/utils/date'
 import { formatProductGoLive } from './productDisplay.mjs'
 import { rebuildOne } from '@/api/watchface-search'
 import { submitCnCatalogProduct } from '@/api/app-management'
-import { addProductCategory, deleteProductCategory, createProductPackageTask, resetGarminAndRepack, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, batchUpdateProductTrialDuration, manageCategoryForAllProducts } from '@/api/products'
+import { publishProductEarly, addProductCategory, deleteProductCategory, createProductPackageTask, resetGarminAndRepack, fetchProductPage, updateProduct, updateProductCategories, toggleProductStatus, transferProductOwner, refreshProductStats, resetAllProductStoreWeights, batchUpdateProductTrialDuration, manageCategoryForAllProducts } from '@/api/products'
 import { uploadProductHeroImage } from '@/api/files'
 import { fetchAllCategories } from '@/api/category'
 import type { Product } from '@/types/product'
@@ -1423,6 +1425,29 @@ async function handleImageChange(file: any) {
 const handlePaymentChange = () => {
   if (form.value.paymentMethod === 'free') form.value.price = 0
   if (form.value.paymentMethod === 'garmin') form.value.trialLasts = 0
+}
+
+const publishingEarly = reactive(new Set<number>())
+const handlePublishEarly = async (row: Product) => {
+  if (publishingEarly.has(row.appId)) return
+  publishingEarly.add(row.appId)
+  try {
+    await ElMessageBox.confirm(
+      `确定提前上线「${row.name}」（${row.appId}）？将把此应用的创建时间调整到审核截止时间前一秒，并同步国内数据。已早于该时间的应用保持原创建时间。`,
+      '提前上线',
+      { type: 'warning', confirmButtonText: '确认提前上线', cancelButtonText: '取消' }
+    )
+    const res = await publishProductEarly(row.appId)
+    if (res.code !== 0 || !res.data) throw new Error(res.msg || '提前上线失败')
+    ElMessage.success(`已提前上线，创建时间：${res.data.replace('T', ' ')}；国内数据同步已提交`)
+    await fetchProducts()
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error(error instanceof Error ? error.message : '提前上线失败，请重试')
+    }
+  } finally {
+    publishingEarly.delete(row.appId)
+  }
 }
 
 const handleSync = async (row: Product, target: 'index' | 'cn') => {

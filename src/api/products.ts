@@ -272,3 +272,6 @@ export const clearProductPackagingDeadQueue = (): Promise<ApiResponse<number>> =
 export const resetGarminAndRepack = (appId: number): Promise<ApiResponse<void>> => {
   return instance.post(`/admin/products/${appId}/reset-garmin-and-repack`)
 }
+
+export const publishProductEarly = (appId: number): Promise<ApiResponse<string>> =>
+  instance.post(`/admin/products/${appId}/publish-early`)
