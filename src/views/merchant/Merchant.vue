@@ -6,6 +6,10 @@
         <span class="list-search-label">商家用户</span>
         <UserSelect aria-label="商家用户" v-model="searchUserId" placeholder="按商家用户搜索" @change="handleUserChange" />
       </div>
+      <div class="list-search-field">
+        <span class="list-search-label">实控人</span>
+        <el-input v-model.trim="query.actualController" aria-label="实控人" placeholder="输入实控人姓名" clearable @keyup.enter="handleSearch" @clear="handleSearch" />
+      </div>
       <template #query>
         <el-button type="primary" @click="handleSearch">查询</el-button>
         <el-button @click="handleReset">重置</el-button>

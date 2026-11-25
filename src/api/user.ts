@@ -63,6 +63,7 @@ export const getUserStats = (): Promise<ApiResponse<UserStats>> => {
 
 // 商家用户分页（固定按商家角色筛选）
 export interface MerchantUserPageQueryDTO extends PageQueryDTO {
+  actualController?: string
   userId?: number
   username?: string
   email?: string
