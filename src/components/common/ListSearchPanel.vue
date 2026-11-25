@@ -19,7 +19,7 @@ withDefaults(defineProps<{ tag?: 'section' | 'form' }>(), { tag: 'section' })
 <style lang="scss">
 // Opt-in selectors: editor forms, dialogs and table actions are deliberately outside this system.
 .list-search-panel {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
