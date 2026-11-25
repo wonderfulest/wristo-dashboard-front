@@ -43,6 +43,17 @@
         </template>
       </el-table-column>
       <el-table-column prop="email" label="邮箱" width="160" />
+      <el-table-column prop="actualController" label="实际控制人" min-width="140" show-overflow-tooltip>
+        <template #default="{ row }">{{ row.actualController || '未填写' }}</template>
+      </el-table-column>
+      <el-table-column prop="certificationEntityType" label="认证主体类型" width="130">
+        <template #default="{ row }">
+          {{ row.certificationEntityType === 'INDIVIDUAL' ? '个人' : row.certificationEntityType === 'ORGANIZATION' ? '公司' : '未填写' }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="certificationLegalName" label="认证主体法定名称" min-width="220" show-overflow-tooltip>
+        <template #default="{ row }">{{ row.certificationLegalName || '未填写' }}</template>
+      </el-table-column>
       <el-table-column label="Banner" width="120">
         <template #default="{ row }">
           <el-image
@@ -139,6 +150,20 @@
 
         <el-form-item label="Slogan" prop="slogan">
           <el-input v-model="editForm.slogan" placeholder="Slogan" />
+        </el-form-item>
+
+        <el-form-item label="实际控制人" prop="actualController">
+          <el-input v-model="editForm.actualController" :maxlength="255" clearable placeholder="实际持有、管理佳明账号的人；未核实可留空" />
+        </el-form-item>
+        <el-form-item label="认证主体类型" prop="certificationEntityType">
+          <el-select v-model="editForm.certificationEntityType" clearable placeholder="未核实" style="width: 100%">
+            <el-option label="个人" value="INDIVIDUAL" />
+            <el-option label="公司" value="ORGANIZATION" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="认证主体法定名称" prop="certificationLegalName">
+          <el-input v-model="editForm.certificationLegalName" :maxlength="255" clearable placeholder="认证使用的个人姓名或公司完整法定名称" />
+          <div class="el-form-item__extra">记录认证主体不代表已通过佳明商家认证；未核实的信息可留空。</div>
         </el-form-item>
 
         <el-form-item label="备注" prop="remark">
@@ -279,6 +304,9 @@ const editForm = ref({
   bannerImageId: undefined as number | undefined,
   slogan: '',
   remark: '',
+  actualController: '',
+  certificationEntityType: '' as '' | 'INDIVIDUAL' | 'ORGANIZATION',
+  certificationLegalName: '',
   facebookUrl: '',
   instagramUrl: '',
   xUrl: '',
@@ -330,6 +358,9 @@ const openEdit = async (row: any) => {
       bannerImageId: (r.bannerImageId ?? undefined) as any,
       slogan: (r.slogan || '') as any,
       remark: r.remark || '',
+      actualController: r.actualController || '',
+      certificationEntityType: r.certificationEntityType || '',
+      certificationLegalName: r.certificationLegalName || '',
       facebookUrl: (r.facebookUrl || '') as any,
       instagramUrl: (r.instagramUrl || '') as any,
       xUrl: (r.xUrl || '') as any,
@@ -360,6 +391,9 @@ const handleEditSubmit = async () => {
         bannerImageId: editForm.value.bannerImageId,
         slogan: editForm.value.slogan,
         remark: editForm.value.remark,
+        actualController: editForm.value.actualController.trim(),
+        certificationEntityType: editForm.value.certificationEntityType || '',
+        certificationLegalName: editForm.value.certificationLegalName.trim(),
         facebookUrl: editForm.value.facebookUrl,
         instagramUrl: editForm.value.instagramUrl,
         xUrl: editForm.value.xUrl,

@@ -82,6 +82,9 @@ export interface RoleInfo {
 
 export interface UserMchUpdateDTO {
   remark?: string
+  actualController?: string
+  certificationEntityType?: '' | 'INDIVIDUAL' | 'ORGANIZATION'
+  certificationLegalName?: string
   username?: string
   nickname?: string
   avatar?: string
@@ -100,6 +103,9 @@ export interface UserMchUpdateDTO {
 
 export interface MchUserVO extends UserInfo {
   remark?: string | null
+  actualController?: string | null
+  certificationEntityType?: '' | 'INDIVIDUAL' | 'ORGANIZATION' | null
+  certificationLegalName?: string | null
   payoutMethod?: string | null
   payoutAccount?: string | null
   bannerImageId?: number | null
