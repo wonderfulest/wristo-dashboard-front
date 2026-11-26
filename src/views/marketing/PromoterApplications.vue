@@ -16,6 +16,7 @@
       <el-table-column label="审核状态" width="110">
         <template #default="{ row }">{{ labels[(row as PromoterApplication).status] }}</template>
       </el-table-column>
+      <el-table-column prop="applicationReason" label="申请理由" min-width="200" />
       <el-table-column prop="reason" label="审核说明" min-width="160" />
       <el-table-column v-if="status === 'pending'" label="操作" width="150">
         <template #default="{ row }">

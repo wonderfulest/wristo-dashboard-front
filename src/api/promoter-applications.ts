@@ -9,6 +9,7 @@ export interface PromoterApplication {
   email: string
   status: ReviewStatus
   reason: string | null
+  applicationReason: string | null
   createdAt: string
 }
 
