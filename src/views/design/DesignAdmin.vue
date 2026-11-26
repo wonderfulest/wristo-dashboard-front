@@ -61,7 +61,8 @@
             <div class="design-meta">
               <span>{{ row.designUid }}</span>
               <a
-                :href="`https://studio.wristo.io/design?id=${encodeURIComponent(String(row.designUid))}`"
+                v-if="row.product?.appId"
+                :href="`https://studio.wristo.io/faces/${encodeURIComponent(String(row.product.appId))}`"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -180,7 +181,7 @@ const fetchDesigns = async () => {
       designUid: searchDesignUid.value || undefined,
       userId: searchUserId.value,
       isTemplate: searchIsTemplate.value,
-      populate: 'user'
+      populate: 'user,product'
     }
     const resp = await fetchDesignPage(params) as unknown as ApiResponse<PageResponse<Design>>
     if (resp.code === 0 && resp.data) {

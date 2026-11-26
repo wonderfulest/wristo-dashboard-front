@@ -23,8 +23,8 @@
         <a v-if="storeUrl" :href="storeUrl" target="_blank" rel="noopener noreferrer">{{ title }}</a>
         <span v-else>{{ title }}</span>
         <a
-          v-if="designId"
-          :href="`http://studio.wristo.io/design?id=${encodeURIComponent(String(designId))}`"
+          v-if="displayAppId !== '-'"
+          :href="`https://studio.wristo.io/faces/${encodeURIComponent(String(displayAppId))}`"
           target="_blank"
           rel="noopener noreferrer"
           style="margin-left: 8px"
