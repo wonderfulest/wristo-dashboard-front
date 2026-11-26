@@ -4,6 +4,7 @@ export const reviewCategories = [
   { key: 'comments', label: 'Looks 评论审核', note: '待公开的评论与回复', path: '/looks/reviews?type=comments&state=pending' },
   { key: 'reports', label: 'Looks 举报处理', note: '尚未处理的内容举报', path: '/looks/reports' },
   { key: 'social', label: '社交分享奖励审核', note: '待核实的分享奖励申请', path: '/ops/reward-records?tab=social' },
+  { key: 'promoterApplications', label: '推广员申请审核', note: '待审核的小程序推广员申请', path: '/marketing/miniapp/promoter-applications' },
 ]
 
 export function requireCount(response, key) {

@@ -14,6 +14,8 @@ test('partial failure remains unknown without hiding successful queues', async (
   loaders.comments = async () => { throw new Error('offline') }
   const result = await loadReviewCounts(loaders)
   assert.deepEqual(result.comments, { count: null, error: true })
+  assert.equal(reviewCategories.find(item => item.key === 'promoterApplications')?.path, '/marketing/miniapp/promoter-applications')
+  assert.deepEqual(result.promoterApplications, { count: 12, error: false })
   assert.deepEqual(result.designs, { count: 12, error: false })
   assert.deepEqual(result.reports, { count: 12, error: false })
   loaders.comments = async () => 0

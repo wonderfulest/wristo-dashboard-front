@@ -1,4 +1,4 @@
-export type ReviewKey = 'designs' | 'posts' | 'comments' | 'reports' | 'social'
+export type ReviewKey = 'designs' | 'posts' | 'comments' | 'reports' | 'social' | 'promoterApplications'
 export interface ReviewCount { count: number | null; error: boolean }
 export const reviewCategories: readonly { key: ReviewKey; label: string; note: string; path: string }[]
 export function requireCount(response: unknown, key: string): number

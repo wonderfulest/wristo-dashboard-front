@@ -52,7 +52,7 @@ onBeforeUnmount(() => { disposed = true; window.removeEventListener('focus', ref
 .review-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
 h2 { margin: 0; color: #1d3027; font-size: 20px; }
 p { margin: 6px 0 0; color: #60736a; font-size: 13px; line-height: 1.6; }
-.review-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.review-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
 .review-card { display: flex; flex-direction: column; gap: 9px; padding: 16px; border: 1px solid #e0e8e4; border-radius: 10px; background: #fff; color: #52635b; text-decoration: none; }
 .review-card:hover, .review-card:focus-visible { border-color: #169260; box-shadow: 0 4px 14px #23443414; }
 .review-card:focus-visible { outline: 2px solid #169260; outline-offset: 2px; }

@@ -1,5 +1,6 @@
 <template>
   <section class="applications">
+    <MembershipSimulation />
     <h2>推广员申请审核</h2>
     <el-radio-group v-model="status" aria-label="审核状态" @change="changeStatus">
       <el-radio-button v-for="(label, value) in labels" :key="value" :value="value">{{ label }}</el-radio-button>
@@ -43,6 +44,7 @@
 </template>
 
 <script setup lang="ts">
+import MembershipSimulation from './MembershipSimulation.vue'
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getApplications, reviewApplication, type PromoterApplication, type ReviewStatus } from '@/api/promoter-applications'
