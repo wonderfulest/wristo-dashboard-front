@@ -87,7 +87,7 @@ async function downloadImage(value: string | null, kind: string) {
 onMounted(load)
 </script>
 <template>
-  <section class="utilities-admin"><header><div><h1>实用工具</h1><p>管理四款实用工具的产品资料、宣传图片、使用指南和网站展示。安装记录指已连接服务的应用安装，不代表商店下载量；个人二维码及配置不在此展示。</p></div><el-button :loading="loading" @click="load">刷新</el-button></header>
+  <section class="utilities-admin"><header><div><h1>工具管理</h1><p>管理实用工具的产品资料、宣传图片、使用指南和网站展示。安装记录指已连接服务的应用安装，不代表商店下载量；个人二维码及配置不在此展示。</p></div><div class="asset-actions"><router-link to="/utilities/overview">运营总览</router-link><el-button :loading="loading" @click="load">刷新</el-button></div></header>
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-table v-loading="loading" :data="items" empty-text="暂无工具">
       <TableActionColumn><template #default="{ row }"><el-button link type="primary" @click="edit(row)">编辑资料</el-button></template></TableActionColumn>

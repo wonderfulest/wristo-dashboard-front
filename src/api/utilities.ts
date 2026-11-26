@@ -12,3 +12,15 @@ export const saveUtilityConfig = (value: UtilityConfig): Promise<ApiResponse<Uti
   const { appKey, installationCount, boundInstallationCount, boundUserCount, ...body } = value
   return api.put(`/admin/utilities/${encodeURIComponent(appKey)}`, body)
 }
+
+export interface UtilityMetrics {
+  installationCount: number; boundInstallationCount: number; boundUserCount: number; newInstallations: number
+}
+export interface UtilityDaily { date: string; newInstallations: number }
+export interface UtilityOverview {
+  timezone: string; from: string; to: string; summary: UtilityMetrics
+  tools: (Pick<UtilityConfig, 'appKey' | 'name' | 'nameZh' | 'logoUrl' | 'downloadUrl' | 'enabled' | 'websiteVisible'> & { metrics: UtilityMetrics })[]
+  daily: UtilityDaily[]
+}
+export const getUtilityOverview = (from: string, to: string): Promise<ApiResponse<UtilityOverview>> =>
+  api.get('/admin/utilities/analytics', { params: { from, to } })

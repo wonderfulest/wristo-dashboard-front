@@ -1,0 +1,29 @@
+<template><div ref="container" class="game-trend" role="img" aria-label="每日新增安装趋势" /></template>
+<script setup lang="ts">
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import * as echarts from 'echarts/core'
+import { LineChart } from 'echarts/charts'
+import { TooltipComponent, GridComponent, LegendComponent, DataZoomComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import type { UtilityDaily } from '@/api/utilities'
+echarts.use([LineChart, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent, CanvasRenderer])
+const props = defineProps<{ items: UtilityDaily[] }>()
+const container = ref<HTMLElement>()
+let chart: echarts.ECharts | undefined
+let observer: ResizeObserver | undefined
+function render() {
+  chart?.setOption({
+    color: ['#168456', '#3b82f6', '#d99828'], tooltip: { trigger: 'axis' }, legend: { top: 0 },
+    grid: { left: 50, right: 24, top: 48, bottom: 65 },
+    xAxis: { type: 'category', data: props.items.map(d => d.date), boundaryGap: false },
+    yAxis: { type: 'value', minInterval: 1 }, dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: 0, height: 20 }],
+    series: [
+      { name: '新增安装', type: 'line', data: props.items.map(d => d.newInstallations) },
+    ],
+  }, true)
+}
+watch(() => props.items, render)
+onMounted(() => { if (container.value) { chart = echarts.init(container.value); observer = new ResizeObserver(() => chart?.resize()); observer.observe(container.value); render() } })
+onBeforeUnmount(() => { observer?.disconnect(); chart?.dispose() })
+</script>
+<style scoped>.game-trend { width: 100%; height: 330px; }</style>
