@@ -572,6 +572,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/marketing/miniapp/promoter-applications',
+      name: 'PromoterApplications',
+      component: () => import('@/views/marketing/PromoterApplications.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/marketing/campaigns',
       name: 'Campaigns',
       component: () => import('@/views/marketing/Campaigns.vue'),

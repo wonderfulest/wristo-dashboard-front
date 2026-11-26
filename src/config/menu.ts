@@ -89,6 +89,7 @@ export const topMenus: TopMenuGroup[] = [
     basePaths: ['/marketing', '/ga', '/email-records', '/looks', '/website/home-banners', '/website/ios-home-recommendations', '/website/studio-memberships', '/website/studio-conversion', '/ops/credit-grants', '/ops/miniapp-points', '/ops/user-rewards', '/ops/share-rewards', '/ops/creator-rewards'],
     children: [
       { key: 'wechat-miniapp', title: '微信小程序', icon: 'ChatDotRound', children: [
+        { key: 'promoter-applications', title: '推广员申请审核', icon: 'DocumentChecked', path: '/marketing/miniapp/promoter-applications' },
         { key: 'miniapp-single-face-purchase', title: '单表盘购买', icon: 'ShoppingCart', path: '/marketing/miniapp/single-face-purchase' },
         { key: 'website-home-banners', title: '首页 Banner', icon: 'Picture', path: '/website/home-banners' },
         { key: 'miniapp-rewards', title: '任务奖励', icon: 'Coin', path: '/marketing/miniapp/rewards' },
