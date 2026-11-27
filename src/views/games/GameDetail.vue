@@ -24,6 +24,7 @@ async function loadReport() {
 }
 async function loadBoard() {
   const id = ++boardRequest
+  if (key.value === 'step-land') { boardLoading.value = false; boardError.value = ''; board.value = null; return }
   boardLoading.value = true; boardError.value = ''; board.value = null
   try { const result = await getGameBoard(key.value, leaderboardMode(key.value, mode.value, boardDate.value)); if (!result.data) throw new Error("Missing response data"); if (id === boardRequest) board.value = result.data }
   catch { if (id === boardRequest) boardError.value = '排行榜加载失败，请重试。' }
@@ -95,7 +96,8 @@ watch(key, initialize, { immediate: true })
       </el-table>
       <el-pagination v-if="runs" :current-page="page" :page-size="20" :total="runs.total" :disabled="runsLoading" layout="total, prev, pager, next" :pager-count="5" @current-change="changePage" />
     </el-card>
-    <el-card shadow="never"><template #header><div class="filters"><h2>排行榜</h2>
+    <el-alert v-if="key === 'step-land'" type="info" :closable="false" title="步落使用社区地块竞赛与有效步数结算，暂无通用对局排行榜；以上通用事件统计尚未接入步落，不代表社区真实活跃人数。" />
+    <el-card v-else shadow="never"><template #header><div class="filters"><h2>排行榜</h2>
       <el-select v-if="key === 'echo-orbit'" v-model="mode" aria-label="排行榜模式" style="width:140px" @change="loadBoard"><el-option label="触屏" value="touch"/><el-option label="按键" value="buttons"/></el-select>
       <el-date-picker v-if="key === 'daily-lights'" v-model="boardDate" type="date" value-format="YYYY-MM-DD" :clearable="false" aria-label="挑战日期" @change="loadBoard" />
       <el-button :loading="boardLoading" @click="loadBoard">刷新排行榜</el-button></div></template>
