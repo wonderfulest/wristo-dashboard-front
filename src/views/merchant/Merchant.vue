@@ -33,6 +33,16 @@
 
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="username" label="用户名" width="100" />
+      <el-table-column prop="remark" label="备注" min-width="260">
+        <template #default="{ row }">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <el-tooltip :content="row.remark" :disabled="!row.remark" placement="top" popper-style="max-width: 480px; white-space: pre-wrap; overflow-wrap: anywhere;">
+              <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ row.remark || '未填写' }}</span>
+            </el-tooltip>
+            <el-button type="primary" link :aria-label="`编辑 ${row.username || row.id} 的备注`" @click="openEdit(row)">编辑</el-button>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="头像" width="80">
         <template #default="{ row }">
           <el-image
@@ -171,7 +181,7 @@
         </el-form-item>
 
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="editForm.remark" type="textarea" :rows="4" :maxlength="10000" show-word-limit placeholder="仅管理员可见的商家备注" />
+          <el-input v-model="editForm.remark" type="textarea" :rows="4" :maxlength="10000" show-word-limit placeholder="记录账号定位、主题方向等，仅管理员可见" />
         </el-form-item>
 
         <el-form-item label="支付方式" prop="payoutMethod">
