@@ -39,7 +39,6 @@
             <el-tooltip :content="row.remark" :disabled="!row.remark" placement="top" popper-style="max-width: 480px; white-space: pre-wrap; overflow-wrap: anywhere;">
               <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ row.remark || '未填写' }}</span>
             </el-tooltip>
-            <el-button type="primary" link :aria-label="`编辑 ${row.username || row.id} 的备注`" @click="openEdit(row)">编辑</el-button>
           </div>
         </template>
       </el-table-column>
